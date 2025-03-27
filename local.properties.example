@@ -1,0 +1,7 @@
+# SDK location
+sdk.dir=/path/to/your/android/sdk
+
+# Annict API credentials
+# Get these from https://annict.com/oauth/applications
+ANNICT_CLIENT_ID=your_client_id_here
+ANNICT_CLIENT_SECRET=your_client_secret_here 
