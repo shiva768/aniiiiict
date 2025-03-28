@@ -3,12 +3,12 @@ package com.zelretch.aniiiiiict.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalDate
 
-@Entity(tableName = "custom_start_dates")
-data class CustomStartDate(
+@Entity(tableName = "work_images")
+data class WorkImage(
     @PrimaryKey
     @ColumnInfo(name = "work_id")
     val workId: Long,
-    val startDate: LocalDate
+    val imageUrl: String,
+    val localPath: String
 ) 

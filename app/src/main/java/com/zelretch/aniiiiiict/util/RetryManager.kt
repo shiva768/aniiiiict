@@ -3,7 +3,6 @@ package com.zelretch.aniiiiiict.util
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.takeWhile
 
 class RetryManager {
     companion object {

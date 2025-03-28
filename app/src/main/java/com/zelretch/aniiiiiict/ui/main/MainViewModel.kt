@@ -1,47 +1,47 @@
 package com.zelretch.aniiiiiict.ui.main
 
+import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.api.AnnictApiClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.local.dao.CustomStartDateDao
-import com.zelretch.aniiiiiict.data.local.entity.CustomStartDate
-import com.zelretch.aniiiiiict.data.model.AnnictWork
+import com.zelretch.aniiiiiict.data.model.AnnictProgram
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.util.ErrorLogger
 import com.zelretch.aniiiiiict.util.NetworkMonitor
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
+import androidx.core.net.toUri
+
+data class MainUiState(
+    val programs: List<AnnictProgram> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val selectedDate: LocalDateTime = LocalDateTime.now()
+)
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val apiClient: AnnictApiClient,
     private val authManager: AnnictAuthManager,
     private val tokenManager: TokenManager,
-    private val customStartDateDao: CustomStartDateDao,
     private val repository: AnnictRepository,
     private val networkMonitor: NetworkMonitor,
     private val retryManager: RetryManager
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    private val _watchingWorks = MutableStateFlow<List<WorkWithCustomDate>>(emptyList())
-    val watchingWorks: StateFlow<List<WorkWithCustomDate>> = _watchingWorks.asStateFlow()
-
-    private val _wantToWatchWorks = MutableStateFlow<List<WorkWithCustomDate>>(emptyList())
-    val wantToWatchWorks: StateFlow<List<WorkWithCustomDate>> = _wantToWatchWorks.asStateFlow()
 
     private var lastAction: (() -> Unit)? = null
 
@@ -51,65 +51,87 @@ class MainViewModel @Inject constructor(
 
     private fun checkAuthState() {
         viewModelScope.launch {
+            ErrorLogger.logInfo("認証状態を確認中", "checkAuthState")
             try {
-                if (repository.isAuthenticated()) {
-                    _uiState.value = _uiState.value.copy(isAuthenticated = true)
-                    loadWorks()
+                if (!repository.isAuthenticated()) {
+                    ErrorLogger.logInfo("未認証のため認証を開始", "checkAuthState")
+                    startAuth()
                 } else {
-                    val authUrl = repository.getAuthUrl()
-                    _uiState.value = _uiState.value.copy(authUrl = authUrl)
+                    ErrorLogger.logInfo("認証済みのためプログラム一覧を取得", "checkAuthState")
+                    loadPrograms()
                 }
             } catch (e: Exception) {
-                ErrorLogger.logError(e, "認証状態の確認")
+                ErrorLogger.logError(e, "認証状態の確認中にエラーが発生")
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "認証状態の確認に失敗しました"
+                    error = e.message ?: "認証状態の確認に失敗しました",
+                    isLoading = false
                 )
             }
         }
     }
 
-    fun loadWorks() {
+    private fun loadPrograms() {
         viewModelScope.launch {
+            ErrorLogger.logInfo("プログラム一覧の取得を開始", "loadPrograms")
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                val works = repository.getWorks()
+                val programs = repository.getPrograms(
+                    unwatched = true
+                )
+                ErrorLogger.logInfo("プログラム一覧の取得に成功: ${programs.size}件", "loadPrograms")
                 _uiState.value = _uiState.value.copy(
-                    works = works,
+                    programs = programs,
                     isLoading = false
                 )
             } catch (e: Exception) {
+                ErrorLogger.logError(e, "プログラム一覧の取得に失敗 - ${_uiState.value.selectedDate}")
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "作品の読み込みに失敗しました",
+                    error = e.message ?: "プログラム一覧の取得に失敗しました",
                     isLoading = false
                 )
             }
         }
     }
 
-    fun startAuth() {
+    fun onDateChange(date: LocalDateTime) {
+        _uiState.value = _uiState.value.copy(selectedDate = date)
+        loadPrograms()
+    }
+
+    fun onProgramClick(program: AnnictProgram) {
         viewModelScope.launch {
             try {
+                repository.createRecord(program.episode.id)
+                loadPrograms() // リストを更新
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Failed to mark episode as watched"
+                )
+            }
+        }
+    }
+
+    fun onImageLoad(workId: Long, imageUrl: String) {
+        viewModelScope.launch {
+            try {
+                repository.saveWorkImage(workId, imageUrl)
+            } catch (e: Exception) {
+                ErrorLogger.logError(e, "画像の保存に失敗 - workId: $workId")
+            }
+        }
+    }
+
+    private fun startAuth() {
+        viewModelScope.launch {
+            try {
+                ErrorLogger.logInfo("認証URLを取得中", "startAuth")
                 val authUrl = repository.getAuthUrl()
-                _uiState.value = _uiState.value.copy(authUrl = authUrl)
+                ErrorLogger.logInfo("認証URLを取得: $authUrl", "startAuth")
+                val intent = Intent(Intent.ACTION_VIEW, authUrl.toUri())
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "認証URLの取得に失敗しました"
-                )
-            }
-        }
-    }
-
-    fun handleAuthCallback(code: String) {
-        viewModelScope.launch {
-            try {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                repository.handleAuthCallback(code)
-                _uiState.value = _uiState.value.copy(
-                    isAuthenticated = true,
-                    isLoading = false
-                )
-                loadWorks()
-            } catch (e: Exception) {
+                ErrorLogger.logError(e, "認証URLの取得に失敗")
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "認証に失敗しました",
                     isLoading = false
@@ -118,27 +140,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setCustomStartDate(workId: Long, date: LocalDateTime) {
+    fun handleAuthCallback(code: String) {
         viewModelScope.launch {
             try {
-                repository.setCustomStartDate(workId, date)
-                loadWorks()
+                repository.handleAuthCallback(code)
+                loadPrograms()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "開始日の設定に失敗しました"
-                )
-            }
-        }
-    }
-
-    fun clearCustomStartDate(workId: Long) {
-        viewModelScope.launch {
-            try {
-                repository.clearCustomStartDate(workId)
-                loadWorks()
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "開始日の削除に失敗しました"
+                    error = e.message ?: "認証に失敗しました"
                 )
             }
         }
@@ -154,25 +163,3 @@ class MainViewModel @Inject constructor(
         lastAction?.invoke()
     }
 }
-
-data class MainUiState(
-    val isAuthenticated: Boolean = false,
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val works: List<AnnictWork> = emptyList(),
-    val authUrl: String? = null
-)
-
-data class WorkWithCustomDate(
-    val work: AnnictWork,
-    val customStartDate: LocalDateTime?
-) {
-    val effectiveStartDate: LocalDateTime?
-        get() = customStartDate ?: work.releasedOn?.takeIf { it.isNotEmpty() }?.let {
-            try {
-                LocalDateTime.parse(it)
-            } catch (e: Exception) {
-                null
-            }
-        }
-} 

@@ -4,13 +4,13 @@ import android.app.DatePickerDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.util.Calendar
 
 @Composable
 fun DatePickerDialog(
     onDismiss: () -> Unit,
-    onDateSelected: (LocalDateTime) -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
     onError: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -42,7 +42,7 @@ fun DatePickerDialog(
                                 onError("1年以内の日付を選択してください")
                             }
                             else -> {
-                                val selectedDate = LocalDateTime.of(year, month + 1, dayOfMonth, 0, 0)
+                                val selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
                                 onDateSelected(selectedDate)
                             }
                         }

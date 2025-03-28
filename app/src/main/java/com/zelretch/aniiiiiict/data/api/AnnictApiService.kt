@@ -1,7 +1,8 @@
 package com.zelretch.aniiiiiict.data.api
 
-import com.zelretch.aniiiiiict.data.model.AnnictWork
 import com.zelretch.aniiiiiict.data.model.AnnictResponse
+import com.zelretch.aniiiiiict.data.model.AnnictWork
+import com.zelretch.aniiiiiict.data.model.ProgramsResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -40,4 +41,15 @@ interface AnnictApiService {
         @Query("filter_status") status: String = "wanna_watch",
         @Query("sort_started_at") sortStartedAt: String = "asc"
     ): Response<AnnictResponse<AnnictWork>>
+
+    @GET("me/programs")
+    suspend fun getPrograms(
+        @Query("filter_unwatched") unwatched: Boolean,
+        @Query("fields") fields: String = "id,started_at,work.id,work.title,work.media_text,work.season_name_text,work.image_url,episode.id,episode.number,episode.number_text,episode.title"
+    ): Response<ProgramsResponse>
+
+    @POST("me/records")
+    suspend fun createRecord(
+        @Query("episode_id") episodeId: Long
+    ): Response<Unit>
 }

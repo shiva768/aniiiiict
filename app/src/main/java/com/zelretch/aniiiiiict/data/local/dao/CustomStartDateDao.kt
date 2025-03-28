@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CustomStartDateDao {
-    @Query("SELECT * FROM custom_start_dates WHERE workId = :workId")
+    @Query("SELECT * FROM custom_start_dates WHERE work_id = :workId")
     fun getCustomStartDate(workId: Long): Flow<CustomStartDate?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setCustomStartDate(customStartDate: CustomStartDate)
 
-    @Query("DELETE FROM custom_start_dates WHERE workId = :workId")
+    @Query("DELETE FROM custom_start_dates WHERE work_id = :workId")
     suspend fun deleteCustomStartDate(workId: Long)
 } 

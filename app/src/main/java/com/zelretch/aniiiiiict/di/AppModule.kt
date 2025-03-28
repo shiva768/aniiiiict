@@ -9,8 +9,10 @@ import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.local.AppDatabase
 import com.zelretch.aniiiiiict.data.local.dao.CustomStartDateDao
+import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
+import com.zelretch.aniiiiiict.data.util.ImageDownloader
 import com.zelretch.aniiiiiict.util.NetworkMonitor
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.Module
@@ -74,13 +76,34 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideWorkImageDao(database: AppDatabase): WorkImageDao {
+        return database.workImageDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideImageDownloader(@ApplicationContext context: Context): ImageDownloader {
+        return ImageDownloader(context)
+    }
+
+    @Provides
+    @Singleton
     fun provideAnnictRepository(
         apiClient: AnnictApiClient,
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        customStartDateDao: CustomStartDateDao
+        customStartDateDao: CustomStartDateDao,
+        workImageDao: WorkImageDao,
+        imageDownloader: ImageDownloader
     ): AnnictRepository {
-        return AnnictRepositoryImpl(apiClient, tokenManager, authManager, customStartDateDao)
+        return AnnictRepositoryImpl(
+            apiClient,
+            tokenManager,
+            authManager,
+            customStartDateDao,
+            workImageDao,
+            imageDownloader
+        )
     }
 
     @Provides

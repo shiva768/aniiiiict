@@ -1,21 +1,28 @@
 package com.zelretch.aniiiiiict.data.api
 
+import com.google.gson.GsonBuilder
 import com.zelretch.aniiiiiict.data.auth.TokenManager
+import com.zelretch.aniiiiiict.data.model.AnnictProgram
 import com.zelretch.aniiiiiict.data.model.AnnictWork
+import com.zelretch.aniiiiiict.util.ErrorLogger
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.LocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
-import android.util.Log
 
 @Singleton
 class AnnictApiClient @Inject constructor(
     private val tokenManager: TokenManager
 ) {
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(LocalDateTime::class.java, DateTimeTypeAdapter())
+        .create()
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(AnnictConfig.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create(gson))
         .client(createOkHttpClient())
         .build()
 
@@ -33,6 +40,7 @@ class AnnictApiClient @Inject constructor(
                     .header("Authorization", "Bearer $token")
                     .method(original.method, original.body)
                     .build()
+                ErrorLogger.logInfo("APIリクエスト: ${request.method} ${request.url}", "AnnictApiClient")
                 chain.proceed(request)
             }
             .build()
@@ -44,7 +52,6 @@ class AnnictApiClient @Inject constructor(
                 return Result.failure(Exception("API error: 401 - No valid token"))
             }
             val response = api.getWatchingWorks()
-            Log.d("AnnictApiClient", "API Response: ${response.body()}")
             if (response.isSuccessful) {
                 Result.success(response.body()?.works ?: emptyList())
             } else {
@@ -61,7 +68,6 @@ class AnnictApiClient @Inject constructor(
                 return Result.failure(Exception("API error: 401 - No valid token"))
             }
             val response = api.getWantToWatchWorks()
-            Log.d("AnnictApiClient", "API Response: ${response.body()}")
             if (response.isSuccessful) {
                 Result.success(response.body()?.works ?: emptyList())
             } else {
@@ -72,12 +78,52 @@ class AnnictApiClient @Inject constructor(
         }
     }
 
+    suspend fun getPrograms(
+        unwatched: Boolean
+    ): Result<List<AnnictProgram>> {
+        return try {
+            ErrorLogger.logInfo("プログラム一覧を取得中 - unwatched: $unwatched", "AnnictApiClient")
+            if (!tokenManager.hasValidToken()) {
+                ErrorLogger.logWarning("有効なトークンがありません", "AnnictApiClient")
+                return Result.failure(Exception("API error: 401 - No valid token"))
+            }
+            val response = api.getPrograms(unwatched)
+            if (response.isSuccessful) {
+                val programs = response.body()?.programs ?: emptyList()
+                ErrorLogger.logInfo("プログラム一覧の取得に成功: ${programs.size}件", "AnnictApiClient")
+                Result.success(programs)
+            } else {
+                ErrorLogger.logError(Exception("API error: ${response.code()}"), "プログラム一覧の取得に失敗 - status: ${response.code()}")
+                Result.failure(Exception("API error: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            ErrorLogger.logError(e, "プログラム一覧の取得中に例外が発生")
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateWorkStatus(workId: Long, status: String): Result<Unit> {
         return try {
             if (!tokenManager.hasValidToken()) {
                 return Result.failure(Exception("API error: 401 - No valid token"))
             }
             val response = api.updateStatus(workId, status)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("API error: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createRecord(episodeId: Long): Result<Unit> {
+        return try {
+            if (!tokenManager.hasValidToken()) {
+                return Result.failure(Exception("API error: 401 - No valid token"))
+            }
+            val response = api.createRecord(episodeId)
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {

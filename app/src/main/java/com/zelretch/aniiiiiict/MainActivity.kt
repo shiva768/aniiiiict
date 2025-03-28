@@ -1,23 +1,24 @@
 package com.zelretch.aniiiiiict
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.zelretch.aniiiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiiict.ui.main.MainViewModel
+import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val viewModel: MainViewModel by viewModels()
+    private lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +32,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(viewModel = viewModel)
+                    viewModel = hiltViewModel()
+                    val uiState by viewModel.uiState.collectAsState()
+
+                    MainScreen(
+                        uiState = uiState,
+                        onProgramClick = viewModel::onProgramClick,
+                        onDateChange = viewModel::onDateChange,
+                        onImageLoad = viewModel::onImageLoad
+                    )
                 }
             }
         }
@@ -47,7 +56,7 @@ class MainActivity : ComponentActivity() {
             val uri = intent.data
             if (uri?.scheme == "aniiiiiict" && uri.host == "oauth" && uri.pathSegments.firstOrNull() == "callback") {
                 val code = uri.getQueryParameter("code")
-                if (code != null) {
+                if (code != null && ::viewModel.isInitialized) {
                     viewModel.handleAuthCallback(code)
                 }
             }
