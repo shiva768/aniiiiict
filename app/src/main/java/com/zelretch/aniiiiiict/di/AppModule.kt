@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.zelretch.aniiiiiict.data.api.AnnictApiClient
 import com.zelretch.aniiiiiict.data.api.AnnictApiService
 import com.zelretch.aniiiiiict.data.api.AnnictConfig
+import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.local.AppDatabase
@@ -70,12 +71,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCustomStartDateDao(database: AppDatabase): CustomStartDateDao {
-        return database.customStartDateDao()
-    }
-
-    @Provides
-    @Singleton
     fun provideWorkImageDao(database: AppDatabase): WorkImageDao {
         return database.workImageDao()
     }
@@ -88,21 +83,27 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideApolloClient(tokenManager: TokenManager): ApolloClient {
+        return ApolloClient(tokenManager)
+    }
+
+    @Provides
+    @Singleton
     fun provideAnnictRepository(
         apiClient: AnnictApiClient,
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        customStartDateDao: CustomStartDateDao,
         workImageDao: WorkImageDao,
-        imageDownloader: ImageDownloader
+        imageDownloader: ImageDownloader,
+        apolloClient: ApolloClient
     ): AnnictRepository {
         return AnnictRepositoryImpl(
             apiClient,
             tokenManager,
             authManager,
-            customStartDateDao,
             workImageDao,
-            imageDownloader
+            imageDownloader,
+            apolloClient
         )
     }
 

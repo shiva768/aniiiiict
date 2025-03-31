@@ -39,7 +39,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.zelretch.aniiiiiict.data.model.AnnictProgram
+import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.ui.components.DatePickerDialog
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -49,9 +49,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MainScreen(
     uiState: MainUiState,
-    onProgramClick: (AnnictProgram) -> Unit,
+    onProgramClick: (ProgramWithWork) -> Unit,
     onDateChange: (LocalDateTime) -> Unit,
-    onImageLoad: (Long, String) -> Unit
+    onImageLoad: (Int, String) -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -88,11 +88,11 @@ fun MainScreen(
                 ) {
                     items(uiState.programs) { program ->
                         ProgramCard(
-                            program = program,
+                            programWithWork = program,
                             onClick = { onProgramClick(program) },
                             onImageLoad = {
-                                program.work.imageUrl?.let { imageUrl ->
-                                    onImageLoad(program.work.id, imageUrl)
+                                program.work.image?.recommendedImageUrl?.let { imageUrl ->
+                                    onImageLoad(program.program.annictId, imageUrl)
                                 }
                             }
                         )
@@ -115,7 +115,7 @@ fun MainScreen(
 
 @Composable
 fun ProgramCard(
-    program: AnnictProgram,
+    programWithWork: ProgramWithWork,
     onClick: () -> Unit,
     onImageLoad: () -> Unit
 ) {
@@ -131,11 +131,11 @@ fun ProgramCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val imageUrl = program.work.imageUrl
+            val imageUrl = programWithWork.work.image?.recommendedImageUrl
             if (imageUrl != null) {
                 AsyncImage(
                     model = imageUrl,
-                    contentDescription = program.work.title,
+                    contentDescription = programWithWork.work.title,
                     modifier = Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(8.dp)),
@@ -146,19 +146,19 @@ fun ProgramCard(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = program.work.title,
+                    text = programWithWork.work.title,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = program.work.mediaText,
+                    text = programWithWork.work.media ?: "Unknown",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Episode ${program.episode.numberText}",
+                    text = "Episode ${programWithWork.program.episode.numberText ?: "?"}",
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = program.startedAt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")),
+                    text = programWithWork.program.startedAt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")),
                     style = MaterialTheme.typography.bodySmall
                 )
             }

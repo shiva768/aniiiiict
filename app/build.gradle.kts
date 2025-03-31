@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("dagger.hilt.android.plugin")
+    id("com.apollographql.apollo3")
 }
 
 val localProperties = Properties().apply {
@@ -32,6 +33,7 @@ android {
 
         buildConfigField("String", "ANNICT_CLIENT_ID", "\"${localProperties.getProperty("ANNICT_CLIENT_ID", "")}\"")
         buildConfigField("String", "ANNICT_CLIENT_SECRET", "\"${localProperties.getProperty("ANNICT_CLIENT_SECRET", "")}\"")
+        buildConfigField("String", "ANNICT_ACCESS_TOKEN", "\"${localProperties.getProperty("ANNICT_ACCESS_TOKEN", "")}\"")
     }
 
     buildTypes {
@@ -87,6 +89,10 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // OkHttp
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
@@ -111,4 +117,18 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Apollo Client
+    implementation("com.apollographql.apollo3:apollo-runtime:3.8.5")
+    implementation("com.apollographql.apollo3:apollo-normalized-cache:3.8.5")
+    implementation("com.apollographql.apollo3:apollo-adapters:3.8.5")
+}
+
+apollo {
+    service("api") {
+        packageName.set("com.zelretch.aniiiiiict")
+        generateKotlinModels.set(true)
+        schemaFile.set(file("src/main/graphql/schema.json.graphqls"))
+        generateFragmentImplementations.set(true)
+    }
 }

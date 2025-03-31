@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.api.AnnictApiClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.model.AnnictProgram
+import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.util.ErrorLogger
 import com.zelretch.aniiiiiict.util.NetworkMonitor
@@ -17,13 +17,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 import androidx.core.net.toUri
 
 data class MainUiState(
-    val programs: List<AnnictProgram> = emptyList(),
+    val programs: List<ProgramWithWork> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val selectedDate: LocalDateTime = LocalDateTime.now()
@@ -75,16 +76,29 @@ class MainViewModel @Inject constructor(
             ErrorLogger.logInfo("プログラム一覧の取得を開始", "loadPrograms")
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                val programs = repository.getPrograms(
-                    unwatched = true
-                )
-                ErrorLogger.logInfo("プログラム一覧の取得に成功: ${programs.size}件", "loadPrograms")
-                _uiState.value = _uiState.value.copy(
-                    programs = programs,
-                    isLoading = false
-                )
+                // GraphQLでプログラム一覧を取得
+                println("MainViewModel: GraphQLでプログラム一覧の取得を開始")
+                repository.getProgramsWithWorks()
+                    .catch { e ->
+                        ErrorLogger.logError(e, "プログラム一覧の取得に失敗")
+                        println("MainViewModel: プログラム一覧の取得に失敗 - ${e.message}")
+                        _uiState.value = _uiState.value.copy(
+                            error = e.message ?: "プログラム一覧の取得に失敗しました",
+                            isLoading = false
+                        )
+                    }
+                    .collect { programs ->
+                        ErrorLogger.logInfo("プログラム一覧の取得に成功: ${programs.size}件", "loadPrograms")
+                        println("MainViewModel: プログラム一覧の取得に成功 - ${programs.size}件")
+                        _uiState.value = _uiState.value.copy(
+                            programs = programs,
+                            isLoading = false
+                        )
+                    }
             } catch (e: Exception) {
                 ErrorLogger.logError(e, "プログラム一覧の取得に失敗 - ${_uiState.value.selectedDate}")
+                println("MainViewModel: 例外発生 - ${e.message}")
+                e.printStackTrace()
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "プログラム一覧の取得に失敗しました",
                     isLoading = false
@@ -98,10 +112,10 @@ class MainViewModel @Inject constructor(
         loadPrograms()
     }
 
-    fun onProgramClick(program: AnnictProgram) {
+    fun onProgramClick(program: ProgramWithWork) {
         viewModelScope.launch {
             try {
-                repository.createRecord(program.episode.id)
+                repository.createRecord(program.program.episode.annictId.toLong())
                 loadPrograms() // リストを更新
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -111,10 +125,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onImageLoad(workId: Long, imageUrl: String) {
+    fun onImageLoad(workId: Int, imageUrl: String) {
         viewModelScope.launch {
             try {
-                repository.saveWorkImage(workId, imageUrl)
+                repository.saveWorkImage(workId.toLong(), imageUrl)
             } catch (e: Exception) {
                 ErrorLogger.logError(e, "画像の保存に失敗 - workId: $workId")
             }

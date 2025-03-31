@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.data.model
+package com.zelretch.aniiiiiict.data.model.rest
 
 import com.google.gson.annotations.SerializedName
 import java.time.LocalDateTime

@@ -1,0 +1,36 @@
+query GetPrograms {
+  viewer {
+    programs(
+      unwatched: true
+      orderBy: {
+        field: STARTED_AT
+        direction: DESC
+      }
+    ) {
+      nodes {
+        annictId
+        startedAt
+        channel {
+          name
+        }
+        episode {
+          annictId
+          number
+          numberText
+          title
+        }
+        work {
+          title
+          seasonName
+          seasonYear
+          media
+          viewerStatusState
+          image {
+            recommendedImageUrl
+            facebookOgImageUrl
+          }
+        }
+      }
+    }
+  }
+} 
