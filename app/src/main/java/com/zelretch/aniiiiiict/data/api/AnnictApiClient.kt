@@ -2,8 +2,8 @@ package com.zelretch.aniiiiiict.data.api
 
 import com.google.gson.GsonBuilder
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.model.rest.AnnictProgram
 import com.zelretch.aniiiiiict.data.model.AnnictWork
+import com.zelretch.aniiiiiict.data.model.rest.AnnictProgram
 import com.zelretch.aniiiiiict.util.ErrorLogger
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit

@@ -2,7 +2,6 @@ package com.zelretch.aniiiiiict.ui.main
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,9 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
@@ -56,11 +55,21 @@ fun MainScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // エラーメッセージを表示
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
         }
     }
+
+    // 認証状態のアニメーション値
+    val authAnimValue = androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (uiState.isAuthenticating) 1f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(
+            durationMillis = 300,
+            easing = androidx.compose.animation.core.FastOutLinearInEasing
+        )
+    )
 
     Scaffold(topBar = {
         TopAppBar(title = { Text("Aniiiiict") }, actions = {
@@ -69,35 +78,99 @@ fun MainScreen(
             }
         })
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+        // コンテンツの記憶（再コンポーズを最小限に）
+        val programs = remember(uiState.programs) { uiState.programs }
+        val isAuthenticating = remember(uiState.isAuthenticating) { uiState.isAuthenticating }
+        val isLoading = remember(uiState.isLoading) { uiState.isLoading }
+        
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (uiState.isLoading) {
+            // プログラム一覧表示（ローディング中でも表示を継続）
+            if (programs.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    state = androidx.compose.foundation.lazy.rememberLazyListState()
+                ) {
+                    items(
+                        items = programs,
+                        key = { it.program.annictId },
+                        contentType = { "program" }
+                    ) { program ->
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = true,
+                            enter = androidx.compose.animation.fadeIn() + 
+                                    androidx.compose.animation.expandVertically(),
+                            exit = androidx.compose.animation.fadeOut() + 
+                                   androidx.compose.animation.shrinkVertically()
+                        ) {
+                            ProgramCard(
+                                programWithWork = program,
+                                onClick = { onProgramClick(program) },
+                                onImageLoad = {
+                                    program.work.image?.recommendedImageUrl?.let { imageUrl ->
+                                        onImageLoad(program.program.annictId, imageUrl)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // 認証中の表示（半透明のオーバーレイ）- アニメーション付き
+            if (isAuthenticating || authAnimValue.value > 0) {
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .alpha(authAnimValue.value), // アニメーション適用
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.Surface(
+                        modifier = Modifier.padding(16.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        shadowElevation = 4.dp
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                            Spacer(modifier = Modifier.padding(16.dp))
+                            Text(
+                                "認証中...",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                "ブラウザで認証を完了してください",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            // ローディング表示（空のリストの場合のみ）
+            else if (isLoading && programs.isEmpty()) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .size(48.dp)
                         .align(Alignment.Center)
                 )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    items(uiState.programs) { program ->
-                        ProgramCard(
-                            programWithWork = program,
-                            onClick = { onProgramClick(program) },
-                            onImageLoad = {
-                                program.work.image?.recommendedImageUrl?.let { imageUrl ->
-                                    onImageLoad(program.program.annictId, imageUrl)
-                                }
-                            }
-                        )
-                    }
-                }
+            }
+            // データがない場合のメッセージ（ローディング中でなく、認証中でもない場合）
+            else if (!isLoading && !isAuthenticating && programs.isEmpty()) {
+                Text(
+                    text = "番組がありません",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }

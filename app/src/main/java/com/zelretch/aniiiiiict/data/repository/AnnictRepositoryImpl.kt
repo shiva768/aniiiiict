@@ -14,19 +14,19 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Collections
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(
@@ -38,7 +38,9 @@ class AnnictRepositoryImpl @Inject constructor(
     private val apolloClient: ApolloClient
 ) : AnnictRepository {
     override suspend fun isAuthenticated(): Boolean {
-        return tokenManager.hasValidToken()
+        val result = tokenManager.hasValidToken()
+        println("AnnictRepositoryImpl: 認証状態 = $result")
+        return result
     }
 
     override suspend fun getAuthUrl(): String {
@@ -69,8 +71,24 @@ class AnnictRepositoryImpl @Inject constructor(
         apiClient.createRecord(episodeId).getOrThrow()
     }
 
-    override suspend fun handleAuthCallback(code: String) {
-        authManager.handleAuthorizationCode(code).getOrThrow()
+    override suspend fun handleAuthCallback(code: String): Boolean {
+        println("AnnictRepositoryImpl: 認証コールバック処理開始 - コード: ${code.take(5)}...")
+        return try {
+            authManager.handleAuthorizationCode(code).fold(
+                onSuccess = { 
+                    println("AnnictRepositoryImpl: 認証成功")
+                    true 
+                },
+                onFailure = { e -> 
+                    println("AnnictRepositoryImpl: 認証失敗 - ${e.message}")
+                    false 
+                }
+            )
+        } catch (e: Exception) {
+            println("AnnictRepositoryImpl: 認証処理中に例外が発生 - ${e.message}")
+            e.printStackTrace()
+            false
+        }
     }
 
     override suspend fun saveWorkImage(workId: Long, imageUrl: String) {
@@ -88,6 +106,14 @@ class AnnictRepositoryImpl @Inject constructor(
         return flow {
             try {
                 println("GraphQLクエリの実行を開始します")
+                
+                // キャンセルされた場合は例外をスローせずに空のリストを返す
+                if (!currentCoroutineContext().isActive) {
+                    println("GraphQLクエリがキャンセルされたため、実行をスキップします")
+                    emit(emptyList())
+                    return@flow
+                }
+                
                 val response = apolloClient.client.query(GetProgramsQuery()).execute()
                 println("GraphQLクエリのレスポンス: ${response.data != null}")
                 
@@ -105,9 +131,15 @@ class AnnictRepositoryImpl @Inject constructor(
                 
                 emit(programsWithWorks)
             } catch (e: Exception) {
+                // キャンセル例外の場合は再スローして上位で処理
+                if (e is kotlinx.coroutines.CancellationException) {
+                    println("GraphQLクエリの実行中にキャンセルされました")
+                    throw e
+                }
+                
                 println("GraphQLクエリの実行中にエラーが発生しました: ${e.message}")
                 e.printStackTrace()
-                emit(Collections.emptyList())
+                emit(emptyList())
             }
         }
     }

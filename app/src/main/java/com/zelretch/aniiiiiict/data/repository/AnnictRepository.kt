@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface AnnictRepository {
     suspend fun isAuthenticated(): Boolean
     suspend fun getAuthUrl(): String
-    suspend fun handleAuthCallback(code: String)
+    suspend fun handleAuthCallback(code: String): Boolean
     suspend fun getWorks(): List<AnnictWork>
     suspend fun getPrograms(
         unwatched: Boolean = false
