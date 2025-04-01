@@ -15,6 +15,7 @@ import com.zelretch.aniiiiiict.util.NetworkMonitor
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 data class MainUiState(
     val programs: List<ProgramWithWork> = emptyList(),
@@ -78,79 +80,90 @@ class MainViewModel @Inject constructor(
     }
 
     private fun loadPrograms() {
-        // 既存のジョブが実行中の場合はキャンセル
         loadProgramsJob?.cancel()
-        
         loadProgramsJob = viewModelScope.launch {
-            // すでにデータが表示されている場合は、新しいデータの取得中にローディング表示しない
-            // これにより画面のチラつきを防止
-            val showLoading = _uiState.value.programs.isEmpty()
-            
-            ErrorLogger.logInfo("プログラム一覧の取得を開始", "loadPrograms")
-            if (showLoading) {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            }
-            
             try {
-                // GraphQLでプログラム一覧を取得
-                println("MainViewModel: GraphQLでプログラム一覧の取得を開始")
+                if (!currentCoroutineContext().isActive) return@launch
                 
-                // 少し遅延を入れてUIの更新頻度を下げる
+                // データがすでに表示されている場合はローディングを表示しない
+                if (_uiState.value.programs.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isLoading = true)
+                }
+                
+                // 少し遅延させてUIの更新頻度を下げる
                 delay(300)
+                if (!currentCoroutineContext().isActive) return@launch
                 
-                // キャンセルされているかチェック
-                if (!currentCoroutineContext().isActive) {
-                    println("MainViewModel: ジョブがキャンセルされたため、GraphQLクエリをスキップ")
-                    return@launch
+                repository.getProgramsWithWorks().collect { programs ->
+                    _uiState.value = _uiState.value.copy(
+                        programs = programs,
+                        isLoading = false,
+                        isAuthenticating = false
+                    )
+                    
+                    // バックグラウンドで画像をプリロード
+                    preloadImages(programs)
                 }
-                
-                repository.getProgramsWithWorks()
-                    .catch { e ->
-                        if (e is kotlinx.coroutines.CancellationException) {
-                            println("MainViewModel: GraphQLクエリがキャンセルされました")
-                            return@catch
-                        }
-                        
-                        ErrorLogger.logError(e, "プログラム一覧の取得に失敗")
-                        println("MainViewModel: プログラム一覧の取得に失敗 - ${e.message}")
-                        _uiState.value = _uiState.value.copy(
-                            error = e.message ?: "プログラム一覧の取得に失敗しました",
-                            isLoading = false
-                        )
-                    }
-                    .collect { programs ->
-                        // キャンセルされているかチェック
-                        if (!currentCoroutineContext().isActive) {
-                            println("MainViewModel: ジョブがキャンセルされたため、結果の処理をスキップ")
-                            return@collect
-                        }
-                        
-                        ErrorLogger.logInfo("プログラム一覧の取得に成功: ${programs.size}件", "loadPrograms")
-                        println("MainViewModel: プログラム一覧の取得に成功 - ${programs.size}件")
-                        _uiState.value = _uiState.value.copy(
-                            programs = programs,
-                            isLoading = false
-                        )
-                    }
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) {
-                    println("MainViewModel: GraphQLクエリの実行がキャンセルされました")
+                if (e is CancellationException) {
+                    // キャンセルされた場合は何もしない
+                    println("プログラムの読み込みがキャンセルされました")
                     return@launch
                 }
                 
-                ErrorLogger.logError(e, "プログラム一覧の取得に失敗 - ${_uiState.value.selectedDate}")
-                println("MainViewModel: 例外発生 - ${e.message}")
-                e.printStackTrace()
+                println("プログラムの読み込み中にエラーが発生しました: ${e.message}")
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "プログラム一覧の取得に失敗しました",
-                    isLoading = false
+                    isLoading = false,
+                    error = e.localizedMessage
                 )
-            } finally {
-                // このジョブが終了した場合は参照をクリア
-                if (loadProgramsJob == this) {
-                    loadProgramsJob = null
+            }
+        }
+    }
+    
+    /**
+     * 画像を非同期でプリロードする
+     * UI表示を遅延させずにバックグラウンドで画像を取得・保存
+     */
+    private fun preloadImages(programs: List<ProgramWithWork>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val startTime = System.currentTimeMillis()
+            var successCount = 0
+            var failCount = 0
+            
+            programs.forEach { program ->
+                if (!isActive) return@forEach
+                
+                try {
+                    // 画像URLの取得
+                    val imageUrl = program.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() } 
+                        ?: program.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
+                        ?: return@forEach
+                        
+                    // ワークIDの取得を試みる
+                    val workId = try {
+                        program.work.title.hashCode().toLong() // 一時的な解決策としてハッシュコードを使用
+                    } catch (e: Exception) {
+                        println("ワークIDの変換に失敗: ${e.message}")
+                        return@forEach
+                    }
+                    
+                    // 画像の保存処理
+                    val success = repository.saveWorkImage(workId, imageUrl)
+                    if (success) {
+                        successCount++
+                    } else {
+                        failCount++
+                        println("画像の保存に失敗: workId=$workId, url=$imageUrl")
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    println("画像のプリロード中にエラー: ${e.message}")
+                    failCount++
                 }
             }
+            
+            val endTime = System.currentTimeMillis()
+            println("画像プリロード完了: 成功=${successCount}件, 失敗=${failCount}件, 合計時間=${endTime - startTime}ms")
         }
     }
 
@@ -175,7 +188,10 @@ class MainViewModel @Inject constructor(
     fun onImageLoad(workId: Int, imageUrl: String) {
         viewModelScope.launch {
             try {
-                repository.saveWorkImage(workId.toLong(), imageUrl)
+                val success = repository.saveWorkImage(workId.toLong(), imageUrl)
+                if (!success) {
+                    ErrorLogger.logWarning("画像の保存に失敗 - workId: $workId", "onImageLoad")
+                }
             } catch (e: Exception) {
                 ErrorLogger.logError(e, "画像の保存に失敗 - workId: $workId")
             }

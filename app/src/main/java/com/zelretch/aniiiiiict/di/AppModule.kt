@@ -43,11 +43,21 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAnnictApiService(): AnnictApiService {
+    fun provideOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply {
+                level = okhttp3.logging.HttpLoggingInterceptor.Level.BODY
+            })
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAnnictApiService(okHttpClient: OkHttpClient): AnnictApiService {
         val retrofit = Retrofit.Builder()
             .baseUrl(AnnictConfig.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
-            .client(OkHttpClient())
+            .client(okHttpClient)
             .build()
         return retrofit.create(AnnictApiService::class.java)
     }

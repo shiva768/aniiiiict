@@ -91,10 +91,24 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveWorkImage(workId: Long, imageUrl: String) {
-        withContext(Dispatchers.IO) {
-            val localPath = imageDownloader.downloadImage(workId, imageUrl)
-            workImageDao.insertWorkImage(WorkImage(workId, imageUrl, localPath))
+    override suspend fun saveWorkImage(workId: Long, imageUrl: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val localPath = imageDownloader.downloadImage(workId, imageUrl)
+                // パスが空でなければデータベースに保存
+                if (localPath.isNotEmpty()) {
+                    workImageDao.insertWorkImage(WorkImage(workId, imageUrl, localPath))
+                    true // 成功
+                } else {
+                    println("画像の保存に失敗 - 空のパス: workId=$workId")
+                    false // 失敗（空のパス）
+                }
+            } catch (e: Exception) {
+                // エラーがあっても続行できるように例外を処理
+                println("画像の保存に失敗: workId=$workId, error=${e.message}")
+                // エラーログは既にImageDownloaderで記録されているので、ここでは再度記録しない
+                false // 失敗（例外発生）
+            }
         }
     }
 

@@ -14,7 +14,7 @@ interface AnnictRepository {
         unwatched: Boolean = false
     ): List<ProgramWithWork>
     suspend fun createRecord(episodeId: Long)
-    suspend fun saveWorkImage(workId: Long, imageUrl: String)
+    suspend fun saveWorkImage(workId: Long, imageUrl: String): Boolean
     suspend fun getWorkImage(workId: Long): WorkImage?
     suspend fun getProgramsWithWorks(): Flow<List<ProgramWithWork>>
 } 

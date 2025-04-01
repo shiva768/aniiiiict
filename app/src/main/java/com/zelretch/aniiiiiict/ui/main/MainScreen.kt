@@ -227,34 +227,37 @@ fun ProgramCard(
                 // 画像（左側）
                 val imageUrl = programWithWork.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() } 
                     ?: programWithWork.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
-                if (imageUrl != null) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    ) {
+                
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    if (imageUrl != null) {
+                        // 1つのBoxで画像とローディング状態を処理
                         AsyncImage(
                             model = imageUrl,
                             contentDescription = programWithWork.work.title,
                             modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                            onSuccess = { onImageLoad() }
+                            contentScale = ContentScale.Crop
                         )
-                    }
-                } else {
-                    // 画像がない場合はプレースホルダー
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Movie,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        
+                        // 常に画像URLがあれば保存を試みる（画像表示の成否に関わらず）
+                        onImageLoad()
+                    } else {
+                        // 画像がない場合はプレースホルダー
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Movie,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
                 
@@ -272,11 +275,10 @@ fun ProgramCard(
                     
                     Spacer(modifier = Modifier.height(4.dp))
                     
-                    // タグ情報のフロー
-                    FlowRow(
+                    // タグ情報（横並び）
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         // メディアタイプ
                         programWithWork.work.media?.let {
