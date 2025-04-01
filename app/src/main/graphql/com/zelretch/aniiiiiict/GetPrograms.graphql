@@ -4,7 +4,7 @@ query GetPrograms {
       unwatched: true
       orderBy: {
         field: STARTED_AT
-        direction: DESC
+        direction: ASC
       }
     ) {
       nodes {

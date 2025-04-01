@@ -198,8 +198,13 @@ class AnnictRepositoryImpl @Inject constructor(
         // 各作品の最初の未視聴エピソードのみを残す
         return programs
             .groupBy { it.work.title }
-            .mapValues { (_, programs) -> programs.first() }
+            .mapValues { (_, programs) -> 
+                // エピソード番号でソート（nullや変換できない場合は最後に）
+                programs.sortedBy { program -> 
+                    program.program.episode.number ?: Int.MAX_VALUE 
+                }.first() 
+            }
             .values
-            .sortedByDescending { it.program.startedAt }
+            .sortedBy { it.program.startedAt }
     }
 } 

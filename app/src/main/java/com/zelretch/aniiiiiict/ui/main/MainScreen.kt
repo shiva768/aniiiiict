@@ -1,11 +1,16 @@
 package com.zelretch.aniiiiiict.ui.main
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -13,7 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
@@ -43,6 +53,11 @@ import com.zelretch.aniiiiiict.ui.components.DatePickerDialog
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.contentColorFor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -186,6 +201,7 @@ fun MainScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProgramCard(
     programWithWork: ProgramWithWork,
@@ -198,43 +214,171 @@ fun ProgramCard(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(12.dp)
         ) {
-            val imageUrl = programWithWork.work.image?.recommendedImageUrl
-            if (imageUrl != null) {
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = programWithWork.work.title,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop,
-                    onSuccess = { onImageLoad() }
-                )
+            // ヘッダー：画像と基本情報
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 画像（左側）
+                val imageUrl = programWithWork.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() } 
+                    ?: programWithWork.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
+                if (imageUrl != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    ) {
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = programWithWork.work.title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            onSuccess = { onImageLoad() }
+                        )
+                    }
+                } else {
+                    // 画像がない場合はプレースホルダー
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Movie,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                // 右側の情報
+                Column(modifier = Modifier.weight(1f)) {
+                    // タイトル
+                    Text(
+                        text = programWithWork.work.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // タグ情報のフロー
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // メディアタイプ
+                        programWithWork.work.media?.let {
+                            InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
+                        }
+                        
+                        // シーズン情報
+                        programWithWork.work.seasonName?.let {
+                            InfoTag(text = it, color = MaterialTheme.colorScheme.secondaryContainer)
+                        }
+                        
+                        // 視聴ステータス
+                        programWithWork.work.viewerStatusState?.let {
+                            InfoTag(text = it, color = MaterialTheme.colorScheme.tertiaryContainer)
+                        }
+                        
+                        // チャンネル名
+                        InfoTag(text = programWithWork.program.channel.name, color = MaterialTheme.colorScheme.surfaceVariant)
+                    }
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = programWithWork.work.title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = programWithWork.work.media ?: "Unknown",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "Episode ${programWithWork.program.episode.numberText ?: "?"}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = programWithWork.program.startedAt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")),
-                    style = MaterialTheme.typography.bodySmall
-                )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // エピソード情報
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    // エピソード番号とタイトル
+                    val episodeText = buildString {
+                        append("Episode ")
+                        append(programWithWork.program.episode.numberText ?: "?")
+                        programWithWork.program.episode.title?.let {
+                            append(" ")
+                            append(it)
+                        }
+                    }
+                    
+                    Text(
+                        text = episodeText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    
+                    // 放送日時
+                    Text(
+                        text = programWithWork.program.startedAt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                // アクションボタン
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 記録ボタン
+                    FilledTonalIconButton(
+                        onClick = { /* 記録処理 */ },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "記録する",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // スキップボタン
+                    OutlinedIconButton(
+                        onClick = { /* スキップ処理 */ },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext, 
+                            contentDescription = "スキップ",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+fun InfoTag(text: String, color: Color) {
+    Surface(
+        color = color,
+        shape = RoundedCornerShape(4.dp),
+        modifier = Modifier.height(22.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+            color = contentColorFor(color)
+        )
     }
 } 
