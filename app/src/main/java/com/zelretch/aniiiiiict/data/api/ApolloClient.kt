@@ -36,4 +36,8 @@ class ApolloClient @Inject constructor(
             .okHttpClient(okHttpClient)
             .build()
     }
+    
+    fun getApolloClient(): ApolloClient {
+        return client
+    }
 } 

@@ -6,15 +6,19 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.zelretch.aniiiiiict.ui.history.HistoryScreen
+import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiiict.ui.main.MainViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
@@ -29,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private var pendingAuthCode: String? = null
     private var isProcessingAuth = false
     private var isResumeFromBrowser = false
+    private var authCodeProcessed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,40 +74,50 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             AniiiiictTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val uiState by viewModel.uiState.collectAsState()
+                val navController = rememberNavController()
+                var authCodeProcessed by remember { mutableStateOf(false) }
 
-                    // 認証コードがある場合のみ実行（パフォーマンス向上）
-                    val needsProcessAuthCode = remember(pendingAuthCode) { pendingAuthCode != null }
-                    
-                    if (needsProcessAuthCode) {
-                        LaunchedEffect(Unit) {
-                            pendingAuthCode?.let { code ->
-                                if (!isProcessingAuth) {
-                                    isProcessingAuth = true
-                                    Log.d("MainActivity", "処理待ちの認証コードを処理します: ${code.take(5)}...")
-                                    ErrorLogger.logInfo("処理待ちの認証コードを処理します: ${code.take(5)}...", "LaunchedEffect")
-                                    
-                                    // 認証処理は新しいコルーチンで実行して独立性を保つ
-                                    lifecycleScope.launch {
-                                        viewModel.handleAuthCallback(code)
-                                        pendingAuthCode = null
-                                        isProcessingAuth = false
-                                    }
-                                }
+                NavHost(
+                    navController = navController,
+                    startDestination = "main"
+                ) {
+                    composable("main") {
+                        val viewModel = hiltViewModel<MainViewModel>()
+                        val uiState by viewModel.uiState.collectAsState()
+                        
+                        LaunchedEffect(authCodeProcessed) {
+                            if (authCodeProcessed) {
+                                viewModel.loadPrograms()
+                                authCodeProcessed = false
                             }
                         }
+                        
+                        LaunchedEffect(Unit) {
+                            handleIntent(intent)
+                            viewModel.loadPrograms()
+                        }
+                        
+                        MainScreen(
+                            uiState = uiState,
+                            onProgramClick = viewModel::onProgramClick,
+                            onDateChange = viewModel::onDateChange,
+                            onImageLoad = viewModel::onImageLoad,
+                            onRecordEpisode = viewModel::recordEpisode,
+                            onNavigateToHistory = { navController.navigate("history") }
+                        )
                     }
-
-                    MainScreen(
-                        uiState = uiState,
-                        onProgramClick = viewModel::onProgramClick,
-                        onDateChange = viewModel::onDateChange,
-                        onImageLoad = viewModel::onImageLoad
-                    )
+                    
+                    composable("history") {
+                        val viewModel = hiltViewModel<HistoryViewModel>()
+                        val uiState by viewModel.uiState.collectAsState()
+                        
+                        HistoryScreen(
+                            uiState = uiState,
+                            onNavigateBack = { navController.popBackStack() },
+                            onRetry = { viewModel.loadRecords() },
+                            onDeleteRecord = { recordId -> viewModel.deleteRecord(recordId) }
+                        )
+                    }
                 }
             }
         }
@@ -110,16 +125,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        
-        // 現在のインテントを設定して、新しいインテントを処理
         setIntent(intent)
-        isResumeFromBrowser = true
-        
-        if (!isProcessingAuth) {
-            handleIntent(intent)
-        } else {
-            Log.d("MainActivity", "認証処理中のため、新しいインテントをスキップします")
-        }
+        handleIntent(intent)
     }
     
     override fun onResume() {
@@ -159,24 +166,29 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent) {
         Log.d("MainActivity", "Intent received: ${intent.action}, data: ${intent.data}")
         if (intent.action == Intent.ACTION_VIEW) {
-            val uri = intent.data
-            if (uri?.scheme == "aniiiiiict" && uri.host == "oauth" && uri.pathSegments.firstOrNull() == "callback") {
+            intent.data?.let { uri ->
+                Log.d("MainActivity", "Received OAuth callback: $uri")
+                // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
-                Log.d("MainActivity", "OAuth callback received with code: ${code?.take(5)}...")
-                if (code != null && !isProcessingAuth) {
-                    isProcessingAuth = true
-                    ErrorLogger.logInfo("認証コードを処理: ${code.take(5)}...", "handleIntent")
-                    
-                    // 認証処理は新しいコルーチンで実行して独立性を保つ
-                    lifecycleScope.launch {
-                        viewModel.handleAuthCallback(code)
-                        isProcessingAuth = false
+                if (code != null) {
+                    if (!isProcessingAuth) {
+                        isProcessingAuth = true
+                        Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
+                        ErrorLogger.logInfo("Processing authentication code: ${code.take(5)}...", "handleIntent")
+                        
+                        // 認証処理は新しいコルーチンで実行して独立性を保つ
+                        lifecycleScope.launch {
+                            viewModel.handleAuthCallback(code)
+                            authCodeProcessed = true
+                            isProcessingAuth = false
+                        }
+                    } else {
+                        Log.d("MainActivity", "認証処理が既に進行中です。このリクエストはスキップします。")
+                        ErrorLogger.logInfo("認証処理が既に進行中です。このリクエストはスキップします。", "handleIntent")
                     }
                 } else {
-                    Log.e("MainActivity", "Failed to handle OAuth callback: code=$code, isProcessingAuth=$isProcessingAuth")
-                    if (code == null) {
-                        ErrorLogger.logError(Exception("認証コールバックの処理に失敗: コードがnull"), "handleIntent")
-                    }
+                    Log.e("MainActivity", "認証コードがURIに含まれていません: $uri")
+                    ErrorLogger.logError("認証コードがURIに含まれていません: $uri", "handleIntent")
                 }
             }
         }

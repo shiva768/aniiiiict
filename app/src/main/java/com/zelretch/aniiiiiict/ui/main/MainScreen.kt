@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,21 +17,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,11 +59,6 @@ import com.zelretch.aniiiiiict.ui.components.DatePickerDialog
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.Surface
-import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.contentColorFor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +66,9 @@ fun MainScreen(
     uiState: MainUiState,
     onProgramClick: (ProgramWithWork) -> Unit,
     onDateChange: (LocalDateTime) -> Unit,
-    onImageLoad: (Int, String) -> Unit
+    onImageLoad: (Int, String) -> Unit,
+    onRecordEpisode: (Int) -> Unit,
+    onNavigateToHistory: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -74,6 +77,13 @@ fun MainScreen(
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
+        }
+    }
+
+    // 記録成功メッセージを表示
+    LaunchedEffect(uiState.recordingSuccess) {
+        uiState.recordingSuccess?.let {
+            snackbarHostState.showSnackbar("エピソードを記録しました")
         }
     }
 
@@ -88,8 +98,8 @@ fun MainScreen(
 
     Scaffold(topBar = {
         TopAppBar(title = { Text("Aniiiiict") }, actions = {
-            IconButton(onClick = { showDatePicker = true }) {
-                Icon(Icons.Default.DateRange, contentDescription = "Select date")
+            IconButton(onClick = { onNavigateToHistory() }) {
+                Icon(Icons.Default.History, contentDescription = "履歴")
             }
         })
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
@@ -130,7 +140,9 @@ fun MainScreen(
                                     program.work.image?.recommendedImageUrl?.let { imageUrl ->
                                         onImageLoad(program.program.annictId, imageUrl)
                                     }
-                                }
+                                },
+                                onRecordEpisode = { onRecordEpisode(program.program.episode.annictId) },
+                                uiState = uiState
                             )
                         }
                     }
@@ -139,14 +151,14 @@ fun MainScreen(
             
             // 認証中の表示（半透明のオーバーレイ）- アニメーション付き
             if (isAuthenticating || authAnimValue.value > 0) {
-                androidx.compose.foundation.layout.Box(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
                         .alpha(authAnimValue.value), // アニメーション適用
                     contentAlignment = Alignment.Center
                 ) {
-                    androidx.compose.material3.Surface(
+                    Surface(
                         modifier = Modifier.padding(16.dp),
                         shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
@@ -206,7 +218,9 @@ fun MainScreen(
 fun ProgramCard(
     programWithWork: ProgramWithWork,
     onClick: () -> Unit,
-    onImageLoad: () -> Unit
+    onImageLoad: () -> Unit,
+    onRecordEpisode: (Int) -> Unit,
+    uiState: MainUiState
 ) {
     ElevatedCard(
         onClick = onClick,
@@ -275,28 +289,45 @@ fun ProgramCard(
                     
                     Spacer(modifier = Modifier.height(4.dp))
                     
-                    // タグ情報（横並び）
-                    Row(
+                    // タグ情報（縦に並べる）
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         // メディアタイプ
                         programWithWork.work.media?.let {
                             InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
                         }
                         
-                        // シーズン情報
-                        programWithWork.work.seasonName?.let {
-                            InfoTag(text = it, color = MaterialTheme.colorScheme.secondaryContainer)
+                        // シーズンと年（横に並べる）
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        ) {
+                            // シーズン名
+                            programWithWork.work.seasonName?.let {
+                                InfoTag(text = it, color = MaterialTheme.colorScheme.secondaryContainer)
+                            }
+                            
+                            // 年
+                            programWithWork.work.seasonYear?.let {
+                                InfoTag(text = it.toString() + "年", color = MaterialTheme.colorScheme.secondaryContainer)
+                            }
                         }
                         
-                        // 視聴ステータス
-                        programWithWork.work.viewerStatusState?.let {
-                            InfoTag(text = it, color = MaterialTheme.colorScheme.tertiaryContainer)
+                        // 視聴ステータスとチャンネルを横に並べる
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        ) {
+                            // 視聴ステータス
+                            programWithWork.work.viewerStatusState?.let {
+                                InfoTag(text = it, color = MaterialTheme.colorScheme.tertiaryContainer)
+                            }
+                            
+                            // チャンネル名
+                            InfoTag(text = programWithWork.program.channel.name, color = MaterialTheme.colorScheme.surfaceVariant)
                         }
-                        
-                        // チャンネル名
-                        InfoTag(text = programWithWork.program.channel.name, color = MaterialTheme.colorScheme.surfaceVariant)
                     }
                 }
             }
@@ -340,14 +371,36 @@ fun ProgramCard(
                 ) {
                     // 記録ボタン
                     FilledTonalIconButton(
-                        onClick = { /* 記録処理 */ },
-                        modifier = Modifier.size(40.dp)
+                        onClick = { onRecordEpisode(programWithWork.program.episode.annictId) },
+                        modifier = Modifier.size(40.dp),
+                        enabled = !uiState.isRecording,
+                        colors = if (uiState.recordingSuccess == programWithWork.program.episode.annictId) {
+                            IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        } else {
+                            IconButtonDefaults.filledTonalIconButtonColors()
+                        }
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "記録する",
-                            modifier = Modifier.size(20.dp)
-                        )
+                        if (uiState.isRecording && uiState.recordingSuccess == null) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else if (uiState.recordingSuccess == programWithWork.program.episode.annictId) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "記録済み",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "記録する",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.width(8.dp))
@@ -374,13 +427,15 @@ fun InfoTag(text: String, color: Color) {
     Surface(
         color = color,
         shape = RoundedCornerShape(4.dp),
-        modifier = Modifier.height(22.dp)
+        modifier = Modifier.height(20.dp)
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-            color = contentColorFor(color)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            color = contentColorFor(color),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 } 

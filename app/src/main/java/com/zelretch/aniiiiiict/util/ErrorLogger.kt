@@ -22,6 +22,17 @@ object ErrorLogger {
         Log.e(TAG, message)
     }
 
+    fun logError(errorMessage: String, context: String) {
+        val timestamp = LocalDateTime.now().format(dateFormatter)
+        val message = """
+            [Error] $timestamp
+            Context: $context
+            Message: $errorMessage
+        """.trimIndent()
+        
+        Log.e(TAG, message)
+    }
+
     fun logWarning(message: String, context: String) {
         val timestamp = LocalDateTime.now().format(dateFormatter)
         val logMessage = """

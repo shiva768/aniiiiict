@@ -5,14 +5,9 @@ import android.content.Intent
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zelretch.aniiiiiict.data.api.AnnictApiClient
-import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
-import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.util.ErrorLogger
-import com.zelretch.aniiiiiict.util.NetworkMonitor
-import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +16,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -33,24 +27,20 @@ data class MainUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val selectedDate: LocalDateTime = LocalDateTime.now(),
-    val isAuthenticating: Boolean = false
+    val isAuthenticating: Boolean = false,
+    val isRecording: Boolean = false,
+    val recordingSuccess: Int? = null
 )
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val apiClient: AnnictApiClient,
-    private val authManager: AnnictAuthManager,
-    private val tokenManager: TokenManager,
-    private val repository: AnnictRepository,
-    private val networkMonitor: NetworkMonitor,
-    private val retryManager: RetryManager
+    private val repository: AnnictRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
 
-    private var lastAction: (() -> Unit)? = null
     private var loadProgramsJob: kotlinx.coroutines.Job? = null
     private var isAuthInProgress = false
 
@@ -79,7 +69,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun loadPrograms() {
+    fun loadPrograms() {
         loadProgramsJob?.cancel()
         loadProgramsJob = viewModelScope.launch {
             try {
@@ -135,15 +125,20 @@ class MainViewModel @Inject constructor(
                 
                 try {
                     // 画像URLの取得
-                    val imageUrl = program.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() } 
-                        ?: program.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
-                        ?: return@forEach
+                    val imageUrl = program.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() && it.startsWith("http", ignoreCase = true) } 
+                        ?: program.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() && it.startsWith("http", ignoreCase = true) }
+                    
+                    if (imageUrl == null) {
+                        // 有効なURLがない場合はスキップ
+                        ErrorLogger.logInfo("有効な画像URLがないためスキップ: ${program.work.title}", "preloadImages")
+                        return@forEach
+                    }
                         
                     // ワークIDの取得を試みる
                     val workId = try {
                         program.work.title.hashCode().toLong() // 一時的な解決策としてハッシュコードを使用
                     } catch (e: Exception) {
-                        println("ワークIDの変換に失敗: ${e.message}")
+                        ErrorLogger.logError(e, "ワークIDの変換に失敗: ${program.work.title}")
                         return@forEach
                     }
                     
@@ -153,17 +148,17 @@ class MainViewModel @Inject constructor(
                         successCount++
                     } else {
                         failCount++
-                        println("画像の保存に失敗: workId=$workId, url=$imageUrl")
+                        ErrorLogger.logWarning("画像の保存に失敗: workId=$workId, url=$imageUrl", "preloadImages")
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    println("画像のプリロード中にエラー: ${e.message}")
+                    ErrorLogger.logError(e, "画像のプリロード中にエラー: ${program.work.title}")
                     failCount++
                 }
             }
             
             val endTime = System.currentTimeMillis()
-            println("画像プリロード完了: 成功=${successCount}件, 失敗=${failCount}件, 合計時間=${endTime - startTime}ms")
+            ErrorLogger.logInfo("画像プリロード完了: 成功=${successCount}件, 失敗=${failCount}件, 合計時間=${endTime - startTime}ms", "preloadImages")
         }
     }
 
@@ -175,11 +170,22 @@ class MainViewModel @Inject constructor(
     fun onProgramClick(program: ProgramWithWork) {
         viewModelScope.launch {
             try {
-                repository.createRecord(program.program.episode.annictId.toLong())
-                loadPrograms() // リストを更新
+                // エピソードIDを取得して記録
+                val episodeId = program.program.episode.annictId.toString()
+                val success = repository.createRecord(episodeId)
+                
+                if (success) {
+                    ErrorLogger.logInfo("エピソードを記録しました: ${program.work.title}", "onProgramClick")
+                    loadPrograms() // リストを更新
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        error = "エピソード視聴の記録に失敗しました"
+                    )
+                }
             } catch (e: Exception) {
+                ErrorLogger.logError(e, "エピソード視聴の記録に失敗: ${program.work.title}")
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "Failed to mark episode as watched"
+                    error = e.message ?: "エピソード視聴の記録に失敗しました"
                 )
             }
         }
@@ -188,6 +194,12 @@ class MainViewModel @Inject constructor(
     fun onImageLoad(workId: Int, imageUrl: String) {
         viewModelScope.launch {
             try {
+                // 無効なURLはスキップ
+                if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
+                    ErrorLogger.logWarning("無効な画像URL: '$imageUrl'", "onImageLoad")
+                    return@launch
+                }
+                
                 val success = repository.saveWorkImage(workId.toLong(), imageUrl)
                 if (!success) {
                     ErrorLogger.logWarning("画像の保存に失敗 - workId: $workId", "onImageLoad")
@@ -289,16 +301,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun showError(message: String) {
-        ErrorLogger.logWarning(message, "showError")
-        _uiState.value = _uiState.value.copy(error = message)
-    }
-
-    fun retryLastAction() {
-        ErrorLogger.logInfo("最後のアクションを再試行", "retryLastAction")
-        lastAction?.invoke()
-    }
-
     /**
      * 認証をキャンセルする
      * ブラウザから戻ってきた時に認証コードがない場合などに呼び出される
@@ -312,6 +314,50 @@ class MainViewModel @Inject constructor(
                 isAuthenticating = false,
                 isLoading = false
             )
+        }
+    }
+
+    /**
+     * エピソードを視聴済みとして記録する
+     */
+    fun recordEpisode(episodeId: Int) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = _uiState.value.copy(isRecording = true)
+                
+                // 記録APIを呼び出し（String型に変換）
+                val success = repository.createRecord(episodeId.toString())
+                
+                if (success) {
+                    // 成功メッセージ
+                    _uiState.value = _uiState.value.copy(
+                        isRecording = false,
+                        recordingSuccess = episodeId,
+                        error = null
+                    )
+                    
+                    // 成功メッセージをリセット（短時間表示）
+                    delay(2000)
+                    if (_uiState.value.recordingSuccess == episodeId) {
+                        _uiState.value = _uiState.value.copy(recordingSuccess = null)
+                    }
+                    
+                    // 記録後にプログラム一覧を再読込
+                    loadPrograms()
+                } else {
+                    // 失敗時の処理
+                    _uiState.value = _uiState.value.copy(
+                        isRecording = false,
+                        error = "エピソードの記録に失敗しました"
+                    )
+                }
+            } catch (e: Exception) {
+                ErrorLogger.logError(e, "エピソードの記録に失敗: episodeId=$episodeId")
+                _uiState.value = _uiState.value.copy(
+                    isRecording = false,
+                    error = "エピソードの記録に失敗しました: ${e.localizedMessage}"
+                )
+            }
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.zelretch.aniiiiiict.data.model
 
 data class Episode(
-    val annictId: Int,
-    val number: Int?,
-    val numberText: String?,
-    val title: String?
+    val id: String? = null,
+    val annictId: Int = 0,
+    val number: Int? = null,
+    val numberText: String? = null,
+    val title: String? = null,
+    val viewerDidTrack: Boolean? = null
 ) 

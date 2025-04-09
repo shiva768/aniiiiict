@@ -11,13 +11,12 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
-import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ImageDownloader @Inject constructor(
-    private val context: Context
+    context: Context
 ) {
     private val client = OkHttpClient()
     private val imageDir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "work_images")

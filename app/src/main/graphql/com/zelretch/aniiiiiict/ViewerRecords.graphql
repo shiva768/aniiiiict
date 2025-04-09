@@ -1,0 +1,27 @@
+query ViewerRecordsQuery {
+  viewer {
+    records(first: 30, orderBy: {field: CREATED_AT, direction: DESC}) {
+      nodes {
+        id
+        comment
+        rating
+        createdAt
+        episode {
+          id
+          numberText
+          title
+          viewerDidTrack
+          work {
+            id
+            annictId
+            title
+            image {
+              recommendedImageUrl
+              facebookOgImageUrl
+            }
+          }
+        }
+      }
+    }
+  }
+} 

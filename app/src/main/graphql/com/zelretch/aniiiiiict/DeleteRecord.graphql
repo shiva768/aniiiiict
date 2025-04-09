@@ -1,0 +1,5 @@
+mutation DeleteRecordMutation($recordId: ID!) {
+  deleteRecord(input: {recordId: $recordId}) {
+    clientMutationId
+  }
+} 
