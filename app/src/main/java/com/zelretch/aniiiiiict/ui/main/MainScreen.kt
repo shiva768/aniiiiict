@@ -128,14 +128,13 @@ fun MainScreen(
                     ) { program ->
                         androidx.compose.animation.AnimatedVisibility(
                             visible = true,
-                            enter = androidx.compose.animation.fadeIn() + 
+                            enter = androidx.compose.animation.fadeIn() +
                                     androidx.compose.animation.expandVertically(),
-                            exit = androidx.compose.animation.fadeOut() + 
+                            exit = androidx.compose.animation.fadeOut() +
                                    androidx.compose.animation.shrinkVertically()
                         ) {
                             ProgramCard(
                                 programWithWork = program,
-                                onClick = { onProgramClick(program) },
                                 onImageLoad = {
                                     program.work.image?.recommendedImageUrl?.let { imageUrl ->
                                         onImageLoad(program.program.annictId, imageUrl)
@@ -217,13 +216,11 @@ fun MainScreen(
 @Composable
 fun ProgramCard(
     programWithWork: ProgramWithWork,
-    onClick: () -> Unit,
     onImageLoad: () -> Unit,
     onRecordEpisode: (Int) -> Unit,
     uiState: MainUiState
 ) {
     ElevatedCard(
-        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
