@@ -167,30 +167,6 @@ class MainViewModel @Inject constructor(
         loadPrograms()
     }
 
-    fun onProgramClick(program: ProgramWithWork) {
-        viewModelScope.launch {
-            try {
-                // エピソードIDを取得して記録
-                val episodeId = program.program.episode.annictId.toString()
-                val success = repository.createRecord(episodeId)
-                
-                if (success) {
-                    ErrorLogger.logInfo("エピソードを記録しました: ${program.work.title}", "onProgramClick")
-                    loadPrograms() // リストを更新
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        error = "エピソード視聴の記録に失敗しました"
-                    )
-                }
-            } catch (e: Exception) {
-                ErrorLogger.logError(e, "エピソード視聴の記録に失敗: ${program.work.title}")
-                _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "エピソード視聴の記録に失敗しました"
-                )
-            }
-        }
-    }
-
     fun onImageLoad(workId: Int, imageUrl: String) {
         viewModelScope.launch {
             try {

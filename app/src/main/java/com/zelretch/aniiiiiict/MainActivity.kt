@@ -99,7 +99,6 @@ class MainActivity : ComponentActivity() {
                         
                         MainScreen(
                             uiState = uiState,
-                            onProgramClick = viewModel::onProgramClick,
                             onDateChange = viewModel::onDateChange,
                             onImageLoad = viewModel::onImageLoad,
                             onRecordEpisode = viewModel::recordEpisode,
