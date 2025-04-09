@@ -99,22 +99,24 @@ class MainActivity : ComponentActivity() {
                         
                         MainScreen(
                             uiState = uiState,
-                            onDateChange = viewModel::onDateChange,
-                            onImageLoad = viewModel::onImageLoad,
-                            onRecordEpisode = viewModel::recordEpisode,
-                            onNavigateToHistory = { navController.navigate("history") }
+                            onDateChange = { viewModel.onDateChange(it) },
+                            onImageLoad = { id, url -> viewModel.onImageLoad(id, url) },
+                            onRecordEpisode = { id -> viewModel.recordEpisode(id) },
+                            onNavigateToHistory = { navController.navigate("history") },
+                            onRefresh = { viewModel.refresh() }
                         )
                     }
                     
                     composable("history") {
-                        val viewModel = hiltViewModel<HistoryViewModel>()
-                        val uiState by viewModel.uiState.collectAsState()
+                        val historyViewModel: HistoryViewModel = hiltViewModel()
+                        val historyUiState by historyViewModel.uiState.collectAsState()
                         
                         HistoryScreen(
-                            uiState = uiState,
-                            onNavigateBack = { navController.popBackStack() },
-                            onRetry = { viewModel.loadRecords() },
-                            onDeleteRecord = { recordId -> viewModel.deleteRecord(recordId) }
+                            uiState = historyUiState,
+                            onNavigateBack = { navController.navigateUp() },
+                            onRetry = { historyViewModel.loadRecords() },
+                            onDeleteRecord = { historyViewModel.deleteRecord(it) },
+                            onRefresh = { historyViewModel.loadRecords() }
                         )
                     }
                 }

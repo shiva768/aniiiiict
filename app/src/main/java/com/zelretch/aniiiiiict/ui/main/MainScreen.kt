@@ -59,18 +59,27 @@ import com.zelretch.aniiiiiict.ui.components.DatePickerDialog
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material.ExperimentalMaterialApi
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
     uiState: MainUiState,
     onDateChange: (LocalDateTime) -> Unit,
     onImageLoad: (Int, String) -> Unit,
     onRecordEpisode: (Int) -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToHistory: () -> Unit,
+    onRefresh: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isLoading,
+        onRefresh = onRefresh
+    )
 
     // エラーメッセージを表示
     LaunchedEffect(uiState.error) {
@@ -95,23 +104,27 @@ fun MainScreen(
         )
     )
 
-    Scaffold(topBar = {
-        TopAppBar(title = { Text("Aniiiiict") }, actions = {
-            IconButton(onClick = { onNavigateToHistory() }) {
-                Icon(Icons.Default.History, contentDescription = "履歴")
-            }
-        })
-    }, snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
-        // コンテンツの記憶（再コンポーズを最小限に）
-        val programs = remember(uiState.programs) { uiState.programs }
-        val isAuthenticating = remember(uiState.isAuthenticating) { uiState.isAuthenticating }
-        val isLoading = remember(uiState.isLoading) { uiState.isLoading }
-        
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("Aniiiiict") }, actions = {
+                IconButton(onClick = { onNavigateToHistory() }) {
+                    Icon(Icons.Default.History, contentDescription = "履歴")
+                }
+            })
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
         ) {
+            // コンテンツの記憶（再コンポーズを最小限に）
+            val programs = remember(uiState.programs) { uiState.programs }
+            val isAuthenticating = remember(uiState.isAuthenticating) { uiState.isAuthenticating }
+            val isLoading = remember(uiState.isLoading) { uiState.isLoading }
+            
             // プログラム一覧表示（ローディング中でも表示を継続）
             if (programs.isNotEmpty()) {
                 LazyColumn(
@@ -143,6 +156,29 @@ fun MainScreen(
                                 uiState = uiState
                             )
                         }
+                    }
+                }
+            } else {
+                // 番組リストが空の場合でもBoxを表示してPullToRefreshを有効にする
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "視聴中のアニメはありません",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "下にスワイプして更新",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
                     }
                 }
             }
@@ -189,14 +225,12 @@ fun MainScreen(
                         .align(Alignment.Center)
                 )
             }
-            // データがない場合のメッセージ（ローディング中でなく、認証中でもない場合）
-            else if (!isLoading && programs.isEmpty()) {
-                Text(
-                    text = "番組がありません",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+
+            PullRefreshIndicator(
+                refreshing = uiState.isLoading,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 

@@ -39,15 +39,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zelretch.aniiiiiict.data.model.Record
 import java.time.format.DateTimeFormatter
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material.ExperimentalMaterialApi
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun HistoryScreen(
     uiState: HistoryUiState,
     onNavigateBack: () -> Unit,
     onRetry: () -> Unit,
-    onDeleteRecord: (String) -> Unit
+    onDeleteRecord: (String) -> Unit,
+    onRefresh: () -> Unit
 ) {
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isLoading,
+        onRefresh = onRefresh
+    )
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -64,13 +74,25 @@ fun HistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
         ) {
             if (uiState.records.isEmpty() && !uiState.isLoading && uiState.error == null) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("視聴履歴がありません")
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("視聴履歴がありません")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "下にスワイプして更新",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -89,7 +111,7 @@ fun HistoryScreen(
             }
 
             AnimatedVisibility(
-                visible = uiState.isLoading,
+                visible = uiState.isLoading && uiState.records.isNotEmpty(),
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier.fillMaxSize()
@@ -126,6 +148,12 @@ fun HistoryScreen(
                     }
                 }
             }
+            
+            PullRefreshIndicator(
+                refreshing = uiState.isLoading,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
