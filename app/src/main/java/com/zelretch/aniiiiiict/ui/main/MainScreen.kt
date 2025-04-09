@@ -64,7 +64,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MainScreen(
     uiState: MainUiState,
-    onProgramClick: (ProgramWithWork) -> Unit,
     onDateChange: (LocalDateTime) -> Unit,
     onImageLoad: (Int, String) -> Unit,
     onRecordEpisode: (Int) -> Unit,
@@ -191,7 +190,7 @@ fun MainScreen(
                 )
             }
             // データがない場合のメッセージ（ローディング中でなく、認証中でもない場合）
-            else if (!isLoading && !isAuthenticating && programs.isEmpty()) {
+            else if (!isLoading && programs.isEmpty()) {
                 Text(
                     text = "番組がありません",
                     style = MaterialTheme.typography.bodyLarge,
