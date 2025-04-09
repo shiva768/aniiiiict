@@ -15,7 +15,8 @@ import javax.inject.Singleton
 class NetworkMonitor @Inject constructor(
     private val context: Context
 ) {
-    private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     fun isNetworkAvailable(): Boolean {
         val network = connectivityManager.activeNetwork

@@ -40,7 +40,10 @@ class AnnictApiClient @Inject constructor(
                     .header("Authorization", "Bearer $token")
                     .method(original.method, original.body)
                     .build()
-                ErrorLogger.logInfo("APIリクエスト: ${request.method} ${request.url}", "AnnictApiClient")
+                ErrorLogger.logInfo(
+                    "APIリクエスト: ${request.method} ${request.url}",
+                    "AnnictApiClient"
+                )
                 chain.proceed(request)
             }
             .build()
@@ -90,10 +93,16 @@ class AnnictApiClient @Inject constructor(
             val response = api.getPrograms(unwatched)
             if (response.isSuccessful) {
                 val programs = response.body()?.programs ?: emptyList()
-                ErrorLogger.logInfo("プログラム一覧の取得に成功: ${programs.size}件", "AnnictApiClient")
+                ErrorLogger.logInfo(
+                    "プログラム一覧の取得に成功: ${programs.size}件",
+                    "AnnictApiClient"
+                )
                 Result.success(programs)
             } else {
-                ErrorLogger.logError(Exception("API error: ${response.code()}"), "プログラム一覧の取得に失敗 - status: ${response.code()}")
+                ErrorLogger.logError(
+                    Exception("API error: ${response.code()}"),
+                    "プログラム一覧の取得に失敗 - status: ${response.code()}"
+                )
                 Result.failure(Exception("API error: ${response.code()}"))
             }
         } catch (e: Exception) {

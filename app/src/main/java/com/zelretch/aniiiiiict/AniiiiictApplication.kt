@@ -8,9 +8,9 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class AniiiiictApplication : Application(), ImageLoaderFactory {
-    
+
     @Inject
     lateinit var imageLoader: ImageLoader
-    
+
     override fun newImageLoader(): ImageLoader = imageLoader
 } 

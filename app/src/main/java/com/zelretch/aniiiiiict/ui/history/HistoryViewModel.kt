@@ -23,19 +23,19 @@ data class HistoryUiState(
 class HistoryViewModel @Inject constructor(
     private val repository: AnnictRepository
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
-    
+
     init {
         loadRecords()
     }
-    
+
     fun loadRecords() {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                
+
                 val records = repository.getRecords(30)
                 _uiState.value = _uiState.value.copy(
                     records = records,
@@ -50,12 +50,12 @@ class HistoryViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun deleteRecord(recordId: String) {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isDeletingRecord = true)
-                
+
                 val success = repository.deleteRecord(recordId)
                 if (success) {
                     // 現在の記録リストから削除したものを除外

@@ -16,27 +16,30 @@ class ApolloClient @Inject constructor(
     val client by lazy {
         val token = tokenManager.getAccessToken()
         println("Apollo初期化 - アクセストークン: ${token?.take(10)}...")
-        
-        val loggingInterceptor = HttpLoggingInterceptor().apply { 
-            level = HttpLoggingInterceptor.Level.BODY 
+
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
         }
-        
+
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
-                    .addHeader("Authorization", "Bearer ${token ?: BuildConfig.ANNICT_ACCESS_TOKEN}")
+                    .addHeader(
+                        "Authorization",
+                        "Bearer ${token ?: BuildConfig.ANNICT_ACCESS_TOKEN}"
+                    )
                     .build()
                 chain.proceed(request)
             }
             .addInterceptor(loggingInterceptor)
             .build()
-            
+
         ApolloClient.Builder()
             .serverUrl("https://api.annict.com/graphql")
             .okHttpClient(okHttpClient)
             .build()
     }
-    
+
     fun getApolloClient(): ApolloClient {
         return client
     }

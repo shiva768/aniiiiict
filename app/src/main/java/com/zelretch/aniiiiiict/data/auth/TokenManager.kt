@@ -24,10 +24,10 @@ class TokenManager @Inject constructor(
             ErrorLogger.logWarning("空のトークンを保存しようとしました", "saveAccessToken")
             return
         }
-        
+
         Log.d(TAG, "アクセストークンを保存: ${token.take(10)}...")
         ErrorLogger.logInfo("アクセストークンを保存: ${token.take(10)}...", "saveAccessToken")
-        
+
         try {
             prefs.edit().putString(TOKEN_KEY, token).apply()
             Log.d(TAG, "アクセストークンの保存に成功")

@@ -15,7 +15,7 @@ fun DatePickerDialog(
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
-    
+
     // 日付の範囲制限を設定
     val minDate = Calendar.getInstance().apply {
         set(2000, Calendar.JANUARY, 1)
@@ -33,14 +33,16 @@ fun DatePickerDialog(
                         val selectedCalendar = Calendar.getInstance().apply {
                             set(year, month, dayOfMonth)
                         }
-                        
+
                         when {
                             selectedCalendar.before(minDate) -> {
                                 onError("2000年1月1日以降の日付を選択してください")
                             }
+
                             selectedCalendar.after(maxDate) -> {
                                 onError("1年以内の日付を選択してください")
                             }
+
                             else -> {
                                 val selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
                                 onDateSelected(selectedDate)

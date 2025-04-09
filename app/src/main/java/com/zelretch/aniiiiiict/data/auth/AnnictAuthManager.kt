@@ -26,21 +26,27 @@ class AnnictAuthManager @Inject constructor(
 
     fun getAuthorizationUrl(): String {
         return "${AnnictConfig.AUTH_URL}?" +
-            "client_id=${BuildConfig.ANNICT_CLIENT_ID}&" +
-            "response_type=code&" +
-            "redirect_uri=$REDIRECT_URI&" +
-            "scope=read+write"
+                "client_id=${BuildConfig.ANNICT_CLIENT_ID}&" +
+                "response_type=code&" +
+                "redirect_uri=$REDIRECT_URI&" +
+                "scope=read+write"
     }
 
     suspend fun handleAuthorizationCode(code: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 Log.d(TAG, "認証コードの処理を開始: ${code.take(5)}...")
-                ErrorLogger.logInfo("認証コードの処理を開始: ${code.take(5)}...", "handleAuthorizationCode")
+                ErrorLogger.logInfo(
+                    "認証コードの処理を開始: ${code.take(5)}...",
+                    "handleAuthorizationCode"
+                )
                 val tokenResponse = getAccessToken(code)
                 Log.d(TAG, "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...")
-                ErrorLogger.logInfo("アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...", "handleAuthorizationCode")
-                
+                ErrorLogger.logInfo(
+                    "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...",
+                    "handleAuthorizationCode"
+                )
+
                 tokenManager.saveAccessToken(tokenResponse.accessToken)
                 Result.success(Unit)
             } catch (e: Exception) {
@@ -61,7 +67,10 @@ class AnnictAuthManager @Inject constructor(
             .add("code", code)
             .build()
 
-        Log.d(TAG, "トークンリクエストを送信: client_id=${BuildConfig.ANNICT_CLIENT_ID}, redirect_uri=$REDIRECT_URI")
+        Log.d(
+            TAG,
+            "トークンリクエストを送信: client_id=${BuildConfig.ANNICT_CLIENT_ID}, redirect_uri=$REDIRECT_URI"
+        )
         ErrorLogger.logInfo("トークンリクエストを送信", "getAccessToken")
 
         val request = Request.Builder()
@@ -70,11 +79,14 @@ class AnnictAuthManager @Inject constructor(
             .build()
 
         val response = client.newCall(request).execute()
-        
+
         if (!response.isSuccessful) {
             val errorBody = response.body?.string() ?: "レスポンスボディなし"
             Log.e(TAG, "トークンリクエストが失敗: ${response.code}, body: $errorBody")
-            ErrorLogger.logError(IOException("トークンリクエスト失敗: ${response.code}, $errorBody"), "getAccessToken")
+            ErrorLogger.logError(
+                IOException("トークンリクエスト失敗: ${response.code}, $errorBody"),
+                "getAccessToken"
+            )
             throw IOException("Token request failed: ${response.code}, $errorBody")
         }
 

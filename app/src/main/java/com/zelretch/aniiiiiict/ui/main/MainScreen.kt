@@ -16,12 +16,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,10 +44,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -55,26 +56,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.ui.components.DatePickerDialog
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material.ExperimentalMaterialApi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
     uiState: MainUiState,
-    onDateChange: (LocalDateTime) -> Unit,
     onImageLoad: (Int, String) -> Unit,
     onRecordEpisode: (Int) -> Unit,
     onNavigateToHistory: () -> Unit,
     onRefresh: () -> Unit
 ) {
-    var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullRefreshState(
         refreshing = uiState.isLoading,
@@ -124,7 +116,7 @@ fun MainScreen(
             val programs = remember(uiState.programs) { uiState.programs }
             val isAuthenticating = remember(uiState.isAuthenticating) { uiState.isAuthenticating }
             val isLoading = remember(uiState.isLoading) { uiState.isLoading }
-            
+
             // プログラム一覧表示（ローディング中でも表示を継続）
             if (programs.isNotEmpty()) {
                 LazyColumn(
@@ -143,7 +135,7 @@ fun MainScreen(
                             enter = androidx.compose.animation.fadeIn() +
                                     androidx.compose.animation.expandVertically(),
                             exit = androidx.compose.animation.fadeOut() +
-                                   androidx.compose.animation.shrinkVertically()
+                                    androidx.compose.animation.shrinkVertically()
                         ) {
                             ProgramCard(
                                 programWithWork = program,
@@ -182,7 +174,7 @@ fun MainScreen(
                     }
                 }
             }
-            
+
             // 認証中の表示（半透明のオーバーレイ）- アニメーション付き
             if (isAuthenticating || authAnimValue.value > 0) {
                 Box(
@@ -233,16 +225,6 @@ fun MainScreen(
             )
         }
     }
-
-    if (showDatePicker) {
-        DatePickerDialog(onDismiss = { showDatePicker = false }, onDateSelected = { date ->
-            onDateChange(date.atTime(LocalTime.now()))
-            showDatePicker = false
-        }, onError = {
-            // エラー処理は省略
-            showDatePicker = false
-        })
-    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -269,9 +251,10 @@ fun ProgramCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 画像（左側）
-                val imageUrl = programWithWork.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() } 
-                    ?: programWithWork.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
-                
+                val imageUrl =
+                    programWithWork.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() }
+                        ?: programWithWork.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
+
                 Box(
                     modifier = Modifier
                         .size(100.dp)
@@ -285,7 +268,7 @@ fun ProgramCard(
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
-                        
+
                         // 常に画像URLがあれば保存を試みる（画像表示の成否に関わらず）
                         onImageLoad()
                     } else {
@@ -304,9 +287,9 @@ fun ProgramCard(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 // 右側の情報
                 Column(modifier = Modifier.weight(1f)) {
                     // タイトル
@@ -316,9 +299,9 @@ fun ProgramCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    
+
                     Spacer(modifier = Modifier.height(4.dp))
-                    
+
                     // タグ情報（縦に並べる）
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -328,7 +311,7 @@ fun ProgramCard(
                         programWithWork.work.media?.let {
                             InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
                         }
-                        
+
                         // シーズンと年（横に並べる）
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -336,15 +319,21 @@ fun ProgramCard(
                         ) {
                             // シーズン名
                             programWithWork.work.seasonName?.let {
-                                InfoTag(text = it, color = MaterialTheme.colorScheme.secondaryContainer)
+                                InfoTag(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.secondaryContainer
+                                )
                             }
-                            
+
                             // 年
                             programWithWork.work.seasonYear?.let {
-                                InfoTag(text = it.toString() + "年", color = MaterialTheme.colorScheme.secondaryContainer)
+                                InfoTag(
+                                    text = it.toString() + "年",
+                                    color = MaterialTheme.colorScheme.secondaryContainer
+                                )
                             }
                         }
-                        
+
                         // 視聴ステータスとチャンネルを横に並べる
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -352,18 +341,24 @@ fun ProgramCard(
                         ) {
                             // 視聴ステータス
                             programWithWork.work.viewerStatusState?.let {
-                                InfoTag(text = it, color = MaterialTheme.colorScheme.tertiaryContainer)
+                                InfoTag(
+                                    text = it,
+                                    color = MaterialTheme.colorScheme.tertiaryContainer
+                                )
                             }
-                            
+
                             // チャンネル名
-                            InfoTag(text = programWithWork.program.channel.name, color = MaterialTheme.colorScheme.surfaceVariant)
+                            InfoTag(
+                                text = programWithWork.program.channel.name,
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         }
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // エピソード情報
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -379,21 +374,25 @@ fun ProgramCard(
                             append(it)
                         }
                     }
-                    
+
                     Text(
                         text = episodeText,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
-                    
+
                     // 放送日時
                     Text(
-                        text = programWithWork.program.startedAt.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")),
+                        text = programWithWork.program.startedAt.format(
+                            DateTimeFormatter.ofPattern(
+                                "yyyy/MM/dd HH:mm"
+                            )
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                
+
                 // アクションボタン
                 Row(
                     horizontalArrangement = Arrangement.End,
@@ -432,16 +431,16 @@ fun ProgramCard(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    
+
                     // スキップボタン
                     OutlinedIconButton(
                         onClick = { /* スキップ処理 */ },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.SkipNext, 
+                            imageVector = Icons.Default.SkipNext,
                             contentDescription = "スキップ",
                             modifier = Modifier.size(20.dp)
                         )

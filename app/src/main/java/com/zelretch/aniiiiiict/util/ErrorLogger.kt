@@ -18,7 +18,7 @@ object ErrorLogger {
             StackTrace:
             $stackTrace
         """.trimIndent()
-        
+
         Log.e(TAG, message)
     }
 
@@ -29,7 +29,7 @@ object ErrorLogger {
             Context: $context
             Message: $errorMessage
         """.trimIndent()
-        
+
         Log.e(TAG, message)
     }
 
@@ -40,7 +40,7 @@ object ErrorLogger {
             Context: $context
             Message: $message
         """.trimIndent()
-        
+
         Log.w(TAG, logMessage)
     }
 
@@ -51,7 +51,7 @@ object ErrorLogger {
             Context: $context
             Message: $message
         """.trimIndent()
-        
+
         Log.i(TAG, logMessage)
     }
 } 

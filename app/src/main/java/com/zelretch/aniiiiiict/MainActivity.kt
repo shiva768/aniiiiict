@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // サンプルコードではWindowアニメーションが無効化されていないケースが多いため
         // ここで明示的に無効化する
         (window.decorView.context as android.content.Context).theme?.obtainStyledAttributes(
@@ -68,10 +68,10 @@ class MainActivity : ComponentActivity() {
                 it.recycle()
             }
         }
-        
+
         // 認証コードを抽出して保存
         extractAuthCode(intent)
-        
+
         setContent {
             AniiiiictTheme {
                 val navController = rememberNavController()
@@ -84,33 +84,32 @@ class MainActivity : ComponentActivity() {
                     composable("main") {
                         val viewModel = hiltViewModel<MainViewModel>()
                         val uiState by viewModel.uiState.collectAsState()
-                        
+
                         LaunchedEffect(authCodeProcessed) {
                             if (authCodeProcessed) {
                                 viewModel.loadPrograms()
                                 authCodeProcessed = false
                             }
                         }
-                        
+
                         LaunchedEffect(Unit) {
                             handleIntent(intent)
                             viewModel.loadPrograms()
                         }
-                        
+
                         MainScreen(
                             uiState = uiState,
-                            onDateChange = { viewModel.onDateChange(it) },
                             onImageLoad = { id, url -> viewModel.onImageLoad(id, url) },
                             onRecordEpisode = { id -> viewModel.recordEpisode(id) },
                             onNavigateToHistory = { navController.navigate("history") },
                             onRefresh = { viewModel.refresh() }
                         )
                     }
-                    
+
                     composable("history") {
                         val historyViewModel: HistoryViewModel = hiltViewModel()
                         val historyUiState by historyViewModel.uiState.collectAsState()
-                        
+
                         HistoryScreen(
                             uiState = historyUiState,
                             onNavigateBack = { navController.navigateUp() },
@@ -129,15 +128,15 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         handleIntent(intent)
     }
-    
+
     override fun onResume() {
         super.onResume()
-        
+
         // ブラウザから戻ってきた場合は、状態を更新
         if (isResumeFromBrowser) {
             Log.d("MainActivity", "ブラウザから復帰しました")
             isResumeFromBrowser = false
-            
+
             // アプリがフォアグラウンドに戻った時点で認証コードがない場合は
             // 認証をキャンセルしたと判断
             if (pendingAuthCode == null && viewModel.uiState.value.isAuthenticating) {
@@ -158,7 +157,10 @@ class MainActivity : ComponentActivity() {
                     pendingAuthCode = code
                     ErrorLogger.logInfo("認証コードを保存: ${code.take(5)}...", "extractAuthCode")
                 } else {
-                    Log.d("MainActivity", "既に認証コードが処理中のため、新しいコードをスキップします")
+                    Log.d(
+                        "MainActivity",
+                        "既に認証コードが処理中のため、新しいコードをスキップします"
+                    )
                 }
             }
         }
@@ -175,8 +177,11 @@ class MainActivity : ComponentActivity() {
                     if (!isProcessingAuth) {
                         isProcessingAuth = true
                         Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
-                        ErrorLogger.logInfo("Processing authentication code: ${code.take(5)}...", "handleIntent")
-                        
+                        ErrorLogger.logInfo(
+                            "Processing authentication code: ${code.take(5)}...",
+                            "handleIntent"
+                        )
+
                         // 認証処理は新しいコルーチンで実行して独立性を保つ
                         lifecycleScope.launch {
                             viewModel.handleAuthCallback(code)
@@ -184,8 +189,14 @@ class MainActivity : ComponentActivity() {
                             isProcessingAuth = false
                         }
                     } else {
-                        Log.d("MainActivity", "認証処理が既に進行中です。このリクエストはスキップします。")
-                        ErrorLogger.logInfo("認証処理が既に進行中です。このリクエストはスキップします。", "handleIntent")
+                        Log.d(
+                            "MainActivity",
+                            "認証処理が既に進行中です。このリクエストはスキップします。"
+                        )
+                        ErrorLogger.logInfo(
+                            "認証処理が既に進行中です。このリクエストはスキップします。",
+                            "handleIntent"
+                        )
                     }
                 } else {
                     Log.e("MainActivity", "認証コードがURIに含まれていません: $uri")

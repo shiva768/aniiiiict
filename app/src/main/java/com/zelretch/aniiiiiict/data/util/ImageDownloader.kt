@@ -19,7 +19,8 @@ class ImageDownloader @Inject constructor(
     context: Context
 ) {
     private val client = OkHttpClient()
-    private val imageDir = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "work_images")
+    private val imageDir =
+        File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "work_images")
     private val TAG = "ImageDownloader"
 
     init {
@@ -46,17 +47,17 @@ class ImageDownloader @Inject constructor(
     suspend fun downloadImage(workId: Long, imageUrl: String): String {
         return withContext(Dispatchers.IO) {
             val imageFile = File(imageDir, "work_${workId}.jpg")
-            
+
             if (imageFile.exists()) {
                 Log.d(TAG, "画像はすでにキャッシュされています: $workId")
                 return@withContext imageFile.absolutePath
             }
 
             val secureUrl = ensureHttps(imageUrl)
-            
+
             Log.d(TAG, "画像のダウンロードを開始: $secureUrl")
             val startTime = System.currentTimeMillis()
-            
+
             val request = Request.Builder()
                 .url(secureUrl)
                 .build()
@@ -65,27 +66,27 @@ class ImageDownloader @Inject constructor(
                 client.newCall(request).execute().use { response ->
                     val endTime = System.currentTimeMillis()
                     Log.d(TAG, "ダウンロード時間: ${endTime - startTime}ms")
-                    
+
                     if (!response.isSuccessful) {
                         val message = "画像のダウンロードに失敗: HTTP ${response.code}"
                         Log.w(TAG, message)
-                        
+
                         if (response.code == HttpURLConnection.HTTP_NOT_FOUND) {
                             imageFile.createNewFile()
                             Log.w(TAG, "404のため空ファイルを作成: $workId")
                             return@withContext ""
                         }
-                        
+
                         throw Exception(message)
                     }
-                    
+
                     response.body?.bytes()?.let { bytes ->
                         try {
                             val tempFile = File(imageDir, "temp_${workId}.jpg")
                             FileOutputStream(tempFile).use { outputStream ->
                                 outputStream.write(bytes)
                             }
-                            
+
                             if (tempFile.exists() && tempFile.length() > 0) {
                                 if (tempFile.renameTo(imageFile)) {
                                     Log.d(TAG, "画像の保存に成功: $workId (${bytes.size / 1024}KB)")

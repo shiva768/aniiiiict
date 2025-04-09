@@ -63,32 +63,44 @@ class AnnictRepositoryImpl @Inject constructor(
         unwatched: Boolean
     ): List<ProgramWithWork> {
         ErrorLogger.logInfo("プログラム一覧を取得中...", "AnnictRepositoryImpl.getPrograms")
-        
+
         val result = mutableListOf<ProgramWithWork>()
         try {
             // キャンセルされた場合は例外をスローせずに空のリストを返す
             if (!currentCoroutineContext().isActive) {
-                ErrorLogger.logInfo("処理がキャンセルされたため、実行をスキップします", "AnnictRepositoryImpl.getPrograms")
+                ErrorLogger.logInfo(
+                    "処理がキャンセルされたため、実行をスキップします",
+                    "AnnictRepositoryImpl.getPrograms"
+                )
                 return emptyList()
             }
-            
+
             // アクセストークンの確認
             val token = tokenManager.getAccessToken()
             if (token.isNullOrEmpty()) {
-                ErrorLogger.logError("アクセストークンがありません", "AnnictRepositoryImpl.getPrograms")
+                ErrorLogger.logError(
+                    "アクセストークンがありません",
+                    "AnnictRepositoryImpl.getPrograms"
+                )
                 return emptyList()
             }
-            
+
             val query = GetProgramsQuery()
             val response = apolloClient.getApolloClient().query(query).execute()
-            
+
             if (response.hasErrors()) {
-                ErrorLogger.logError("GraphQLエラー: ${response.errors}", "AnnictRepositoryImpl.getPrograms")
+                ErrorLogger.logError(
+                    "GraphQLエラー: ${response.errors}",
+                    "AnnictRepositoryImpl.getPrograms"
+                )
                 return emptyList()
             }
-            
+
             result.addAll(processProgramsResponse(response))
-            ErrorLogger.logInfo("${result.size}件のプログラムを取得しました", "AnnictRepositoryImpl.getPrograms")
+            ErrorLogger.logInfo(
+                "${result.size}件のプログラムを取得しました",
+                "AnnictRepositoryImpl.getPrograms"
+            )
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             ErrorLogger.logError(e, "プログラム一覧の取得に失敗")
@@ -100,52 +112,79 @@ class AnnictRepositoryImpl @Inject constructor(
         return try {
             // nullや空文字の場合は早期リターン
             if (episodeId.isEmpty()) {
-                ErrorLogger.logError("エピソードIDがnullまたは空です", "AnnictRepositoryImpl.createRecord")
+                ErrorLogger.logError(
+                    "エピソードIDがnullまたは空です",
+                    "AnnictRepositoryImpl.createRecord"
+                )
                 return false
             }
-            
-            ErrorLogger.logInfo("エピソード記録を実行: episodeId=$episodeId", "AnnictRepositoryImpl.createRecord")
-            
+
+            ErrorLogger.logInfo(
+                "エピソード記録を実行: episodeId=$episodeId",
+                "AnnictRepositoryImpl.createRecord"
+            )
+
             // キャンセルされた場合は例外をスローせずに失敗を返す
             if (!currentCoroutineContext().isActive) {
-                ErrorLogger.logInfo("処理がキャンセルされたため、実行をスキップします", "AnnictRepositoryImpl.createRecord")
+                ErrorLogger.logInfo(
+                    "処理がキャンセルされたため、実行をスキップします",
+                    "AnnictRepositoryImpl.createRecord"
+                )
                 return false
             }
-            
+
             // アクセストークンの確認
             val token = tokenManager.getAccessToken()
             if (token.isNullOrEmpty()) {
-                ErrorLogger.logError("アクセストークンがありません", "AnnictRepositoryImpl.createRecord")
+                ErrorLogger.logError(
+                    "アクセストークンがありません",
+                    "AnnictRepositoryImpl.createRecord"
+                )
                 return false
             }
-            
+
             // GraphQL MutationのIDはプレフィックス付きの特殊な形式が必要
             val formattedEpisodeId = "Episode:$episodeId"
-            ErrorLogger.logInfo("フォーマット済みID: $formattedEpisodeId", "AnnictRepositoryImpl.createRecord")
-            
+            ErrorLogger.logInfo(
+                "フォーマット済みID: $formattedEpisodeId",
+                "AnnictRepositoryImpl.createRecord"
+            )
+
             // GraphQL Mutationを実行
             val mutation = CreateRecordMutation(episodeId = formattedEpisodeId)
             val response = apolloClient.getApolloClient().mutation(mutation).execute()
-            
-            ErrorLogger.logInfo("GraphQLのレスポンス: ${response.data != null}, エラー: ${response.errors}", "AnnictRepositoryImpl.createRecord")
-            
+
+            ErrorLogger.logInfo(
+                "GraphQLのレスポンス: ${response.data != null}, エラー: ${response.errors}",
+                "AnnictRepositoryImpl.createRecord"
+            )
+
             if (response.hasErrors()) {
-                ErrorLogger.logError("GraphQLエラー: ${response.errors}", "AnnictRepositoryImpl.createRecord")
+                ErrorLogger.logError(
+                    "GraphQLエラー: ${response.errors}",
+                    "AnnictRepositoryImpl.createRecord"
+                )
                 return false
             }
-            
+
             val record = response.data?.createRecord?.record
             if (record != null) {
-                ErrorLogger.logInfo("エピソードを記録しました: episodeId=${episodeId}, recordId=${record.annictId}", "AnnictRepositoryImpl.createRecord")
+                ErrorLogger.logInfo(
+                    "エピソードを記録しました: episodeId=${episodeId}, recordId=${record.annictId}",
+                    "AnnictRepositoryImpl.createRecord"
+                )
                 true
             } else {
-                ErrorLogger.logError("エピソードの記録に失敗しました: データがnullです", "AnnictRepositoryImpl.createRecord")
+                ErrorLogger.logError(
+                    "エピソードの記録に失敗しました: データがnullです",
+                    "AnnictRepositoryImpl.createRecord"
+                )
                 false
             }
         } catch (e: Exception) {
             // キャンセル例外の場合は再スローして上位で処理
             if (e is kotlinx.coroutines.CancellationException) throw e
-            
+
             ErrorLogger.logError(e, "エピソードの記録に失敗: episodeId=$episodeId")
             false
         }
@@ -155,13 +194,13 @@ class AnnictRepositoryImpl @Inject constructor(
         println("AnnictRepositoryImpl: 認証コールバック処理開始 - コード: ${code.take(5)}...")
         return try {
             authManager.handleAuthorizationCode(code).fold(
-                onSuccess = { 
+                onSuccess = {
                     println("AnnictRepositoryImpl: 認証成功")
-                    true 
+                    true
                 },
-                onFailure = { e -> 
+                onFailure = { e ->
                     println("AnnictRepositoryImpl: 認証失敗 - ${e.message}")
-                    false 
+                    false
                 }
             )
         } catch (e: Exception) {
@@ -176,22 +215,31 @@ class AnnictRepositoryImpl @Inject constructor(
             try {
                 // URLが空か無効な場合は早期リターン
                 if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
-                    ErrorLogger.logWarning("無効な画像URL: '$imageUrl'", "AnnictRepositoryImpl.saveWorkImage")
+                    ErrorLogger.logWarning(
+                        "無効な画像URL: '$imageUrl'",
+                        "AnnictRepositoryImpl.saveWorkImage"
+                    )
                     return@withContext false
                 }
-                
+
                 val localPath = imageDownloader.downloadImage(workId, imageUrl)
                 // パスが空でなければデータベースに保存
                 if (localPath.isNotEmpty()) {
                     workImageDao.insertWorkImage(WorkImage(workId, imageUrl, localPath))
                     true // 成功
                 } else {
-                    ErrorLogger.logWarning("画像の保存に失敗 - 空のパス: workId=$workId", "AnnictRepositoryImpl.saveWorkImage")
+                    ErrorLogger.logWarning(
+                        "画像の保存に失敗 - 空のパス: workId=$workId",
+                        "AnnictRepositoryImpl.saveWorkImage"
+                    )
                     false // 失敗（空のパス）
                 }
             } catch (e: Exception) {
                 // エラーがあっても続行できるように例外を処理
-                ErrorLogger.logWarning("画像の保存に失敗: workId=$workId, error=${e.message}", "AnnictRepositoryImpl.saveWorkImage")
+                ErrorLogger.logWarning(
+                    "画像の保存に失敗: workId=$workId, error=${e.message}",
+                    "AnnictRepositoryImpl.saveWorkImage"
+                )
                 false // 失敗（例外発生）
             }
         }
@@ -204,44 +252,65 @@ class AnnictRepositoryImpl @Inject constructor(
     override suspend fun getProgramsWithWorks(): Flow<List<ProgramWithWork>> {
         return flow {
             try {
-                ErrorLogger.logInfo("プログラム一覧の取得を開始", "AnnictRepositoryImpl.getProgramsWithWorks")
-                
+                ErrorLogger.logInfo(
+                    "プログラム一覧の取得を開始",
+                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                )
+
                 // キャンセルされた場合は例外をスローせずに空のリストを返す
                 if (!currentCoroutineContext().isActive) {
-                    ErrorLogger.logInfo("処理がキャンセルされたため、実行をスキップします", "AnnictRepositoryImpl.getProgramsWithWorks")
+                    ErrorLogger.logInfo(
+                        "処理がキャンセルされたため、実行をスキップします",
+                        "AnnictRepositoryImpl.getProgramsWithWorks"
+                    )
                     emit(emptyList())
                     return@flow
                 }
-                
+
                 // アクセストークンの確認
                 val token = tokenManager.getAccessToken()
                 if (token.isNullOrEmpty()) {
-                    ErrorLogger.logError("アクセストークンがありません", "AnnictRepositoryImpl.getProgramsWithWorks")
+                    ErrorLogger.logError(
+                        "アクセストークンがありません",
+                        "AnnictRepositoryImpl.getProgramsWithWorks"
+                    )
                     emit(emptyList())
                     return@flow
                 }
-                
+
                 val query = GetProgramsQuery()
                 val response = apolloClient.getApolloClient().query(query).execute()
-                ErrorLogger.logInfo("GraphQLのレスポンス: ${response.data != null}", "AnnictRepositoryImpl.getProgramsWithWorks")
-                
+                ErrorLogger.logInfo(
+                    "GraphQLのレスポンス: ${response.data != null}",
+                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                )
+
                 if (response.hasErrors()) {
-                    ErrorLogger.logError("GraphQLエラー: ${response.errors}", "AnnictRepositoryImpl.getProgramsWithWorks")
+                    ErrorLogger.logError(
+                        "GraphQLエラー: ${response.errors}",
+                        "AnnictRepositoryImpl.getProgramsWithWorks"
+                    )
                     emit(emptyList())
                     return@flow
                 }
-                
+
                 val programs = response.data?.viewer?.programs?.nodes
-                ErrorLogger.logInfo("取得したプログラム数: ${programs?.size ?: 0}", "AnnictRepositoryImpl.getProgramsWithWorks")
-                
+                ErrorLogger.logInfo(
+                    "取得したプログラム数: ${programs?.size ?: 0}",
+                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                )
+
                 val programsWithWorks = processProgramsResponse(response)
-                ErrorLogger.logInfo("変換後のプログラム数: ${programsWithWorks.size}", "AnnictRepositoryImpl.getProgramsWithWorks")
-                
+                ErrorLogger.logInfo(
+                    "変換後のプログラム数: ${programsWithWorks.size}",
+                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                )
+
                 emit(programsWithWorks)
             } catch (e: Exception) {
                 // キャンセル例外の場合は再スローして上位で処理
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                
+
                 ErrorLogger.logError(e, "プログラム一覧の取得に失敗")
                 emit(emptyList())
             }
@@ -302,11 +371,11 @@ class AnnictRepositoryImpl @Inject constructor(
         // 各作品の最初の未視聴エピソードのみを残す
         return programs
             .groupBy { it.work.title }
-            .mapValues { (_, programs) -> 
+            .mapValues { (_, programs) ->
                 // エピソード番号でソート（nullや変換できない場合は最後に）
-                programs.sortedBy { program -> 
-                    program.program.episode.number ?: Int.MAX_VALUE 
-                }.first() 
+                programs.sortedBy { program ->
+                    program.program.episode.number ?: Int.MAX_VALUE
+                }.first()
             }
             .values
             .sortedBy { it.program.startedAt }
@@ -314,19 +383,22 @@ class AnnictRepositoryImpl @Inject constructor(
 
     override suspend fun getRecords(limit: Int): List<Record> {
         if (!currentCoroutineContext().isActive) return emptyList()
-        
+
         ErrorLogger.logInfo("記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
-        
+
         return try {
             val token = tokenManager.getAccessToken()
             if (token.isNullOrEmpty()) {
-                ErrorLogger.logError("アクセストークンがありません", "AnnictRepositoryImpl.getRecords")
+                ErrorLogger.logError(
+                    "アクセストークンがありません",
+                    "AnnictRepositoryImpl.getRecords"
+                )
                 return emptyList()
             }
-            
+
             val query = ViewerRecordsQuery()
             val response = apolloClient.getApolloClient().query(query).execute()
-            
+
             if (!response.hasErrors()) {
                 val records = response.data?.viewer?.records?.nodes?.mapNotNull { node ->
                     node?.let {
@@ -357,11 +429,17 @@ class AnnictRepositoryImpl @Inject constructor(
                         )
                     }
                 } ?: emptyList()
-                
-                ErrorLogger.logInfo("${records.size}件の記録を取得しました", "AnnictRepositoryImpl.getRecords")
+
+                ErrorLogger.logInfo(
+                    "${records.size}件の記録を取得しました",
+                    "AnnictRepositoryImpl.getRecords"
+                )
                 records
             } else {
-                ErrorLogger.logError("GraphQLエラー: ${response.errors}", "AnnictRepositoryImpl.getRecords")
+                ErrorLogger.logError(
+                    "GraphQLエラー: ${response.errors}",
+                    "AnnictRepositoryImpl.getRecords"
+                )
                 emptyList()
             }
         } catch (e: Exception) {
@@ -370,27 +448,36 @@ class AnnictRepositoryImpl @Inject constructor(
             emptyList()
         }
     }
-    
+
     override suspend fun deleteRecord(recordId: String): Boolean {
         if (!currentCoroutineContext().isActive) return false
-        
+
         ErrorLogger.logInfo("記録を削除中: $recordId", "AnnictRepositoryImpl.deleteRecord")
-        
+
         return try {
             val token = tokenManager.getAccessToken()
             if (token.isNullOrEmpty()) {
-                ErrorLogger.logError("アクセストークンがありません", "AnnictRepositoryImpl.deleteRecord")
+                ErrorLogger.logError(
+                    "アクセストークンがありません",
+                    "AnnictRepositoryImpl.deleteRecord"
+                )
                 return false
             }
-            
+
             val mutation = DeleteRecordMutation(recordId)
             val response = apolloClient.getApolloClient().mutation(mutation).execute()
-            
+
             if (!response.hasErrors()) {
-                ErrorLogger.logInfo("記録を削除しました: $recordId", "AnnictRepositoryImpl.deleteRecord")
+                ErrorLogger.logInfo(
+                    "記録を削除しました: $recordId",
+                    "AnnictRepositoryImpl.deleteRecord"
+                )
                 true
             } else {
-                ErrorLogger.logError("GraphQLエラー: ${response.errors}", "AnnictRepositoryImpl.deleteRecord")
+                ErrorLogger.logError(
+                    "GraphQLエラー: ${response.errors}",
+                    "AnnictRepositoryImpl.deleteRecord"
+                )
                 false
             }
         } catch (e: Exception) {
