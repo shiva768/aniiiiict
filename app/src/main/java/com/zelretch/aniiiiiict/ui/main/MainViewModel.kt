@@ -355,32 +355,11 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    /**
+     * プログラム一覧を再読み込み
+     */
     fun refresh() {
-        loadProgramsJob?.cancel()
-        loadProgramsJob = viewModelScope.launch {
-            try {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-
-                // Flowを収集して処理
-                repository.getProgramsWithWorks().collect { programs ->
-                    _uiState.value = _uiState.value.copy(
-                        programs = programs,
-                        isLoading = false,
-                        isAuthenticating = false
-                    )
-
-                    // バックグラウンドで画像をプリロード
-                    preloadImages(programs)
-                }
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    _uiState.value = _uiState.value.copy(
-                        error = "アニメ一覧の取得に失敗しました: ${e.message}",
-                        isLoading = false
-                    )
-                    ErrorLogger.logError(e, "Failed to refresh programs")
-                }
-            }
-        }
+        ErrorLogger.logInfo("プログラム一覧を再読み込み", "MainViewModel.refresh")
+        loadPrograms()
     }
 }

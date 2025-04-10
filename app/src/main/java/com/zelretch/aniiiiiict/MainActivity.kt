@@ -87,13 +87,17 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(authCodeProcessed) {
                             if (authCodeProcessed) {
+                                ErrorLogger.logInfo("認証コード処理後のプログラム読み込みを実行", "MainActivity.LaunchedEffect")
                                 viewModel.loadPrograms()
                                 authCodeProcessed = false
                             }
                         }
 
                         LaunchedEffect(Unit) {
-                            handleIntent(intent)
+                            handleIntent(intent, onAuthProcessed = { 
+                                ErrorLogger.logInfo("認証処理完了フラグをセット", "MainActivity.handleIntent.callback")
+                                authCodeProcessed = true 
+                            })
                             viewModel.loadPrograms()
                         }
 
@@ -126,7 +130,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleIntent(intent)
+        handleIntent(intent, null)
     }
 
     override fun onResume() {
@@ -166,7 +170,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun handleIntent(intent: Intent) {
+    private fun handleIntent(intent: Intent, onAuthProcessed: (() -> Unit)? = null) {
         Log.d("MainActivity", "Intent received: ${intent.action}, data: ${intent.data}")
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
@@ -185,8 +189,10 @@ class MainActivity : ComponentActivity() {
                         // 認証処理は新しいコルーチンで実行して独立性を保つ
                         lifecycleScope.launch {
                             viewModel.handleAuthCallback(code)
-                            authCodeProcessed = true
                             isProcessingAuth = false
+                            
+                            // コールバックがある場合は実行
+                            onAuthProcessed?.invoke()
                         }
                     } else {
                         Log.d(
