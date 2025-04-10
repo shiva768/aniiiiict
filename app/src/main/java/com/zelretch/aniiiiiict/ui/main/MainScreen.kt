@@ -51,6 +51,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -239,6 +240,7 @@ fun ProgramCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .testTag("program_card_${programWithWork.program.annictId}")
     ) {
         Column(
             modifier = Modifier
@@ -293,11 +295,13 @@ fun ProgramCard(
                 // 右側の情報
                 Column(modifier = Modifier.weight(1f)) {
                     // タイトル
+                    val workTitle = programWithWork.work.title
                     Text(
-                        text = programWithWork.work.title,
+                        text = workTitle,
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.testTag("work_title_${programWithWork.work.annictId}")
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
