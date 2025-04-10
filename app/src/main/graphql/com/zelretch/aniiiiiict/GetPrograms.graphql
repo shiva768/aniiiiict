@@ -14,6 +14,7 @@ query GetPrograms {
           name
         }
         episode {
+          id
           annictId
           number
           numberText

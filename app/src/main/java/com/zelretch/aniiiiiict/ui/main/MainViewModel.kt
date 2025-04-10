@@ -27,7 +27,7 @@ data class MainUiState(
     val error: String? = null,
     val isAuthenticating: Boolean = false,
     val isRecording: Boolean = false,
-    val recordingSuccess: Int? = null
+    val recordingSuccess: String? = null
 )
 
 @HiltViewModel
@@ -314,13 +314,13 @@ class MainViewModel @Inject constructor(
     /**
      * エピソードを視聴済みとして記録する
      */
-    fun recordEpisode(episodeId: Int) {
+    fun recordEpisode(episodeId: String) {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isRecording = true)
 
                 // 記録APIを呼び出し（String型に変換）
-                val success = repository.createRecord(episodeId.toString())
+                val success = repository.createRecord(episodeId)
 
                 if (success) {
                     // 成功メッセージ

@@ -4,6 +4,7 @@ mutation CreateRecord($episodeId: ID!) {
     clientMutationId: "android-app-record"
   }) {
     record {
+      id
       annictId
     }
   }

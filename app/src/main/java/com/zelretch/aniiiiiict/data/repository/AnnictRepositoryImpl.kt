@@ -143,15 +143,8 @@ class AnnictRepositoryImpl @Inject constructor(
                 return false
             }
 
-            // GraphQL MutationのIDはプレフィックス付きの特殊な形式が必要
-            val formattedEpisodeId = "Episode:$episodeId"
-            ErrorLogger.logInfo(
-                "フォーマット済みID: $formattedEpisodeId",
-                "AnnictRepositoryImpl.createRecord"
-            )
-
             // GraphQL Mutationを実行
-            val mutation = CreateRecordMutation(episodeId = formattedEpisodeId)
+            val mutation = CreateRecordMutation(episodeId = episodeId)
             val response = apolloClient.getApolloClient().mutation(mutation).execute()
 
             ErrorLogger.logInfo(
@@ -170,7 +163,7 @@ class AnnictRepositoryImpl @Inject constructor(
             val record = response.data?.createRecord?.record
             if (record != null) {
                 ErrorLogger.logInfo(
-                    "エピソードを記録しました: episodeId=${episodeId}, recordId=${record.annictId}",
+                    "エピソードを記録しました: episodeId=${episodeId}, recordId=${record.id}",
                     "AnnictRepositoryImpl.createRecord"
                 )
                 true
@@ -332,6 +325,7 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             val episode = Episode(
+                id = node.episode.id,
                 annictId = node.episode.annictId,
                 number = node.episode.number,
                 numberText = node.episode.numberText,

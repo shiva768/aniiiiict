@@ -63,7 +63,7 @@ import java.time.format.DateTimeFormatter
 fun MainScreen(
     uiState: MainUiState,
     onImageLoad: (Int, String) -> Unit,
-    onRecordEpisode: (Int) -> Unit,
+    onRecordEpisode: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -144,7 +144,7 @@ fun MainScreen(
                                         onImageLoad(program.program.annictId, imageUrl)
                                     }
                                 },
-                                onRecordEpisode = { onRecordEpisode(program.program.episode.annictId) },
+                                onRecordEpisode = { onRecordEpisode(program.program.episode.id) },
                                 uiState = uiState
                             )
                         }
@@ -232,7 +232,7 @@ fun MainScreen(
 fun ProgramCard(
     programWithWork: ProgramWithWork,
     onImageLoad: () -> Unit,
-    onRecordEpisode: (Int) -> Unit,
+    onRecordEpisode: (String) -> Unit,
     uiState: MainUiState
 ) {
     ElevatedCard(
@@ -400,10 +400,10 @@ fun ProgramCard(
                 ) {
                     // 記録ボタン
                     FilledTonalIconButton(
-                        onClick = { onRecordEpisode(programWithWork.program.episode.annictId) },
+                        onClick = { onRecordEpisode(programWithWork.program.episode.id) },
                         modifier = Modifier.size(40.dp),
                         enabled = !uiState.isRecording,
-                        colors = if (uiState.recordingSuccess == programWithWork.program.episode.annictId) {
+                        colors = if (uiState.recordingSuccess == programWithWork.program.episode.id) {
                             IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -417,7 +417,7 @@ fun ProgramCard(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
                             )
-                        } else if (uiState.recordingSuccess == programWithWork.program.episode.annictId) {
+                        } else if (uiState.recordingSuccess == programWithWork.program.episode.id) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "記録済み",
