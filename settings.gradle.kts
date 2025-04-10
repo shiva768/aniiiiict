@@ -11,7 +11,7 @@ pluginManagement {
         maven { url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
     }
 }
-
+@Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {

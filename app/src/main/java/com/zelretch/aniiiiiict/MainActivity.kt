@@ -33,7 +33,6 @@ class MainActivity : ComponentActivity() {
     private var pendingAuthCode: String? = null
     private var isProcessingAuth = false
     private var isResumeFromBrowser = false
-    private var authCodeProcessed = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
