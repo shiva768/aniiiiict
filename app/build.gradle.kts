@@ -1,12 +1,12 @@
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("com.google.devtools.ksp")
-    id("dagger.hilt.android.plugin")
-    id("com.apollographql.apollo3")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.plugin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.apollo)
 }
 
 val localProperties = Properties().apply {
@@ -78,54 +78,48 @@ android {
 
 dependencies {
     // Android Core
-
-    implementation("androidx.core:core-ktx:1.16.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.activity:activity-compose:1.10.1")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.activity.compose)
 
     // Compose
-    implementation(platform("androidx.compose:compose-bom:2025.04.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3:1.3.2")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.material:material:1.7.8")
+    implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.compose.ui)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons)
+    implementation(libs.compose.material)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.50")
-    implementation("androidx.room:room-ktx:2.7.0")
-    ksp("com.google.dagger:hilt-android-compiler:2.50")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
 
-    // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.google.code.gson:gson:2.11.0")
-
-    // OkHttp
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    // Retrofit & OkHttp
+    implementation(libs.bundles.retrofit)
+    implementation(libs.bundles.okhttp)
 
     // Room
-    implementation("androidx.room:room-runtime:2.7.0")
-    implementation("androidx.room:room-ktx:2.7.0")
-    ksp("androidx.room:room-compiler:2.7.0")
+    implementation(libs.bundles.room)
+    ksp(libs.room.compiler)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation(libs.coroutines.android)
 
     // Coil
-    implementation("io.coil-kt:coil:2.5.0")
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation(libs.coil)
+    implementation(libs.coil.compose)
 
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.8.9")
+    implementation(libs.navigation.compose)
 
     // Apollo Client
-    implementation("com.apollographql.apollo3:apollo-runtime:3.8.5")
-    implementation("com.apollographql.apollo3:apollo-normalized-cache:3.8.5")
-    implementation("com.apollographql.apollo3:apollo-adapters:3.8.5")
+    implementation(libs.bundles.apollo)
+
+    // Testing
+    testImplementation(libs.bundles.testing)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.bundles.android.testing)
+    debugImplementation(libs.bundles.compose.debug)
 }
 
 apollo {
