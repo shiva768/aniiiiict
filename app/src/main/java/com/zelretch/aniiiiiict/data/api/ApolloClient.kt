@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class ApolloClient @Inject constructor(
     private val tokenManager: TokenManager
 ) {
-    val client by lazy {
+    private val client by lazy {
         val token = tokenManager.getAccessToken()
         println("Apollo初期化 - アクセストークン: ${token?.take(10)}...")
 

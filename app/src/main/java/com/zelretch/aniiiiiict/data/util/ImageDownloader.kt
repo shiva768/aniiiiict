@@ -3,7 +3,7 @@ package com.zelretch.aniiiiiict.data.util
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import com.zelretch.aniiiiiict.util.Logger
+import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -105,7 +105,7 @@ class ImageDownloader @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "画像ダウンロード中にエラー: ${e.message}")
-                Logger.logError(e, "画像の保存に失敗 - workId: $workId, url: $secureUrl")
+                AniiiiiictLogger.logError(e, "画像の保存に失敗 - workId: $workId, url: $secureUrl")
                 throw Exception("Failed to download image: ${e.message}")
             }
         }

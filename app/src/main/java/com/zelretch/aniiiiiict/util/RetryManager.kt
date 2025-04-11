@@ -27,7 +27,7 @@ class RetryManager {
                     throw e
                 }
 
-                Logger.logWarning(
+                AniiiiiictLogger.logWarning(
                     "リトライ実行: ${retryCount + 1}/${MAX_RETRIES}, 遅延: ${currentDelay}ms",
                     "RetryManager"
                 )

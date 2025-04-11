@@ -116,6 +116,4 @@ data class AnnictWork(
         )
     }
 
-    val nextUnwatchedEpisode: AnnictEpisode?
-        get() = episodes?.firstOrNull { !it.watched }
 }
