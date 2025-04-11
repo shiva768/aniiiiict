@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
-import com.zelretch.aniiiiiict.util.ErrorLogger
+import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +42,7 @@ class HistoryViewModel @Inject constructor(
                     isLoading = false
                 )
             } catch (e: Exception) {
-                ErrorLogger.logError(e, "記録履歴の取得に失敗")
+                Logger.logError(e, "記録履歴の取得に失敗")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "記録履歴の取得に失敗しました: ${e.localizedMessage}"
@@ -71,7 +71,7 @@ class HistoryViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                ErrorLogger.logError(e, "記録削除中にエラー: $recordId")
+                Logger.logError(e, "記録削除中にエラー: $recordId")
                 _uiState.value = _uiState.value.copy(
                     isDeletingRecord = false,
                     error = "記録の削除に失敗しました: ${e.localizedMessage}"

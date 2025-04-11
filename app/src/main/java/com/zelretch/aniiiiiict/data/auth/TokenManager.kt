@@ -2,7 +2,7 @@ package com.zelretch.aniiiiiict.data.auth
 
 import android.content.Context
 import android.util.Log
-import com.zelretch.aniiiiiict.util.ErrorLogger
+import com.zelretch.aniiiiiict.util.Logger
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,19 +21,19 @@ class TokenManager @Inject constructor(
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
             Log.e(TAG, "空のトークンを保存しようとしました")
-            ErrorLogger.logWarning("空のトークンを保存しようとしました", "saveAccessToken")
+            Logger.logWarning("空のトークンを保存しようとしました", "saveAccessToken")
             return
         }
 
         Log.d(TAG, "アクセストークンを保存: ${token.take(10)}...")
-        ErrorLogger.logInfo("アクセストークンを保存: ${token.take(10)}...", "saveAccessToken")
+        Logger.logInfo("アクセストークンを保存: ${token.take(10)}...", "saveAccessToken")
 
         try {
             prefs.edit().putString(TOKEN_KEY, token).apply()
             Log.d(TAG, "アクセストークンの保存に成功")
         } catch (e: Exception) {
             Log.e(TAG, "アクセストークンの保存に失敗: ${e.message}", e)
-            ErrorLogger.logError(e, "アクセストークンの保存に失敗")
+            Logger.logError(e, "アクセストークンの保存に失敗")
         }
     }
 
@@ -49,7 +49,7 @@ class TokenManager @Inject constructor(
 
     fun clearToken() {
         Log.d(TAG, "アクセストークンをクリア")
-        ErrorLogger.logInfo("アクセストークンをクリア", "clearToken")
+        Logger.logInfo("アクセストークンをクリア", "clearToken")
         prefs.edit().remove(TOKEN_KEY).apply()
     }
 

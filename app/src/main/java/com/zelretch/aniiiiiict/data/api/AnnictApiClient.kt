@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.AnnictWork
 import com.zelretch.aniiiiiict.data.model.rest.AnnictProgram
-import com.zelretch.aniiiiiict.util.ErrorLogger
+import com.zelretch.aniiiiiict.util.Logger
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -40,7 +40,7 @@ class AnnictApiClient @Inject constructor(
                     .header("Authorization", "Bearer $token")
                     .method(original.method, original.body)
                     .build()
-                ErrorLogger.logInfo(
+                Logger.logInfo(
                     "APIリクエスト: ${request.method} ${request.url}",
                     "AnnictApiClient"
                 )
@@ -85,28 +85,28 @@ class AnnictApiClient @Inject constructor(
         unwatched: Boolean
     ): Result<List<AnnictProgram>> {
         return try {
-            ErrorLogger.logInfo("プログラム一覧を取得中 - unwatched: $unwatched", "AnnictApiClient")
+            Logger.logInfo("プログラム一覧を取得中 - unwatched: $unwatched", "AnnictApiClient")
             if (!tokenManager.hasValidToken()) {
-                ErrorLogger.logWarning("有効なトークンがありません", "AnnictApiClient")
+                Logger.logWarning("有効なトークンがありません", "AnnictApiClient")
                 return Result.failure(Exception("API error: 401 - No valid token"))
             }
             val response = api.getPrograms(unwatched)
             if (response.isSuccessful) {
                 val programs = response.body()?.programs ?: emptyList()
-                ErrorLogger.logInfo(
+                Logger.logInfo(
                     "プログラム一覧の取得に成功: ${programs.size}件",
                     "AnnictApiClient"
                 )
                 Result.success(programs)
             } else {
-                ErrorLogger.logError(
+                Logger.logError(
                     Exception("API error: ${response.code()}"),
                     "プログラム一覧の取得に失敗 - status: ${response.code()}"
                 )
                 Result.failure(Exception("API error: ${response.code()}"))
             }
         } catch (e: Exception) {
-            ErrorLogger.logError(e, "プログラム一覧の取得中に例外が発生")
+            Logger.logError(e, "プログラム一覧の取得中に例外が発生")
             Result.failure(e)
         }
     }

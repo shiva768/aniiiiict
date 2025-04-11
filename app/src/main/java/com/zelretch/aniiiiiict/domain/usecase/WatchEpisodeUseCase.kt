@@ -2,7 +2,7 @@ package com.zelretch.aniiiiiict.domain.usecase
 
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.type.StatusState
-import com.zelretch.aniiiiiict.util.ErrorLogger
+import com.zelretch.aniiiiiict.util.Logger
 import javax.inject.Inject
 
 class WatchEpisodeUseCase @Inject constructor(
@@ -20,7 +20,7 @@ class WatchEpisodeUseCase @Inject constructor(
             if (currentStatus == StatusState.WANNA_WATCH) {
                 val updateSuccess = repository.updateWorkStatus(workId, StatusState.WATCHING)
                 if (!updateSuccess) {
-                    ErrorLogger.logWarning(
+                    Logger.logWarning(
                         "ステータスの更新に失敗しました: workId=$workId",
                         "WatchEpisodeUseCase"
                     )

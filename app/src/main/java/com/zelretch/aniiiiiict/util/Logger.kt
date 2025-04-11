@@ -4,7 +4,7 @@ import android.util.Log
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-object ErrorLogger {
+object Logger {
     private const val TAG = "AniiiiiictError"
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 

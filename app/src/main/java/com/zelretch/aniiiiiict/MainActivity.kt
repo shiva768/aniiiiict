@@ -22,7 +22,7 @@ import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiiict.ui.main.MainViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
-import com.zelretch.aniiiiiict.util.ErrorLogger
+import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(authCodeProcessed) {
                             if (authCodeProcessed) {
-                                ErrorLogger.logInfo("認証コード処理後のプログラム読み込みを実行", "MainActivity.LaunchedEffect")
+                                Logger.logInfo("認証コード処理後のプログラム読み込みを実行", "MainActivity.LaunchedEffect")
                                 viewModel.loadPrograms()
                                 authCodeProcessed = false
                             }
@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(Unit) {
                             handleIntent(intent, onAuthProcessed = { 
-                                ErrorLogger.logInfo("認証処理完了フラグをセット", "MainActivity.handleIntent.callback")
+                                Logger.logInfo("認証処理完了フラグをセット", "MainActivity.handleIntent.callback")
                                 authCodeProcessed = true 
                             })
                             viewModel.loadPrograms()
@@ -158,7 +158,7 @@ class MainActivity : ComponentActivity() {
                 Log.d("MainActivity", "認証コードを抽出: ${code?.take(5)}...")
                 if (code != null && pendingAuthCode == null && !isProcessingAuth) {
                     pendingAuthCode = code
-                    ErrorLogger.logInfo("認証コードを保存: ${code.take(5)}...", "extractAuthCode")
+                    Logger.logInfo("認証コードを保存: ${code.take(5)}...", "extractAuthCode")
                 } else {
                     Log.d(
                         "MainActivity",
@@ -180,7 +180,7 @@ class MainActivity : ComponentActivity() {
                     if (!isProcessingAuth) {
                         isProcessingAuth = true
                         Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
-                        ErrorLogger.logInfo(
+                        Logger.logInfo(
                             "Processing authentication code: ${code.take(5)}...",
                             "handleIntent"
                         )
@@ -198,14 +198,14 @@ class MainActivity : ComponentActivity() {
                             "MainActivity",
                             "認証処理が既に進行中です。このリクエストはスキップします。"
                         )
-                        ErrorLogger.logInfo(
+                        Logger.logInfo(
                             "認証処理が既に進行中です。このリクエストはスキップします。",
                             "handleIntent"
                         )
                     }
                 } else {
                     Log.e("MainActivity", "認証コードがURIに含まれていません: $uri")
-                    ErrorLogger.logError("認証コードがURIに含まれていません: $uri", "handleIntent")
+                    Logger.logError("認証コードがURIに含まれていません: $uri", "handleIntent")
                 }
             }
         }
