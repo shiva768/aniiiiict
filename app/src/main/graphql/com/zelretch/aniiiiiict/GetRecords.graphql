@@ -13,6 +13,7 @@ query GetRecords($first: Int) {
             id
             title
             media
+            viewerStatusState
             image {
               recommendedImageUrl
               facebookOgImageUrl

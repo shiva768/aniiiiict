@@ -4,6 +4,7 @@ import com.apollographql.apollo3.api.ApolloResponse
 import com.zelretch.aniiiiiict.CreateRecordMutation
 import com.zelretch.aniiiiiict.DeleteRecordMutation
 import com.zelretch.aniiiiiict.GetProgramsQuery
+import com.zelretch.aniiiiiict.UpdateStatusMutation
 import com.zelretch.aniiiiiict.ViewerRecordsQuery
 import com.zelretch.aniiiiiict.data.api.AnnictApiClient
 import com.zelretch.aniiiiiict.data.api.ApolloClient
@@ -19,6 +20,7 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
+import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.ErrorLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -108,19 +110,19 @@ class AnnictRepositoryImpl @Inject constructor(
         return result
     }
 
-    override suspend fun createRecord(episodeId: String): Boolean {
+    override suspend fun createRecord(episodeId: String, workId: String): Boolean {
         return try {
             // nullや空文字の場合は早期リターン
-            if (episodeId.isEmpty()) {
+            if (episodeId.isEmpty() || workId.isEmpty()) {
                 ErrorLogger.logError(
-                    "エピソードIDがnullまたは空です",
+                    "エピソードIDまたは作品IDがnullまたは空です",
                     "AnnictRepositoryImpl.createRecord"
                 )
                 return false
             }
 
             ErrorLogger.logInfo(
-                "エピソード記録を実行: episodeId=$episodeId",
+                "エピソード記録を実行: episodeId=$episodeId, workId=$workId",
                 "AnnictRepositoryImpl.createRecord"
             )
 
@@ -128,16 +130,6 @@ class AnnictRepositoryImpl @Inject constructor(
             if (!currentCoroutineContext().isActive) {
                 ErrorLogger.logInfo(
                     "処理がキャンセルされたため、実行をスキップします",
-                    "AnnictRepositoryImpl.createRecord"
-                )
-                return false
-            }
-
-            // アクセストークンの確認
-            val token = tokenManager.getAccessToken()
-            if (token.isNullOrEmpty()) {
-                ErrorLogger.logError(
-                    "アクセストークンがありません",
                     "AnnictRepositoryImpl.createRecord"
                 )
                 return false
@@ -152,33 +144,9 @@ class AnnictRepositoryImpl @Inject constructor(
                 "AnnictRepositoryImpl.createRecord"
             )
 
-            if (response.hasErrors()) {
-                ErrorLogger.logError(
-                    "GraphQLエラー: ${response.errors}",
-                    "AnnictRepositoryImpl.createRecord"
-                )
-                return false
-            }
-
-            val record = response.data?.createRecord?.record
-            if (record != null) {
-                ErrorLogger.logInfo(
-                    "エピソードを記録しました: episodeId=${episodeId}, recordId=${record.id}",
-                    "AnnictRepositoryImpl.createRecord"
-                )
-                true
-            } else {
-                ErrorLogger.logError(
-                    "エピソードの記録に失敗しました: データがnullです",
-                    "AnnictRepositoryImpl.createRecord"
-                )
-                false
-            }
+            !response.hasErrors()
         } catch (e: Exception) {
-            // キャンセル例外の場合は再スローして上位で処理
-            if (e is kotlinx.coroutines.CancellationException) throw e
-
-            ErrorLogger.logError(e, "エピソードの記録に失敗: episodeId=$episodeId")
+            ErrorLogger.logError(e, "記録の作成に失敗: episodeId=$episodeId, workId=$workId")
             false
         }
     }
@@ -340,11 +308,12 @@ class AnnictRepositoryImpl @Inject constructor(
             }
 
             val work = Work(
+                id = node.work.id,
                 title = node.work.title,
                 seasonName = node.work.seasonName?.toString(),
                 seasonYear = node.work.seasonYear,
                 media = node.work.media.toString(),
-                viewerStatusState = node.work.viewerStatusState?.toString(),
+                viewerStatusState = node.work.viewerStatusState.toString(),
                 image = workImage
             )
 
@@ -417,6 +386,7 @@ class AnnictRepositoryImpl @Inject constructor(
                                 title = work.title,
                                 media = null,
                                 mediaText = "",
+                                viewerStatusState = StatusState.NO_STATE.toString(),
                                 seasonNameText = "",
                                 imageUrl = work.image?.recommendedImageUrl
                             )
@@ -477,6 +447,46 @@ class AnnictRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             ErrorLogger.logError(e, "AnnictRepositoryImpl.deleteRecord")
+            false
+        }
+    }
+
+    override suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean {
+        return try {
+            ErrorLogger.logInfo(
+                "作品のステータス更新を実行: workId=$workId, state=$state",
+                "AnnictRepositoryImpl.updateWorkStatus"
+            )
+
+            if (!currentCoroutineContext().isActive) {
+                ErrorLogger.logInfo(
+                    "処理がキャンセルされたため、実行をスキップします",
+                    "AnnictRepositoryImpl.updateWorkStatus"
+                )
+                return false
+            }
+
+            val mutation = UpdateStatusMutation(
+                workId = workId,
+                state = state
+            )
+            val response = apolloClient.getApolloClient().mutation(mutation).execute()
+
+            if (!response.hasErrors()) {
+                ErrorLogger.logInfo(
+                    "ステータス更新が成功しました: ${response.data?.updateStatus?.work?.viewerStatusState}",
+                    "AnnictRepositoryImpl.updateWorkStatus"
+                )
+                true
+            } else {
+                ErrorLogger.logError(
+                    "GraphQLエラー: ${response.errors}",
+                    "AnnictRepositoryImpl.updateWorkStatus"
+                )
+                false
+            }
+        } catch (e: Exception) {
+            ErrorLogger.logError(e, "作品のステータス更新に失敗: workId=$workId, state=$state")
             false
         }
     }

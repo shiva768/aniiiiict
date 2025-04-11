@@ -21,6 +21,7 @@ query GetPrograms {
           title
         }
         work {
+          id
           title
           seasonName
           seasonYear

@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiiict.ui.main
 
+import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
@@ -7,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.ErrorLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,7 +35,8 @@ data class MainUiState(
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val repository: AnnictRepository
+    private val repository: AnnictRepository,
+    private val watchEpisodeUseCase: WatchEpisodeUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -314,37 +317,35 @@ class MainViewModel @Inject constructor(
     /**
      * エピソードを視聴済みとして記録する
      */
-    fun recordEpisode(episodeId: String) {
+    fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isRecording = true)
 
-                // 記録APIを呼び出し（String型に変換）
-                val success = repository.createRecord(episodeId)
+                // ユースケースを実行
+                watchEpisodeUseCase(episodeId, workId, currentStatus)
+                    .onSuccess {
+                        _uiState.value = _uiState.value.copy(
+                            isRecording = false,
+                            recordingSuccess = episodeId,
+                            error = null
+                        )
 
-                if (success) {
-                    // 成功メッセージ
-                    _uiState.value = _uiState.value.copy(
-                        isRecording = false,
-                        recordingSuccess = episodeId,
-                        error = null
-                    )
+                        // 成功メッセージをリセット
+                        delay(2000)
+                        if (_uiState.value.recordingSuccess == episodeId) {
+                            _uiState.value = _uiState.value.copy(recordingSuccess = null)
+                        }
 
-                    // 成功メッセージをリセット（短時間表示）
-                    delay(2000)
-                    if (_uiState.value.recordingSuccess == episodeId) {
-                        _uiState.value = _uiState.value.copy(recordingSuccess = null)
+                        // プログラム一覧を再読込
+                        loadPrograms()
                     }
-
-                    // 記録後にプログラム一覧を再読込
-                    loadPrograms()
-                } else {
-                    // 失敗時の処理
-                    _uiState.value = _uiState.value.copy(
-                        isRecording = false,
-                        error = "エピソードの記録に失敗しました"
-                    )
-                }
+                    .onFailure { e ->
+                        _uiState.value = _uiState.value.copy(
+                            isRecording = false,
+                            error = e.message ?: "エピソードの記録に失敗しました"
+                        )
+                    }
             } catch (e: Exception) {
                 ErrorLogger.logError(e, "エピソードの記録に失敗: episodeId=$episodeId")
                 _uiState.value = _uiState.value.copy(

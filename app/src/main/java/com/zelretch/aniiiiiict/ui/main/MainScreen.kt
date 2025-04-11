@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.type.StatusState
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -64,7 +65,7 @@ import java.time.format.DateTimeFormatter
 fun MainScreen(
     uiState: MainUiState,
     onImageLoad: (Int, String) -> Unit,
-    onRecordEpisode: (String) -> Unit,
+    onRecordEpisode: (String, String, StatusState) -> Unit,
     onNavigateToHistory: () -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -145,7 +146,7 @@ fun MainScreen(
                                         onImageLoad(program.program.annictId, imageUrl)
                                     }
                                 },
-                                onRecordEpisode = { onRecordEpisode(program.program.episode.id) },
+                                onRecordEpisode = onRecordEpisode,
                                 uiState = uiState
                             )
                         }
@@ -233,7 +234,7 @@ fun MainScreen(
 fun ProgramCard(
     programWithWork: ProgramWithWork,
     onImageLoad: () -> Unit,
-    onRecordEpisode: (String) -> Unit,
+    onRecordEpisode: (String, String, StatusState) -> Unit,
     uiState: MainUiState
 ) {
     ElevatedCard(
@@ -404,7 +405,13 @@ fun ProgramCard(
                 ) {
                     // 記録ボタン
                     FilledTonalIconButton(
-                        onClick = { onRecordEpisode(programWithWork.program.episode.id) },
+                        onClick = {
+                            onRecordEpisode(
+                                programWithWork.program.episode.id,
+                                programWithWork.work.id,
+                                StatusState.valueOf(programWithWork.work.viewerStatusState)
+                            )
+                        },
                         modifier = Modifier.size(40.dp),
                         enabled = !uiState.isRecording,
                         colors = if (uiState.recordingSuccess == programWithWork.program.episode.id) {

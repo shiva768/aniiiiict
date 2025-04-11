@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             uiState = uiState,
                             onImageLoad = { id, url -> viewModel.onImageLoad(id, url) },
-                            onRecordEpisode = { id -> viewModel.recordEpisode(id) },
+                            onRecordEpisode = { id, workId, status -> viewModel.recordEpisode(id, workId, status) },
                             onNavigateToHistory = { navController.navigate("history") },
                             onRefresh = { viewModel.refresh() }
                         )
