@@ -13,7 +13,6 @@ import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
-import com.zelretch.aniiiiiict.util.NetworkMonitor
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.Module
 import dagger.Provides
@@ -37,9 +36,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAnnictAuthManager(
-        @ApplicationContext context: Context,
         tokenManager: TokenManager
-    ): AnnictAuthManager = AnnictAuthManager(context, tokenManager)
+    ): AnnictAuthManager = AnnictAuthManager(tokenManager)
 
     @Provides
     @Singleton
@@ -115,12 +113,6 @@ object AppModule {
             apolloClient
         )
     }
-
-    @Provides
-    @Singleton
-    fun provideNetworkMonitor(
-        @ApplicationContext context: Context
-    ): NetworkMonitor = NetworkMonitor(context)
 
     @Provides
     @Singleton

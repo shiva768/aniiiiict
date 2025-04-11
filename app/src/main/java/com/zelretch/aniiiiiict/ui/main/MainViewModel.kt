@@ -9,7 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.type.StatusState
-import com.zelretch.aniiiiiict.util.Logger
+import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -51,17 +51,17 @@ class MainViewModel @Inject constructor(
 
     private fun checkAuthState() {
         viewModelScope.launch {
-            Logger.logInfo("認証状態を確認中", "checkAuthState")
+            AniiiiiictLogger.logInfo("認証状態を確認中", "checkAuthState")
             try {
                 if (!repository.isAuthenticated()) {
-                    Logger.logInfo("未認証のため認証を開始", "checkAuthState")
+                    AniiiiiictLogger.logInfo("未認証のため認証を開始", "checkAuthState")
                     startAuth()
                 } else {
-                    Logger.logInfo("認証済みのためプログラム一覧を取得", "checkAuthState")
+                    AniiiiiictLogger.logInfo("認証済みのためプログラム一覧を取得", "checkAuthState")
                     loadPrograms()
                 }
             } catch (e: Exception) {
-                Logger.logError(e, "認証状態の確認中にエラーが発生")
+                AniiiiiictLogger.logError(e, "認証状態の確認中にエラーが発生")
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "認証状態の確認に失敗しました",
                     isLoading = false
@@ -141,7 +141,7 @@ class MainViewModel @Inject constructor(
 
                     if (imageUrl == null) {
                         // 有効なURLがない場合はスキップ
-                        Logger.logInfo(
+                        AniiiiiictLogger.logInfo(
                             "有効な画像URLがないためスキップ: ${program.work.title}",
                             "preloadImages"
                         )
@@ -152,7 +152,7 @@ class MainViewModel @Inject constructor(
                     val workId = try {
                         program.work.title.hashCode().toLong() // 一時的な解決策としてハッシュコードを使用
                     } catch (e: Exception) {
-                        Logger.logError(e, "ワークIDの変換に失敗: ${program.work.title}")
+                        AniiiiiictLogger.logError(e, "ワークIDの変換に失敗: ${program.work.title}")
                         return@forEach
                     }
 
@@ -162,20 +162,23 @@ class MainViewModel @Inject constructor(
                         successCount++
                     } else {
                         failCount++
-                        Logger.logWarning(
+                        AniiiiiictLogger.logWarning(
                             "画像の保存に失敗: workId=$workId, url=$imageUrl",
                             "preloadImages"
                         )
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    Logger.logError(e, "画像のプリロード中にエラー: ${program.work.title}")
+                    AniiiiiictLogger.logError(
+                        e,
+                        "画像のプリロード中にエラー: ${program.work.title}"
+                    )
                     failCount++
                 }
             }
 
             val endTime = System.currentTimeMillis()
-            Logger.logInfo(
+            AniiiiiictLogger.logInfo(
                 "画像プリロード完了: 成功=${successCount}件, 失敗=${failCount}件, 合計時間=${endTime - startTime}ms",
                 "preloadImages"
             )
@@ -187,16 +190,16 @@ class MainViewModel @Inject constructor(
             try {
                 // 無効なURLはスキップ
                 if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
-                    Logger.logWarning("無効な画像URL: '$imageUrl'", "onImageLoad")
+                    AniiiiiictLogger.logWarning("無効な画像URL: '$imageUrl'", "onImageLoad")
                     return@launch
                 }
 
                 val success = repository.saveWorkImage(workId.toLong(), imageUrl)
                 if (!success) {
-                    Logger.logWarning("画像の保存に失敗 - workId: $workId", "onImageLoad")
+                    AniiiiiictLogger.logWarning("画像の保存に失敗 - workId: $workId", "onImageLoad")
                 }
             } catch (e: Exception) {
-                Logger.logError(e, "画像の保存に失敗 - workId: $workId")
+                AniiiiiictLogger.logError(e, "画像の保存に失敗 - workId: $workId")
             }
         }
     }
@@ -212,9 +215,9 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                Logger.logInfo("認証URLを取得中", "startAuth")
+                AniiiiiictLogger.logInfo("認証URLを取得中", "startAuth")
                 val authUrl = repository.getAuthUrl()
-                Logger.logInfo("認証URLを取得: $authUrl", "startAuth")
+                AniiiiiictLogger.logInfo("認証URLを取得: $authUrl", "startAuth")
 
                 // 少し遅延を入れて遷移を安定させる
                 delay(200)
@@ -224,7 +227,7 @@ class MainViewModel @Inject constructor(
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Logger.logError(e, "認証URLの取得に失敗")
+                AniiiiiictLogger.logError(e, "認証URLの取得に失敗")
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "認証に失敗しました",
                     isLoading = false,
@@ -239,7 +242,7 @@ class MainViewModel @Inject constructor(
         if (isAuthInProgress) {
             viewModelScope.launch {
                 try {
-                    Logger.logInfo(
+                    AniiiiiictLogger.logInfo(
                         "認証コードを処理中: ${code.take(5)}...",
                         "handleAuthCallback"
                     )
@@ -250,7 +253,7 @@ class MainViewModel @Inject constructor(
 
                     val success = repository.handleAuthCallback(code)
                     if (success) {
-                        Logger.logInfo(
+                        AniiiiiictLogger.logInfo(
                             "認証成功、プログラム一覧を読み込みます",
                             "handleAuthCallback"
                         )
@@ -266,7 +269,7 @@ class MainViewModel @Inject constructor(
                         // プログラム一覧を読み込む
                         loadPrograms()
                     } else {
-                        Logger.logWarning("認証が失敗しました", "handleAuthCallback")
+                        AniiiiiictLogger.logWarning("認証が失敗しました", "handleAuthCallback")
                         println("MainViewModel: 認証失敗")
 
                         // 少し待ってからUIを更新
@@ -279,7 +282,7 @@ class MainViewModel @Inject constructor(
                         isAuthInProgress = false
                     }
                 } catch (e: Exception) {
-                    Logger.logError(e, "認証コールバックの処理中にエラーが発生")
+                    AniiiiiictLogger.logError(e, "認証コールバックの処理中にエラーが発生")
                     println("MainViewModel: 認証処理中に例外が発生 - ${e.message}")
                     e.printStackTrace()
 
@@ -347,7 +350,7 @@ class MainViewModel @Inject constructor(
                         )
                     }
             } catch (e: Exception) {
-                Logger.logError(e, "エピソードの記録に失敗: episodeId=$episodeId")
+                AniiiiiictLogger.logError(e, "エピソードの記録に失敗: episodeId=$episodeId")
                 _uiState.value = _uiState.value.copy(
                     isRecording = false,
                     error = "エピソードの記録に失敗しました: ${e.localizedMessage}"
@@ -360,7 +363,7 @@ class MainViewModel @Inject constructor(
      * プログラム一覧を再読み込み
      */
     fun refresh() {
-        Logger.logInfo("プログラム一覧を再読み込み", "MainViewModel.refresh")
+        AniiiiiictLogger.logInfo("プログラム一覧を再読み込み", "MainViewModel.refresh")
         loadPrograms()
     }
 }

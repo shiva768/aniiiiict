@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.AnnictWork
 import com.zelretch.aniiiiiict.data.model.rest.AnnictProgram
-import com.zelretch.aniiiiiict.util.Logger
+import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -32,15 +32,12 @@ class AnnictApiClient @Inject constructor(
         return OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val original = chain.request()
-                val token = tokenManager.getAccessToken()
-                if (token == null) {
-                    throw Exception("API error: 401 - No access token")
-                }
+                val token = tokenManager.getAccessToken() ?: throw Exception("API error: 401 - No access token")
                 val request = original.newBuilder()
                     .header("Authorization", "Bearer $token")
                     .method(original.method, original.body)
                     .build()
-                Logger.logInfo(
+                AniiiiiictLogger.logInfo(
                     "APIリクエスト: ${request.method} ${request.url}",
                     "AnnictApiClient"
                 )
@@ -85,28 +82,28 @@ class AnnictApiClient @Inject constructor(
         unwatched: Boolean
     ): Result<List<AnnictProgram>> {
         return try {
-            Logger.logInfo("プログラム一覧を取得中 - unwatched: $unwatched", "AnnictApiClient")
+            AniiiiiictLogger.logInfo("プログラム一覧を取得中 - unwatched: $unwatched", "AnnictApiClient")
             if (!tokenManager.hasValidToken()) {
-                Logger.logWarning("有効なトークンがありません", "AnnictApiClient")
+                AniiiiiictLogger.logWarning("有効なトークンがありません", "AnnictApiClient")
                 return Result.failure(Exception("API error: 401 - No valid token"))
             }
             val response = api.getPrograms(unwatched)
             if (response.isSuccessful) {
                 val programs = response.body()?.programs ?: emptyList()
-                Logger.logInfo(
+                AniiiiiictLogger.logInfo(
                     "プログラム一覧の取得に成功: ${programs.size}件",
                     "AnnictApiClient"
                 )
                 Result.success(programs)
             } else {
-                Logger.logError(
+                AniiiiiictLogger.logError(
                     Exception("API error: ${response.code()}"),
                     "プログラム一覧の取得に失敗 - status: ${response.code()}"
                 )
                 Result.failure(Exception("API error: ${response.code()}"))
             }
         } catch (e: Exception) {
-            Logger.logError(e, "プログラム一覧の取得中に例外が発生")
+            AniiiiiictLogger.logError(e, "プログラム一覧の取得中に例外が発生")
             Result.failure(e)
         }
     }

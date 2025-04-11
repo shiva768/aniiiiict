@@ -2,13 +2,14 @@ package com.zelretch.aniiiiiict.data.auth
 
 import android.content.Context
 import android.util.Log
-import com.zelretch.aniiiiiict.util.Logger
+import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 @Singleton
 class TokenManager @Inject constructor(
-    private val context: Context
+    context: Context
 ) {
     companion object {
         private const val TAG = "TokenManager"
@@ -21,19 +22,19 @@ class TokenManager @Inject constructor(
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
             Log.e(TAG, "空のトークンを保存しようとしました")
-            Logger.logWarning("空のトークンを保存しようとしました", "saveAccessToken")
+            AniiiiiictLogger.logWarning("空のトークンを保存しようとしました", "saveAccessToken")
             return
         }
 
         Log.d(TAG, "アクセストークンを保存: ${token.take(10)}...")
-        Logger.logInfo("アクセストークンを保存: ${token.take(10)}...", "saveAccessToken")
+        AniiiiiictLogger.logInfo("アクセストークンを保存: ${token.take(10)}...", "saveAccessToken")
 
         try {
-            prefs.edit().putString(TOKEN_KEY, token).apply()
+            prefs.edit { putString(TOKEN_KEY, token) }
             Log.d(TAG, "アクセストークンの保存に成功")
         } catch (e: Exception) {
             Log.e(TAG, "アクセストークンの保存に失敗: ${e.message}", e)
-            Logger.logError(e, "アクセストークンの保存に失敗")
+            AniiiiiictLogger.logError(e, "アクセストークンの保存に失敗")
         }
     }
 
@@ -45,12 +46,6 @@ class TokenManager @Inject constructor(
             Log.d(TAG, "アクセストークンを取得: ${token.take(10)}...")
         }
         return token
-    }
-
-    fun clearToken() {
-        Log.d(TAG, "アクセストークンをクリア")
-        Logger.logInfo("アクセストークンをクリア", "clearToken")
-        prefs.edit().remove(TOKEN_KEY).apply()
     }
 
     fun hasValidToken(): Boolean {
