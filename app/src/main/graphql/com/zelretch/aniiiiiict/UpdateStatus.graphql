@@ -2,11 +2,12 @@ mutation UpdateStatus($workId: ID!, $state: StatusState!) {
   updateStatus(input: {
     workId: $workId,
     state: $state,
-    clientMutationId: "android-app-status"
+    clientMutationId: "aniiiiiict-update-status"
   }) {
     work {
       id
       viewerStatusState
     }
+    clientMutationId
   }
 } 

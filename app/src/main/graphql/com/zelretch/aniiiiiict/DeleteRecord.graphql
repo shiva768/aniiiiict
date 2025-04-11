@@ -1,5 +1,8 @@
 mutation DeleteRecordMutation($recordId: ID!) {
-  deleteRecord(input: {recordId: $recordId}) {
+  deleteRecord(input: {
+    recordId: $recordId
+    clientMutationId: "aniiiiiict-delete-record"
+  }) {
     clientMutationId
   }
 } 

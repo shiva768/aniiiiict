@@ -1,11 +1,12 @@
 mutation CreateRecord($episodeId: ID!) {
   createRecord(input: {
     episodeId: $episodeId,
-    clientMutationId: "android-app-record"
+    clientMutationId: "aniiiiiict-create-record"
   }) {
     record {
       id
       annictId
     }
+    clientMutationId
   }
 } 
