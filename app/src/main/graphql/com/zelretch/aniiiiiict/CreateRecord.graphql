@@ -3,10 +3,9 @@ mutation CreateRecord($episodeId: ID!) {
     episodeId: $episodeId,
     clientMutationId: "aniiiiiict-create-record"
   }) {
+    clientMutationId
     record {
       id
-      annictId
     }
-    clientMutationId
   }
 } 

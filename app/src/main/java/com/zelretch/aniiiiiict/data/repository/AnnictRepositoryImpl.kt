@@ -474,7 +474,7 @@ class AnnictRepositoryImpl @Inject constructor(
 
             if (!response.hasErrors()) {
                 Logger.logInfo(
-                    "ステータス更新が成功しました: ${response.data?.updateStatus?.work?.viewerStatusState}",
+                    "ステータス更新が成功しました: ${response.data?.updateStatus?.work?.id}",
                     "AnnictRepositoryImpl.updateWorkStatus"
                 )
                 true

@@ -4,10 +4,9 @@ mutation UpdateStatus($workId: ID!, $state: StatusState!) {
     state: $state,
     clientMutationId: "aniiiiiict-update-status"
   }) {
+    clientMutationId
     work {
       id
-      viewerStatusState
     }
-    clientMutationId
   }
 } 

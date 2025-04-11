@@ -4,5 +4,8 @@ mutation DeleteRecordMutation($recordId: ID!) {
     clientMutationId: "aniiiiiict-delete-record"
   }) {
     clientMutationId
+    episode {
+      id
+    }
   }
 } 
