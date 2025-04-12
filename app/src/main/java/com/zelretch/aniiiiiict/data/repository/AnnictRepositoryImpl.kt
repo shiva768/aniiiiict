@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiiict.data.repository
 
+import com.apollographql.apollo3.api.Optional
 import com.zelretch.aniiiiiict.CreateRecordMutation
 import com.zelretch.aniiiiiict.DeleteRecordMutation
 import com.zelretch.aniiiiiict.UpdateStatusMutation
@@ -34,6 +35,7 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
+import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(
@@ -293,8 +295,8 @@ class AnnictRepositoryImpl @Inject constructor(
             .sortedBy { it.program.startedAt }
     }
 
-    override suspend fun getRecords(after: String?): List<Record> {
-        if (!currentCoroutineContext().isActive) return emptyList()
+    override suspend fun getRecords(after: String?): PaginatedRecords {
+        if (!currentCoroutineContext().isActive) return PaginatedRecords(emptyList())
 
         AniiiiiictLogger.logInfo("記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
 
@@ -305,14 +307,16 @@ class AnnictRepositoryImpl @Inject constructor(
                     "アクセストークンがありません",
                     "AnnictRepositoryImpl.getRecords"
                 )
-                return emptyList()
+                return PaginatedRecords(emptyList())
             }
 
-            val query = ViewerRecordsQuery()
+            val query = ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
             val response = apolloClient.getApolloClient().query(query).execute()
 
             if (!response.hasErrors()) {
-                val records = response.data?.viewer?.records?.nodes?.mapNotNull { node ->
+                val nodes = response.data?.viewer?.records?.nodes ?: emptyList()
+                val pageInfo = response.data?.viewer?.records?.pageInfo
+                val records = nodes.mapNotNull { node ->
                     node?.let {
                         val episode = it.episode
                         val work = episode.work
@@ -341,24 +345,28 @@ class AnnictRepositoryImpl @Inject constructor(
                             )
                         )
                     }
-                } ?: emptyList()
+                }
 
                 AniiiiiictLogger.logInfo(
                     "${records.size}件の記録を取得しました",
                     "AnnictRepositoryImpl.getRecords"
                 )
-                records
+                PaginatedRecords(
+                    records = records,
+                    hasNextPage = pageInfo?.hasNextPage == true,
+                    endCursor = pageInfo?.endCursor
+                )
             } else {
                 AniiiiiictLogger.logError(
                     "GraphQLエラー: ${response.errors}",
                     "AnnictRepositoryImpl.getRecords"
                 )
-                emptyList()
+                PaginatedRecords(emptyList())
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             AniiiiiictLogger.logError(e, "AnnictRepositoryImpl.getRecords")
-            emptyList()
+            PaginatedRecords(emptyList())
         }
     }
 
