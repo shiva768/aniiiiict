@@ -2,21 +2,19 @@ package com.zelretch.aniiiiiict.ui.main
 
 import android.content.Context
 import android.content.Intent
-import androidx.core.net.toUri
-import androidx.lifecycle.ViewModel
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.type.StatusState
+import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,14 +26,14 @@ import javax.inject.Inject
 
 data class MainUiState(
     val programs: List<ProgramWithWork> = emptyList(),
-    val records: List<Record> = emptyList(),
-    val filterState: FilterState = FilterState(),
-    val isFilterVisible: Boolean = false,
+    val records: List<com.zelretch.aniiiiiict.data.model.Record> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val isAuthenticating: Boolean = false,
     val isRecording: Boolean = false,
     val recordingSuccess: String? = null,
+    val filterState: FilterState = FilterState(),
+    val isFilterVisible: Boolean = false,
     val availableMedia: List<String> = emptyList(),
     val availableSeasons: List<String> = emptyList(),
     val availableYears: List<Int> = emptyList(),
@@ -48,7 +46,7 @@ class MainViewModel @Inject constructor(
     private val repository: AnnictRepository,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val programFilter: ProgramFilter
-) : ViewModel() {
+) : BaseViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
@@ -57,6 +55,14 @@ class MainViewModel @Inject constructor(
     init {
         checkAuthState()
         loadInitialData()
+    }
+
+    override fun updateLoadingState(isLoading: Boolean) {
+        _uiState.update { it.copy(isLoading = isLoading) }
+    }
+
+    override fun updateErrorState(error: String?) {
+        _uiState.update { it.copy(error = error) }
     }
 
     private fun checkAuthState() {
@@ -87,16 +93,9 @@ class MainViewModel @Inject constructor(
     }
 
     private fun loadInitialData() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                loadPrograms()
-                loadRecords()
-            } catch (e: Exception) {
-                handleError(e)
-            } finally {
-                _uiState.update { it.copy(isLoading = false) }
-            }
+        executeWithLoading {
+            loadPrograms()
+            loadRecords()
         }
     }
 
@@ -128,7 +127,7 @@ class MainViewModel @Inject constructor(
     private fun preloadImages(programs: List<ProgramWithWork>) {
         viewModelScope.launch(Dispatchers.IO) {
             programs.forEach { program ->
-                if (!currentCoroutineContext().isActive) return@forEach
+                if (!isActive) return@forEach
 
                 try {
                     val imageUrl = program.work.image?.recommendedImageUrl.takeIf {
@@ -194,9 +193,9 @@ class MainViewModel @Inject constructor(
 
                 delay(200)
 
-                if (!currentCoroutineContext().isActive) return@launch
+                if (!isActive) return@launch
 
-                val intent = Intent(Intent.ACTION_VIEW, authUrl.toUri())
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } catch (e: Exception) {
@@ -221,7 +220,7 @@ class MainViewModel @Inject constructor(
                         println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
                         delay(200)
 
-                        if (!currentCoroutineContext().isActive) return@launch
+                        if (!isActive) return@launch
 
                         val success = repository.handleAuthCallback(code)
                         if (success) {
@@ -324,7 +323,7 @@ class MainViewModel @Inject constructor(
 
     fun refresh() {
         AniiiiiictLogger.logInfo("プログラム一覧を再読み込み", "MainViewModel.refresh")
-        viewModelScope.launch {
+        executeWithLoading {
             loadPrograms()
         }
     }
