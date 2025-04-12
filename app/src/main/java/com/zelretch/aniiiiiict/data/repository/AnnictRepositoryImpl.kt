@@ -117,16 +117,16 @@ class AnnictRepositoryImpl @Inject constructor(
                 }
 
                 val localPath = imageDownloader.downloadImage(workId, imageUrl)
-                // パスが空でなければデータベースに保存
-                if (localPath.isNotEmpty()) {
+                // パスがnullでなければデータベースに保存
+                if (localPath != null) {
                     workImageDao.insertWorkImage(WorkImage(workId, imageUrl, localPath))
                     true // 成功
                 } else {
                     AniiiiiictLogger.logWarning(
-                        "画像の保存に失敗 - 空のパス: workId=$workId",
+                        "画像の保存に失敗 - ダウンロード失敗: workId=$workId",
                         "AnnictRepositoryImpl.saveWorkImage"
                     )
-                    false // 失敗（空のパス）
+                    false // 失敗（ダウンロード失敗）
                 }
             } catch (e: Exception) {
                 // エラーがあっても続行できるように例外を処理

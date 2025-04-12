@@ -47,6 +47,9 @@ android {
             "ANNICT_ACCESS_TOKEN",
             "\"${localProperties.getProperty("ANNICT_ACCESS_TOKEN", "")}\""
         )
+
+        // DEBUGフラグを手動で設定
+//        buildConfigField("boolean", "DEBUG", "false")
     }
 
     buildTypes {
