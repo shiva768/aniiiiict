@@ -113,7 +113,7 @@ class MainViewModel @Inject constructor(
 
                 repository.getProgramsWithWorks().collect { programs ->
                     val filteredPrograms = applyFilters(programs, _uiState.value.filterState)
-                    
+
                     updateAvailableFilters(programs) // すべてのプログラムから利用可能なフィルターを更新
                     _uiState.value = _uiState.value.copy(
                         programs = filteredPrograms,
@@ -131,21 +131,24 @@ class MainViewModel @Inject constructor(
     }
 
     // フィルタリングロジックを別メソッドに抽出
-    private fun applyFilters(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> {
+    private fun applyFilters(
+        programs: List<ProgramWithWork>,
+        filterState: FilterState
+    ): List<ProgramWithWork> {
         // 基本フィルタリング
         var filtered = programs.filter { program ->
             (filterState.selectedMedia == null || program.work.media == filterState.selectedMedia) &&
-            (filterState.selectedSeason == null || program.work.seasonName?.split(" ")?.firstOrNull() == filterState.selectedSeason) &&
-            (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
-            (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
-            (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString())
+                    (filterState.selectedSeason == null || program.work.seasonName?.split(" ")
+                        ?.firstOrNull() == filterState.selectedSeason) &&
+                    (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
+                    (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
+                    (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString())
         }
 
         // 検索クエリでフィルタリング
         if (filterState.searchQuery.isNotBlank()) {
             filtered = filtered.filter { program ->
-                program.work.title.contains(filterState.searchQuery, ignoreCase = true) ||
-                program.program.channel.name.contains(filterState.searchQuery, ignoreCase = true)
+                program.work.title.contains(filterState.searchQuery, ignoreCase = true)
             }
         }
 
@@ -391,7 +394,11 @@ class MainViewModel @Inject constructor(
                         )
                     }
             } catch (e: Exception) {
-                handleError(e, "エピソードの記録に失敗: episodeId=$episodeId", "エピソードの記録に失敗しました")
+                handleError(
+                    e,
+                    "エピソードの記録に失敗: episodeId=$episodeId",
+                    "エピソードの記録に失敗しました"
+                )
                 _uiState.value = _uiState.value.copy(isRecording = false)
             }
         }
