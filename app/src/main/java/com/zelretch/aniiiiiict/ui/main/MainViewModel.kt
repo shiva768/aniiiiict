@@ -2,6 +2,7 @@ package com.zelretch.aniiiiiict.ui.main
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.ui.text.toLowerCase
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,13 +24,24 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
+data class FilterState(
+    val selectedMedia: String? = null,
+    val selectedSeason: String? = null,
+    val selectedChannel: String? = null,
+    val searchQuery: String = ""
+)
+
 data class MainUiState(
     val programs: List<ProgramWithWork> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val isAuthenticating: Boolean = false,
     val isRecording: Boolean = false,
-    val recordingSuccess: String? = null
+    val recordingSuccess: String? = null,
+    val filterState: FilterState = FilterState(),
+    val availableMedia: List<String> = emptyList(),
+    val availableSeasons: List<String> = emptyList(),
+    val availableChannels: List<String> = emptyList()
 )
 
 @HiltViewModel
@@ -78,22 +90,33 @@ class MainViewModel @Inject constructor(
 
                 // データがすでに表示されている場合はローディングを表示しない
                 if (_uiState.value.programs.isEmpty()) {
-                    _uiState.value = _uiState.value.copy(isLoading = true)
+                    _uiState.value = _uiState.value.copy(isLoading = true, error = null)
                 }
 
                 // 少し遅延させてUIの更新頻度を下げる
                 delay(300)
                 if (!currentCoroutineContext().isActive) return@launch
 
+                val filterState = _uiState.value.filterState
                 repository.getProgramsWithWorks().collect { programs ->
+                    val filteredPrograms = programs.filter { program ->
+                        (filterState.selectedMedia == null || program.work.media == filterState.selectedMedia) &&
+                        (filterState.selectedSeason == null || program.work.seasonName == filterState.selectedSeason) &&
+                        (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
+                        (filterState.searchQuery.isEmpty() || 
+                            program.work.title.contains(filterState.searchQuery, ignoreCase = true) ||
+                            program.program.channel.name.contains(filterState.searchQuery, ignoreCase = true))
+                    }
+
+                    updateAvailableFilters(filteredPrograms)
                     _uiState.value = _uiState.value.copy(
-                        programs = programs,
+                        programs = filteredPrograms,
                         isLoading = false,
                         isAuthenticating = false
                     )
 
                     // バックグラウンドで画像をプリロード
-                    preloadImages(programs)
+                    preloadImages(filteredPrograms)
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) {
@@ -105,7 +128,8 @@ class MainViewModel @Inject constructor(
                 println("プログラムの読み込み中にエラーが発生しました: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = e.localizedMessage
+                    error = e.localizedMessage ?: "Unknown error occurred",
+                    isAuthenticating = false
                 )
             }
         }
@@ -365,5 +389,34 @@ class MainViewModel @Inject constructor(
     fun refresh() {
         AniiiiiictLogger.logInfo("プログラム一覧を再読み込み", "MainViewModel.refresh")
         loadPrograms()
+    }
+
+    fun updateFilter(
+        selectedMedia: String? = _uiState.value.filterState.selectedMedia,
+        selectedSeason: String? = _uiState.value.filterState.selectedSeason,
+        selectedChannel: String? = _uiState.value.filterState.selectedChannel,
+        searchQuery: String = _uiState.value.filterState.searchQuery
+    ) {
+        _uiState.value = _uiState.value.copy(
+            filterState = FilterState(
+                selectedMedia = selectedMedia,
+                selectedSeason = selectedSeason,
+                selectedChannel = selectedChannel,
+                searchQuery = searchQuery
+            )
+        )
+        loadPrograms()
+    }
+
+    private fun updateAvailableFilters(programs: List<ProgramWithWork>) {
+        val media = programs.mapNotNull { it.work.media }.distinct().sorted()
+        val seasons = programs.mapNotNull { it.work.seasonName }.distinct().sorted()
+        val channels = programs.mapNotNull { it.program.channel?.name }.distinct().sorted()
+
+        _uiState.value = _uiState.value.copy(
+            availableMedia = media,
+            availableSeasons = seasons,
+            availableChannels = channels
+        )
     }
 }
