@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
@@ -26,7 +27,6 @@ import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +34,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,12 +54,27 @@ fun HistoryScreen(
     onNavigateBack: () -> Unit,
     onRetry: () -> Unit,
     onDeleteRecord: (String) -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onLoadNextPage: () -> Unit
 ) {
     val pullRefreshState = rememberPullRefreshState(
         refreshing = uiState.isLoading,
         onRefresh = onRefresh
     )
+
+    val listState = rememberLazyListState()
+    val shouldLoadNextPage = remember {
+        derivedStateOf {
+            val lastItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            lastItem != null && lastItem.index >= listState.layoutInfo.totalItemsCount - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadNextPage.value) {
+        if (shouldLoadNextPage.value && uiState.hasNextPage && !uiState.isLoading) {
+            onLoadNextPage()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -96,7 +114,8 @@ fun HistoryScreen(
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    state = listState
                 ) {
                     items(
                         items = uiState.records,
@@ -107,20 +126,21 @@ fun HistoryScreen(
                             onDelete = { onDeleteRecord(record.id) }
                         )
                     }
-                }
-            }
 
-            AnimatedVisibility(
-                visible = uiState.isLoading && uiState.records.isNotEmpty(),
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    CircularProgressIndicator()
+                    if (uiState.hasNextPage) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (uiState.isLoading) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -212,6 +232,7 @@ fun RecordItem(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
             IconButton(
                 onClick = onDelete,
                 modifier = Modifier.align(Alignment.End)
