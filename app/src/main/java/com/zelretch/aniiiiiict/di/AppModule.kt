@@ -2,9 +2,6 @@ package com.zelretch.aniiiiiict.di
 
 import android.content.Context
 import androidx.room.Room
-import com.zelretch.aniiiiiict.data.api.AnnictApiClient
-import com.zelretch.aniiiiiict.data.api.AnnictApiService
-import com.zelretch.aniiiiiict.data.api.AnnictConfig
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
@@ -20,8 +17,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Module
@@ -47,23 +42,6 @@ object AppModule {
                 level = okhttp3.logging.HttpLoggingInterceptor.Level.BODY
             })
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnnictApiService(okHttpClient: OkHttpClient): AnnictApiService {
-        val retrofit = Retrofit.Builder()
-            .baseUrl(AnnictConfig.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(okHttpClient)
-            .build()
-        return retrofit.create(AnnictApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnnictApiClient(tokenManager: TokenManager): AnnictApiClient {
-        return AnnictApiClient(tokenManager)
     }
 
     @Provides
@@ -97,7 +75,6 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAnnictRepository(
-        apiClient: AnnictApiClient,
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
         workImageDao: WorkImageDao,
@@ -105,7 +82,6 @@ object AppModule {
         apolloClient: ApolloClient
     ): AnnictRepository {
         return AnnictRepositoryImpl(
-            apiClient,
             tokenManager,
             authManager,
             workImageDao,

@@ -6,13 +6,11 @@ import com.zelretch.aniiiiiict.DeleteRecordMutation
 import com.zelretch.aniiiiiict.UpdateStatusMutation
 import com.zelretch.aniiiiiict.ViewerProgramsQuery
 import com.zelretch.aniiiiiict.ViewerRecordsQuery
-import com.zelretch.aniiiiiict.data.api.AnnictApiClient
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
 import com.zelretch.aniiiiiict.data.local.entity.WorkImage
-import com.zelretch.aniiiiiict.data.model.AnnictWork
 import com.zelretch.aniiiiiict.data.model.Channel
 import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Program
@@ -39,7 +37,6 @@ import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(
-    private val apiClient: AnnictApiClient,
     private val tokenManager: TokenManager,
     private val authManager: AnnictAuthManager,
     private val workImageDao: WorkImageDao,
@@ -54,12 +51,6 @@ class AnnictRepositoryImpl @Inject constructor(
 
     override suspend fun getAuthUrl(): String {
         return authManager.getAuthorizationUrl()
-    }
-
-    override suspend fun getWorks(): List<AnnictWork> {
-        val watchingWorks = apiClient.getWatchingWorks().getOrThrow()
-        val wantToWatchWorks = apiClient.getWantToWatchWorks().getOrThrow()
-        return watchingWorks + wantToWatchWorks
     }
 
     override suspend fun createRecord(episodeId: String, workId: String): Boolean {
