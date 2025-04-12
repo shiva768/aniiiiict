@@ -16,7 +16,7 @@ interface AnnictRepository {
     suspend fun saveWorkImage(workId: Long, imageUrl: String): Boolean
     suspend fun getWorkImage(workId: Long): WorkImage?
     suspend fun getProgramsWithWorks(): Flow<List<ProgramWithWork>>
-    suspend fun getRecords(limit: Int = 30): List<Record>
+    suspend fun getRecords(after: String? = null): List<Record>
     suspend fun deleteRecord(recordId: String): Boolean
     suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean
 } 

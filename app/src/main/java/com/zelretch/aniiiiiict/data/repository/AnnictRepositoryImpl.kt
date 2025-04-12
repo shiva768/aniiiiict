@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiiict.data.repository
 
-import com.apollographql.apollo3.api.ApolloResponse
 import com.zelretch.aniiiiiict.CreateRecordMutation
 import com.zelretch.aniiiiiict.DeleteRecordMutation
 import com.zelretch.aniiiiiict.UpdateStatusMutation
@@ -212,7 +211,7 @@ class AnnictRepositoryImpl @Inject constructor(
                     "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
 
-                val programsWithWorks = processProgramsResponse(response)
+                val programsWithWorks = processProgramsResponse(programs)
                 AniiiiiictLogger.logInfo(
                     "変換後のプログラム数: ${programsWithWorks.size}",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
@@ -229,10 +228,9 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun processProgramsResponse(response: ApolloResponse<ViewerProgramsQuery.Data>): List<ProgramWithWork> {
-        val programs = response.data?.viewer?.programs?.nodes?.mapNotNull { node ->
-            if (node == null) return@mapNotNull null
-
+    private fun processProgramsResponse(responsePrograms: List<ViewerProgramsQuery.Node?>?): List<ProgramWithWork> {
+        val programs = responsePrograms?.mapNotNull { node ->
+            if (node == null ) return@mapNotNull null
             val startedAt = try {
                 LocalDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
             } catch (_: Exception) {
@@ -295,7 +293,7 @@ class AnnictRepositoryImpl @Inject constructor(
             .sortedBy { it.program.startedAt }
     }
 
-    override suspend fun getRecords(limit: Int): List<Record> {
+    override suspend fun getRecords(after: String?): List<Record> {
         if (!currentCoroutineContext().isActive) return emptyList()
 
         AniiiiiictLogger.logInfo("記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")

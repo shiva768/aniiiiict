@@ -1,7 +1,11 @@
-query ViewerRecordsQuery() {
+query ViewerRecordsQuery($after: String) {
   viewer {
-    records(first: 30, orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes {
+    records(first: 30, after: $after, orderBy: {field: CREATED_AT, direction: DESC}) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      nodes{
         id
         comment
         rating

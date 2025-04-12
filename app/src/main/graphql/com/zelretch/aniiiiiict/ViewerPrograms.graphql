@@ -7,6 +7,10 @@ query ViewerPrograms {
         direction: ASC
       }
     ) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
       nodes {
         annictId
         startedAt
