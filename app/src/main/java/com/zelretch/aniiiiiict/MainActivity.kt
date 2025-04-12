@@ -118,7 +118,8 @@ class MainActivity : ComponentActivity() {
                             onNavigateBack = { navController.navigateUp() },
                             onRetry = { historyViewModel.loadRecords() },
                             onDeleteRecord = { historyViewModel.deleteRecord(it) },
-                            onRefresh = { historyViewModel.loadRecords() }
+                            onRefresh = { historyViewModel.loadRecords() },
+                            onLoadNextPage = { historyViewModel.loadNextPage() }
                         )
                     }
                 }
