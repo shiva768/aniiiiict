@@ -38,7 +38,10 @@ class AnnictAuthManager @Inject constructor(
         try {
             logInfo("認証コードの処理を開始: ${code.take(5)}...", "handleAuthorizationCode")
             val tokenResponse = getAccessTokenWithRetry(code)
-            logInfo("アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...", "handleAuthorizationCode")
+            logInfo(
+                "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...",
+                "handleAuthorizationCode"
+            )
             tokenManager.saveAccessToken(tokenResponse.accessToken)
             Result.success(Unit)
         } catch (e: Exception) {

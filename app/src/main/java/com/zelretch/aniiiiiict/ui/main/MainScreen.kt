@@ -102,7 +102,7 @@ fun MainScreen(
                             tint = if (uiState.isFilterVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    
+
                     // 履歴画面へのナビゲーションボタン
                     IconButton(
                         onClick = onNavigateToHistory
@@ -501,7 +501,7 @@ fun FilterBar(
         // 検索バー
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { 
+            onValueChange = {
                 searchQuery = it
                 onFilterChange(
                     filterState.selectedMedia,

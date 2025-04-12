@@ -13,6 +13,7 @@ import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
 import com.zelretch.aniiiiiict.data.local.entity.WorkImage
 import com.zelretch.aniiiiiict.data.model.Channel
 import com.zelretch.aniiiiiict.data.model.Episode
+import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Record
@@ -33,7 +34,6 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
-import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(
@@ -180,7 +180,7 @@ class AnnictRepositoryImpl @Inject constructor(
                     operation = query,
                     context = "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
-                
+
                 AniiiiiictLogger.logInfo(
                     "GraphQLのレスポンス: ${response.data != null}",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
@@ -220,7 +220,7 @@ class AnnictRepositoryImpl @Inject constructor(
 
     private fun processProgramsResponse(responsePrograms: List<ViewerProgramsQuery.Node?>?): List<ProgramWithWork> {
         val programs = responsePrograms?.mapNotNull { node ->
-            if (node == null ) return@mapNotNull null
+            if (node == null) return@mapNotNull null
             val startedAt = try {
                 LocalDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
             } catch (_: Exception) {
@@ -289,7 +289,8 @@ class AnnictRepositoryImpl @Inject constructor(
     ) {
         AniiiiiictLogger.logInfo("記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
 
-        val query = ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
+        val query =
+            ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
         val response = apolloClient.executeQuery(
             operation = query,
             context = "AnnictRepositoryImpl.getRecords"
@@ -374,32 +375,36 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean = executeApiRequest(
-        operation = "updateWorkStatus",
-        defaultValue = false
-    ) {
-        AniiiiiictLogger.logInfo("作品ステータスを更新中: workId=$workId, state=$state", "AnnictRepositoryImpl.updateWorkStatus")
-
-        val mutation = UpdateStatusMutation(workId = workId, state = state)
-        val response = apolloClient.executeMutation(
-            operation = mutation,
-            context = "AnnictRepositoryImpl.updateWorkStatus"
-        )
-
-        if (!response.hasErrors()) {
+    override suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean =
+        executeApiRequest(
+            operation = "updateWorkStatus",
+            defaultValue = false
+        ) {
             AniiiiiictLogger.logInfo(
-                "作品ステータスを更新しました: workId=$workId, state=$state",
+                "作品ステータスを更新中: workId=$workId, state=$state",
                 "AnnictRepositoryImpl.updateWorkStatus"
             )
-            true
-        } else {
-            AniiiiiictLogger.logError(
-                "GraphQLエラー: ${response.errors}",
-                "AnnictRepositoryImpl.updateWorkStatus"
+
+            val mutation = UpdateStatusMutation(workId = workId, state = state)
+            val response = apolloClient.executeMutation(
+                operation = mutation,
+                context = "AnnictRepositoryImpl.updateWorkStatus"
             )
-            false
+
+            if (!response.hasErrors()) {
+                AniiiiiictLogger.logInfo(
+                    "作品ステータスを更新しました: workId=$workId, state=$state",
+                    "AnnictRepositoryImpl.updateWorkStatus"
+                )
+                true
+            } else {
+                AniiiiiictLogger.logError(
+                    "GraphQLエラー: ${response.errors}",
+                    "AnnictRepositoryImpl.updateWorkStatus"
+                )
+                false
+            }
         }
-    }
 
     // 共通のAPIリクエスト処理を行うヘルパーメソッド
     private suspend fun <T> executeApiRequest(

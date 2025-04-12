@@ -101,28 +101,43 @@ class ImageDownloader @Inject constructor(
                                     return@withContext imageFile.absolutePath
                                 } else {
                                     Log.e(TAG, "ファイル名の変更に失敗")
-                                    AniiiiiictLogger.logError("ファイル名の変更に失敗 - workId: $workId", "downloadImage")
+                                    AniiiiiictLogger.logError(
+                                        "ファイル名の変更に失敗 - workId: $workId",
+                                        "downloadImage"
+                                    )
                                     return@withContext null
                                 }
                             } else {
                                 Log.e(TAG, "空のファイルが生成されました")
-                                AniiiiiictLogger.logError("空のファイルが生成されました - workId: $workId", "downloadImage")
+                                AniiiiiictLogger.logError(
+                                    "空のファイルが生成されました - workId: $workId",
+                                    "downloadImage"
+                                )
                                 return@withContext null
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "ファイル操作中にエラー: ${e.message}")
-                            AniiiiiictLogger.logError("ファイル操作中にエラー: ${e.message}", "downloadImage")
+                            AniiiiiictLogger.logError(
+                                "ファイル操作中にエラー: ${e.message}",
+                                "downloadImage"
+                            )
                             return@withContext null
                         }
                     } ?: run {
                         Log.e(TAG, "レスポンスボディがありません")
-                        AniiiiiictLogger.logError("レスポンスボディがありません - workId: $workId", "downloadImage")
+                        AniiiiiictLogger.logError(
+                            "レスポンスボディがありません - workId: $workId",
+                            "downloadImage"
+                        )
                         return@withContext null
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "画像ダウンロード中にエラー: ${e.message}")
-                AniiiiiictLogger.logError("画像の保存に失敗 - workId: $workId, url: $secureUrl, エラー: ${e.message}", "downloadImage")
+                AniiiiiictLogger.logError(
+                    "画像の保存に失敗 - workId: $workId, url: $secureUrl, エラー: ${e.message}",
+                    "downloadImage"
+                )
                 return@withContext null
             }
         }

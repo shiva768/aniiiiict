@@ -85,16 +85,22 @@ class MainActivity : ComponentActivity() {
 
                         LaunchedEffect(authCodeProcessed) {
                             if (authCodeProcessed) {
-                                AniiiiiictLogger.logInfo("認証コード処理後のプログラム読み込みを実行", "MainActivity.LaunchedEffect")
+                                AniiiiiictLogger.logInfo(
+                                    "認証コード処理後のプログラム読み込みを実行",
+                                    "MainActivity.LaunchedEffect"
+                                )
                                 viewModel.loadPrograms()
                                 authCodeProcessed = false
                             }
                         }
 
                         LaunchedEffect(Unit) {
-                            handleIntent(intent, onAuthProcessed = { 
-                                AniiiiiictLogger.logInfo("認証処理完了フラグをセット", "MainActivity.handleIntent.callback")
-                                authCodeProcessed = true 
+                            handleIntent(intent, onAuthProcessed = {
+                                AniiiiiictLogger.logInfo(
+                                    "認証処理完了フラグをセット",
+                                    "MainActivity.handleIntent.callback"
+                                )
+                                authCodeProcessed = true
                             })
                             viewModel.loadPrograms()
                         }
@@ -102,7 +108,13 @@ class MainActivity : ComponentActivity() {
                         MainScreen(
                             viewModel = viewModel,
                             onImageLoad = { id, url -> viewModel.onImageLoad(id, url) },
-                            onRecordEpisode = { id, workId, status -> viewModel.recordEpisode(id, workId, status) },
+                            onRecordEpisode = { id, workId, status ->
+                                viewModel.recordEpisode(
+                                    id,
+                                    workId,
+                                    status
+                                )
+                            },
                             onNavigateToHistory = { navController.navigate("history") },
                             onRefresh = { viewModel.refresh() }
                         )
@@ -158,7 +170,10 @@ class MainActivity : ComponentActivity() {
                 Log.d("MainActivity", "認証コードを抽出: ${code?.take(5)}...")
                 if (code != null && pendingAuthCode == null && !isProcessingAuth) {
                     pendingAuthCode = code
-                    AniiiiiictLogger.logInfo("認証コードを保存: ${code.take(5)}...", "extractAuthCode")
+                    AniiiiiictLogger.logInfo(
+                        "認証コードを保存: ${code.take(5)}...",
+                        "extractAuthCode"
+                    )
                 } else {
                     Log.d(
                         "MainActivity",
@@ -189,7 +204,7 @@ class MainActivity : ComponentActivity() {
                         lifecycleScope.launch {
                             viewModel.handleAuthCallback(code)
                             isProcessingAuth = false
-                            
+
                             // コールバックがある場合は実行
                             onAuthProcessed?.invoke()
                         }
@@ -205,7 +220,10 @@ class MainActivity : ComponentActivity() {
                     }
                 } else {
                     Log.e("MainActivity", "認証コードがURIに含まれていません: $uri")
-                    AniiiiiictLogger.logError("認証コードがURIに含まれていません: $uri", "handleIntent")
+                    AniiiiiictLogger.logError(
+                        "認証コードがURIに含まれていません: $uri",
+                        "handleIntent"
+                    )
                 }
             }
         }
