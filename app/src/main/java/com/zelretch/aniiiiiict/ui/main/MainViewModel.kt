@@ -2,7 +2,7 @@ package com.zelretch.aniiiiiict.ui.main
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
@@ -195,7 +195,7 @@ class MainViewModel @Inject constructor(
 
                 if (!isActive) return@launch
 
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
+                val intent = Intent(Intent.ACTION_VIEW, authUrl.toUri())
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } catch (e: Exception) {
