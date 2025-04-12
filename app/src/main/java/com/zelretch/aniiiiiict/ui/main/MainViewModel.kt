@@ -29,6 +29,7 @@ data class FilterState(
     val selectedSeason: String? = null,
     val selectedYear: Int? = null,
     val selectedChannel: String? = null,
+    val selectedStatus: StatusState? = null,
     val searchQuery: String = ""
 )
 
@@ -43,7 +44,8 @@ data class MainUiState(
     val availableMedia: List<String> = emptyList(),
     val availableSeasons: List<String> = emptyList(),
     val availableYears: List<Int> = emptyList(),
-    val availableChannels: List<String> = emptyList()
+    val availableChannels: List<String> = emptyList(),
+    val isFilterVisible: Boolean = false
 )
 
 @HiltViewModel
@@ -106,6 +108,7 @@ class MainViewModel @Inject constructor(
                         (filterState.selectedSeason == null || program.work.seasonName?.split(" ")?.firstOrNull() == filterState.selectedSeason) &&
                         (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
                         (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
+                        (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString()) &&
                         (filterState.searchQuery.isEmpty() || 
                             program.work.title.contains(filterState.searchQuery, ignoreCase = true) ||
                             program.program.channel.name.contains(filterState.searchQuery, ignoreCase = true))
@@ -393,6 +396,7 @@ class MainViewModel @Inject constructor(
         selectedSeason: String? = _uiState.value.filterState.selectedSeason,
         selectedYear: Int? = _uiState.value.filterState.selectedYear,
         selectedChannel: String? = _uiState.value.filterState.selectedChannel,
+        selectedStatus: StatusState? = _uiState.value.filterState.selectedStatus,
         searchQuery: String = _uiState.value.filterState.searchQuery
     ) {
         _uiState.value = _uiState.value.copy(
@@ -401,6 +405,7 @@ class MainViewModel @Inject constructor(
                 selectedSeason = selectedSeason,
                 selectedYear = selectedYear,
                 selectedChannel = selectedChannel,
+                selectedStatus = selectedStatus,
                 searchQuery = searchQuery
             )
         )
@@ -424,6 +429,12 @@ class MainViewModel @Inject constructor(
             availableSeasons = seasons,
             availableYears = years,
             availableChannels = channels
+        )
+    }
+
+    fun toggleFilterVisibility() {
+        _uiState.value = _uiState.value.copy(
+            isFilterVisible = !_uiState.value.isFilterVisible
         )
     }
 }

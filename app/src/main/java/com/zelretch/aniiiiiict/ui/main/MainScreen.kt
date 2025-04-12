@@ -88,7 +88,6 @@ fun MainScreen(
         refreshing = uiState.isLoading,
         onRefresh = onRefresh
     )
-    var showFilter by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -97,12 +96,12 @@ fun MainScreen(
                 actions = {
                     // フィルターボタン
                     IconButton(
-                        onClick = { showFilter = !showFilter }
+                        onClick = { viewModel.toggleFilterVisibility() }
                     ) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
                             contentDescription = "フィルター",
-                            tint = if (showFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            tint = if (uiState.isFilterVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     
@@ -142,7 +141,7 @@ fun MainScreen(
         ) {
             // フィルターバー（アニメーション付きで表示/非表示）
             androidx.compose.animation.AnimatedVisibility(
-                visible = showFilter,
+                visible = uiState.isFilterVisible,
                 enter = androidx.compose.animation.fadeIn() +
                         androidx.compose.animation.expandVertically(),
                 exit = androidx.compose.animation.fadeOut() +
@@ -487,12 +486,13 @@ fun FilterBar(
     availableSeasons: List<String>,
     availableYears: List<Int>,
     availableChannels: List<String>,
-    onFilterChange: (String?, String?, Int?, String?, String) -> Unit
+    onFilterChange: (String?, String?, Int?, String?, StatusState?, String) -> Unit
 ) {
     var showMediaFilter by remember { mutableStateOf(false) }
     var showSeasonFilter by remember { mutableStateOf(false) }
     var showYearFilter by remember { mutableStateOf(false) }
     var showChannelFilter by remember { mutableStateOf(false) }
+    var showStatusFilter by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf(filterState.searchQuery) }
 
     Column(
@@ -510,6 +510,7 @@ fun FilterBar(
                     filterState.selectedSeason,
                     filterState.selectedYear,
                     filterState.selectedChannel,
+                    filterState.selectedStatus,
                     it
                 )
             },
@@ -582,6 +583,20 @@ fun FilterBar(
                     )
                 }
             )
+
+            // ステータスフィルター
+            FilterChip(
+                selected = filterState.selectedStatus != null,
+                onClick = { showStatusFilter = true },
+                label = { Text(filterState.selectedStatus?.toString() ?: "ステータス") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
         }
     }
 
@@ -601,6 +616,7 @@ fun FilterBar(
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showMediaFilter = false
@@ -617,6 +633,7 @@ fun FilterBar(
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showMediaFilter = false
@@ -650,6 +667,7 @@ fun FilterBar(
                                     null,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showSeasonFilter = false
@@ -666,6 +684,7 @@ fun FilterBar(
                                     season,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showSeasonFilter = false
@@ -699,6 +718,7 @@ fun FilterBar(
                                     filterState.selectedSeason,
                                     null,
                                     filterState.selectedChannel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showYearFilter = false
@@ -715,6 +735,7 @@ fun FilterBar(
                                     filterState.selectedSeason,
                                     year,
                                     filterState.selectedChannel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showYearFilter = false
@@ -748,6 +769,7 @@ fun FilterBar(
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
                                     null,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showChannelFilter = false
@@ -764,6 +786,7 @@ fun FilterBar(
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
                                     channel,
+                                    filterState.selectedStatus,
                                     searchQuery
                                 )
                                 showChannelFilter = false
@@ -775,6 +798,74 @@ fun FilterBar(
             },
             confirmButton = {
                 TextButton(onClick = { showChannelFilter = false }) {
+                    Text("閉じる")
+                }
+            }
+        )
+    }
+
+    // ステータスフィルターダイアログ
+    if (showStatusFilter) {
+        AlertDialog(
+            onDismissRequest = { showStatusFilter = false },
+            title = { Text("ステータスを選択") },
+            text = {
+                LazyColumn {
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedStatus == null,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    null,
+                                    searchQuery
+                                )
+                                showStatusFilter = false
+                            },
+                            label = { Text("すべて") }
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedStatus == StatusState.WANNA_WATCH,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    StatusState.WANNA_WATCH,
+                                    searchQuery
+                                )
+                                showStatusFilter = false
+                            },
+                            label = { Text("見たい") }
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedStatus == StatusState.WATCHING,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    StatusState.WATCHING,
+                                    searchQuery
+                                )
+                                showStatusFilter = false
+                            },
+                            label = { Text("見てる") }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showStatusFilter = false }) {
                     Text("閉じる")
                 }
             }
