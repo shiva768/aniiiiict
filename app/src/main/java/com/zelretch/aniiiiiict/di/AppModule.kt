@@ -3,7 +3,6 @@ package com.zelretch.aniiiiiict.di
 import android.content.Context
 import androidx.room.Room
 import com.zelretch.aniiiiiict.BuildConfig
-import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.local.AppDatabase
@@ -18,8 +17,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
-import javax.inject.Singleton
 import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
+import com.zelretch.aniiiiiict.data.api.ApolloClient as AniiiiiictApolloClient
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -80,7 +80,9 @@ object AppModule {
     fun provideApolloClient(
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient
-    ): ApolloClient = ApolloClient(tokenManager, okHttpClient)
+    ): AniiiiiictApolloClient {
+        return AniiiiiictApolloClient(tokenManager, okHttpClient)
+    }
 
     @Provides
     @Singleton
@@ -89,7 +91,7 @@ object AppModule {
         authManager: AnnictAuthManager,
         workImageDao: WorkImageDao,
         imageDownloader: ImageDownloader,
-        apolloClient: ApolloClient
+        apolloClient: AniiiiiictApolloClient
     ): AnnictRepository {
         return AnnictRepositoryImpl(
             tokenManager,

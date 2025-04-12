@@ -73,7 +73,10 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             val mutation = CreateRecordMutation(episodeId = episodeId)
-            val response = apolloClient.getApolloClient().mutation(mutation).execute()
+            val response = apolloClient.executeMutation(
+                operation = mutation,
+                context = "AnnictRepositoryImpl.createRecord"
+            )
 
             AniiiiiictLogger.logInfo(
                 "GraphQLのレスポンス: ${response.data != null}, エラー: ${response.errors}",
@@ -173,7 +176,11 @@ class AnnictRepositoryImpl @Inject constructor(
                 }
 
                 val query = ViewerProgramsQuery()
-                val response = apolloClient.getApolloClient().query(query).execute()
+                val response = apolloClient.executeQuery(
+                    operation = query,
+                    context = "AnnictRepositoryImpl.getProgramsWithWorks"
+                )
+                
                 AniiiiiictLogger.logInfo(
                     "GraphQLのレスポンス: ${response.data != null}",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
@@ -283,7 +290,10 @@ class AnnictRepositoryImpl @Inject constructor(
         AniiiiiictLogger.logInfo("記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
 
         val query = ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
-        val response = apolloClient.getApolloClient().query(query).execute()
+        val response = apolloClient.executeQuery(
+            operation = query,
+            context = "AnnictRepositoryImpl.getRecords"
+        )
 
         if (!response.hasErrors()) {
             val nodes = response.data?.viewer?.records?.nodes ?: emptyList()
@@ -344,7 +354,10 @@ class AnnictRepositoryImpl @Inject constructor(
         AniiiiiictLogger.logInfo("記録を削除中: $recordId", "AnnictRepositoryImpl.deleteRecord")
 
         val mutation = DeleteRecordMutation(recordId)
-        val response = apolloClient.getApolloClient().mutation(mutation).execute()
+        val response = apolloClient.executeMutation(
+            operation = mutation,
+            context = "AnnictRepositoryImpl.deleteRecord"
+        )
 
         if (!response.hasErrors()) {
             AniiiiiictLogger.logInfo(
@@ -368,7 +381,10 @@ class AnnictRepositoryImpl @Inject constructor(
         AniiiiiictLogger.logInfo("作品ステータスを更新中: workId=$workId, state=$state", "AnnictRepositoryImpl.updateWorkStatus")
 
         val mutation = UpdateStatusMutation(workId = workId, state = state)
-        val response = apolloClient.getApolloClient().mutation(mutation).execute()
+        val response = apolloClient.executeMutation(
+            operation = mutation,
+            context = "AnnictRepositoryImpl.updateWorkStatus"
+        )
 
         if (!response.hasErrors()) {
             AniiiiiictLogger.logInfo(

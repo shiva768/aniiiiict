@@ -1,10 +1,16 @@
 package com.zelretch.aniiiiiict.data.api
 
 import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo3.api.ApolloResponse
+import com.apollographql.apollo3.api.Mutation
+import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo3.cache.normalized.FetchPolicy
+import com.apollographql.apollo3.cache.normalized.fetchPolicy
 import com.apollographql.apollo3.network.okHttpClient
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
+import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -41,5 +47,43 @@ class ApolloClient @Inject constructor(
             .build()
     }
 
-    fun getApolloClient(): ApolloClient = client
+    suspend fun <D : Query.Data> executeQuery(
+        operation: Query<D>,
+        context: String,
+        cachePolicy: FetchPolicy = FetchPolicy.NetworkFirst
+    ): ApolloResponse<D> {
+        try {
+            return client.query(operation)
+                .fetchPolicy(cachePolicy)
+                .execute()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            
+            AniiiiiictLogger.logError(
+                "GraphQLクエリの実行に失敗: ${operation.name()}",
+                context
+            )
+            throw e
+        }
+    }
+
+    suspend fun <D : Mutation.Data> executeMutation(
+        operation: Mutation<D>,
+        context: String,
+        cachePolicy: FetchPolicy = FetchPolicy.NetworkOnly
+    ): ApolloResponse<D> {
+        try {
+            return client.mutation(operation)
+                .fetchPolicy(cachePolicy)
+                .execute()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            
+            AniiiiiictLogger.logError(
+                "GraphQLミューテーションの実行に失敗: ${operation.name()}",
+                context
+            )
+            throw e
+        }
+    }
 } 
