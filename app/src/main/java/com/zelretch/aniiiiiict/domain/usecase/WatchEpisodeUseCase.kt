@@ -8,6 +8,7 @@ import javax.inject.Inject
 class WatchEpisodeUseCase @Inject constructor(
     private val repository: AnnictRepository
 ) {
+    private val TAG = "WatchEpisodeUseCase"
     suspend operator fun invoke(
         episodeId: String,
         workId: String,
@@ -25,6 +26,7 @@ class WatchEpisodeUseCase @Inject constructor(
                 val updateSuccess = repository.updateWorkStatus(workId, StatusState.WATCHING)
                 if (!updateSuccess) {
                     AniiiiiictLogger.logWarning(
+                        TAG,
                         "ステータスの更新に失敗しました: workId=$workId",
                         "WatchEpisodeUseCase"
                     )

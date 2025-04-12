@@ -22,19 +22,24 @@ class TokenManager @Inject constructor(
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
             Log.e(TAG, "空のトークンを保存しようとしました")
-            AniiiiiictLogger.logWarning("空のトークンを保存しようとしました", "saveAccessToken")
+            AniiiiiictLogger.logWarning(
+                TAG,
+                "空のトークンを保存しようとしました",
+                "saveAccessToken"
+            )
             return
         }
 
-        Log.d(TAG, "アクセストークンを保存: ${token.take(10)}...")
-        AniiiiiictLogger.logInfo("アクセストークンを保存: ${token.take(10)}...", "saveAccessToken")
+        AniiiiiictLogger.logInfo(
+            TAG,
+            "アクセストークンを保存: ${token.take(10)}...",
+            "saveAccessToken"
+        )
 
         try {
             prefs.edit { putString(TOKEN_KEY, token) }
-            Log.d(TAG, "アクセストークンの保存に成功")
         } catch (e: Exception) {
-            Log.e(TAG, "アクセストークンの保存に失敗: ${e.message}", e)
-            AniiiiiictLogger.logError(e, "アクセストークンの保存に失敗")
+            AniiiiiictLogger.logError(TAG, e, "アクセストークンの保存に失敗")
         }
     }
 

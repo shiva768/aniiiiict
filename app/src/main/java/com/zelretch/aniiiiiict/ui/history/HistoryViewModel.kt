@@ -25,6 +25,7 @@ data class HistoryUiState(
 class HistoryViewModel @Inject constructor(
     private val repository: AnnictRepository
 ) : BaseViewModel() {
+    private val TAG = "HistoryViewModel"
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
@@ -81,7 +82,7 @@ class HistoryViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                AniiiiiictLogger.logError(e, "記録の削除に失敗")
+                AniiiiiictLogger.logError(TAG, e, "記録の削除に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "記録の削除に失敗しました"

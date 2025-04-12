@@ -5,10 +5,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object AniiiiiictLogger {
-    private const val TAG = "AniiiiiictError"
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-    fun logError(error: Throwable, context: String) {
+    fun logError(tag: String, error: Throwable, context: String) {
         val timestamp = LocalDateTime.now().format(dateFormatter)
         val stackTrace = error.stackTraceToString()
         val message = """
@@ -19,10 +18,10 @@ object AniiiiiictLogger {
             $stackTrace
         """.trimIndent()
 
-        Log.e(TAG, message)
+        Log.e(tag, message)
     }
 
-    fun logError(errorMessage: String, context: String) {
+    fun logError(tag: String, errorMessage: String, context: String) {
         val timestamp = LocalDateTime.now().format(dateFormatter)
         val message = """
             [Error] $timestamp
@@ -30,10 +29,10 @@ object AniiiiiictLogger {
             Message: $errorMessage
         """.trimIndent()
 
-        Log.e(TAG, message)
+        Log.e(tag, message)
     }
 
-    fun logWarning(message: String, context: String) {
+    fun logWarning(tag: String, message: String, context: String) {
         val timestamp = LocalDateTime.now().format(dateFormatter)
         val logMessage = """
             [Warning] $timestamp
@@ -41,10 +40,10 @@ object AniiiiiictLogger {
             Message: $message
         """.trimIndent()
 
-        Log.w(TAG, logMessage)
+        Log.w(tag, logMessage)
     }
 
-    fun logInfo(message: String, context: String) {
+    fun logInfo(tag: String, message: String, context: String) {
         val timestamp = LocalDateTime.now().format(dateFormatter)
         val logMessage = """
             [Info] $timestamp
@@ -52,6 +51,17 @@ object AniiiiiictLogger {
             Message: $message
         """.trimIndent()
 
-        Log.i(TAG, logMessage)
+        Log.i(tag, logMessage)
+    }
+
+    fun logDebug(tag: String, message: String, context: String) {
+        val timestamp = LocalDateTime.now().format(dateFormatter)
+        val logMessage = """
+            [Debug] $timestamp
+            Context: $context
+            Message: $message
+        """.trimIndent()
+
+        Log.d(tag, logMessage)
     }
 } 

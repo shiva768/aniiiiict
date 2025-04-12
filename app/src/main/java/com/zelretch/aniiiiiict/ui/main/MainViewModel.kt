@@ -47,14 +47,15 @@ class MainViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val programFilter: ProgramFilter
 ) : BaseViewModel() {
+    private val TAG = "MainViewModel"
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     private var isAuthInProgress = false
 
     init {
-        checkAuthState()
-        loadInitialData()
+        AniiiiiictLogger.logInfo(TAG, "koko", "koko")
+        checkAuthState { loadInitialData() }
     }
 
     override fun updateLoadingState(isLoading: Boolean) {
@@ -65,7 +66,7 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(error = error) }
     }
 
-    private fun checkAuthState() {
+    private fun checkAuthState(function: () -> Unit) {
         viewModelScope.launch {
             try {
                 val isAuthenticated = repository.isAuthenticated()
@@ -73,13 +74,16 @@ class MainViewModel @Inject constructor(
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
                     AniiiiiictLogger.logInfo(
+                        TAG,
                         "認証されていないため、認証を開始します",
                         "checkAuthState"
                     )
                     startAuth()
+                } else {
+                    function()
                 }
             } catch (e: Exception) {
-                AniiiiiictLogger.logError(e, "認証状態の確認中にエラーが発生")
+                AniiiiiictLogger.logError(TAG, e, "認証状態の確認中にエラーが発生")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証状態の確認に失敗しました",
@@ -134,6 +138,7 @@ class MainViewModel @Inject constructor(
 
                     if (imageUrl == null) {
                         AniiiiiictLogger.logInfo(
+                            TAG,
                             "有効な画像URLがないためスキップ: ${program.work.title}",
                             "MainViewModel.preloadImages"
                         )
@@ -144,17 +149,23 @@ class MainViewModel @Inject constructor(
                     val success = repository.saveWorkImage(workId, imageUrl)
                     if (success) {
                         AniiiiiictLogger.logInfo(
+                            TAG,
                             "画像を保存しました: ${program.work.title}",
                             "MainViewModel.preloadImages"
                         )
                     } else {
                         AniiiiiictLogger.logWarning(
+                            TAG,
                             "画像の保存に失敗: ${program.work.title}",
                             "MainViewModel.preloadImages"
                         )
                     }
                 } catch (e: Exception) {
-                    AniiiiiictLogger.logError(e, "画像のプリロードに失敗: ${program.work.title}")
+                    AniiiiiictLogger.logError(
+                        TAG,
+                        e,
+                        "画像のプリロードに失敗: ${program.work.title}"
+                    )
                 }
             }
         }
@@ -164,30 +175,30 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
-                    AniiiiiictLogger.logWarning("無効な画像URL: '$imageUrl'", "onImageLoad")
+                    AniiiiiictLogger.logWarning(TAG, "無効な画像URL: '$imageUrl'", "onImageLoad")
                     return@launch
                 }
 
                 repository.saveWorkImage(annictId.toLong(), imageUrl)
             } catch (e: Exception) {
-                AniiiiiictLogger.logError(e, "画像の保存に失敗: $imageUrl")
+                AniiiiiictLogger.logError(TAG, e, "画像の保存に失敗: $imageUrl")
             }
         }
     }
 
     fun startAuth() {
         if (isAuthInProgress) {
-            AniiiiiictLogger.logWarning("認証が既に進行中です", "startAuth")
+            AniiiiiictLogger.logWarning(TAG, "認証が既に進行中です", "startAuth")
             return
         }
-
+        AniiiiiictLogger.logInfo(TAG, "authsiteru", "auth")
         isAuthInProgress = true
         _uiState.update { it.copy(isAuthenticating = true) }
 
         viewModelScope.launch {
             try {
                 val authUrl = repository.getAuthUrl()
-                AniiiiiictLogger.logInfo("認証URLを取得: $authUrl", "startAuth")
+                AniiiiiictLogger.logInfo(TAG, "認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
@@ -197,7 +208,7 @@ class MainViewModel @Inject constructor(
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } catch (e: Exception) {
-                AniiiiiictLogger.logError(e, "認証URLの取得に失敗")
+                AniiiiiictLogger.logError(TAG, e, "認証URLの取得に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
@@ -225,9 +236,13 @@ class MainViewModel @Inject constructor(
                             println("MainViewModel: 認証成功")
                             delay(300)
                             _uiState.update { it.copy(isAuthenticating = false) }
-                            loadPrograms()
+                            loadInitialData()
                         } else {
-                            AniiiiiictLogger.logWarning("認証が失敗しました", "handleAuthCallback")
+                            AniiiiiictLogger.logWarning(
+                                TAG,
+                                "認証が失敗しました",
+                                "handleAuthCallback"
+                            )
                             println("MainViewModel: 認証失敗")
                             delay(200)
                             _uiState.update {
@@ -240,7 +255,11 @@ class MainViewModel @Inject constructor(
                             isAuthInProgress = false
                         }
                     } else {
-                        AniiiiiictLogger.logWarning("認証コードがnullです", "handleAuthCallback")
+                        AniiiiiictLogger.logWarning(
+                            TAG,
+                            "認証コードがnullです",
+                            "handleAuthCallback"
+                        )
                         println("MainViewModel: 認証コードなし")
                         delay(200)
                         _uiState.update {
@@ -253,7 +272,7 @@ class MainViewModel @Inject constructor(
                         isAuthInProgress = false
                     }
                 } catch (e: Exception) {
-                    AniiiiiictLogger.logError(e, "認証処理に失敗")
+                    AniiiiiictLogger.logError(TAG, e, "認証処理に失敗")
                     e.printStackTrace()
                     delay(200)
                     _uiState.update {
@@ -320,10 +339,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun refresh() {
-        AniiiiiictLogger.logInfo("プログラム一覧を再読み込み", "MainViewModel.refresh")
-        executeWithLoading {
-            loadPrograms()
-        }
+        AniiiiiictLogger.logInfo(TAG, "プログラム一覧を再読み込み", "MainViewModel.refresh")
+        checkAuthState { loadInitialData() }
     }
 
     fun updateFilter(
@@ -362,7 +379,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun handleError(error: Throwable) {
-        AniiiiiictLogger.logError(error, "MainViewModel")
+        AniiiiiictLogger.logError(TAG, error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 }

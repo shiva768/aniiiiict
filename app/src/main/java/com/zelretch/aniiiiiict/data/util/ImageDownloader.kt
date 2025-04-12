@@ -37,7 +37,7 @@ class ImageDownloader @Inject constructor(
     private fun ensureHttps(url: String): String {
         return if (url.startsWith("http://")) {
             val httpsUrl = url.replaceFirst("http://", "https://")
-            Log.d(TAG, "HTTPをHTTPSに変換: $url -> $httpsUrl")
+            AniiiiiictLogger.logDebug(TAG, "HTTPをHTTPSに変換: $url -> $httpsUrl", "ensureHttps")
             httpsUrl
         } else {
             url
@@ -55,13 +55,17 @@ class ImageDownloader @Inject constructor(
             val imageFile = File(imageDir, "work_${workId}.jpg")
 
             if (imageFile.exists()) {
-                Log.d(TAG, "画像はすでにキャッシュされています: $workId")
+                AniiiiiictLogger.logDebug(
+                    TAG,
+                    "画像はすでにキャッシュされています: $workId",
+                    "downloadImage"
+                )
                 return@withContext imageFile.absolutePath
             }
 
             val secureUrl = ensureHttps(imageUrl)
 
-            Log.d(TAG, "画像のダウンロードを開始: $secureUrl")
+            AniiiiiictLogger.logDebug(TAG, "画像のダウンロードを開始: $secureUrl", "downloadImage")
             val startTime = System.currentTimeMillis()
 
             val request = Request.Builder()
@@ -71,12 +75,16 @@ class ImageDownloader @Inject constructor(
             try {
                 client.newCall(request).execute().use { response ->
                     val endTime = System.currentTimeMillis()
-                    Log.d(TAG, "ダウンロード時間: ${endTime - startTime}ms")
+                    AniiiiiictLogger.logDebug(
+                        TAG,
+                        "ダウンロード時間: ${endTime - startTime}ms",
+                        "downloadImage"
+                    )
 
                     if (!response.isSuccessful) {
                         val message = "画像のダウンロードに失敗: HTTP ${response.code}"
                         Log.w(TAG, message)
-                        AniiiiiictLogger.logWarning(message, "downloadImage")
+                        AniiiiiictLogger.logWarning(TAG, message, "downloadImage")
 
                         if (response.code == HttpURLConnection.HTTP_NOT_FOUND) {
                             imageFile.createNewFile()
@@ -97,11 +105,16 @@ class ImageDownloader @Inject constructor(
 
                             if (tempFile.exists() && tempFile.length() > 0) {
                                 if (tempFile.renameTo(imageFile)) {
-                                    Log.d(TAG, "画像の保存に成功: $workId (${bytes.size / 1024}KB)")
+                                    AniiiiiictLogger.logDebug(
+                                        TAG,
+                                        "画像の保存に成功: $workId (${bytes.size / 1024}KB)",
+                                        "downloadImage"
+                                    )
                                     return@withContext imageFile.absolutePath
                                 } else {
                                     Log.e(TAG, "ファイル名の変更に失敗")
                                     AniiiiiictLogger.logError(
+                                        TAG,
                                         "ファイル名の変更に失敗 - workId: $workId",
                                         "downloadImage"
                                     )
@@ -110,6 +123,7 @@ class ImageDownloader @Inject constructor(
                             } else {
                                 Log.e(TAG, "空のファイルが生成されました")
                                 AniiiiiictLogger.logError(
+                                    TAG,
                                     "空のファイルが生成されました - workId: $workId",
                                     "downloadImage"
                                 )
@@ -118,6 +132,7 @@ class ImageDownloader @Inject constructor(
                         } catch (e: Exception) {
                             Log.e(TAG, "ファイル操作中にエラー: ${e.message}")
                             AniiiiiictLogger.logError(
+                                TAG,
                                 "ファイル操作中にエラー: ${e.message}",
                                 "downloadImage"
                             )
@@ -126,6 +141,7 @@ class ImageDownloader @Inject constructor(
                     } ?: run {
                         Log.e(TAG, "レスポンスボディがありません")
                         AniiiiiictLogger.logError(
+                            TAG,
                             "レスポンスボディがありません - workId: $workId",
                             "downloadImage"
                         )
@@ -135,6 +151,7 @@ class ImageDownloader @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "画像ダウンロード中にエラー: ${e.message}")
                 AniiiiiictLogger.logError(
+                    TAG,
                     "画像の保存に失敗 - workId: $workId, url: $secureUrl, エラー: ${e.message}",
                     "downloadImage"
                 )

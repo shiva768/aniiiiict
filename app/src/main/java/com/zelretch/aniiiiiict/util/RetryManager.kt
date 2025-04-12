@@ -39,6 +39,7 @@ class RetryManager {
             } catch (e: Exception) {
                 lastException = e
                 AniiiiiictLogger.logError(
+                    TAG,
                     "リトライ失敗 (${attempt + 1}/$maxAttempts): ${e.message}",
                     "retry"
                 )

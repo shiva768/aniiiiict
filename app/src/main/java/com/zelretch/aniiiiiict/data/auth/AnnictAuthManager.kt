@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiiict.data.auth
 
-import android.util.Log
 import com.google.gson.Gson
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.AnnictConfig
@@ -103,12 +102,10 @@ class AnnictAuthManager @Inject constructor(
     }
 
     private fun logInfo(message: String, method: String) {
-        Log.d(TAG, message)
-        AniiiiiictLogger.logInfo(message, method)
+        AniiiiiictLogger.logInfo(TAG, message, method)
     }
 
     private fun logError(error: Exception, method: String) {
-        Log.e(TAG, "${error.message}", error)
-        AniiiiiictLogger.logError(error, method)
+        AniiiiiictLogger.logError(TAG, error, method)
     }
 }

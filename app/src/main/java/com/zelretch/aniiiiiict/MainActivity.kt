@@ -6,12 +6,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
@@ -28,11 +24,10 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val TAG = "MainActivity"
     // ViewModelを一度だけ初期化して保持する
     private val viewModel: MainViewModel by viewModels()
-    private var pendingAuthCode: String? = null
     private var isProcessingAuth = false
-    private var isResumeFromBrowser = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,36 +69,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             AniiiiictTheme {
                 val navController = rememberNavController()
-                var authCodeProcessed by remember { mutableStateOf(false) }
 
                 NavHost(
                     navController = navController,
                     startDestination = "main"
                 ) {
                     composable("main") {
-                        val viewModel = hiltViewModel<MainViewModel>()
-
-                        LaunchedEffect(authCodeProcessed) {
-                            if (authCodeProcessed) {
-                                AniiiiiictLogger.logInfo(
-                                    "認証コード処理後のプログラム読み込みを実行",
-                                    "MainActivity.LaunchedEffect"
-                                )
-                                viewModel.loadPrograms()
-                                authCodeProcessed = false
-                            }
-                        }
-
-                        LaunchedEffect(Unit) {
-                            handleIntent(intent, onAuthProcessed = {
-                                AniiiiiictLogger.logInfo(
-                                    "認証処理完了フラグをセット",
-                                    "MainActivity.handleIntent.callback"
-                                )
-                                authCodeProcessed = true
-                            })
-                            viewModel.loadPrograms()
-                        }
 
                         MainScreen(
                             viewModel = viewModel,
@@ -145,20 +116,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onResume() {
+        AniiiiiictLogger.logInfo(TAG, "resume", "resume")
         super.onResume()
-
-        // ブラウザから戻ってきた場合は、状態を更新
-        if (isResumeFromBrowser) {
-            Log.d("MainActivity", "ブラウザから復帰しました")
-            isResumeFromBrowser = false
-
-            // アプリがフォアグラウンドに戻った時点で認証コードがない場合は
-            // 認証をキャンセルしたと判断
-            if (pendingAuthCode == null && viewModel.uiState.value.isAuthenticating) {
-                Log.d("MainActivity", "認証がキャンセルされました")
-                viewModel.cancelAuth()
-            }
-        }
+        if (viewModel.uiState.value.isAuthenticating)
+            viewModel.cancelAuth()
     }
 
 //    private fun extractAuthCode(intent: Intent) {
@@ -196,6 +157,7 @@ class MainActivity : ComponentActivity() {
                         isProcessingAuth = true
                         Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
                         AniiiiiictLogger.logInfo(
+                            TAG,
                             "Processing authentication code: ${code.take(5)}...",
                             "handleIntent"
                         )
@@ -209,18 +171,15 @@ class MainActivity : ComponentActivity() {
                             onAuthProcessed?.invoke()
                         }
                     } else {
-                        Log.d(
-                            "MainActivity",
-                            "認証処理が既に進行中です。このリクエストはスキップします。"
-                        )
                         AniiiiiictLogger.logInfo(
+                            TAG,
                             "認証処理が既に進行中です。このリクエストはスキップします。",
                             "handleIntent"
                         )
                     }
                 } else {
-                    Log.e("MainActivity", "認証コードがURIに含まれていません: $uri")
                     AniiiiiictLogger.logError(
+                        TAG,
                         "認証コードがURIに含まれていません: $uri",
                         "handleIntent"
                     )

@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
  * 共通のローディング処理を提供する基底ViewModelクラス
  */
 abstract class BaseViewModel : ViewModel() {
-
+    private val TAG = "BaseViewModel"
     /**
      * ローディング状態を更新する関数
      */
@@ -44,7 +44,7 @@ abstract class BaseViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 // エラーを設定
-                AniiiiiictLogger.logError(e, "ローディング処理中にエラーが発生")
+                AniiiiiictLogger.logError(TAG, e, "ローディング処理中にエラーが発生")
                 updateErrorState(e.message ?: "処理中にエラーが発生しました")
             } finally {
                 // ローディング状態を終了

@@ -43,6 +43,7 @@ class AnnictRepositoryImpl @Inject constructor(
     private val imageDownloader: ImageDownloader,
     private val apolloClient: ApolloClient
 ) : AnnictRepository {
+    private val TAG = "AnnictRepositoryImpl"
     override suspend fun isAuthenticated(): Boolean {
         val result = tokenManager.hasValidToken()
         println("AnnictRepositoryImpl: 認証状態 = $result")
@@ -57,6 +58,7 @@ class AnnictRepositoryImpl @Inject constructor(
         // パラメータバリデーション（APIリクエスト前に行う必要あり）
         if (episodeId.isEmpty() || workId.isEmpty()) {
             AniiiiiictLogger.logError(
+                TAG,
                 "エピソードIDまたは作品IDがnullまたは空です",
                 "AnnictRepositoryImpl.createRecord"
             )
@@ -68,6 +70,7 @@ class AnnictRepositoryImpl @Inject constructor(
             defaultValue = false
         ) {
             AniiiiiictLogger.logInfo(
+                TAG,
                 "エピソード記録を実行: episodeId=$episodeId, workId=$workId",
                 "AnnictRepositoryImpl.createRecord"
             )
@@ -79,6 +82,7 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             AniiiiiictLogger.logInfo(
+                TAG,
                 "GraphQLのレスポンス: ${response.data != null}, エラー: ${response.errors}",
                 "AnnictRepositoryImpl.createRecord"
             )
@@ -113,6 +117,7 @@ class AnnictRepositoryImpl @Inject constructor(
                 // URLが空か無効な場合は早期リターン
                 if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
                     AniiiiiictLogger.logWarning(
+                        TAG,
                         "無効な画像URL: '$imageUrl'",
                         "AnnictRepositoryImpl.saveWorkImage"
                     )
@@ -126,6 +131,7 @@ class AnnictRepositoryImpl @Inject constructor(
                     true // 成功
                 } else {
                     AniiiiiictLogger.logWarning(
+                        TAG,
                         "画像の保存に失敗 - ダウンロード失敗: workId=$workId",
                         "AnnictRepositoryImpl.saveWorkImage"
                     )
@@ -134,6 +140,7 @@ class AnnictRepositoryImpl @Inject constructor(
             } catch (e: Exception) {
                 // エラーがあっても続行できるように例外を処理
                 AniiiiiictLogger.logWarning(
+                    TAG,
                     "画像の保存に失敗: workId=$workId, error=${e.message}",
                     "AnnictRepositoryImpl.saveWorkImage"
                 )
@@ -150,6 +157,7 @@ class AnnictRepositoryImpl @Inject constructor(
         return flow {
             try {
                 AniiiiiictLogger.logInfo(
+                    TAG,
                     "プログラム一覧の取得を開始",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
@@ -157,6 +165,7 @@ class AnnictRepositoryImpl @Inject constructor(
                 // キャンセルされた場合は例外をスローせずに空のリストを返す
                 if (!currentCoroutineContext().isActive) {
                     AniiiiiictLogger.logInfo(
+                        TAG,
                         "処理がキャンセルされたため、実行をスキップします",
                         "AnnictRepositoryImpl.getProgramsWithWorks"
                     )
@@ -168,6 +177,7 @@ class AnnictRepositoryImpl @Inject constructor(
                 val token = tokenManager.getAccessToken()
                 if (token.isNullOrEmpty()) {
                     AniiiiiictLogger.logError(
+                        TAG,
                         "アクセストークンがありません",
                         "AnnictRepositoryImpl.getProgramsWithWorks"
                     )
@@ -182,12 +192,14 @@ class AnnictRepositoryImpl @Inject constructor(
                 )
 
                 AniiiiiictLogger.logInfo(
+                    TAG,
                     "GraphQLのレスポンス: ${response.data != null}",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
 
                 if (response.hasErrors()) {
                     AniiiiiictLogger.logError(
+                        TAG,
                         "GraphQLエラー: ${response.errors}",
                         "AnnictRepositoryImpl.getProgramsWithWorks"
                     )
@@ -197,12 +209,14 @@ class AnnictRepositoryImpl @Inject constructor(
 
                 val programs = response.data?.viewer?.programs?.nodes
                 AniiiiiictLogger.logInfo(
+                    TAG,
                     "取得したプログラム数: ${programs?.size ?: 0}",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
 
                 val programsWithWorks = processProgramsResponse(programs)
                 AniiiiiictLogger.logInfo(
+                    TAG,
                     "変換後のプログラム数: ${programsWithWorks.size}",
                     "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
@@ -212,7 +226,7 @@ class AnnictRepositoryImpl @Inject constructor(
                 // キャンセル例外の場合は再スローして上位で処理
                 if (e is kotlinx.coroutines.CancellationException) throw e
 
-                AniiiiiictLogger.logError(e, "プログラム一覧の取得に失敗")
+                AniiiiiictLogger.logError(TAG, e, "プログラム一覧の取得に失敗")
                 emit(emptyList())
             }
         }
@@ -287,7 +301,7 @@ class AnnictRepositoryImpl @Inject constructor(
         operation = "getRecords",
         defaultValue = PaginatedRecords(emptyList())
     ) {
-        AniiiiiictLogger.logInfo("記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
+        AniiiiiictLogger.logInfo(TAG, "記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
 
         val query =
             ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
@@ -331,6 +345,7 @@ class AnnictRepositoryImpl @Inject constructor(
             }
 
             AniiiiiictLogger.logInfo(
+                TAG,
                 "${records.size}件の記録を取得しました",
                 "AnnictRepositoryImpl.getRecords"
             )
@@ -341,6 +356,7 @@ class AnnictRepositoryImpl @Inject constructor(
             )
         } else {
             AniiiiiictLogger.logError(
+                TAG,
                 "GraphQLエラー: ${response.errors}",
                 "AnnictRepositoryImpl.getRecords"
             )
@@ -352,7 +368,11 @@ class AnnictRepositoryImpl @Inject constructor(
         operation = "deleteRecord",
         defaultValue = false
     ) {
-        AniiiiiictLogger.logInfo("記録を削除中: $recordId", "AnnictRepositoryImpl.deleteRecord")
+        AniiiiiictLogger.logInfo(
+            TAG,
+            "記録を削除中: $recordId",
+            "AnnictRepositoryImpl.deleteRecord"
+        )
 
         val mutation = DeleteRecordMutation(recordId)
         val response = apolloClient.executeMutation(
@@ -362,12 +382,14 @@ class AnnictRepositoryImpl @Inject constructor(
 
         if (!response.hasErrors()) {
             AniiiiiictLogger.logInfo(
+                TAG,
                 "記録を削除しました: $recordId",
                 "AnnictRepositoryImpl.deleteRecord"
             )
             true
         } else {
             AniiiiiictLogger.logError(
+                TAG,
                 "GraphQLエラー: ${response.errors}",
                 "AnnictRepositoryImpl.deleteRecord"
             )
@@ -381,6 +403,7 @@ class AnnictRepositoryImpl @Inject constructor(
             defaultValue = false
         ) {
             AniiiiiictLogger.logInfo(
+                TAG,
                 "作品ステータスを更新中: workId=$workId, state=$state",
                 "AnnictRepositoryImpl.updateWorkStatus"
             )
@@ -393,12 +416,14 @@ class AnnictRepositoryImpl @Inject constructor(
 
             if (!response.hasErrors()) {
                 AniiiiiictLogger.logInfo(
+                    TAG,
                     "作品ステータスを更新しました: workId=$workId, state=$state",
                     "AnnictRepositoryImpl.updateWorkStatus"
                 )
                 true
             } else {
                 AniiiiiictLogger.logError(
+                    TAG,
                     "GraphQLエラー: ${response.errors}",
                     "AnnictRepositoryImpl.updateWorkStatus"
                 )
@@ -414,6 +439,7 @@ class AnnictRepositoryImpl @Inject constructor(
     ): T {
         if (!currentCoroutineContext().isActive) {
             AniiiiiictLogger.logInfo(
+                TAG,
                 "処理がキャンセルされたため、実行をスキップします",
                 "AnnictRepositoryImpl.$operation"
             )
@@ -423,6 +449,7 @@ class AnnictRepositoryImpl @Inject constructor(
         val token = tokenManager.getAccessToken()
         if (token.isNullOrEmpty()) {
             AniiiiiictLogger.logError(
+                TAG,
                 "アクセストークンがありません",
                 "AnnictRepositoryImpl.$operation"
             )
@@ -433,7 +460,7 @@ class AnnictRepositoryImpl @Inject constructor(
             request()
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            AniiiiiictLogger.logError(e, "AnnictRepositoryImpl.$operation")
+            AniiiiiictLogger.logError(TAG, e, "AnnictRepositoryImpl.$operation")
             defaultValue
         }
     }
