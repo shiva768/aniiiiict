@@ -12,10 +12,6 @@ interface AnnictRepository {
     suspend fun getAuthUrl(): String
     suspend fun handleAuthCallback(code: String): Boolean
     suspend fun getWorks(): List<AnnictWork>
-    suspend fun getPrograms(
-        unwatched: Boolean = false
-    ): List<ProgramWithWork>
-
     suspend fun createRecord(episodeId: String, workId: String): Boolean
     suspend fun saveWorkImage(workId: Long, imageUrl: String): Boolean
     suspend fun getWorkImage(workId: Long): WorkImage?

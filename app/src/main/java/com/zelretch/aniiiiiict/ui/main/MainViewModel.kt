@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiiict.ui.main
 
-import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
@@ -8,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import dagger.hilt.android.lifecycle.HiltViewModel

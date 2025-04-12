@@ -16,7 +16,8 @@ data class HistoryUiState(
     val records: List<Record> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isDeletingRecord: Boolean = false
+    val isDeletingRecord: Boolean = false,
+    val hasMoreData: Boolean = true
 )
 
 @HiltViewModel
@@ -27,20 +28,36 @@ class HistoryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
+    private var currentPage = 1
+    private val pageSize = 30
+
     init {
         loadRecords()
     }
 
-    fun loadRecords() {
+    fun loadRecords(isRefresh: Boolean = false) {
+        if (_uiState.value.isLoading) return
+        if (isRefresh) {
+            currentPage = 1
+            _uiState.value = _uiState.value.copy(hasMoreData = true)
+        }
+        if (!_uiState.value.hasMoreData && !isRefresh) return
+
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-                val records = repository.getRecords(30)
+                val records = repository.getRecords(pageSize)
+                val currentRecords = if (isRefresh) records else {
+                    _uiState.value.records + records
+                }
+
                 _uiState.value = _uiState.value.copy(
-                    records = records,
-                    isLoading = false
+                    records = currentRecords,
+                    isLoading = false,
+                    hasMoreData = records.size >= pageSize
                 )
+                if (_uiState.value.hasMoreData) currentPage++
             } catch (e: Exception) {
                 AniiiiiictLogger.logError(e, "記録履歴の取得に失敗")
                 _uiState.value = _uiState.value.copy(

@@ -1,4 +1,4 @@
-query ViewerRecordsQuery {
+query ViewerRecordsQuery() {
   viewer {
     records(first: 30, orderBy: {field: CREATED_AT, direction: DESC}) {
       nodes {

@@ -3,8 +3,8 @@ package com.zelretch.aniiiiiict.data.repository
 import com.apollographql.apollo3.api.ApolloResponse
 import com.zelretch.aniiiiiict.CreateRecordMutation
 import com.zelretch.aniiiiiict.DeleteRecordMutation
-import com.zelretch.aniiiiiict.GetProgramsQuery
 import com.zelretch.aniiiiiict.UpdateStatusMutation
+import com.zelretch.aniiiiiict.ViewerProgramsQuery
 import com.zelretch.aniiiiiict.ViewerRecordsQuery
 import com.zelretch.aniiiiiict.data.api.AnnictApiClient
 import com.zelretch.aniiiiiict.data.api.ApolloClient
@@ -59,55 +59,6 @@ class AnnictRepositoryImpl @Inject constructor(
         val watchingWorks = apiClient.getWatchingWorks().getOrThrow()
         val wantToWatchWorks = apiClient.getWantToWatchWorks().getOrThrow()
         return watchingWorks + wantToWatchWorks
-    }
-
-    override suspend fun getPrograms(
-        unwatched: Boolean
-    ): List<ProgramWithWork> {
-        AniiiiiictLogger.logInfo("プログラム一覧を取得中...", "AnnictRepositoryImpl.getPrograms")
-
-        val result = mutableListOf<ProgramWithWork>()
-        try {
-            // キャンセルされた場合は例外をスローせずに空のリストを返す
-            if (!currentCoroutineContext().isActive) {
-                AniiiiiictLogger.logInfo(
-                    "処理がキャンセルされたため、実行をスキップします",
-                    "AnnictRepositoryImpl.getPrograms"
-                )
-                return emptyList()
-            }
-
-            // アクセストークンの確認
-            val token = tokenManager.getAccessToken()
-            if (token.isNullOrEmpty()) {
-                AniiiiiictLogger.logError(
-                    "アクセストークンがありません",
-                    "AnnictRepositoryImpl.getPrograms"
-                )
-                return emptyList()
-            }
-
-            val query = GetProgramsQuery()
-            val response = apolloClient.getApolloClient().query(query).execute()
-
-            if (response.hasErrors()) {
-                AniiiiiictLogger.logError(
-                    "GraphQLエラー: ${response.errors}",
-                    "AnnictRepositoryImpl.getPrograms"
-                )
-                return emptyList()
-            }
-
-            result.addAll(processProgramsResponse(response))
-            AniiiiiictLogger.logInfo(
-                "${result.size}件のプログラムを取得しました",
-                "AnnictRepositoryImpl.getPrograms"
-            )
-        } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
-            AniiiiiictLogger.logError(e, "プログラム一覧の取得に失敗")
-        }
-        return result
     }
 
     override suspend fun createRecord(episodeId: String, workId: String): Boolean {
@@ -239,7 +190,7 @@ class AnnictRepositoryImpl @Inject constructor(
                     return@flow
                 }
 
-                val query = GetProgramsQuery()
+                val query = ViewerProgramsQuery()
                 val response = apolloClient.getApolloClient().query(query).execute()
                 AniiiiiictLogger.logInfo(
                     "GraphQLのレスポンス: ${response.data != null}",
@@ -278,13 +229,13 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun processProgramsResponse(response: ApolloResponse<GetProgramsQuery.Data>): List<ProgramWithWork> {
+    private fun processProgramsResponse(response: ApolloResponse<ViewerProgramsQuery.Data>): List<ProgramWithWork> {
         val programs = response.data?.viewer?.programs?.nodes?.mapNotNull { node ->
             if (node == null) return@mapNotNull null
 
             val startedAt = try {
                 LocalDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 LocalDateTime.now() // パースに失敗した場合は現在時刻を使用
             }
 
@@ -320,7 +271,7 @@ class AnnictRepositoryImpl @Inject constructor(
             val program = Program(
                 annictId = try {
                     node.annictId
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     0 // 変換に失敗した場合は0を使用
                 },
                 startedAt = startedAt,
@@ -336,9 +287,9 @@ class AnnictRepositoryImpl @Inject constructor(
             .groupBy { it.work.title }
             .mapValues { (_, programs) ->
                 // エピソード番号でソート（nullや変換できない場合は最後に）
-                programs.sortedBy { program ->
+                programs.minByOrNull { program ->
                     program.program.episode.number ?: Int.MAX_VALUE
-                }.first()
+                }!!
             }
             .values
             .sortedBy { it.program.startedAt }

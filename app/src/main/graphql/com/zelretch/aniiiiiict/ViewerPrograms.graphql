@@ -1,4 +1,4 @@
-query GetPrograms {
+query ViewerPrograms {
   viewer {
     programs(
       unwatched: true

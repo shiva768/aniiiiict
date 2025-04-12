@@ -2,10 +2,10 @@ package com.zelretch.aniiiiiict.data.auth
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.core.content.edit
 
 @Singleton
 class TokenManager @Inject constructor(

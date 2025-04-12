@@ -18,7 +18,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiiict.ui.history.HistoryScreen
-import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiiict.ui.main.MainViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
@@ -110,16 +109,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("history") {
-                        val historyViewModel: HistoryViewModel = hiltViewModel()
-                        val historyUiState by historyViewModel.uiState.collectAsState()
-
-                        HistoryScreen(
-                            uiState = historyUiState,
-                            onNavigateBack = { navController.navigateUp() },
-                            onRetry = { historyViewModel.loadRecords() },
-                            onDeleteRecord = { historyViewModel.deleteRecord(it) },
-                            onRefresh = { historyViewModel.loadRecords() }
-                        )
+                        HistoryScreen()
                     }
                 }
             }
