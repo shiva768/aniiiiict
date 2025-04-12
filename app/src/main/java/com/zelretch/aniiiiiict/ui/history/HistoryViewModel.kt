@@ -16,7 +16,9 @@ data class HistoryUiState(
     val records: List<Record> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isDeletingRecord: Boolean = false
+    val isDeletingRecord: Boolean = false,
+    val hasNextPage: Boolean = false,
+    val endCursor: String? = null
 )
 
 @HiltViewModel
@@ -36,9 +38,11 @@ class HistoryViewModel @Inject constructor(
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-                val records = repository.getRecords()
+                val result = repository.getRecords()
                 _uiState.value = _uiState.value.copy(
-                    records = records,
+                    records = result.records,
+                    hasNextPage = result.hasNextPage,
+                    endCursor = result.endCursor,
                     isLoading = false
                 )
             } catch (e: Exception) {
@@ -46,6 +50,33 @@ class HistoryViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "記録履歴の取得に失敗しました: ${e.localizedMessage}"
+                )
+            }
+        }
+    }
+
+    fun loadNextPage() {
+        val currentState = _uiState.value
+        if (!currentState.hasNextPage || currentState.endCursor == null || currentState.isLoading) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _uiState.value = currentState.copy(isLoading = true, error = null)
+
+                val result = repository.getRecords(after = currentState.endCursor)
+                _uiState.value = _uiState.value.copy(
+                    records = currentState.records + result.records,
+                    hasNextPage = result.hasNextPage,
+                    endCursor = result.endCursor,
+                    isLoading = false
+                )
+            } catch (e: Exception) {
+                AniiiiiictLogger.logError(e, "次のページの取得に失敗")
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "次のページの取得に失敗しました: ${e.localizedMessage}"
                 )
             }
         }
