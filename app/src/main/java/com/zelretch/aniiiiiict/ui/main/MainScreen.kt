@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.type.StatusState
 import java.time.format.DateTimeFormatter
 

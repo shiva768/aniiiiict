@@ -10,6 +10,7 @@ import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
+import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.Module
 import dagger.Provides
@@ -105,4 +106,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideRetryManager(): RetryManager = RetryManager()
+
+    @Provides
+    @Singleton
+    fun provideProgramFilter(): ProgramFilter {
+        return ProgramFilter()
+    }
 }

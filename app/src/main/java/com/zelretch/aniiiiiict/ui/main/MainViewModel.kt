@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
@@ -23,38 +25,29 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
-
-data class FilterState(
-    val selectedMedia: String? = null,
-    val selectedSeason: String? = null,
-    val selectedYear: Int? = null,
-    val selectedChannel: String? = null,
-    val selectedStatus: StatusState? = null,
-    val searchQuery: String = ""
-)
 
 data class MainUiState(
     val programs: List<ProgramWithWork> = emptyList(),
     val records: List<Record> = emptyList(),
+    val filterState: FilterState = FilterState(),
+    val isFilterVisible: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val isAuthenticating: Boolean = false,
     val isRecording: Boolean = false,
     val recordingSuccess: String? = null,
-    val filterState: FilterState = FilterState(),
     val availableMedia: List<String> = emptyList(),
     val availableSeasons: List<String> = emptyList(),
     val availableYears: List<Int> = emptyList(),
-    val availableChannels: List<String> = emptyList(),
-    val isFilterVisible: Boolean = false
+    val availableChannels: List<String> = emptyList()
 )
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: AnnictRepository,
-    private val watchEpisodeUseCase: WatchEpisodeUseCase
+    private val watchEpisodeUseCase: WatchEpisodeUseCase,
+    private val programFilter: ProgramFilter
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -68,14 +61,18 @@ class MainViewModel @Inject constructor(
 
     private fun checkAuthState() {
         viewModelScope.launch {
-            AniiiiiictLogger.logInfo("認証状態を確認中", "checkAuthState")
             try {
-                if (!repository.isAuthenticated()) {
-                    AniiiiiictLogger.logInfo("未認証のため認証を開始", "checkAuthState")
+                _uiState.update { it.copy(isLoading = true) }
+                val isAuthenticated = repository.isAuthenticated()
+                _uiState.update { it.copy(isLoading = false) }
+
+                // 認証されていない場合は認証を開始
+                if (!isAuthenticated) {
+                    AniiiiiictLogger.logInfo(
+                        "認証されていないため、認証を開始します",
+                        "checkAuthState"
+                    )
                     startAuth()
-                } else {
-                    AniiiiiictLogger.logInfo("認証済みのためプログラム一覧を取得", "checkAuthState")
-                    loadPrograms()
                 }
             } catch (e: Exception) {
                 AniiiiiictLogger.logError(e, "認証状態の確認中にエラーが発生")
@@ -107,11 +104,16 @@ class MainViewModel @Inject constructor(
         repository.getProgramsWithWorks()
             .collect { programs ->
                 _uiState.update { currentState ->
-                    val filteredPrograms = applyFilters(programs, currentState.filterState)
-                    updateAvailableFilters(programs)
+                    val filteredPrograms =
+                        programFilter.applyFilters(programs, currentState.filterState)
+                    val availableFilters = programFilter.extractAvailableFilters(programs)
                     currentState.copy(
                         programs = filteredPrograms,
-                        isAuthenticating = false
+                        isAuthenticating = false,
+                        availableMedia = availableFilters.media,
+                        availableSeasons = availableFilters.seasons,
+                        availableYears = availableFilters.years,
+                        availableChannels = availableFilters.channels
                     )
                 }
                 preloadImages(_uiState.value.programs)
@@ -123,95 +125,45 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(records = result.records) }
     }
 
-    private fun applyFilters(
-        programs: List<ProgramWithWork>,
-        filterState: FilterState
-    ): List<ProgramWithWork> {
-        var filtered = programs.filter { program ->
-            (filterState.selectedMedia == null || program.work.media == filterState.selectedMedia) &&
-                    (filterState.selectedSeason == null || program.work.seasonName?.split(" ")
-                        ?.firstOrNull() == filterState.selectedSeason) &&
-                    (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
-                    (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
-                    (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString())
-        }
-
-        if (filterState.searchQuery.isNotBlank()) {
-            filtered = filtered.filter { program ->
-                program.work.title.contains(filterState.searchQuery, ignoreCase = true)
-            }
-        }
-
-        return filtered
-    }
-
     private fun preloadImages(programs: List<ProgramWithWork>) {
         viewModelScope.launch(Dispatchers.IO) {
-            val startTime = System.currentTimeMillis()
-            var successCount = 0
-            var failCount = 0
-
             programs.forEach { program ->
                 if (!currentCoroutineContext().isActive) return@forEach
 
                 try {
                     val imageUrl = program.work.image?.recommendedImageUrl.takeIf {
-                        !it.isNullOrEmpty() && it.startsWith(
-                            "http",
-                            ignoreCase = true
-                        )
+                        !it.isNullOrEmpty() && it.startsWith("http", ignoreCase = true)
                     }
-                        ?: program.work.image?.facebookOgImageUrl.takeIf {
-                            !it.isNullOrEmpty() && it.startsWith(
-                                "http",
-                                ignoreCase = true
-                            )
-                        }
 
                     if (imageUrl == null) {
                         AniiiiiictLogger.logInfo(
                             "有効な画像URLがないためスキップ: ${program.work.title}",
-                            "preloadImages"
+                            "MainViewModel.preloadImages"
                         )
                         return@forEach
                     }
 
-                    val workId = try {
-                        program.work.title.hashCode().toLong()
-                    } catch (e: Exception) {
-                        AniiiiiictLogger.logError(e, "ワークIDの変換に失敗: ${program.work.title}")
-                        return@forEach
-                    }
-
+                    val workId = program.work.annictId
                     val success = repository.saveWorkImage(workId, imageUrl)
                     if (success) {
-                        successCount++
+                        AniiiiiictLogger.logInfo(
+                            "画像を保存しました: ${program.work.title}",
+                            "MainViewModel.preloadImages"
+                        )
                     } else {
-                        failCount++
                         AniiiiiictLogger.logWarning(
-                            "画像の保存に失敗: workId=$workId, url=$imageUrl",
-                            "preloadImages"
+                            "画像の保存に失敗: ${program.work.title}",
+                            "MainViewModel.preloadImages"
                         )
                     }
                 } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    AniiiiiictLogger.logError(
-                        e,
-                        "画像のプリロード中にエラー: ${program.work.title}"
-                    )
-                    failCount++
+                    AniiiiiictLogger.logError(e, "画像のプリロードに失敗: ${program.work.title}")
                 }
             }
-
-            val endTime = System.currentTimeMillis()
-            AniiiiiictLogger.logInfo(
-                "画像プリロード完了: 成功=${successCount}件, 失敗=${failCount}件, 合計時間=${endTime - startTime}ms",
-                "preloadImages"
-            )
         }
     }
 
-    fun onImageLoad(workId: Int, imageUrl: String) {
+    fun onImageLoad(annictId: Int, imageUrl: String) {
         viewModelScope.launch {
             try {
                 if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
@@ -219,19 +171,16 @@ class MainViewModel @Inject constructor(
                     return@launch
                 }
 
-                val success = repository.saveWorkImage(workId.toLong(), imageUrl)
-                if (!success) {
-                    AniiiiiictLogger.logWarning("画像の保存に失敗 - workId: $workId", "onImageLoad")
-                }
+                repository.saveWorkImage(annictId.toLong(), imageUrl)
             } catch (e: Exception) {
-                AniiiiiictLogger.logError(e, "画像の保存に失敗 - workId: $workId")
+                AniiiiiictLogger.logError(e, "画像の保存に失敗: $imageUrl")
             }
         }
     }
 
-    private fun startAuth() {
+    fun startAuth() {
         if (isAuthInProgress) {
-            println("MainViewModel: 認証処理がすでに進行中のため、新しい認証をスキップします")
+            AniiiiiictLogger.logWarning("認証が既に進行中です", "startAuth")
             return
         }
 
@@ -240,15 +189,15 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                AniiiiiictLogger.logInfo("認証URLを取得中", "startAuth")
                 val authUrl = repository.getAuthUrl()
                 AniiiiiictLogger.logInfo("認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
+                if (!currentCoroutineContext().isActive) return@launch
+
                 val intent = Intent(Intent.ACTION_VIEW, authUrl.toUri())
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 context.startActivity(intent)
             } catch (e: Exception) {
                 AniiiiiictLogger.logError(e, "認証URLの取得に失敗")
@@ -264,34 +213,38 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun handleAuthCallback(code: String) {
+    fun handleAuthCallback(code: String?) {
         if (isAuthInProgress) {
             viewModelScope.launch {
                 try {
-                    AniiiiiictLogger.logInfo(
-                        "認証コードを処理中: ${code.take(5)}...",
-                        "handleAuthCallback"
-                    )
-                    println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
+                    if (code != null) {
+                        println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
+                        delay(200)
 
-                    delay(200)
+                        if (!currentCoroutineContext().isActive) return@launch
 
-                    val success = repository.handleAuthCallback(code)
-                    if (success) {
-                        AniiiiiictLogger.logInfo(
-                            "認証成功、プログラム一覧を読み込みます",
-                            "handleAuthCallback"
-                        )
-                        println("MainViewModel: 認証成功")
-
-                        delay(300)
-                        _uiState.update { it.copy(isAuthenticating = false) }
-
-                        loadPrograms()
+                        val success = repository.handleAuthCallback(code)
+                        if (success) {
+                            println("MainViewModel: 認証成功")
+                            delay(300)
+                            _uiState.update { it.copy(isAuthenticating = false) }
+                            loadPrograms()
+                        } else {
+                            AniiiiiictLogger.logWarning("認証が失敗しました", "handleAuthCallback")
+                            println("MainViewModel: 認証失敗")
+                            delay(200)
+                            _uiState.update {
+                                it.copy(
+                                    error = "認証に失敗しました。再度お試しください。",
+                                    isLoading = false,
+                                    isAuthenticating = false
+                                )
+                            }
+                            isAuthInProgress = false
+                        }
                     } else {
-                        AniiiiiictLogger.logWarning("認証が失敗しました", "handleAuthCallback")
-                        println("MainViewModel: 認証失敗")
-
+                        AniiiiiictLogger.logWarning("認証コードがnullです", "handleAuthCallback")
+                        println("MainViewModel: 認証コードなし")
                         delay(200)
                         _uiState.update {
                             it.copy(
@@ -303,10 +256,8 @@ class MainViewModel @Inject constructor(
                         isAuthInProgress = false
                     }
                 } catch (e: Exception) {
-                    AniiiiiictLogger.logError(e, "認証コールバックの処理中にエラーが発生")
-                    println("MainViewModel: 認証処理中に例外が発生 - ${e.message}")
+                    AniiiiiictLogger.logError(e, "認証処理に失敗")
                     e.printStackTrace()
-
                     delay(200)
                     _uiState.update {
                         it.copy(
@@ -318,8 +269,6 @@ class MainViewModel @Inject constructor(
                     isAuthInProgress = false
                 }
             }
-        } else {
-            println("MainViewModel: 認証処理が行われていないため、コールバック処理をスキップします")
         }
     }
 
@@ -399,33 +348,11 @@ class MainViewModel @Inject constructor(
             )
             currentState.copy(
                 filterState = newFilterState,
-                programs = applyFilters(currentState.programs, newFilterState)
+                programs = programFilter.applyFilters(currentState.programs, newFilterState)
             )
         }
         viewModelScope.launch {
             loadPrograms()
-        }
-    }
-
-    private fun updateAvailableFilters(programs: List<ProgramWithWork>) {
-        val media = programs.mapNotNull { it.work.media }.distinct().sorted()
-        val seasons = programs.mapNotNull { it.work.seasonName }
-            .map { it.split(" ").firstOrNull() ?: "" }
-            .filter { it in listOf("SPRING", "SUMMER", "AUTUMN", "WINTER") }
-            .distinct()
-            .sorted()
-        val years = programs.mapNotNull { it.work.seasonYear }
-            .distinct()
-            .sorted()
-        val channels = programs.map { it.program.channel.name }.distinct().sorted()
-
-        _uiState.update { currentState ->
-            currentState.copy(
-                availableMedia = media,
-                availableSeasons = seasons,
-                availableYears = years,
-                availableChannels = channels
-            )
         }
     }
 
