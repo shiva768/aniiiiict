@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,31 +21,44 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -63,168 +77,153 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
-    uiState: MainUiState,
+    viewModel: MainViewModel,
     onImageLoad: (Int, String) -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    onNavigateToHistory: () -> Unit,
-    onRefresh: () -> Unit
+    onNavigateToHistory: () -> Unit = {},
+    onRefresh: () -> Unit = {}
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    val uiState by viewModel.uiState.collectAsState()
     val pullRefreshState = rememberPullRefreshState(
         refreshing = uiState.isLoading,
         onRefresh = onRefresh
     )
-
-    // エラーメッセージを表示
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-        }
-    }
-
-    // 記録成功メッセージを表示
-    LaunchedEffect(uiState.recordingSuccess) {
-        uiState.recordingSuccess?.let {
-            snackbarHostState.showSnackbar("エピソードを記録しました")
-        }
-    }
-
-    // 認証状態のアニメーション値
-    val authAnimValue = androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (uiState.isAuthenticating) 1f else 0f,
-        animationSpec = androidx.compose.animation.core.tween(
-            durationMillis = 300,
-            easing = androidx.compose.animation.core.FastOutLinearInEasing
-        )
-    )
+    var showFilter by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Aniiiiict") }, actions = {
-                IconButton(onClick = { onNavigateToHistory() }) {
-                    Icon(Icons.Default.History, contentDescription = "履歴")
+            TopAppBar(
+                title = { Text("プログラム一覧") },
+                actions = {
+                    // フィルターボタン
+                    IconButton(
+                        onClick = { showFilter = !showFilter }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "フィルター",
+                            tint = if (showFilter) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    
+                    // 履歴画面へのナビゲーションボタン
+                    IconButton(
+                        onClick = onNavigateToHistory
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "履歴"
+                        )
+                    }
                 }
-            })
+            )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = {
+            SnackbarHost(hostState = remember { SnackbarHostState() }) {
+                if (uiState.error != null) {
+                    Snackbar(
+                        modifier = Modifier.testTag("error_snackbar"),
+                        action = {
+                            TextButton(onClick = { viewModel.refresh() }) {
+                                Text("再試行")
+                            }
+                        }
+                    ) {
+                        Text(uiState.error!!)
+                    }
+                }
+            }
+        }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .pullRefresh(pullRefreshState)
         ) {
-            // コンテンツの記憶（再コンポーズを最小限に）
-            val programs = remember(uiState.programs) { uiState.programs }
-            val isAuthenticating = remember(uiState.isAuthenticating) { uiState.isAuthenticating }
-            val isLoading = remember(uiState.isLoading) { uiState.isLoading }
+            // フィルターバー（アニメーション付きで表示/非表示）
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showFilter,
+                enter = androidx.compose.animation.fadeIn() +
+                        androidx.compose.animation.expandVertically(),
+                exit = androidx.compose.animation.fadeOut() +
+                        androidx.compose.animation.shrinkVertically()
+            ) {
+                FilterBar(
+                    filterState = uiState.filterState,
+                    availableMedia = uiState.availableMedia,
+                    availableSeasons = uiState.availableSeasons,
+                    availableYears = uiState.availableYears,
+                    availableChannels = uiState.availableChannels,
+                    onFilterChange = viewModel::updateFilter
+                )
+            }
 
-            // プログラム一覧表示（ローディング中でも表示を継続）
-            if (programs.isNotEmpty()) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    state = androidx.compose.foundation.lazy.rememberLazyListState()
-                ) {
-                    items(
-                        items = programs,
-                        key = { it.program.annictId },
-                        contentType = { "program" }
-                    ) { program ->
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = true,
-                            enter = androidx.compose.animation.fadeIn() +
-                                    androidx.compose.animation.expandVertically(),
-                            exit = androidx.compose.animation.fadeOut() +
-                                    androidx.compose.animation.shrinkVertically()
-                        ) {
-                            ProgramCard(
-                                programWithWork = program,
-                                onImageLoad = {
-                                    program.work.image?.recommendedImageUrl?.let { imageUrl ->
-                                        onImageLoad(program.program.annictId, imageUrl)
-                                    }
-                                },
-                                onRecordEpisode = onRecordEpisode,
-                                uiState = uiState
-                            )
-                        }
-                    }
-                }
-            } else {
-                // 番組リストが空の場合でもBoxを表示してPullToRefreshを有効にする
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+            // プログラム一覧
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                if (uiState.programs.isEmpty() && !uiState.isLoading) {
                     Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "視聴中のアニメはありません",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "下にスワイプして更新",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            text = "プログラムがありません",
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                }
-            }
-
-            // 認証中の表示（半透明のオーバーレイ）- アニメーション付き
-            if (isAuthenticating || authAnimValue.value > 0) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        .alpha(authAnimValue.value), // アニメーション適用
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        modifier = Modifier.padding(16.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                        shadowElevation = 4.dp
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pullRefresh(pullRefreshState)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                            Spacer(modifier = Modifier.padding(16.dp))
-                            Text(
-                                "認証中...",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                "ブラウザで認証を完了してください",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
+                        items(
+                            items = uiState.programs,
+                            key = { it.program.annictId },
+                            contentType = { "program" }
+                        ) { program ->
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = true,
+                                enter = androidx.compose.animation.fadeIn() +
+                                        androidx.compose.animation.expandVertically(),
+                                exit = androidx.compose.animation.fadeOut() +
+                                        androidx.compose.animation.shrinkVertically()
+                            ) {
+                                ProgramCard(
+                                    programWithWork = program,
+                                    onImageLoad = {
+                                        program.work.image?.recommendedImageUrl?.let { imageUrl ->
+                                            onImageLoad(program.program.annictId, imageUrl)
+                                        }
+                                    },
+                                    onRecordEpisode = onRecordEpisode,
+                                    uiState = uiState
+                                )
+                            }
                         }
                     }
                 }
-            }
-            // ローディング表示（空のリストの場合のみ）
-            else if (isLoading && programs.isEmpty()) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .align(Alignment.Center)
+
+                // ローディングインジケーター
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+
+                PullRefreshIndicator(
+                    refreshing = uiState.isLoading,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
-
-            PullRefreshIndicator(
-                refreshing = uiState.isLoading,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
         }
     }
 }
@@ -476,6 +475,309 @@ fun InfoTag(text: String, color: Color) {
             color = contentColorFor(color),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun FilterBar(
+    filterState: FilterState,
+    availableMedia: List<String>,
+    availableSeasons: List<String>,
+    availableYears: List<Int>,
+    availableChannels: List<String>,
+    onFilterChange: (String?, String?, Int?, String?, String) -> Unit
+) {
+    var showMediaFilter by remember { mutableStateOf(false) }
+    var showSeasonFilter by remember { mutableStateOf(false) }
+    var showYearFilter by remember { mutableStateOf(false) }
+    var showChannelFilter by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf(filterState.searchQuery) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        // 検索バー
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { 
+                searchQuery = it
+                onFilterChange(
+                    filterState.selectedMedia,
+                    filterState.selectedSeason,
+                    filterState.selectedYear,
+                    filterState.selectedChannel,
+                    it
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("作品名やチャンネル名で検索") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // フィルターチップ
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // メディアフィルター
+            FilterChip(
+                selected = filterState.selectedMedia != null,
+                onClick = { showMediaFilter = true },
+                label = { Text(filterState.selectedMedia ?: "メディア") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Movie,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
+
+            // シーズンフィルター（春夏秋冬）
+            FilterChip(
+                selected = filterState.selectedSeason != null,
+                onClick = { showSeasonFilter = true },
+                label = { Text(filterState.selectedSeason ?: "シーズン") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
+
+            // 年フィルター
+            FilterChip(
+                selected = filterState.selectedYear != null,
+                onClick = { showYearFilter = true },
+                label = { Text(filterState.selectedYear?.toString() ?: "年") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
+
+            // チャンネルフィルター
+            FilterChip(
+                selected = filterState.selectedChannel != null,
+                onClick = { showChannelFilter = true },
+                label = { Text(filterState.selectedChannel ?: "チャンネル") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.LiveTv,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            )
+        }
+    }
+
+    // メディアフィルターダイアログ
+    if (showMediaFilter) {
+        AlertDialog(
+            onDismissRequest = { showMediaFilter = false },
+            title = { Text("メディアを選択") },
+            text = {
+                LazyColumn {
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedMedia == null,
+                            onClick = {
+                                onFilterChange(
+                                    null,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    searchQuery
+                                )
+                                showMediaFilter = false
+                            },
+                            label = { Text("すべて") }
+                        )
+                    }
+                    items(availableMedia) { media ->
+                        FilterChip(
+                            selected = media == filterState.selectedMedia,
+                            onClick = {
+                                onFilterChange(
+                                    media,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    searchQuery
+                                )
+                                showMediaFilter = false
+                            },
+                            label = { Text(media) }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showMediaFilter = false }) {
+                    Text("閉じる")
+                }
+            }
+        )
+    }
+
+    // シーズンフィルターダイアログ（春夏秋冬）
+    if (showSeasonFilter) {
+        AlertDialog(
+            onDismissRequest = { showSeasonFilter = false },
+            title = { Text("シーズンを選択") },
+            text = {
+                LazyColumn {
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedSeason == null,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    null,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    searchQuery
+                                )
+                                showSeasonFilter = false
+                            },
+                            label = { Text("すべて") }
+                        )
+                    }
+                    items(availableSeasons) { season ->
+                        FilterChip(
+                            selected = season == filterState.selectedSeason,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    season,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    searchQuery
+                                )
+                                showSeasonFilter = false
+                            },
+                            label = { Text(season) }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSeasonFilter = false }) {
+                    Text("閉じる")
+                }
+            }
+        )
+    }
+
+    // 年フィルターダイアログ
+    if (showYearFilter) {
+        AlertDialog(
+            onDismissRequest = { showYearFilter = false },
+            title = { Text("年を選択") },
+            text = {
+                LazyColumn {
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedYear == null,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    null,
+                                    filterState.selectedChannel,
+                                    searchQuery
+                                )
+                                showYearFilter = false
+                            },
+                            label = { Text("すべて") }
+                        )
+                    }
+                    items(availableYears) { year ->
+                        FilterChip(
+                            selected = year == filterState.selectedYear,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    year,
+                                    filterState.selectedChannel,
+                                    searchQuery
+                                )
+                                showYearFilter = false
+                            },
+                            label = { Text(year.toString()) }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showYearFilter = false }) {
+                    Text("閉じる")
+                }
+            }
+        )
+    }
+
+    // チャンネルフィルターダイアログ
+    if (showChannelFilter) {
+        AlertDialog(
+            onDismissRequest = { showChannelFilter = false },
+            title = { Text("チャンネルを選択") },
+            text = {
+                LazyColumn {
+                    item {
+                        FilterChip(
+                            selected = filterState.selectedChannel == null,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    null,
+                                    searchQuery
+                                )
+                                showChannelFilter = false
+                            },
+                            label = { Text("すべて") }
+                        )
+                    }
+                    items(availableChannels) { channel ->
+                        FilterChip(
+                            selected = channel == filterState.selectedChannel,
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    channel,
+                                    searchQuery
+                                )
+                                showChannelFilter = false
+                            },
+                            label = { Text(channel) }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showChannelFilter = false }) {
+                    Text("閉じる")
+                }
+            }
         )
     }
 } 

@@ -27,6 +27,7 @@ import kotlin.coroutines.cancellation.CancellationException
 data class FilterState(
     val selectedMedia: String? = null,
     val selectedSeason: String? = null,
+    val selectedYear: Int? = null,
     val selectedChannel: String? = null,
     val searchQuery: String = ""
 )
@@ -41,6 +42,7 @@ data class MainUiState(
     val filterState: FilterState = FilterState(),
     val availableMedia: List<String> = emptyList(),
     val availableSeasons: List<String> = emptyList(),
+    val availableYears: List<Int> = emptyList(),
     val availableChannels: List<String> = emptyList()
 )
 
@@ -101,7 +103,8 @@ class MainViewModel @Inject constructor(
                 repository.getProgramsWithWorks().collect { programs ->
                     val filteredPrograms = programs.filter { program ->
                         (filterState.selectedMedia == null || program.work.media == filterState.selectedMedia) &&
-                        (filterState.selectedSeason == null || program.work.seasonName == filterState.selectedSeason) &&
+                        (filterState.selectedSeason == null || program.work.seasonName?.split(" ")?.firstOrNull() == filterState.selectedSeason) &&
+                        (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
                         (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
                         (filterState.searchQuery.isEmpty() || 
                             program.work.title.contains(filterState.searchQuery, ignoreCase = true) ||
@@ -119,17 +122,11 @@ class MainViewModel @Inject constructor(
                     preloadImages(filteredPrograms)
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) {
-                    // キャンセルされた場合は何もしない
-                    println("プログラムの読み込みがキャンセルされました")
-                    return@launch
-                }
-
-                println("プログラムの読み込み中にエラーが発生しました: ${e.message}")
+                if (e is CancellationException) throw e
+                AniiiiiictLogger.logError(e, "プログラム一覧の取得に失敗")
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.localizedMessage ?: "Unknown error occurred",
-                    isAuthenticating = false
+                    error = e.message ?: "プログラム一覧の取得に失敗しました",
+                    isLoading = false
                 )
             }
         }
@@ -394,6 +391,7 @@ class MainViewModel @Inject constructor(
     fun updateFilter(
         selectedMedia: String? = _uiState.value.filterState.selectedMedia,
         selectedSeason: String? = _uiState.value.filterState.selectedSeason,
+        selectedYear: Int? = _uiState.value.filterState.selectedYear,
         selectedChannel: String? = _uiState.value.filterState.selectedChannel,
         searchQuery: String = _uiState.value.filterState.searchQuery
     ) {
@@ -401,6 +399,7 @@ class MainViewModel @Inject constructor(
             filterState = FilterState(
                 selectedMedia = selectedMedia,
                 selectedSeason = selectedSeason,
+                selectedYear = selectedYear,
                 selectedChannel = selectedChannel,
                 searchQuery = searchQuery
             )
@@ -410,12 +409,20 @@ class MainViewModel @Inject constructor(
 
     private fun updateAvailableFilters(programs: List<ProgramWithWork>) {
         val media = programs.mapNotNull { it.work.media }.distinct().sorted()
-        val seasons = programs.mapNotNull { it.work.seasonName }.distinct().sorted()
+        val seasons = programs.mapNotNull { it.work.seasonName }
+            .map { it.split(" ").firstOrNull() ?: "" }
+            .filter { it in listOf("SPRING", "SUMMER", "AUTUMN", "WINTER") }
+            .distinct()
+            .sorted()
+        val years = programs.mapNotNull { it.work.seasonYear }
+            .distinct()
+            .sorted()
         val channels = programs.mapNotNull { it.program.channel?.name }.distinct().sorted()
 
         _uiState.value = _uiState.value.copy(
             availableMedia = media,
             availableSeasons = seasons,
+            availableYears = years,
             availableChannels = channels
         )
     }
