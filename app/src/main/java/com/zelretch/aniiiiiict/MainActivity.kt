@@ -82,7 +82,6 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("main") {
                         val viewModel = hiltViewModel<MainViewModel>()
-                        val uiState by viewModel.uiState.collectAsState()
 
                         LaunchedEffect(authCodeProcessed) {
                             if (authCodeProcessed) {

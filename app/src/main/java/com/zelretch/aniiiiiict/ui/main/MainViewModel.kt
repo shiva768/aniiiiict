@@ -2,7 +2,6 @@ package com.zelretch.aniiiiiict.ui.main
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.ui.text.toLowerCase
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -103,15 +102,19 @@ class MainViewModel @Inject constructor(
 
                 val filterState = _uiState.value.filterState
                 repository.getProgramsWithWorks().collect { programs ->
-                    val filteredPrograms = programs.filter { program ->
+                    var filteredPrograms = programs.filter { program ->
                         (filterState.selectedMedia == null || program.work.media == filterState.selectedMedia) &&
                         (filterState.selectedSeason == null || program.work.seasonName?.split(" ")?.firstOrNull() == filterState.selectedSeason) &&
                         (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
                         (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
-                        (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString()) &&
-                        (filterState.searchQuery.isEmpty() || 
-                            program.work.title.contains(filterState.searchQuery, ignoreCase = true) ||
-                            program.program.channel.name.contains(filterState.searchQuery, ignoreCase = true))
+                        (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString())
+                    }
+
+                    // 検索クエリでフィルタリング
+                    if (filterState.searchQuery.isNotBlank()) {
+                        filteredPrograms = filteredPrograms.filter { program ->
+                            program.work.title.contains(filterState.searchQuery, ignoreCase = true)
+                        }
                     }
 
                     updateAvailableFilters(filteredPrograms)
@@ -422,7 +425,7 @@ class MainViewModel @Inject constructor(
         val years = programs.mapNotNull { it.work.seasonYear }
             .distinct()
             .sorted()
-        val channels = programs.mapNotNull { it.program.channel?.name }.distinct().sorted()
+        val channels = programs.map { it.program.channel.name }.distinct().sorted()
 
         _uiState.value = _uiState.value.copy(
             availableMedia = media,
