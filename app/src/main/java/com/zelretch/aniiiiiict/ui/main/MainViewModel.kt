@@ -68,9 +68,7 @@ class MainViewModel @Inject constructor(
     private fun checkAuthState() {
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(isLoading = true) }
                 val isAuthenticated = repository.isAuthenticated()
-                _uiState.update { it.copy(isLoading = false) }
 
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
