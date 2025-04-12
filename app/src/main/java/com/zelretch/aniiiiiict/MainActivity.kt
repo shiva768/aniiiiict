@@ -25,9 +25,9 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
+
     // ViewModelを一度だけ初期化して保持する
     private val viewModel: MainViewModel by viewModels()
-    private var isProcessingAuth = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,14 +112,11 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleIntent(intent, null)
+        handleIntent(intent)
     }
 
     override fun onResume() {
-        AniiiiiictLogger.logInfo(TAG, "resume", "resume")
         super.onResume()
-        if (viewModel.uiState.value.isAuthenticating)
-            viewModel.cancelAuth()
     }
 
 //    private fun extractAuthCode(intent: Intent) {
@@ -145,7 +142,7 @@ class MainActivity : ComponentActivity() {
 //        }
 //    }
 
-    private fun handleIntent(intent: Intent, onAuthProcessed: (() -> Unit)? = null) {
+    private fun handleIntent(intent: Intent) {
         Log.d("MainActivity", "Intent received: ${intent.action}, data: ${intent.data}")
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
@@ -153,30 +150,19 @@ class MainActivity : ComponentActivity() {
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    if (!isProcessingAuth) {
-                        isProcessingAuth = true
-                        Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
-                        AniiiiiictLogger.logInfo(
-                            TAG,
-                            "Processing authentication code: ${code.take(5)}...",
-                            "handleIntent"
-                        )
 
-                        // 認証処理は新しいコルーチンで実行して独立性を保つ
-                        lifecycleScope.launch {
-                            viewModel.handleAuthCallback(code)
-                            isProcessingAuth = false
+                    Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
+                    AniiiiiictLogger.logInfo(
+                        TAG,
+                        "Processing authentication code: ${code.take(5)}...",
+                        "handleIntent"
+                    )
 
-                            // コールバックがある場合は実行
-                            onAuthProcessed?.invoke()
-                        }
-                    } else {
-                        AniiiiiictLogger.logInfo(
-                            TAG,
-                            "認証処理が既に進行中です。このリクエストはスキップします。",
-                            "handleIntent"
-                        )
+                    // 認証処理は新しいコルーチンで実行して独立性を保つ
+                    lifecycleScope.launch {
+                        viewModel.handleAuthCallback(code)
                     }
+
                 } else {
                     AniiiiiictLogger.logError(
                         TAG,

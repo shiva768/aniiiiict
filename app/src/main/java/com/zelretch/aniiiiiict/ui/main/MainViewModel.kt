@@ -51,8 +51,6 @@ class MainViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    private var isAuthInProgress = false
-
     init {
         AniiiiiictLogger.logInfo(TAG, "koko", "koko")
         checkAuthState { loadInitialData() }
@@ -187,12 +185,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun startAuth() {
-        if (isAuthInProgress) {
-            AniiiiiictLogger.logWarning(TAG, "認証が既に進行中です", "startAuth")
-            return
-        }
         AniiiiiictLogger.logInfo(TAG, "authsiteru", "auth")
-        isAuthInProgress = true
         _uiState.update { it.copy(isAuthenticating = true) }
 
         viewModelScope.launch {
@@ -216,51 +209,32 @@ class MainViewModel @Inject constructor(
                         isAuthenticating = false
                     )
                 }
-                isAuthInProgress = false
             }
         }
     }
 
     fun handleAuthCallback(code: String?) {
-        if (isAuthInProgress) {
-            viewModelScope.launch {
-                try {
-                    if (code != null) {
-                        println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
-                        delay(200)
+        viewModelScope.launch {
+            try {
+                if (code != null) {
+                    println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
+                    delay(200)
 
-                        if (!isActive) return@launch
+                    if (!isActive) return@launch
 
-                        val success = repository.handleAuthCallback(code)
-                        if (success) {
-                            println("MainViewModel: 認証成功")
-                            delay(300)
-                            _uiState.update { it.copy(isAuthenticating = false) }
-                            loadInitialData()
-                        } else {
-                            AniiiiiictLogger.logWarning(
-                                TAG,
-                                "認証が失敗しました",
-                                "handleAuthCallback"
-                            )
-                            println("MainViewModel: 認証失敗")
-                            delay(200)
-                            _uiState.update {
-                                it.copy(
-                                    error = "認証に失敗しました。再度お試しください。",
-                                    isLoading = false,
-                                    isAuthenticating = false
-                                )
-                            }
-                            isAuthInProgress = false
-                        }
+                    val success = repository.handleAuthCallback(code)
+                    if (success) {
+                        println("MainViewModel: 認証成功")
+                        delay(300)
+                        _uiState.update { it.copy(isAuthenticating = false) }
+                        loadInitialData()
                     } else {
                         AniiiiiictLogger.logWarning(
                             TAG,
-                            "認証コードがnullです",
+                            "認証が失敗しました",
                             "handleAuthCallback"
                         )
-                        println("MainViewModel: 認証コードなし")
+                        println("MainViewModel: 認証失敗")
                         delay(200)
                         _uiState.update {
                             it.copy(
@@ -269,37 +243,39 @@ class MainViewModel @Inject constructor(
                                 isAuthenticating = false
                             )
                         }
-                        isAuthInProgress = false
                     }
-                } catch (e: Exception) {
-                    AniiiiiictLogger.logError(TAG, e, "認証処理に失敗")
-                    e.printStackTrace()
+                } else {
+                    AniiiiiictLogger.logWarning(
+                        TAG,
+                        "認証コードがnullです",
+                        "handleAuthCallback"
+                    )
+                    println("MainViewModel: 認証コードなし")
                     delay(200)
                     _uiState.update {
                         it.copy(
-                            error = e.message ?: "認証に失敗しました",
+                            error = "認証に失敗しました。再度お試しください。",
                             isLoading = false,
                             isAuthenticating = false
                         )
                     }
-                    isAuthInProgress = false
+                }
+            } catch (e: Exception) {
+                AniiiiiictLogger.logError(TAG, e, "認証処理に失敗")
+                e.printStackTrace()
+                delay(200)
+                _uiState.update {
+                    it.copy(
+                        error = e.message ?: "認証に失敗しました",
+                        isLoading = false,
+                        isAuthenticating = false
+                    )
                 }
             }
         }
+
     }
 
-    fun cancelAuth() {
-        viewModelScope.launch {
-            println("MainViewModel: 認証をキャンセルします")
-            isAuthInProgress = false
-            _uiState.update {
-                it.copy(
-                    isAuthenticating = false,
-                    isLoading = false
-                )
-            }
-        }
-    }
 
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         viewModelScope.launch {
