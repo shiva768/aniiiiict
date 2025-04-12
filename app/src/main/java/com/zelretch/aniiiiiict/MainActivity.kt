@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // 認証コードを抽出して保存
-        extractAuthCode(intent)
+//        extractAuthCode(intent)
 
         setContent {
             AniiiiictTheme {
@@ -161,28 +161,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun extractAuthCode(intent: Intent) {
-        Log.d("MainActivity", "Intent解析中: ${intent.action}, data: ${intent.data}")
-        if (intent.action == Intent.ACTION_VIEW) {
-            val uri = intent.data
-            if (uri?.scheme == "aniiiiiict" && uri.host == "oauth" && uri.pathSegments.firstOrNull() == "callback") {
-                val code = uri.getQueryParameter("code")
-                Log.d("MainActivity", "認証コードを抽出: ${code?.take(5)}...")
-                if (code != null && pendingAuthCode == null && !isProcessingAuth) {
-                    pendingAuthCode = code
-                    AniiiiiictLogger.logInfo(
-                        "認証コードを保存: ${code.take(5)}...",
-                        "extractAuthCode"
-                    )
-                } else {
-                    Log.d(
-                        "MainActivity",
-                        "既に認証コードが処理中のため、新しいコードをスキップします"
-                    )
-                }
-            }
-        }
-    }
+//    private fun extractAuthCode(intent: Intent) {
+//        Log.d("MainActivity", "Intent解析中: ${intent.action}, data: ${intent.data}")
+//        if (intent.action == Intent.ACTION_VIEW) {
+//            val uri = intent.data
+//            if (uri?.scheme == "aniiiiiict" && uri.host == "oauth" && uri.pathSegments.firstOrNull() == "callback") {
+//                val code = uri.getQueryParameter("code")
+//                Log.d("MainActivity", "認証コードを抽出: ${code?.take(5)}...")
+//                if (code != null && pendingAuthCode == null && !isProcessingAuth) {
+//                    pendingAuthCode = code
+//                    AniiiiiictLogger.logInfo(
+//                        "認証コードを保存: ${code.take(5)}...",
+//                        "extractAuthCode"
+//                    )
+//                } else {
+//                    Log.d(
+//                        "MainActivity",
+//                        "既に認証コードが処理中のため、新しいコードをスキップします"
+//                    )
+//                }
+//            }
+//        }
+//    }
 
     private fun handleIntent(intent: Intent, onAuthProcessed: (() -> Unit)? = null) {
         Log.d("MainActivity", "Intent received: ${intent.action}, data: ${intent.data}")
