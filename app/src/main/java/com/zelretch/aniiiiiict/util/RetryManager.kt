@@ -1,41 +1,82 @@
 package com.zelretch.aniiiiiict.util
 
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withTimeout
+import java.util.concurrent.TimeUnit
+import kotlin.math.min
 
+/**
+ * リトライロジックを提供するユーティリティクラス
+ */
 class RetryManager {
     companion object {
-        private const val MAX_RETRIES = 3
-        private const val INITIAL_DELAY = 1000L // 1秒
-        private const val MAX_DELAY = 10000L // 10秒
+        private const val TAG = "RetryManager"
     }
 
-    fun <T> retryWithExponentialBackoff(
-        operation: suspend () -> T,
-        shouldRetry: (Throwable) -> Boolean = { true }
-    ): Flow<T> = flow {
-        var currentDelay = INITIAL_DELAY
-        var retryCount = 0
+    /**
+     * 指定された回数だけ処理をリトライします
+     *
+     * @param maxAttempts 最大リトライ回数
+     * @param initialDelay 初回リトライまでの遅延時間（ミリ秒）
+     * @param maxDelay 最大遅延時間（ミリ秒）
+     * @param factor 遅延時間の増加係数
+     * @param block リトライする処理
+     * @return 処理の結果
+     */
+    suspend fun <T> retry(
+        maxAttempts: Int = 3,
+        initialDelay: Long = 1000L,
+        maxDelay: Long = 5000L,
+        factor: Double = 2.0,
+        block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelay
+        var lastException: Exception? = null
 
-        while (true) {
+        repeat(maxAttempts) { attempt ->
             try {
-                emit(operation())
-                break
-            } catch (e: Throwable) {
-                if (!shouldRetry(e) || retryCount >= MAX_RETRIES) {
-                    throw e
-                }
-
-                AniiiiiictLogger.logWarning(
-                    "リトライ実行: ${retryCount + 1}/${MAX_RETRIES}, 遅延: ${currentDelay}ms",
-                    "RetryManager"
+                return block()
+            } catch (e: Exception) {
+                lastException = e
+                AniiiiiictLogger.logError(
+                    "リトライ失敗 (${attempt + 1}/$maxAttempts): ${e.message}",
+                    "retry"
                 )
 
-                delay(currentDelay)
-                currentDelay = (currentDelay * 2).coerceAtMost(MAX_DELAY)
-                retryCount++
+                // 最後の試行でない場合のみ待機
+                if (attempt < maxAttempts - 1) {
+                    delay(currentDelay)
+                    // 次回の遅延時間を計算（指数バックオフ）
+                    currentDelay = min((currentDelay * factor).toLong(), maxDelay)
+                }
             }
         }
+
+        // すべてのリトライが失敗した場合
+        throw lastException ?: IllegalStateException("リトライが失敗しました")
+    }
+
+    /**
+     * タイムアウト付きでリトライを行います
+     *
+     * @param timeout タイムアウト時間
+     * @param timeUnit タイムアウトの単位
+     * @param maxAttempts 最大リトライ回数
+     * @param initialDelay 初回リトライまでの遅延時間（ミリ秒）
+     * @param maxDelay 最大遅延時間（ミリ秒）
+     * @param factor 遅延時間の増加係数
+     * @param block リトライする処理
+     * @return 処理の結果
+     */
+    suspend fun <T> retryWithTimeout(
+        timeout: Long,
+        timeUnit: TimeUnit = TimeUnit.SECONDS,
+        maxAttempts: Int = 3,
+        initialDelay: Long = 1000L,
+        maxDelay: Long = 5000L,
+        factor: Double = 2.0,
+        block: suspend () -> T
+    ): T = withTimeout(timeUnit.toMillis(timeout)) {
+        retry(maxAttempts, initialDelay, maxDelay, factor, block)
     }
 } 

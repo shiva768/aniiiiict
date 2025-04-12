@@ -6,6 +6,7 @@ import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.AnnictConfig
 import com.zelretch.aniiiiiict.data.model.TokenResponse
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
+import com.zelretch.aniiiiiict.util.RetryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
@@ -15,48 +16,48 @@ import java.io.IOException
 import javax.inject.Inject
 
 class AnnictAuthManager @Inject constructor(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val okHttpClient: OkHttpClient,
+    private val retryManager: RetryManager
 ) {
     companion object {
         private const val REDIRECT_URI = "aniiiiiict://oauth/callback"
         private const val TAG = "AnnictAuthManager"
+        private const val MAX_RETRIES = 3
     }
 
-    fun getAuthorizationUrl(): String {
-        return "${AnnictConfig.AUTH_URL}?" +
-                "client_id=${BuildConfig.ANNICT_CLIENT_ID}&" +
-                "response_type=code&" +
-                "redirect_uri=$REDIRECT_URI&" +
-                "scope=read+write"
+    fun getAuthorizationUrl(): String = buildString {
+        append(AnnictConfig.AUTH_URL)
+        append("?client_id=${BuildConfig.ANNICT_CLIENT_ID}")
+        append("&response_type=code")
+        append("&redirect_uri=$REDIRECT_URI")
+        append("&scope=read+write")
     }
 
-    suspend fun handleAuthorizationCode(code: String): Result<Unit> {
-        return withContext(Dispatchers.IO) {
-            try {
-                Log.d(TAG, "認証コードの処理を開始: ${code.take(5)}...")
-                AniiiiiictLogger.logInfo(
-                    "認証コードの処理を開始: ${code.take(5)}...",
-                    "handleAuthorizationCode"
-                )
-                val tokenResponse = getAccessToken(code)
-                Log.d(TAG, "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...")
-                AniiiiiictLogger.logInfo(
-                    "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...",
-                    "handleAuthorizationCode"
-                )
-
-                tokenManager.saveAccessToken(tokenResponse.accessToken)
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Log.e(TAG, "認証処理中にエラーが発生: ${e.message}", e)
-                AniiiiiictLogger.logError(e, "認証コードの処理中にエラー")
-                Result.failure(e)
-            }
+    suspend fun handleAuthorizationCode(code: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            logInfo("認証コードの処理を開始: ${code.take(5)}...", "handleAuthorizationCode")
+            val tokenResponse = getAccessTokenWithRetry(code)
+            logInfo("アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...", "handleAuthorizationCode")
+            tokenManager.saveAccessToken(tokenResponse.accessToken)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            logError(e, "認証コードの処理中にエラー")
+            Result.failure(e)
         }
     }
 
-    private suspend fun getAccessToken(code: String): TokenResponse {
-        val client = OkHttpClient()
+    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse =
+        retryManager.retry(
+            maxAttempts = MAX_RETRIES,
+            initialDelay = 1000L,
+            maxDelay = 5000L,
+            factor = 2.0
+        ) {
+            getAccessToken(code)
+        }
+
+    private fun getAccessToken(code: String): TokenResponse {
         val formBody = FormBody.Builder()
             .add("client_id", BuildConfig.ANNICT_CLIENT_ID)
             .add("client_secret", BuildConfig.ANNICT_CLIENT_SECRET)
@@ -65,45 +66,46 @@ class AnnictAuthManager @Inject constructor(
             .add("code", code)
             .build()
 
-        Log.d(
-            TAG,
-            "トークンリクエストを送信: client_id=${BuildConfig.ANNICT_CLIENT_ID}, redirect_uri=$REDIRECT_URI"
-        )
-        AniiiiiictLogger.logInfo("トークンリクエストを送信", "getAccessToken")
+        logInfo("トークンリクエストを送信", "getAccessToken")
 
         val request = Request.Builder()
             .url(AnnictConfig.TOKEN_URL)
             .post(formBody)
             .build()
 
-        val response = client.newCall(request).execute()
+        return okHttpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                val errorBody = response.body?.string() ?: "レスポンスボディなし"
+                val error = IOException("トークンリクエスト失敗: ${response.code}, $errorBody")
+                logError(error, "getAccessToken")
+                throw error
+            }
 
-        if (!response.isSuccessful) {
-            val errorBody = response.body?.string() ?: "レスポンスボディなし"
-            Log.e(TAG, "トークンリクエストが失敗: ${response.code}, body: $errorBody")
-            AniiiiiictLogger.logError(
-                IOException("トークンリクエスト失敗: ${response.code}, $errorBody"),
-                "getAccessToken"
-            )
-            throw IOException("Token request failed: ${response.code}, $errorBody")
+            val responseBody = response.body?.string()
+            if (responseBody.isNullOrEmpty()) {
+                val error = IOException("空のレスポンスボディ")
+                logError(error, "getAccessToken")
+                throw error
+            }
+
+            logInfo("トークンレスポンス受信: ${responseBody.take(50)}...", "getAccessToken")
+
+            try {
+                Gson().fromJson(responseBody, TokenResponse::class.java)
+            } catch (e: Exception) {
+                logError(e, "トークンレスポンスのパース失敗")
+                throw IOException("Failed to parse token response: ${e.message}")
+            }
         }
+    }
 
-        val responseBody = response.body?.string()
-        if (responseBody.isNullOrEmpty()) {
-            Log.e(TAG, "レスポンスボディが空")
-            AniiiiiictLogger.logError(IOException("空のレスポンスボディ"), "getAccessToken")
-            throw IOException("Empty response body")
-        }
+    private fun logInfo(message: String, method: String) {
+        Log.d(TAG, message)
+        AniiiiiictLogger.logInfo(message, method)
+    }
 
-        Log.d(TAG, "トークンレスポンス受信: ${responseBody.take(50)}...")
-        AniiiiiictLogger.logInfo("トークンレスポンス受信", "getAccessToken")
-
-        return try {
-            Gson().fromJson(responseBody, TokenResponse::class.java)
-        } catch (e: Exception) {
-            Log.e(TAG, "JSONパースエラー: ${e.message}, body: $responseBody", e)
-            AniiiiiictLogger.logError(e, "トークンレスポンスのパース失敗")
-            throw IOException("Failed to parse token response: ${e.message}")
-        }
+    private fun logError(error: Exception, method: String) {
+        Log.e(TAG, "${error.message}", error)
+        AniiiiiictLogger.logError(error, method)
     }
 }

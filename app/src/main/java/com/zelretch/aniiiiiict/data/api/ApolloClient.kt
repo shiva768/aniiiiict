@@ -4,24 +4,26 @@ import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.network.okHttpClient
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.auth.TokenManager
+import com.zelretch.aniiiiiict.util.AniiiiiictLogger
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ApolloClient @Inject constructor(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val okHttpClient: OkHttpClient
 ) {
+    companion object {
+        private const val TAG = "ApolloClient"
+        private const val SERVER_URL = "https://api.annict.com/graphql"
+    }
+
     private val client by lazy {
         val token = tokenManager.getAccessToken()
-        println("Apollo初期化 - アクセストークン: ${token?.take(10)}...")
+        AniiiiiictLogger.logInfo("Apollo初期化 - アクセストークンの有無: ${!token.isNullOrBlank()}", "ApolloClient.init")
 
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-
-        val okHttpClient = OkHttpClient.Builder()
+        val authenticatedClient = okHttpClient.newBuilder()
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader(
@@ -31,16 +33,13 @@ class ApolloClient @Inject constructor(
                     .build()
                 chain.proceed(request)
             }
-            .addInterceptor(loggingInterceptor)
             .build()
 
         ApolloClient.Builder()
-            .serverUrl("https://api.annict.com/graphql")
-            .okHttpClient(okHttpClient)
+            .serverUrl(SERVER_URL)
+            .okHttpClient(authenticatedClient)
             .build()
     }
 
-    fun getApolloClient(): ApolloClient {
-        return client
-    }
+    fun getApolloClient(): ApolloClient = client
 } 

@@ -2,6 +2,7 @@ package com.zelretch.aniiiiiict.di
 
 import android.content.Context
 import androidx.room.Room
+import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
@@ -18,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
+import java.util.concurrent.TimeUnit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -31,18 +33,25 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAnnictAuthManager(
-        tokenManager: TokenManager
-    ): AnnictAuthManager = AnnictAuthManager(tokenManager)
+        tokenManager: TokenManager,
+        okHttpClient: OkHttpClient,
+        retryManager: RetryManager
+    ): AnnictAuthManager = AnnictAuthManager(tokenManager, okHttpClient, retryManager)
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply {
-                level = okhttp3.logging.HttpLoggingInterceptor.Level.BODY
-            })
-            .build()
-    }
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                okhttp3.logging.HttpLoggingInterceptor.Level.BODY
+            } else {
+                okhttp3.logging.HttpLoggingInterceptor.Level.NONE
+            }
+        })
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     @Provides
     @Singleton
@@ -68,9 +77,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideApolloClient(tokenManager: TokenManager): ApolloClient {
-        return ApolloClient(tokenManager)
-    }
+    fun provideApolloClient(
+        tokenManager: TokenManager,
+        okHttpClient: OkHttpClient
+    ): ApolloClient = ApolloClient(tokenManager, okHttpClient)
 
     @Provides
     @Singleton
