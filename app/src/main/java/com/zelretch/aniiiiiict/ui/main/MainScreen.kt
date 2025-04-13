@@ -492,6 +492,29 @@ fun FilterBar(
     var showChannelDialog by remember { mutableStateOf(false) }
     var showStatusDialog by remember { mutableStateOf(false) }
 
+    // フィルター更新のヘルパー関数
+    fun updateFilter(
+        selectedMedia: Set<String> = filterState.selectedMedia,
+        selectedSeason: Set<String> = filterState.selectedSeason,
+        selectedYear: Set<Int> = filterState.selectedYear,
+        selectedChannel: Set<String> = filterState.selectedChannel,
+        selectedStatus: Set<StatusState> = filterState.selectedStatus,
+        searchQuery: String = filterState.searchQuery,
+        showOnlyAired: Boolean = filterState.showOnlyAired,
+        sortOrder: SortOrder = filterState.sortOrder
+    ) {
+        onFilterChange(
+            selectedMedia,
+            selectedSeason,
+            selectedYear,
+            selectedChannel,
+            selectedStatus,
+            searchQuery,
+            showOnlyAired,
+            sortOrder
+        )
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -509,16 +532,7 @@ fun FilterBar(
             OutlinedTextField(
                 value = filterState.searchQuery,
                 onValueChange = { query ->
-                    onFilterChange(
-                        filterState.selectedMedia,
-                        filterState.selectedSeason,
-                        filterState.selectedYear,
-                        filterState.selectedChannel,
-                        filterState.selectedStatus,
-                        query,
-                        filterState.showOnlyAired,
-                        filterState.sortOrder
-                    )
+                    updateFilter(searchQuery = query)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("作品名やチャンネル名で検索") },
@@ -581,16 +595,7 @@ fun FilterBar(
                 Checkbox(
                     checked = filterState.showOnlyAired,
                     onCheckedChange = { checked ->
-                        onFilterChange(
-                            filterState.selectedMedia,
-                            filterState.selectedSeason,
-                            filterState.selectedYear,
-                            filterState.selectedChannel,
-                            filterState.selectedStatus,
-                            filterState.searchQuery,
-                            checked,
-                            filterState.sortOrder
-                        )
+                        updateFilter(showOnlyAired = checked)
                     }
                 )
                 Text(
@@ -608,32 +613,14 @@ fun FilterBar(
                     FilterChip(
                         selected = filterState.sortOrder == SortOrder.START_TIME_ASC,
                         onClick = {
-                            onFilterChange(
-                                filterState.selectedMedia,
-                                filterState.selectedSeason,
-                                filterState.selectedYear,
-                                filterState.selectedChannel,
-                                filterState.selectedStatus,
-                                filterState.searchQuery,
-                                filterState.showOnlyAired,
-                                SortOrder.START_TIME_ASC
-                            )
+                            updateFilter(sortOrder = SortOrder.START_TIME_ASC)
                         },
                         label = { Text("昇順") }
                     )
                     FilterChip(
                         selected = filterState.sortOrder == SortOrder.START_TIME_DESC,
                         onClick = {
-                            onFilterChange(
-                                filterState.selectedMedia,
-                                filterState.selectedSeason,
-                                filterState.selectedYear,
-                                filterState.selectedChannel,
-                                filterState.selectedStatus,
-                                filterState.searchQuery,
-                                filterState.showOnlyAired,
-                                SortOrder.START_TIME_DESC
-                            )
+                            updateFilter(sortOrder = SortOrder.START_TIME_DESC)
                         },
                         label = { Text("降順") }
                     )
@@ -642,7 +629,7 @@ fun FilterBar(
         }
     }
 
-    // メディア選択ダイアログ
+    // フィルターダイアログの表示
     if (showMediaDialog) {
         FilterSelectionDialog(
             title = "メディアを選択",
@@ -655,22 +642,12 @@ fun FilterBar(
                 } else {
                     newSelection.add(media)
                 }
-                onFilterChange(
-                    newSelection,
-                    filterState.selectedSeason,
-                    filterState.selectedYear,
-                    filterState.selectedChannel,
-                    filterState.selectedStatus,
-                    filterState.searchQuery,
-                    filterState.showOnlyAired,
-                    filterState.sortOrder
-                )
+                updateFilter(selectedMedia = newSelection)
             },
             onDismiss = { showMediaDialog = false }
         )
     }
 
-    // シーズン選択ダイアログ
     if (showSeasonDialog) {
         FilterSelectionDialog(
             title = "シーズンを選択",
@@ -683,22 +660,12 @@ fun FilterBar(
                 } else {
                     newSelection.add(season)
                 }
-                onFilterChange(
-                    filterState.selectedMedia,
-                    newSelection,
-                    filterState.selectedYear,
-                    filterState.selectedChannel,
-                    filterState.selectedStatus,
-                    filterState.searchQuery,
-                    filterState.showOnlyAired,
-                    filterState.sortOrder
-                )
+                updateFilter(selectedSeason = newSelection)
             },
             onDismiss = { showSeasonDialog = false }
         )
     }
 
-    // 年選択ダイアログ
     if (showYearDialog) {
         FilterSelectionDialog(
             title = "年を選択",
@@ -712,22 +679,12 @@ fun FilterBar(
                 } else {
                     newSelection.add(year)
                 }
-                onFilterChange(
-                    filterState.selectedMedia,
-                    filterState.selectedSeason,
-                    newSelection,
-                    filterState.selectedChannel,
-                    filterState.selectedStatus,
-                    filterState.searchQuery,
-                    filterState.showOnlyAired,
-                    filterState.sortOrder
-                )
+                updateFilter(selectedYear = newSelection)
             },
             onDismiss = { showYearDialog = false }
         )
     }
 
-    // チャンネル選択ダイアログ
     if (showChannelDialog) {
         FilterSelectionDialog(
             title = "チャンネルを選択",
@@ -740,22 +697,12 @@ fun FilterBar(
                 } else {
                     newSelection.add(channel)
                 }
-                onFilterChange(
-                    filterState.selectedMedia,
-                    filterState.selectedSeason,
-                    filterState.selectedYear,
-                    newSelection,
-                    filterState.selectedStatus,
-                    filterState.searchQuery,
-                    filterState.showOnlyAired,
-                    filterState.sortOrder
-                )
+                updateFilter(selectedChannel = newSelection)
             },
             onDismiss = { showChannelDialog = false }
         )
     }
 
-    // ステータス選択ダイアログ
     if (showStatusDialog) {
         FilterSelectionDialog(
             title = "ステータスを選択",
@@ -769,16 +716,7 @@ fun FilterBar(
                 } else {
                     newSelection.add(status)
                 }
-                onFilterChange(
-                    filterState.selectedMedia,
-                    filterState.selectedSeason,
-                    filterState.selectedYear,
-                    filterState.selectedChannel,
-                    newSelection,
-                    filterState.searchQuery,
-                    filterState.showOnlyAired,
-                    filterState.sortOrder
-                )
+                updateFilter(selectedStatus = newSelection)
             },
             onDismiss = { showStatusDialog = false }
         )
