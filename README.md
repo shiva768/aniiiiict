@@ -77,6 +77,8 @@ cp local.properties.example local.properties
 - ドメインロジックをUseCaseに集約
 - Repository パターンによるデータアクセスの抽象化
 - Composableによる宣言的UI
+- DataStoreによるデータ永続化（画像URLの保存など）
+- 依存関係のバージョン管理はlibs.versions.tomlで一元化
 
 ## ライセンス
 
