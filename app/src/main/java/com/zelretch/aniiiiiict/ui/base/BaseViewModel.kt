@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
  */
 abstract class BaseViewModel : ViewModel() {
     private val TAG = "BaseViewModel"
+
     /**
      * ローディング状態を更新する関数
      */

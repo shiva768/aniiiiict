@@ -70,7 +70,7 @@ class ProgramFilter {
         val seasons = programs.mapNotNull { it.work.seasonName }
             .distinct()
             .sortedWith(compareBy { seasonOrder[it] ?: Int.MAX_VALUE })
-        
+
         val years = programs.mapNotNull { it.work.seasonYear }.distinct().sorted()
         val channels = programs.map { it.program.channel.name }.distinct().sorted()
 
