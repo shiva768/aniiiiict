@@ -32,9 +32,4 @@ class WorkImagePreferences @Inject constructor(
         }
     }
 
-    suspend fun deleteWorkImage(workId: Long) {
-        dataStore.edit { preferences ->
-            preferences.remove(stringPreferencesKey(workId.toString()))
-        }
-    }
-} 
+}

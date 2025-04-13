@@ -63,7 +63,20 @@ class ProgramFilter {
 
     fun extractAvailableFilters(programs: List<ProgramWithWork>): AvailableFilters {
         val media = programs.mapNotNull { it.work.media }.distinct().sorted()
-        val seasons = programs.mapNotNull { it.work.seasonName }.distinct().sorted()
+
+        // シーズンの並び順を定義
+        val seasonOrder = mapOf(
+            "WINTER" to 0,
+            "SPRING" to 1,
+            "SUMMER" to 2,
+            "AUTUMN" to 3
+        )
+
+        // シーズンをカスタム順序でソート
+        val seasons = programs.mapNotNull { it.work.seasonName }
+            .distinct()
+            .sortedWith(compareBy { seasonOrder[it] ?: Int.MAX_VALUE })
+        
         val years = programs.mapNotNull { it.work.seasonYear }.distinct().sorted()
         val channels = programs.map { it.program.channel.name }.distinct().sorted()
 

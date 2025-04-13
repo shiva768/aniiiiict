@@ -115,8 +115,7 @@ dependencies {
     implementation(libs.bundles.apollo)
 
     // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
-    implementation("androidx.datastore:datastore-preferences-core:1.0.0")
+    implementation(libs.androidx.datastore.preferences)
 
     // Testing
     testImplementation(libs.bundles.testing)

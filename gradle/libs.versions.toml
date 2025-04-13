@@ -1,6 +1,7 @@
 [versions]
 # Plugins
 agp = "8.9.1"
+datastore-preferences = "1.1.4"
 kotlin = "2.0.0"
 kotlin-compose = "2.1.20"
 ksp = "2.1.20-1.0.32"
@@ -47,6 +48,7 @@ arch-testing = "2.2.0"
 [libraries]
 # Android Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore-preferences" }
 androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
 
