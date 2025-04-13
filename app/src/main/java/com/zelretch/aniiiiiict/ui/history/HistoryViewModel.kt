@@ -15,10 +15,12 @@ import javax.inject.Inject
 
 data class HistoryUiState(
     val records: List<Record> = emptyList(),
+    val allRecords: List<Record> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val hasNextPage: Boolean = false,
-    val endCursor: String? = null
+    val endCursor: String? = null,
+    val searchQuery: String = ""
 )
 
 @HiltViewModel
@@ -45,8 +47,10 @@ class HistoryViewModel @Inject constructor(
         executeWithLoading {
             val result = repository.getRecords(null)
             _uiState.update {
+                val allRecords = result.records
                 it.copy(
-                    records = result.records,
+                    allRecords = allRecords,
+                    records = filterRecords(allRecords, it.searchQuery),
                     hasNextPage = result.hasNextPage,
                     endCursor = result.endCursor
                 )
@@ -63,12 +67,38 @@ class HistoryViewModel @Inject constructor(
         executeWithLoading {
             val result = repository.getRecords(currentState.endCursor)
             _uiState.update {
+                val newAllRecords = it.allRecords + result.records
                 it.copy(
-                    records = it.records + result.records,
+                    allRecords = newAllRecords,
+                    records = filterRecords(newAllRecords, it.searchQuery),
                     hasNextPage = result.hasNextPage,
                     endCursor = result.endCursor
                 )
             }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                searchQuery = query,
+                records = filterRecords(currentState.allRecords, query)
+            )
+        }
+
+        _uiState.update {
+            it.copy(
+                hasNextPage = false,
+                endCursor = null
+            )
+        }
+        loadRecords()
+    }
+
+    private fun filterRecords(records: List<Record>, query: String): List<Record> {
+        if (query.isEmpty()) return records
+        return records.filter { record ->
+            record.work.title.contains(query, ignoreCase = true)
         }
     }
 
@@ -77,8 +107,10 @@ class HistoryViewModel @Inject constructor(
             try {
                 repository.deleteRecord(recordId)
                 _uiState.update { currentState ->
+                    val newAllRecords = currentState.allRecords.filter { it.id != recordId }
                     currentState.copy(
-                        records = currentState.records.filter { it.id != recordId }
+                        allRecords = newAllRecords,
+                        records = filterRecords(newAllRecords, currentState.searchQuery)
                     )
                 }
             } catch (e: Exception) {

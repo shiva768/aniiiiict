@@ -101,7 +101,8 @@ class MainActivity : ComponentActivity() {
                             onRetry = { historyViewModel.loadRecords() },
                             onDeleteRecord = { historyViewModel.deleteRecord(it) },
                             onRefresh = { historyViewModel.loadRecords() },
-                            onLoadNextPage = { historyViewModel.loadNextPage() }
+                            onLoadNextPage = { historyViewModel.loadNextPage() },
+                            onSearchQueryChange = { historyViewModel.updateSearchQuery(it) }
                         )
                     }
                 }
