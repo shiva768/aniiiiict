@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -41,7 +40,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -447,20 +445,6 @@ fun ProgramCard(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // スキップボタン
-                    OutlinedIconButton(
-                        onClick = { /* スキップ処理 */ },
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SkipNext,
-                            contentDescription = "スキップ",
-                            modifier = Modifier.size(20.dp)
-                        )
                     }
                 }
             }
