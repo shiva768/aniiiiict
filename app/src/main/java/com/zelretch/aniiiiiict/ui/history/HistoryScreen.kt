@@ -95,9 +95,8 @@ fun HistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .pullRefresh(pullRefreshState)
         ) {
-            // 検索バー
+            // 検索バー（PullRefreshの範囲外）
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = onSearchQueryChange,
@@ -109,94 +108,105 @@ fun HistoryScreen(
                 singleLine = true
             )
 
-            if (uiState.records.isEmpty() && !uiState.isLoading && uiState.error == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            // PullRefreshの範囲
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pullRefresh(pullRefreshState)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text("視聴履歴がありません")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "下にスワイプして更新",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = listState
-                ) {
-                    items(
-                        items = uiState.records,
-                        key = { it.id }
-                    ) { record ->
-                        RecordItem(
-                            record = record,
-                            onDelete = { onDeleteRecord(record.id) }
-                        )
-                    }
-
-                    if (uiState.hasNextPage) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
+                    if (uiState.records.isEmpty() && !uiState.isLoading && uiState.error == null) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
-                                if (uiState.isLoading) {
-                                    CircularProgressIndicator()
-                                } else {
-                                    TextButton(
-                                        onClick = onLoadNextPage
+                                Text("視聴履歴がありません")
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "下にスワイプして更新",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = listState
+                        ) {
+                            items(
+                                items = uiState.records,
+                                key = { it.id }
+                            ) { record ->
+                                RecordItem(
+                                    record = record,
+                                    onDelete = { onDeleteRecord(record.id) }
+                                )
+                            }
+
+                            if (uiState.hasNextPage) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Text("もっと見る")
+                                        if (uiState.isLoading) {
+                                            CircularProgressIndicator()
+                                        } else {
+                                            TextButton(
+                                                onClick = onLoadNextPage
+                                            ) {
+                                                Text("もっと見る")
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-            }
 
-            AnimatedVisibility(
-                visible = uiState.error != null && uiState.records.isEmpty(),
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    AnimatedVisibility(
+                        visible = uiState.error != null && uiState.records.isEmpty(),
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Text(
-                            text = uiState.error ?: "エラーが発生しました",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        IconButton(onClick = onRetry) {
-                            Text("再試行")
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = uiState.error ?: "エラーが発生しました",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                IconButton(onClick = onRetry) {
+                                    Text("再試行")
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            PullRefreshIndicator(
-                refreshing = uiState.isLoading,
-                state = pullRefreshState,
-                modifier = Modifier
-            )
+                PullRefreshIndicator(
+                    refreshing = uiState.isLoading,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
         }
     }
 }
