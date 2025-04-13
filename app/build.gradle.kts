@@ -101,10 +101,6 @@ dependencies {
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.okhttp)
 
-    // Room
-    implementation(libs.bundles.room)
-    ksp(libs.room.compiler)
-
     // Coroutines
     implementation(libs.coroutines.android)
 
@@ -117,6 +113,10 @@ dependencies {
 
     // Apollo Client
     implementation(libs.bundles.apollo)
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences-core:1.0.0")
 
     // Testing
     testImplementation(libs.bundles.testing)

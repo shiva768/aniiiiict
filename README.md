@@ -66,7 +66,7 @@ cp local.properties.example local.properties
 - [Material3](https://m3.material.io/) 1.3.2 - マテリアルデザインコンポーネント
 - [Hilt](https://dagger.dev/hilt/) 2.56 - 依存性注入
 - [Apollo GraphQL](https://www.apollographql.com/docs/kotlin/) 3.8.5 - GraphQLクライアント
-- [Room](https://developer.android.com/training/data-storage/room) 2.7.0 - ローカルデータベース
+- [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) 1.0.0 - データ永続化
 - [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) 1.8.0 - 非同期処理
 - [Coil](https://coil-kt.github.io/coil/) 2.5.0 - 画像読み込み
 - [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.8.9 - 画面遷移

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
+import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
@@ -44,18 +45,29 @@ data class MainUiState(
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val repository: AnnictRepository,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
-    private val programFilter: ProgramFilter
+    private val programFilter: ProgramFilter,
+    private val filterPreferences: FilterPreferences,
+    @ApplicationContext private val context: Context
 ) : BaseViewModel() {
     private val TAG = "MainViewModel"
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
-        AniiiiiictLogger.logInfo(TAG, "koko", "koko")
-        checkAuthState { loadingPrograms() }
+        viewModelScope.launch {
+            // フィルター状態の復元を待ってから認証状態のチェックを行う
+            filterPreferences.filterState.collect { savedFilterState ->
+                _uiState.update { currentState ->
+                    currentState.copy(filterState = savedFilterState)
+                }
+                // 初回のフィルター状態の復元後に認証チェックを行う
+                checkAuthState()
+                // 以降の更新は無視する
+                return@collect
+            }
+        }
     }
 
     override fun updateLoadingState(isLoading: Boolean) {
@@ -66,7 +78,7 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(error = error) }
     }
 
-    private fun checkAuthState(function: () -> Unit) {
+    private fun checkAuthState() {
         viewModelScope.launch {
             try {
                 val isAuthenticated = repository.isAuthenticated()
@@ -80,7 +92,7 @@ class MainViewModel @Inject constructor(
                     )
                     startAuth()
                 } else {
-                    function()
+                    loadingPrograms()
                 }
             } catch (e: Exception) {
                 AniiiiiictLogger.logError(TAG, e, "認証状態の確認中にエラーが発生")
@@ -313,7 +325,7 @@ class MainViewModel @Inject constructor(
 
     fun refresh() {
         AniiiiiictLogger.logInfo(TAG, "プログラム一覧を再読み込み", "MainViewModel.refresh")
-        checkAuthState { loadingPrograms() }
+        checkAuthState()
     }
 
     fun updateFilter(
@@ -341,6 +353,10 @@ class MainViewModel @Inject constructor(
                 filterState = newFilterState,
                 programs = programFilter.applyFilters(currentState.allPrograms, newFilterState)
             )
+        }
+        // フィルター状態の保存
+        viewModelScope.launch {
+            filterPreferences.updateFilterState(_uiState.value.filterState)
         }
     }
 

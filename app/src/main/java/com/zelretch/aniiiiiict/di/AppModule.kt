@@ -1,12 +1,11 @@
 package com.zelretch.aniiiiiict.di
 
 import android.content.Context
-import androidx.room.Room
 import com.zelretch.aniiiiiict.BuildConfig
+import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.local.AppDatabase
-import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
+import com.zelretch.aniiiiiict.data.datastore.WorkImagePreferences
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
@@ -56,18 +55,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "aniiiiiict.db"
-        ).build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideWorkImageDao(database: AppDatabase): WorkImageDao {
-        return database.workImageDao()
+    fun provideWorkImagePreferences(@ApplicationContext context: Context): WorkImagePreferences {
+        return WorkImagePreferences(context)
     }
 
     @Provides
@@ -90,16 +79,16 @@ object AppModule {
     fun provideAnnictRepository(
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        workImageDao: WorkImageDao,
+        workImagePreferences: WorkImagePreferences,
         imageDownloader: ImageDownloader,
-        apolloClient: AniiiiiictApolloClient
+        apolloClient: ApolloClient
     ): AnnictRepository {
         return AnnictRepositoryImpl(
-            tokenManager,
-            authManager,
-            workImageDao,
-            imageDownloader,
-            apolloClient
+            tokenManager = tokenManager,
+            authManager = authManager,
+            workImagePreferences = workImagePreferences,
+            imageDownloader = imageDownloader,
+            apolloClient = apolloClient
         )
     }
 
@@ -109,7 +98,5 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideProgramFilter(): ProgramFilter {
-        return ProgramFilter()
-    }
+    fun provideProgramFilter(): ProgramFilter = ProgramFilter()
 }

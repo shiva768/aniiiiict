@@ -27,9 +27,6 @@ okhttp = "4.12.0"
 okhttp-logging = "4.11.0"
 gson = "2.11.0"
 
-# Database
-room = "2.7.0"
-
 # Async
 coroutines = "1.8.0"
 
@@ -79,11 +76,6 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging" }
 
-# Room
-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-
 # Coroutines
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
@@ -124,7 +116,6 @@ compose-ui = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview"]
 compose-debug = ["compose-ui-tooling", "compose-ui-test-manifest"]
 retrofit = ["retrofit", "retrofit-gson", "gson"]
 okhttp = ["okhttp", "okhttp-logging"]
-room = ["room-runtime", "room-ktx"]
 apollo = ["apollo-runtime", "apollo-normalized-cache", "apollo-adapters"]
 testing = ["junit", "mockito-core", "mockito-kotlin", "androidx-arch-testing", "coroutines-test"]
 android-testing = ["androidx-test-ext", "espresso-core", "compose-ui-test", "mockito-android"] 

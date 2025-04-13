@@ -9,8 +9,8 @@ import com.zelretch.aniiiiiict.ViewerRecordsQuery
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.local.dao.WorkImageDao
-import com.zelretch.aniiiiiict.data.local.entity.WorkImage
+import com.zelretch.aniiiiiict.data.datastore.WorkImagePreferences
+import com.zelretch.aniiiiiict.data.local.entity.CachedWorkImage
 import com.zelretch.aniiiiiict.data.model.Channel
 import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
@@ -21,13 +21,11 @@ import com.zelretch.aniiiiiict.data.model.Work
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -39,7 +37,7 @@ import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 class AnnictRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager,
     private val authManager: AnnictAuthManager,
-    private val workImageDao: WorkImageDao,
+    private val workImagePreferences: WorkImagePreferences,
     private val imageDownloader: ImageDownloader,
     private val apolloClient: ApolloClient
 ) : AnnictRepository {
@@ -112,45 +110,49 @@ class AnnictRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveWorkImage(workId: Long, imageUrl: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                // URLが空か無効な場合は早期リターン
-                if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
-                    AniiiiiictLogger.logWarning(
-                        TAG,
-                        "無効な画像URL: '$imageUrl'",
-                        "AnnictRepositoryImpl.saveWorkImage"
-                    )
-                    return@withContext false
-                }
-
-                val localPath = imageDownloader.downloadImage(workId, imageUrl)
-                // パスがnullでなければデータベースに保存
-                if (localPath != null) {
-                    workImageDao.insertWorkImage(WorkImage(workId, imageUrl, localPath))
-                    true // 成功
-                } else {
-                    AniiiiiictLogger.logWarning(
-                        TAG,
-                        "画像の保存に失敗 - ダウンロード失敗: workId=$workId",
-                        "AnnictRepositoryImpl.saveWorkImage"
-                    )
-                    false // 失敗（ダウンロード失敗）
-                }
-            } catch (e: Exception) {
-                // エラーがあっても続行できるように例外を処理
+        return try {
+            // URLが空か無効な場合は早期リターン
+            if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
                 AniiiiiictLogger.logWarning(
                     TAG,
-                    "画像の保存に失敗: workId=$workId, error=${e.message}",
+                    "無効な画像URL: '$imageUrl'",
                     "AnnictRepositoryImpl.saveWorkImage"
                 )
-                false // 失敗（例外発生）
+                return false
             }
+
+            val localPath = imageDownloader.downloadImage(workId, imageUrl)
+            // パスがnullでなければDataStoreに保存
+            if (localPath != null) {
+                workImagePreferences.saveWorkImage(workId, imageUrl)
+                true // 成功
+            } else {
+                AniiiiiictLogger.logWarning(
+                    TAG,
+                    "画像の保存に失敗 - ダウンロード失敗: workId=$workId",
+                    "AnnictRepositoryImpl.saveWorkImage"
+                )
+                false // 失敗（ダウンロード失敗）
+            }
+        } catch (e: Exception) {
+            // エラーがあっても続行できるように例外を処理
+            AniiiiiictLogger.logWarning(
+                TAG,
+                "画像の保存に失敗: workId=$workId, error=${e.message}",
+                "AnnictRepositoryImpl.saveWorkImage"
+            )
+            false // 失敗（例外発生）
         }
     }
 
-    override suspend fun getWorkImage(workId: Long): WorkImage? {
-        return workImageDao.getWorkImage(workId).firstOrNull()
+    override suspend fun getWorkImage(workId: Long): CachedWorkImage? {
+        return workImagePreferences.getWorkImage(workId).firstOrNull()?.let { imageUrl ->
+            CachedWorkImage(
+                workId = workId,
+                imageUrl = imageUrl,
+                localPath = imageUrl // DataStoreではURLのみを保存しているため、localPathにも同じURLを使用
+            )
+        }
     }
 
     override suspend fun getProgramsWithWorks(): Flow<List<ProgramWithWork>> {
