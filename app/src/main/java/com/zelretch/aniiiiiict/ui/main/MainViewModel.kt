@@ -59,13 +59,24 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             // フィルター状態の復元を待ってから認証状態のチェックを行う
             filterPreferences.filterState.collect { savedFilterState ->
-                _uiState.update { currentState ->
-                    currentState.copy(filterState = savedFilterState)
+                if (_uiState.value.allPrograms.isEmpty()) {
+                    // 初回のみ認証チェックを行う
+                    _uiState.update { currentState ->
+                        currentState.copy(filterState = savedFilterState)
+                    }
+                    checkAuthState()
+                } else {
+                    // 2回目以降はフィルター状態の更新のみ
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            filterState = savedFilterState,
+                            programs = programFilter.applyFilters(
+                                currentState.allPrograms,
+                                savedFilterState
+                            )
+                        )
+                    }
                 }
-                // 初回のフィルター状態の復元後に認証チェックを行う
-                checkAuthState()
-                // 以降の更新は無視する
-                return@collect
             }
         }
     }
