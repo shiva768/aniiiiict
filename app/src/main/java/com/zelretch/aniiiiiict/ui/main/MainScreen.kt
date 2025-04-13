@@ -644,221 +644,176 @@ fun FilterBar(
 
     // メディア選択ダイアログ
     if (showMediaDialog) {
-        AlertDialog(
-            onDismissRequest = { showMediaDialog = false },
-            title = { Text("メディアを選択") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    availableMedia.forEach { media ->
-                        FilterChip(
-                            selected = media in filterState.selectedMedia,
-                            onClick = {
-                                val newSelection = filterState.selectedMedia.toMutableSet()
-                                if (media in newSelection) {
-                                    newSelection.remove(media)
-                                } else {
-                                    newSelection.add(media)
-                                }
-                                onFilterChange(
-                                    newSelection,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    filterState.searchQuery,
-                                    filterState.showOnlyAired,
-                                    filterState.sortOrder
-                                )
-                            },
-                            label = { Text(media) }
-                        )
-                    }
+        FilterSelectionDialog(
+            title = "メディアを選択",
+            items = availableMedia,
+            selectedItems = filterState.selectedMedia,
+            onItemSelected = { media ->
+                val newSelection = filterState.selectedMedia.toMutableSet()
+                if (media in newSelection) {
+                    newSelection.remove(media)
+                } else {
+                    newSelection.add(media)
                 }
+                onFilterChange(
+                    newSelection,
+                    filterState.selectedSeason,
+                    filterState.selectedYear,
+                    filterState.selectedChannel,
+                    filterState.selectedStatus,
+                    filterState.searchQuery,
+                    filterState.showOnlyAired,
+                    filterState.sortOrder
+                )
             },
-            confirmButton = {
-                TextButton(onClick = { showMediaDialog = false }) {
-                    Text("閉じる")
-                }
-            }
+            onDismiss = { showMediaDialog = false }
         )
     }
 
     // シーズン選択ダイアログ
     if (showSeasonDialog) {
-        AlertDialog(
-            onDismissRequest = { showSeasonDialog = false },
-            title = { Text("シーズンを選択") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    availableSeasons.forEach { season ->
-                        FilterChip(
-                            selected = season in filterState.selectedSeason,
-                            onClick = {
-                                val newSelection = filterState.selectedSeason.toMutableSet()
-                                if (season in newSelection) {
-                                    newSelection.remove(season)
-                                } else {
-                                    newSelection.add(season)
-                                }
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    newSelection,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    filterState.searchQuery,
-                                    filterState.showOnlyAired,
-                                    filterState.sortOrder
-                                )
-                            },
-                            label = { Text(season) }
-                        )
-                    }
+        FilterSelectionDialog(
+            title = "シーズンを選択",
+            items = availableSeasons,
+            selectedItems = filterState.selectedSeason,
+            onItemSelected = { season ->
+                val newSelection = filterState.selectedSeason.toMutableSet()
+                if (season in newSelection) {
+                    newSelection.remove(season)
+                } else {
+                    newSelection.add(season)
                 }
+                onFilterChange(
+                    filterState.selectedMedia,
+                    newSelection,
+                    filterState.selectedYear,
+                    filterState.selectedChannel,
+                    filterState.selectedStatus,
+                    filterState.searchQuery,
+                    filterState.showOnlyAired,
+                    filterState.sortOrder
+                )
             },
-            confirmButton = {
-                TextButton(onClick = { showSeasonDialog = false }) {
-                    Text("閉じる")
-                }
-            }
+            onDismiss = { showSeasonDialog = false }
         )
     }
 
     // 年選択ダイアログ
     if (showYearDialog) {
-        AlertDialog(
-            onDismissRequest = { showYearDialog = false },
-            title = { Text("年を選択") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    availableYears.forEach { year ->
-                        FilterChip(
-                            selected = year in filterState.selectedYear,
-                            onClick = {
-                                val newSelection = filterState.selectedYear.toMutableSet()
-                                if (year in newSelection) {
-                                    newSelection.remove(year)
-                                } else {
-                                    newSelection.add(year)
-                                }
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    newSelection,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    filterState.searchQuery,
-                                    filterState.showOnlyAired,
-                                    filterState.sortOrder
-                                )
-                            },
-                            label = { Text(year.toString()) }
-                        )
-                    }
+        FilterSelectionDialog(
+            title = "年を選択",
+            items = availableYears.map { it.toString() },
+            selectedItems = filterState.selectedYear.map { it.toString() }.toSet(),
+            onItemSelected = { yearStr ->
+                val year = yearStr.toIntOrNull() ?: return@FilterSelectionDialog
+                val newSelection = filterState.selectedYear.toMutableSet()
+                if (year in newSelection) {
+                    newSelection.remove(year)
+                } else {
+                    newSelection.add(year)
                 }
+                onFilterChange(
+                    filterState.selectedMedia,
+                    filterState.selectedSeason,
+                    newSelection,
+                    filterState.selectedChannel,
+                    filterState.selectedStatus,
+                    filterState.searchQuery,
+                    filterState.showOnlyAired,
+                    filterState.sortOrder
+                )
             },
-            confirmButton = {
-                TextButton(onClick = { showYearDialog = false }) {
-                    Text("閉じる")
-                }
-            }
+            onDismiss = { showYearDialog = false }
         )
     }
 
     // チャンネル選択ダイアログ
     if (showChannelDialog) {
-        AlertDialog(
-            onDismissRequest = { showChannelDialog = false },
-            title = { Text("チャンネルを選択") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    availableChannels.forEach { channel ->
-                        FilterChip(
-                            selected = channel in filterState.selectedChannel,
-                            onClick = {
-                                val newSelection = filterState.selectedChannel.toMutableSet()
-                                if (channel in newSelection) {
-                                    newSelection.remove(channel)
-                                } else {
-                                    newSelection.add(channel)
-                                }
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    newSelection,
-                                    filterState.selectedStatus,
-                                    filterState.searchQuery,
-                                    filterState.showOnlyAired,
-                                    filterState.sortOrder
-                                )
-                            },
-                            label = { Text(channel) }
-                        )
-                    }
+        FilterSelectionDialog(
+            title = "チャンネルを選択",
+            items = availableChannels,
+            selectedItems = filterState.selectedChannel,
+            onItemSelected = { channel ->
+                val newSelection = filterState.selectedChannel.toMutableSet()
+                if (channel in newSelection) {
+                    newSelection.remove(channel)
+                } else {
+                    newSelection.add(channel)
                 }
+                onFilterChange(
+                    filterState.selectedMedia,
+                    filterState.selectedSeason,
+                    filterState.selectedYear,
+                    newSelection,
+                    filterState.selectedStatus,
+                    filterState.searchQuery,
+                    filterState.showOnlyAired,
+                    filterState.sortOrder
+                )
             },
-            confirmButton = {
-                TextButton(onClick = { showChannelDialog = false }) {
-                    Text("閉じる")
-                }
-            }
+            onDismiss = { showChannelDialog = false }
         )
     }
 
     // ステータス選択ダイアログ
     if (showStatusDialog) {
-        AlertDialog(
-            onDismissRequest = { showStatusDialog = false },
-            title = { Text("ステータスを選択") },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    listOf(StatusState.WATCHING, StatusState.WANNA_WATCH).forEach { status ->
-                        FilterChip(
-                            selected = status in filterState.selectedStatus,
-                            onClick = {
-                                val newSelection = filterState.selectedStatus.toMutableSet()
-                                if (status in newSelection) {
-                                    newSelection.remove(status)
-                                } else {
-                                    newSelection.add(status)
-                                }
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    newSelection,
-                                    filterState.searchQuery,
-                                    filterState.showOnlyAired,
-                                    filterState.sortOrder
-                                )
-                            },
-                            label = { Text(status.name) }
-                        )
-                    }
+        FilterSelectionDialog(
+            title = "ステータスを選択",
+            items = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH).map { it.name },
+            selectedItems = filterState.selectedStatus.map { it.name }.toSet(),
+            onItemSelected = { statusStr ->
+                val status = StatusState.valueOf(statusStr)
+                val newSelection = filterState.selectedStatus.toMutableSet()
+                if (status in newSelection) {
+                    newSelection.remove(status)
+                } else {
+                    newSelection.add(status)
                 }
+                onFilterChange(
+                    filterState.selectedMedia,
+                    filterState.selectedSeason,
+                    filterState.selectedYear,
+                    filterState.selectedChannel,
+                    newSelection,
+                    filterState.searchQuery,
+                    filterState.showOnlyAired,
+                    filterState.sortOrder
+                )
             },
-            confirmButton = {
-                TextButton(onClick = { showStatusDialog = false }) {
-                    Text("閉じる")
-                }
-            }
+            onDismiss = { showStatusDialog = false }
         )
     }
+}
+
+@Composable
+fun FilterSelectionDialog(
+    title: String,
+    items: List<String>,
+    selectedItems: Set<String>,
+    onItemSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items.forEach { item ->
+                    FilterChip(
+                        selected = item in selectedItems,
+                        onClick = { onItemSelected(item) },
+                        label = { Text(item) }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("閉じる")
+            }
+        }
+    )
 } 
