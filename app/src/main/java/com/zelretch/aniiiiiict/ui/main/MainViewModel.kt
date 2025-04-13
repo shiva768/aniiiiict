@@ -52,6 +52,8 @@ class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : BaseViewModel() {
     private val TAG = "MainViewModel"
+
+    // UI状態のカプセル化
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
@@ -89,6 +91,7 @@ class MainViewModel @Inject constructor(
         _uiState.update { it.copy(error = error) }
     }
 
+    // 認証状態の確認（内部メソッド）
     private fun checkAuthState() {
         viewModelScope.launch {
             try {
@@ -117,13 +120,15 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 番組一覧の読み込み（内部メソッド）
     private fun loadingPrograms() {
         executeWithLoading {
             loadPrograms()
         }
     }
 
-    suspend fun loadPrograms() {
+    // 番組一覧の読み込み（内部メソッド）
+    private suspend fun loadPrograms() {
         repository.getProgramsWithWorks()
             .collect { programs ->
                 _uiState.update { currentState ->
@@ -144,6 +149,7 @@ class MainViewModel @Inject constructor(
             }
     }
 
+    // 画像のプリロード（内部メソッド）
     private fun preloadImages(programs: List<ProgramWithWork>) {
         viewModelScope.launch(Dispatchers.IO) {
             programs.forEach { program ->
@@ -189,6 +195,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 画像の読み込み（公開メソッド）
     fun onImageLoad(annictId: Int, imageUrl: String) {
         viewModelScope.launch {
             try {
@@ -204,6 +211,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 認証開始（公開メソッド）
     fun startAuth() {
         AniiiiiictLogger.logInfo(TAG, "authsiteru", "auth")
         _uiState.update { it.copy(isAuthenticating = true) }
@@ -233,6 +241,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 認証コールバック処理（公開メソッド）
     fun handleAuthCallback(code: String?) {
         viewModelScope.launch {
             try {
@@ -293,10 +302,9 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
-
     }
 
-
+    // エピソードの記録（公開メソッド）
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         viewModelScope.launch {
             try {
@@ -334,11 +342,13 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 再読み込み（公開メソッド）
     fun refresh() {
         AniiiiiictLogger.logInfo(TAG, "プログラム一覧を再読み込み", "MainViewModel.refresh")
         checkAuthState()
     }
 
+    // フィルターの更新（公開メソッド）
     fun updateFilter(
         selectedMedia: Set<String> = _uiState.value.filterState.selectedMedia,
         selectedSeason: Set<String> = _uiState.value.filterState.selectedSeason,
@@ -371,6 +381,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // フィルターの表示/非表示の切り替え（公開メソッド）
     fun toggleFilterVisibility() {
         _uiState.update {
             it.copy(
@@ -379,6 +390,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
         AniiiiiictLogger.logError(TAG, error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
