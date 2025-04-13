@@ -31,6 +31,7 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.type.StatusState
 import java.time.format.DateTimeFormatter
 
@@ -473,157 +475,203 @@ fun FilterBar(
     availableSeasons: List<String>,
     availableYears: List<Int>,
     availableChannels: List<String>,
-    onFilterChange: (String?, String?, Int?, String?, StatusState?, String) -> Unit
+    onFilterChange: (
+        selectedMedia: Set<String>,
+        selectedSeason: Set<String>,
+        selectedYear: Set<Int>,
+        selectedChannel: Set<String>,
+        selectedStatus: Set<StatusState>,
+        searchQuery: String,
+        showOnlyAired: Boolean,
+        sortOrder: SortOrder
+    ) -> Unit
 ) {
-    var showMediaFilter by remember { mutableStateOf(false) }
-    var showSeasonFilter by remember { mutableStateOf(false) }
-    var showYearFilter by remember { mutableStateOf(false) }
-    var showChannelFilter by remember { mutableStateOf(false) }
-    var showStatusFilter by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf(filterState.searchQuery) }
+    var showMediaDialog by remember { mutableStateOf(false) }
+    var showSeasonDialog by remember { mutableStateOf(false) }
+    var showYearDialog by remember { mutableStateOf(false) }
+    var showChannelDialog by remember { mutableStateOf(false) }
+    var showStatusDialog by remember { mutableStateOf(false) }
 
-    Column(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 2.dp
     ) {
-        // 検索バー
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = {
-                searchQuery = it
-                onFilterChange(
-                    filterState.selectedMedia,
-                    filterState.selectedSeason,
-                    filterState.selectedYear,
-                    filterState.selectedChannel,
-                    filterState.selectedStatus,
-                    it
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("作品名やチャンネル名で検索") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // フィルターチップ
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // メディアフィルター
-            FilterChip(
-                selected = filterState.selectedMedia != null,
-                onClick = { showMediaFilter = true },
-                label = { Text(filterState.selectedMedia ?: "メディア") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Movie,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+            // 検索フィールド
+            OutlinedTextField(
+                value = filterState.searchQuery,
+                onValueChange = { query ->
+                    onFilterChange(
+                        filterState.selectedMedia,
+                        filterState.selectedSeason,
+                        filterState.selectedYear,
+                        filterState.selectedChannel,
+                        filterState.selectedStatus,
+                        query,
+                        filterState.showOnlyAired,
+                        filterState.sortOrder
                     )
-                }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("作品名やチャンネル名で検索") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "検索") },
+                singleLine = true
             )
 
-            // シーズンフィルター（春夏秋冬）
-            FilterChip(
-                selected = filterState.selectedSeason != null,
-                onClick = { showSeasonFilter = true },
-                label = { Text(filterState.selectedSeason ?: "シーズン") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.DateRange,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
+            // フィルターボタン
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // メディアフィルター
+                FilterChip(
+                    selected = filterState.selectedMedia.isNotEmpty(),
+                    onClick = { showMediaDialog = true },
+                    label = { Text("メディア") },
+                    leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
+                )
 
-            // 年フィルター
-            FilterChip(
-                selected = filterState.selectedYear != null,
-                onClick = { showYearFilter = true },
-                label = { Text(filterState.selectedYear?.toString() ?: "年") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.DateRange,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
+                // シーズンフィルター
+                FilterChip(
+                    selected = filterState.selectedSeason.isNotEmpty(),
+                    onClick = { showSeasonDialog = true },
+                    label = { Text("シーズン") },
+                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                )
 
-            // チャンネルフィルター
-            FilterChip(
-                selected = filterState.selectedChannel != null,
-                onClick = { showChannelFilter = true },
-                label = { Text(filterState.selectedChannel ?: "チャンネル") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.LiveTv,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            )
+                // 年フィルター
+                FilterChip(
+                    selected = filterState.selectedYear.isNotEmpty(),
+                    onClick = { showYearDialog = true },
+                    label = { Text("年") },
+                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                )
 
-            // ステータスフィルター
-            FilterChip(
-                selected = filterState.selectedStatus != null,
-                onClick = { showStatusFilter = true },
-                label = { Text(filterState.selectedStatus?.toString() ?: "ステータス") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                // チャンネルフィルター
+                FilterChip(
+                    selected = filterState.selectedChannel.isNotEmpty(),
+                    onClick = { showChannelDialog = true },
+                    label = { Text("チャンネル") },
+                    leadingIcon = { Icon(Icons.Default.LiveTv, contentDescription = null) }
+                )
+
+                // ステータスフィルター
+                FilterChip(
+                    selected = filterState.selectedStatus.isNotEmpty(),
+                    onClick = { showStatusDialog = true },
+                    label = { Text("ステータス") },
+                    leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) }
+                )
+            }
+
+            // 放送済みのみ表示チェックボックス
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = filterState.showOnlyAired,
+                    onCheckedChange = { checked ->
+                        onFilterChange(
+                            filterState.selectedMedia,
+                            filterState.selectedSeason,
+                            filterState.selectedYear,
+                            filterState.selectedChannel,
+                            filterState.selectedStatus,
+                            filterState.searchQuery,
+                            checked,
+                            filterState.sortOrder
+                        )
+                    }
+                )
+                Text(
+                    text = "放送済",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 並び順
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("並び順：")
+                    FilterChip(
+                        selected = filterState.sortOrder == SortOrder.START_TIME_ASC,
+                        onClick = {
+                            onFilterChange(
+                                filterState.selectedMedia,
+                                filterState.selectedSeason,
+                                filterState.selectedYear,
+                                filterState.selectedChannel,
+                                filterState.selectedStatus,
+                                filterState.searchQuery,
+                                filterState.showOnlyAired,
+                                SortOrder.START_TIME_ASC
+                            )
+                        },
+                        label = { Text("昇順") }
+                    )
+                    FilterChip(
+                        selected = filterState.sortOrder == SortOrder.START_TIME_DESC,
+                        onClick = {
+                            onFilterChange(
+                                filterState.selectedMedia,
+                                filterState.selectedSeason,
+                                filterState.selectedYear,
+                                filterState.selectedChannel,
+                                filterState.selectedStatus,
+                                filterState.searchQuery,
+                                filterState.showOnlyAired,
+                                SortOrder.START_TIME_DESC
+                            )
+                        },
+                        label = { Text("降順") }
                     )
                 }
-            )
+            }
         }
     }
 
-    // メディアフィルターダイアログ
-    if (showMediaFilter) {
+    // メディア選択ダイアログ
+    if (showMediaDialog) {
         AlertDialog(
-            onDismissRequest = { showMediaFilter = false },
+            onDismissRequest = { showMediaDialog = false },
             title = { Text("メディアを選択") },
             text = {
-                LazyColumn {
-                    item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    availableMedia.forEach { media ->
                         FilterChip(
-                            selected = filterState.selectedMedia == null,
+                            selected = media in filterState.selectedMedia,
                             onClick = {
+                                val newSelection = filterState.selectedMedia.toMutableSet()
+                                if (media in newSelection) {
+                                    newSelection.remove(media)
+                                } else {
+                                    newSelection.add(media)
+                                }
                                 onFilterChange(
-                                    null,
+                                    newSelection,
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
                                     filterState.selectedStatus,
-                                    searchQuery
+                                    filterState.searchQuery,
+                                    filterState.showOnlyAired,
+                                    filterState.sortOrder
                                 )
-                                showMediaFilter = false
-                            },
-                            label = { Text("すべて") }
-                        )
-                    }
-                    items(availableMedia) { media ->
-                        FilterChip(
-                            selected = media == filterState.selectedMedia,
-                            onClick = {
-                                onFilterChange(
-                                    media,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    searchQuery
-                                )
-                                showMediaFilter = false
                             },
                             label = { Text(media) }
                         )
@@ -631,50 +679,43 @@ fun FilterBar(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showMediaFilter = false }) {
+                TextButton(onClick = { showMediaDialog = false }) {
                     Text("閉じる")
                 }
             }
         )
     }
 
-    // シーズンフィルターダイアログ（春夏秋冬）
-    if (showSeasonFilter) {
+    // シーズン選択ダイアログ
+    if (showSeasonDialog) {
         AlertDialog(
-            onDismissRequest = { showSeasonFilter = false },
+            onDismissRequest = { showSeasonDialog = false },
             title = { Text("シーズンを選択") },
             text = {
-                LazyColumn {
-                    item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    availableSeasons.forEach { season ->
                         FilterChip(
-                            selected = filterState.selectedSeason == null,
+                            selected = season in filterState.selectedSeason,
                             onClick = {
+                                val newSelection = filterState.selectedSeason.toMutableSet()
+                                if (season in newSelection) {
+                                    newSelection.remove(season)
+                                } else {
+                                    newSelection.add(season)
+                                }
                                 onFilterChange(
                                     filterState.selectedMedia,
-                                    null,
+                                    newSelection,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
                                     filterState.selectedStatus,
-                                    searchQuery
+                                    filterState.searchQuery,
+                                    filterState.showOnlyAired,
+                                    filterState.sortOrder
                                 )
-                                showSeasonFilter = false
-                            },
-                            label = { Text("すべて") }
-                        )
-                    }
-                    items(availableSeasons) { season ->
-                        FilterChip(
-                            selected = season == filterState.selectedSeason,
-                            onClick = {
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    season,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    searchQuery
-                                )
-                                showSeasonFilter = false
                             },
                             label = { Text(season) }
                         )
@@ -682,50 +723,43 @@ fun FilterBar(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showSeasonFilter = false }) {
+                TextButton(onClick = { showSeasonDialog = false }) {
                     Text("閉じる")
                 }
             }
         )
     }
 
-    // 年フィルターダイアログ
-    if (showYearFilter) {
+    // 年選択ダイアログ
+    if (showYearDialog) {
         AlertDialog(
-            onDismissRequest = { showYearFilter = false },
+            onDismissRequest = { showYearDialog = false },
             title = { Text("年を選択") },
             text = {
-                LazyColumn {
-                    item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    availableYears.forEach { year ->
                         FilterChip(
-                            selected = filterState.selectedYear == null,
+                            selected = year in filterState.selectedYear,
                             onClick = {
+                                val newSelection = filterState.selectedYear.toMutableSet()
+                                if (year in newSelection) {
+                                    newSelection.remove(year)
+                                } else {
+                                    newSelection.add(year)
+                                }
                                 onFilterChange(
                                     filterState.selectedMedia,
                                     filterState.selectedSeason,
-                                    null,
+                                    newSelection,
                                     filterState.selectedChannel,
                                     filterState.selectedStatus,
-                                    searchQuery
+                                    filterState.searchQuery,
+                                    filterState.showOnlyAired,
+                                    filterState.sortOrder
                                 )
-                                showYearFilter = false
-                            },
-                            label = { Text("すべて") }
-                        )
-                    }
-                    items(availableYears) { year ->
-                        FilterChip(
-                            selected = year == filterState.selectedYear,
-                            onClick = {
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    year,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    searchQuery
-                                )
-                                showYearFilter = false
                             },
                             label = { Text(year.toString()) }
                         )
@@ -733,50 +767,43 @@ fun FilterBar(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showYearFilter = false }) {
+                TextButton(onClick = { showYearDialog = false }) {
                     Text("閉じる")
                 }
             }
         )
     }
 
-    // チャンネルフィルターダイアログ
-    if (showChannelFilter) {
+    // チャンネル選択ダイアログ
+    if (showChannelDialog) {
         AlertDialog(
-            onDismissRequest = { showChannelFilter = false },
+            onDismissRequest = { showChannelDialog = false },
             title = { Text("チャンネルを選択") },
             text = {
-                LazyColumn {
-                    item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    availableChannels.forEach { channel ->
                         FilterChip(
-                            selected = filterState.selectedChannel == null,
+                            selected = channel in filterState.selectedChannel,
                             onClick = {
+                                val newSelection = filterState.selectedChannel.toMutableSet()
+                                if (channel in newSelection) {
+                                    newSelection.remove(channel)
+                                } else {
+                                    newSelection.add(channel)
+                                }
                                 onFilterChange(
                                     filterState.selectedMedia,
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
-                                    null,
+                                    newSelection,
                                     filterState.selectedStatus,
-                                    searchQuery
+                                    filterState.searchQuery,
+                                    filterState.showOnlyAired,
+                                    filterState.sortOrder
                                 )
-                                showChannelFilter = false
-                            },
-                            label = { Text("すべて") }
-                        )
-                    }
-                    items(availableChannels) { channel ->
-                        FilterChip(
-                            selected = channel == filterState.selectedChannel,
-                            onClick = {
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    channel,
-                                    filterState.selectedStatus,
-                                    searchQuery
-                                )
-                                showChannelFilter = false
                             },
                             label = { Text(channel) }
                         )
@@ -784,75 +811,51 @@ fun FilterBar(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showChannelFilter = false }) {
+                TextButton(onClick = { showChannelDialog = false }) {
                     Text("閉じる")
                 }
             }
         )
     }
 
-    // ステータスフィルターダイアログ
-    if (showStatusFilter) {
+    // ステータス選択ダイアログ
+    if (showStatusDialog) {
         AlertDialog(
-            onDismissRequest = { showStatusFilter = false },
+            onDismissRequest = { showStatusDialog = false },
             title = { Text("ステータスを選択") },
             text = {
-                LazyColumn {
-                    item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    listOf(StatusState.WATCHING, StatusState.WANNA_WATCH).forEach { status ->
                         FilterChip(
-                            selected = filterState.selectedStatus == null,
+                            selected = status in filterState.selectedStatus,
                             onClick = {
+                                val newSelection = filterState.selectedStatus.toMutableSet()
+                                if (status in newSelection) {
+                                    newSelection.remove(status)
+                                } else {
+                                    newSelection.add(status)
+                                }
                                 onFilterChange(
                                     filterState.selectedMedia,
                                     filterState.selectedSeason,
                                     filterState.selectedYear,
                                     filterState.selectedChannel,
-                                    null,
-                                    searchQuery
+                                    newSelection,
+                                    filterState.searchQuery,
+                                    filterState.showOnlyAired,
+                                    filterState.sortOrder
                                 )
-                                showStatusFilter = false
                             },
-                            label = { Text("すべて") }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = filterState.selectedStatus == StatusState.WANNA_WATCH,
-                            onClick = {
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    StatusState.WANNA_WATCH,
-                                    searchQuery
-                                )
-                                showStatusFilter = false
-                            },
-                            label = { Text("見たい") }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = filterState.selectedStatus == StatusState.WATCHING,
-                            onClick = {
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    StatusState.WATCHING,
-                                    searchQuery
-                                )
-                                showStatusFilter = false
-                            },
-                            label = { Text("見てる") }
+                            label = { Text(status.name) }
                         )
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showStatusFilter = false }) {
+                TextButton(onClick = { showStatusDialog = false }) {
                     Text("閉じる")
                 }
             }

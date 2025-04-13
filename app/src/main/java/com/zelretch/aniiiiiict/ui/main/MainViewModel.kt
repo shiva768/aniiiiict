@@ -8,6 +8,7 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
+import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
@@ -37,7 +38,8 @@ data class MainUiState(
     val availableMedia: List<String> = emptyList(),
     val availableSeasons: List<String> = emptyList(),
     val availableYears: List<Int> = emptyList(),
-    val availableChannels: List<String> = emptyList()
+    val availableChannels: List<String> = emptyList(),
+    val allPrograms: List<ProgramWithWork> = emptyList()
 )
 
 @HiltViewModel
@@ -102,16 +104,17 @@ class MainViewModel @Inject constructor(
         repository.getProgramsWithWorks()
             .collect { programs ->
                 _uiState.update { currentState ->
+                    val availableFilters = programFilter.extractAvailableFilters(programs)
                     val filteredPrograms =
                         programFilter.applyFilters(programs, currentState.filterState)
-                    val availableFilters = programFilter.extractAvailableFilters(programs)
                     currentState.copy(
                         programs = filteredPrograms,
                         isAuthenticating = false,
                         availableMedia = availableFilters.media,
                         availableSeasons = availableFilters.seasons,
                         availableYears = availableFilters.years,
-                        availableChannels = availableFilters.channels
+                        availableChannels = availableFilters.channels,
+                        allPrograms = programs
                     )
                 }
                 preloadImages(_uiState.value.programs)
@@ -314,12 +317,14 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateFilter(
-        selectedMedia: String? = _uiState.value.filterState.selectedMedia,
-        selectedSeason: String? = _uiState.value.filterState.selectedSeason,
-        selectedYear: Int? = _uiState.value.filterState.selectedYear,
-        selectedChannel: String? = _uiState.value.filterState.selectedChannel,
-        selectedStatus: StatusState? = _uiState.value.filterState.selectedStatus,
-        searchQuery: String = _uiState.value.filterState.searchQuery
+        selectedMedia: Set<String> = _uiState.value.filterState.selectedMedia,
+        selectedSeason: Set<String> = _uiState.value.filterState.selectedSeason,
+        selectedYear: Set<Int> = _uiState.value.filterState.selectedYear,
+        selectedChannel: Set<String> = _uiState.value.filterState.selectedChannel,
+        selectedStatus: Set<StatusState> = _uiState.value.filterState.selectedStatus,
+        searchQuery: String = _uiState.value.filterState.searchQuery,
+        showOnlyAired: Boolean = _uiState.value.filterState.showOnlyAired,
+        sortOrder: SortOrder = _uiState.value.filterState.sortOrder
     ) {
         _uiState.update { currentState ->
             val newFilterState = currentState.filterState.copy(
@@ -328,15 +333,14 @@ class MainViewModel @Inject constructor(
                 selectedYear = selectedYear,
                 selectedChannel = selectedChannel,
                 selectedStatus = selectedStatus,
-                searchQuery = searchQuery
+                searchQuery = searchQuery,
+                showOnlyAired = showOnlyAired,
+                sortOrder = sortOrder
             )
             currentState.copy(
                 filterState = newFilterState,
-                programs = programFilter.applyFilters(currentState.programs, newFilterState)
+                programs = programFilter.applyFilters(currentState.allPrograms, newFilterState)
             )
-        }
-        viewModelScope.launch {
-            loadingPrograms()
         }
     }
 

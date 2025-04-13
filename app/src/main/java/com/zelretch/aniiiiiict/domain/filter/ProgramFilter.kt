@@ -1,29 +1,64 @@
 package com.zelretch.aniiiiiict.domain.filter
 
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.type.StatusState
+import java.time.LocalDateTime
 
 class ProgramFilter {
     fun applyFilters(
         programs: List<ProgramWithWork>,
         filterState: FilterState
     ): List<ProgramWithWork> {
-        // 基本フィルタリング
-        var filtered = programs.filter { program ->
-            (filterState.selectedMedia == null || program.work.media == filterState.selectedMedia) &&
-                    (filterState.selectedSeason == null || program.work.seasonName == filterState.selectedSeason) &&
-                    (filterState.selectedYear == null || program.work.seasonYear == filterState.selectedYear) &&
-                    (filterState.selectedChannel == null || program.program.channel.name == filterState.selectedChannel) &&
-                    (filterState.selectedStatus == null || program.work.viewerStatusState == filterState.selectedStatus.toString())
-        }
+        return programs
+            .filter { program ->
+                // メディアフィルター
+                if (filterState.selectedMedia.isNotEmpty() && program.work.media !in filterState.selectedMedia) {
+                    return@filter false
+                }
 
-        // 検索クエリでフィルタリング
-        if (filterState.searchQuery.isNotBlank()) {
-            filtered = filtered.filter { program ->
-                program.work.title.contains(filterState.searchQuery, ignoreCase = true)
+                // シーズンフィルター
+                if (filterState.selectedSeason.isNotEmpty() && program.work.seasonName !in filterState.selectedSeason) {
+                    return@filter false
+                }
+
+                // 年フィルター
+                if (filterState.selectedYear.isNotEmpty() && program.work.seasonYear !in filterState.selectedYear) {
+                    return@filter false
+                }
+
+                // チャンネルフィルター
+                if (filterState.selectedChannel.isNotEmpty() && program.program.channel.name !in filterState.selectedChannel) {
+                    return@filter false
+                }
+
+                // ステータスフィルター
+                if (filterState.selectedStatus.isNotEmpty() && StatusState.valueOf(program.work.viewerStatusState) !in filterState.selectedStatus) {
+                    return@filter false
+                }
+
+                // 検索フィルター
+                if (filterState.searchQuery.isNotEmpty()) {
+                    val query = filterState.searchQuery.lowercase()
+                    val title = program.work.title.lowercase()
+                    val channel = program.program.channel.name.lowercase()
+                    if (!title.contains(query) && !channel.contains(query)) {
+                        return@filter false
+                    }
+                }
+
+                // 放送済みのみ表示フィルター
+                if (filterState.showOnlyAired && program.program.startedAt.isAfter(LocalDateTime.now())) {
+                    return@filter false
+                }
+
+                true
             }
-        }
-
-        return filtered
+            .let { filteredPrograms ->
+                when (filterState.sortOrder) {
+                    SortOrder.START_TIME_ASC -> filteredPrograms.sortedBy { it.program.startedAt }
+                    SortOrder.START_TIME_DESC -> filteredPrograms.sortedByDescending { it.program.startedAt }
+                }
+            }
     }
 
     fun extractAvailableFilters(programs: List<ProgramWithWork>): AvailableFilters {
@@ -32,12 +67,7 @@ class ProgramFilter {
         val years = programs.mapNotNull { it.work.seasonYear }.distinct().sorted()
         val channels = programs.map { it.program.channel.name }.distinct().sorted()
 
-        return AvailableFilters(
-            media = media,
-            seasons = seasons,
-            years = years,
-            channels = channels
-        )
+        return AvailableFilters(media, seasons, years, channels)
     }
 }
 

@@ -3,10 +3,17 @@ package com.zelretch.aniiiiiict.domain.filter
 import com.zelretch.aniiiiiict.type.StatusState
 
 data class FilterState(
-    val selectedMedia: String? = null,
-    val selectedSeason: String? = null,
-    val selectedYear: Int? = null,
-    val selectedChannel: String? = null,
-    val selectedStatus: StatusState? = null,
-    val searchQuery: String = ""
-) 
+    val selectedMedia: Set<String> = emptySet(),
+    val selectedSeason: Set<String> = emptySet(),
+    val selectedYear: Set<Int> = emptySet(),
+    val selectedChannel: Set<String> = emptySet(),
+    val selectedStatus: Set<StatusState> = emptySet(),
+    val searchQuery: String = "",
+    val showOnlyAired: Boolean = true,
+    val sortOrder: SortOrder = SortOrder.START_TIME_DESC
+)
+
+enum class SortOrder {
+    START_TIME_ASC,  // 放送開始時間（昇順）
+    START_TIME_DESC  // 放送開始時間（降順）
+} 
