@@ -417,7 +417,7 @@ fun ProgramCard(
                             )
                         },
                         modifier = Modifier.size(40.dp),
-                        enabled = !uiState.isRecording,
+                        enabled = !uiState.isLoading && !uiState.isRecording && uiState.recordingSuccess != programWithWork.program.episode.id,
                         colors = if (uiState.recordingSuccess == programWithWork.program.episode.id) {
                             IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -427,12 +427,7 @@ fun ProgramCard(
                             IconButtonDefaults.filledTonalIconButtonColors()
                         }
                     ) {
-                        if (uiState.isRecording && uiState.recordingSuccess == null) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else if (uiState.recordingSuccess == programWithWork.program.episode.id) {
+                        if (uiState.recordingSuccess == programWithWork.program.episode.id) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "記録済み",

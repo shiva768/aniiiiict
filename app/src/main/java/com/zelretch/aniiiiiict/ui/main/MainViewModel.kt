@@ -53,7 +53,7 @@ class MainViewModel @Inject constructor(
 
     init {
         AniiiiiictLogger.logInfo(TAG, "koko", "koko")
-        checkAuthState { loadInitialData() }
+        checkAuthState { loadingPrograms() }
     }
 
     override fun updateLoadingState(isLoading: Boolean) {
@@ -92,10 +92,9 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun loadInitialData() {
+    private fun loadingPrograms() {
         executeWithLoading {
             loadPrograms()
-            loadRecords()
         }
     }
 
@@ -117,11 +116,6 @@ class MainViewModel @Inject constructor(
                 }
                 preloadImages(_uiState.value.programs)
             }
-    }
-
-    private suspend fun loadRecords() {
-        val result = repository.getRecords(null)
-        _uiState.update { it.copy(records = result.records) }
     }
 
     private fun preloadImages(programs: List<ProgramWithWork>) {
@@ -227,7 +221,7 @@ class MainViewModel @Inject constructor(
                         println("MainViewModel: 認証成功")
                         delay(300)
                         _uiState.update { it.copy(isAuthenticating = false) }
-                        loadInitialData()
+                        loadingPrograms()
                     } else {
                         AniiiiiictLogger.logWarning(
                             TAG,
@@ -297,7 +291,7 @@ class MainViewModel @Inject constructor(
                             _uiState.update { it.copy(recordingSuccess = null) }
                         }
 
-                        loadPrograms()
+                        loadingPrograms()
                     }
                     .onFailure { e ->
                         _uiState.update {
@@ -316,7 +310,7 @@ class MainViewModel @Inject constructor(
 
     fun refresh() {
         AniiiiiictLogger.logInfo(TAG, "プログラム一覧を再読み込み", "MainViewModel.refresh")
-        checkAuthState { loadInitialData() }
+        checkAuthState { loadingPrograms() }
     }
 
     fun updateFilter(
@@ -342,7 +336,7 @@ class MainViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            loadPrograms()
+            loadingPrograms()
         }
     }
 
