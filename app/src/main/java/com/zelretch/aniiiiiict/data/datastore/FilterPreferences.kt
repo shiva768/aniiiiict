@@ -45,7 +45,9 @@ class FilterPreferences @Inject constructor(
                 ?.mapNotNull { runCatching { SeasonName.valueOf(it) }.getOrNull() }?.toSet()
                 ?: emptySet(),
             selectedYear = preferences[PreferencesKeys.SELECTED_YEAR]?.split(",")
-                ?.filter { it.isNotEmpty() }?.mapNotNull { it.toIntOrNull() }?.toSet()
+                ?.filter { it.isNotEmpty() }
+                ?.mapNotNull { it.toIntOrNull() }
+                ?.filter { it > 0 }?.toSet()
                 ?: emptySet(),
             selectedChannel = preferences[PreferencesKeys.SELECTED_CHANNEL]?.split(",")
                 ?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
@@ -67,7 +69,8 @@ class FilterPreferences @Inject constructor(
                 filterState.selectedMedia.joinToString(",")
             preferences[PreferencesKeys.SELECTED_SEASON] =
                 filterState.selectedSeason.joinToString(",") { it.name }
-            preferences[PreferencesKeys.SELECTED_YEAR] = filterState.selectedYear.joinToString(",")
+            preferences[PreferencesKeys.SELECTED_YEAR] =
+                filterState.selectedYear.filter { it > 0 }.joinToString(",")
             preferences[PreferencesKeys.SELECTED_CHANNEL] =
                 filterState.selectedChannel.joinToString(",")
             preferences[PreferencesKeys.SELECTED_STATUS] =

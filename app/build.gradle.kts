@@ -122,6 +122,9 @@ dependencies {
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.android.testing)
     debugImplementation(libs.bundles.compose.debug)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.junit)
 }
 
 apollo {

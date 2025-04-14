@@ -44,6 +44,9 @@ mockito-kotlin = "5.2.1"
 androidx-test-ext = "1.2.1"
 espresso = "3.6.1"
 arch-testing = "2.2.0"
+robolectric = "4.10.3"
+androidx-test-core = "1.5.0"
+androidx-test-junit = "1.1.5"
 
 [libraries]
 # Android Core
@@ -103,6 +106,13 @@ androidx-arch-testing = { group = "androidx.arch.core", name = "core-testing", v
 androidx-test-ext = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+
+# Robolectric
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# AndroidX Test
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test-core" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
