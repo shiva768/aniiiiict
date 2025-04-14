@@ -41,8 +41,7 @@ class ProgramFilter {
         if (filterState.searchQuery.isEmpty()) return true
         val query = filterState.searchQuery.lowercase()
         val title = program.work.title.lowercase()
-        val channel = program.program.channel.name.lowercase()
-        return title.contains(query) || channel.contains(query)
+        return title.contains(query)
     }
 
     private fun applyAiredFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
