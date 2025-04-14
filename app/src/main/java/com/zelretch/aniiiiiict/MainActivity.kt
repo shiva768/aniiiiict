@@ -116,11 +116,7 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
-
-//    private fun extractAuthCode(intent: Intent) {
+    //    private fun extractAuthCode(intent: Intent) {
 //        Log.d("MainActivity", "Intent解析中: ${intent.action}, data: ${intent.data}")
 //        if (intent.action == Intent.ACTION_VIEW) {
 //            val uri = intent.data

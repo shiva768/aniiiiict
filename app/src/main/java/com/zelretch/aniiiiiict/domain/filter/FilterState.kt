@@ -1,10 +1,11 @@
 package com.zelretch.aniiiiiict.domain.filter
 
+import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
 
 data class FilterState(
     val selectedMedia: Set<String> = emptySet(),
-    val selectedSeason: Set<String> = emptySet(),
+    val selectedSeason: Set<SeasonName> = emptySet(),
     val selectedYear: Set<Int> = emptySet(),
     val selectedChannel: Set<String> = emptySet(),
     val selectedStatus: Set<StatusState> = emptySet(),

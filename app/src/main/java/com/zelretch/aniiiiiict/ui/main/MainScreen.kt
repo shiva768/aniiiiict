@@ -70,8 +70,10 @@ import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
+import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
 import java.time.format.DateTimeFormatter
+import kotlin.reflect.KFunction8
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -331,7 +333,7 @@ fun ProgramCard(
                             // シーズン名
                             programWithWork.work.seasonName?.let {
                                 InfoTag(
-                                    text = it,
+                                    text = it.name,
                                     color = MaterialTheme.colorScheme.secondaryContainer
                                 )
                             }
@@ -353,7 +355,7 @@ fun ProgramCard(
                             // 視聴ステータス
                             programWithWork.work.viewerStatusState.let {
                                 InfoTag(
-                                    text = it,
+                                    text = it.toString(),
                                     color = MaterialTheme.colorScheme.tertiaryContainer
                                 )
                             }
@@ -415,7 +417,7 @@ fun ProgramCard(
                             onRecordEpisode(
                                 programWithWork.program.episode.id,
                                 programWithWork.work.id,
-                                StatusState.valueOf(programWithWork.work.viewerStatusState)
+                                programWithWork.work.viewerStatusState
                             )
                         },
                         modifier = Modifier.size(40.dp),
@@ -472,19 +474,10 @@ fun InfoTag(text: String, color: Color) {
 fun FilterBar(
     filterState: FilterState,
     availableMedia: List<String>,
-    availableSeasons: List<String>,
+    availableSeasons: List<SeasonName>,
     availableYears: List<Int>,
     availableChannels: List<String>,
-    onFilterChange: (
-        selectedMedia: Set<String>,
-        selectedSeason: Set<String>,
-        selectedYear: Set<Int>,
-        selectedChannel: Set<String>,
-        selectedStatus: Set<StatusState>,
-        searchQuery: String,
-        showOnlyAired: Boolean,
-        sortOrder: SortOrder
-    ) -> Unit
+    onFilterChange: KFunction8<Set<String>, Set<SeasonName>, Set<Int>, Set<String>, Set<StatusState>, String, Boolean, SortOrder, Unit>
 ) {
     var showMediaDialog by remember { mutableStateOf(false) }
     var showSeasonDialog by remember { mutableStateOf(false) }
@@ -495,7 +488,7 @@ fun FilterBar(
     // フィルター更新のヘルパー関数
     fun updateFilter(
         selectedMedia: Set<String> = filterState.selectedMedia,
-        selectedSeason: Set<String> = filterState.selectedSeason,
+        selectedSeason: Set<SeasonName> = filterState.selectedSeason,
         selectedYear: Set<Int> = filterState.selectedYear,
         selectedChannel: Set<String> = filterState.selectedChannel,
         selectedStatus: Set<StatusState> = filterState.selectedStatus,
@@ -651,9 +644,10 @@ fun FilterBar(
     if (showSeasonDialog) {
         FilterSelectionDialog(
             title = "シーズンを選択",
-            items = availableSeasons,
-            selectedItems = filterState.selectedSeason,
-            onItemSelected = { season ->
+            items = availableSeasons.map { it.name },
+            selectedItems = filterState.selectedSeason.map { it.name }.toSet(),
+            onItemSelected = { seasonStr ->
+                val season = SeasonName.valueOf(seasonStr)
                 val newSelection = filterState.selectedSeason.toMutableSet()
                 if (season in newSelection) {
                     newSelection.remove(season)

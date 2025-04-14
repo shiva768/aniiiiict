@@ -265,10 +265,10 @@ class AnnictRepositoryImpl @Inject constructor(
             val work = Work(
                 id = node.work.id,
                 title = node.work.title,
-                seasonName = node.work.seasonName?.toString(),
+                seasonName = node.work.seasonName,
                 seasonYear = node.work.seasonYear,
                 media = node.work.media.toString(),
-                viewerStatusState = node.work.viewerStatusState.toString(),
+                viewerStatusState = node.work.viewerStatusState ?: StatusState.UNKNOWN__,
                 image = workImage
             )
 
@@ -338,7 +338,7 @@ class AnnictRepositoryImpl @Inject constructor(
                             title = work.title,
                             media = null,
                             mediaText = "",
-                            viewerStatusState = StatusState.NO_STATE.toString(),
+                            viewerStatusState = StatusState.UNKNOWN__,
                             seasonNameText = "",
                             imageUrl = work.image?.recommendedImageUrl
                         )

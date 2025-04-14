@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
+import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +41,9 @@ class FilterPreferences @Inject constructor(
             selectedMedia = preferences[PreferencesKeys.SELECTED_MEDIA]?.split(",")
                 ?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
             selectedSeason = preferences[PreferencesKeys.SELECTED_SEASON]?.split(",")
-                ?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+                ?.filter { it.isNotEmpty() }
+                ?.mapNotNull { runCatching { SeasonName.valueOf(it) }.getOrNull() }?.toSet()
+                ?: emptySet(),
             selectedYear = preferences[PreferencesKeys.SELECTED_YEAR]?.split(",")
                 ?.filter { it.isNotEmpty() }?.mapNotNull { it.toIntOrNull() }?.toSet()
                 ?: emptySet(),
@@ -53,11 +56,7 @@ class FilterPreferences @Inject constructor(
             searchQuery = preferences[PreferencesKeys.SEARCH_QUERY] ?: "",
             showOnlyAired = preferences[PreferencesKeys.SHOW_ONLY_AIRED] != false,
             sortOrder = preferences[PreferencesKeys.SORT_ORDER]?.let {
-                runCatching {
-                    SortOrder.valueOf(
-                        it
-                    )
-                }.getOrNull()
+                runCatching { SortOrder.valueOf(it) }.getOrNull()
             } ?: SortOrder.START_TIME_DESC
         )
     }
@@ -67,7 +66,7 @@ class FilterPreferences @Inject constructor(
             preferences[PreferencesKeys.SELECTED_MEDIA] =
                 filterState.selectedMedia.joinToString(",")
             preferences[PreferencesKeys.SELECTED_SEASON] =
-                filterState.selectedSeason.joinToString(",")
+                filterState.selectedSeason.joinToString(",") { it.name }
             preferences[PreferencesKeys.SELECTED_YEAR] = filterState.selectedYear.joinToString(",")
             preferences[PreferencesKeys.SELECTED_CHANNEL] =
                 filterState.selectedChannel.joinToString(",")

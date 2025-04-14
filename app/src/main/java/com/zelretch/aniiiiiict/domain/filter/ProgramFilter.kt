@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.domain.filter
 
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.type.StatusState
+import com.zelretch.aniiiiiict.type.SeasonName
 import java.time.LocalDateTime
 
 class ProgramFilter {
@@ -10,6 +10,7 @@ class ProgramFilter {
         filterState: FilterState
     ): List<ProgramWithWork> {
         return programs
+            .asSequence()
             .filter { program -> applyMediaFilter(program, filterState) }
             .filter { program -> applySeasonFilter(program, filterState) }
             .filter { program -> applyYearFilter(program, filterState) }
@@ -17,6 +18,7 @@ class ProgramFilter {
             .filter { program -> applyStatusFilter(program, filterState) }
             .filter { program -> applySearchFilter(program, filterState) }
             .filter { program -> applyAiredFilter(program, filterState) }
+            .toList()
             .let { filteredPrograms -> applySortOrder(filteredPrograms, filterState.sortOrder) }
     }
 
@@ -33,7 +35,7 @@ class ProgramFilter {
         filterState.selectedChannel.isEmpty() || program.program.channel.name in filterState.selectedChannel
 
     private fun applyStatusFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedStatus.isEmpty() || StatusState.valueOf(program.work.viewerStatusState) in filterState.selectedStatus
+        filterState.selectedStatus.isEmpty() || program.work.viewerStatusState in filterState.selectedStatus
 
     private fun applySearchFilter(program: ProgramWithWork, filterState: FilterState): Boolean {
         if (filterState.searchQuery.isEmpty()) return true
@@ -60,10 +62,10 @@ class ProgramFilter {
 
         // シーズンの並び順を定義
         val seasonOrder = mapOf(
-            "WINTER" to 0,
-            "SPRING" to 1,
-            "SUMMER" to 2,
-            "AUTUMN" to 3
+            SeasonName.WINTER to 0,
+            SeasonName.SPRING to 1,
+            SeasonName.SUMMER to 2,
+            SeasonName.AUTUMN to 3
         )
 
         // シーズンをカスタム順序でソート
@@ -80,7 +82,7 @@ class ProgramFilter {
 
 data class AvailableFilters(
     val media: List<String>,
-    val seasons: List<String>,
+    val seasons: List<SeasonName>,
     val years: List<Int>,
     val channels: List<String>
 ) 

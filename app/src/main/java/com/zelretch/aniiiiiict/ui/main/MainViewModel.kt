@@ -11,6 +11,7 @@ import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.AniiiiiictLogger
@@ -37,7 +38,7 @@ data class MainUiState(
     val filterState: FilterState = FilterState(),
     val isFilterVisible: Boolean = false,
     val availableMedia: List<String> = emptyList(),
-    val availableSeasons: List<String> = emptyList(),
+    val availableSeasons: List<SeasonName> = emptyList(),
     val availableYears: List<Int> = emptyList(),
     val availableChannels: List<String> = emptyList(),
     val allPrograms: List<ProgramWithWork> = emptyList()
@@ -351,7 +352,7 @@ class MainViewModel @Inject constructor(
     // フィルターの更新（公開メソッド）
     fun updateFilter(
         selectedMedia: Set<String> = _uiState.value.filterState.selectedMedia,
-        selectedSeason: Set<String> = _uiState.value.filterState.selectedSeason,
+        selectedSeason: Set<SeasonName> = _uiState.value.filterState.selectedSeason,
         selectedYear: Set<Int> = _uiState.value.filterState.selectedYear,
         selectedChannel: Set<String> = _uiState.value.filterState.selectedChannel,
         selectedStatus: Set<StatusState> = _uiState.value.filterState.selectedStatus,
