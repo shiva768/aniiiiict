@@ -5,10 +5,8 @@ import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.datastore.WorkImagePreferences
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
-import com.zelretch.aniiiiiict.data.util.ImageDownloader
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.util.AndroidLogger
 import com.zelretch.aniiiiiict.util.Logger
@@ -58,21 +56,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideWorkImagePreferences(@ApplicationContext context: Context): WorkImagePreferences {
-        return WorkImagePreferences(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideImageDownloader(
-        @ApplicationContext context: Context,
-        logger: Logger
-    ): ImageDownloader {
-        return ImageDownloader(context, logger)
-    }
-
-    @Provides
-    @Singleton
     fun provideApolloClient(
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient,
@@ -86,16 +69,12 @@ object AppModule {
     fun provideAnnictRepository(
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        workImagePreferences: WorkImagePreferences,
-        imageDownloader: ImageDownloader,
         apolloClient: ApolloClient,
         logger: Logger
     ): AnnictRepository {
         return AnnictRepositoryImpl(
             tokenManager = tokenManager,
             authManager = authManager,
-            workImagePreferences = workImagePreferences,
-            imageDownloader = imageDownloader,
             apolloClient = apolloClient,
             logger = logger
         )

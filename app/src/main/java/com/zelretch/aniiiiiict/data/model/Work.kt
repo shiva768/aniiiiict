@@ -5,7 +5,6 @@ import com.zelretch.aniiiiiict.type.StatusState
 
 data class Work(
     val id: String,
-    val annictId: Long = 0,
     val title: String,
     val seasonName: SeasonName? = null,
     val seasonYear: Int? = null,
@@ -14,5 +13,4 @@ data class Work(
     val viewerStatusState: StatusState,
     val seasonNameText: String? = null,
     val image: WorkImage? = null,
-    val imageUrl: String? = null
-) 
+)

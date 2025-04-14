@@ -66,9 +66,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // 認証コードを抽出して保存
-//        extractAuthCode(intent)
-
         setContent {
             AniiiiictTheme {
                 val navController = rememberNavController()
@@ -81,7 +78,6 @@ class MainActivity : ComponentActivity() {
 
                         MainScreen(
                             viewModel = viewModel,
-                            onImageLoad = { id, url -> viewModel.onImageLoad(id, url) },
                             onRecordEpisode = { id, workId, status ->
                                 viewModel.recordEpisode(
                                     id,
@@ -118,31 +114,6 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         handleIntent(intent)
     }
-
-    //    private fun extractAuthCode(intent: Intent) {
-//        logger.logDebug(TAG, "Intent解析中: ${intent.action}, data: ${intent.data}", "extractAuthCode")
-//        if (intent.action == Intent.ACTION_VIEW) {
-//            val uri = intent.data
-//            if (uri?.scheme == "aniiiiiict" && uri.host == "oauth" && uri.pathSegments.firstOrNull() == "callback") {
-//                val code = uri.getQueryParameter("code")
-//                logger.logDebug(TAG, "認証コードを抽出: ${code?.take(5)}...", "extractAuthCode")
-//                if (code != null && pendingAuthCode == null && !isProcessingAuth) {
-//                    pendingAuthCode = code
-//                    logger.logInfo(
-//                        TAG,
-//                        "認証コードを保存: ${code.take(5)}...",
-//                        "extractAuthCode"
-//                    )
-//                } else {
-//                    logger.logDebug(
-//                        TAG,
-//                        "既に認証コードが処理中のため、新しいコードをスキップします",
-//                        "extractAuthCode"
-//                    )
-//                }
-//            }
-//        }
-//    }
 
     private fun handleIntent(intent: Intent) {
         logger.logDebug(

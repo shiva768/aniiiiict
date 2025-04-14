@@ -17,7 +17,6 @@ import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +40,7 @@ data class MainUiState(
     val availableSeasons: List<SeasonName> = emptyList(),
     val availableYears: List<Int> = emptyList(),
     val availableChannels: List<String> = emptyList(),
-    val allPrograms: List<ProgramWithWork> = emptyList()
+    val allPrograms: List<ProgramWithWork> = emptyList(),
 )
 
 @HiltViewModel
@@ -137,6 +136,7 @@ class MainViewModel @Inject constructor(
                     val availableFilters = programFilter.extractAvailableFilters(programs)
                     val filteredPrograms =
                         programFilter.applyFilters(programs, currentState.filterState)
+
                     currentState.copy(
                         programs = filteredPrograms,
                         isAuthenticating = false,
@@ -147,75 +147,11 @@ class MainViewModel @Inject constructor(
                         allPrograms = programs
                     )
                 }
-                preloadImages(_uiState.value.programs)
             }
-    }
-
-    // 画像のプリロード（内部メソッド）
-    private fun preloadImages(programs: List<ProgramWithWork>) {
-        viewModelScope.launch(Dispatchers.IO) {
-            programs.forEach { program ->
-                if (!isActive) return@forEach
-
-                try {
-                    val imageUrl = program.work.image?.recommendedImageUrl.takeIf {
-                        !it.isNullOrEmpty() && it.startsWith("http", ignoreCase = true)
-                    }
-
-                    if (imageUrl == null) {
-                        logger.logInfo(
-                            TAG,
-                            "有効な画像URLがないためスキップ: ${program.work.title}",
-                            "MainViewModel.preloadImages"
-                        )
-                        return@forEach
-                    }
-
-                    val workId = program.work.annictId
-                    val success = repository.saveWorkImage(workId, imageUrl)
-                    if (success) {
-                        logger.logInfo(
-                            TAG,
-                            "画像を保存しました: ${program.work.title}",
-                            "MainViewModel.preloadImages"
-                        )
-                    } else {
-                        logger.logWarning(
-                            TAG,
-                            "画像の保存に失敗: ${program.work.title}",
-                            "MainViewModel.preloadImages"
-                        )
-                    }
-                } catch (e: Exception) {
-                    logger.logError(
-                        TAG,
-                        e,
-                        "画像のプリロードに失敗: ${program.work.title}"
-                    )
-                }
-            }
-        }
-    }
-
-    // 画像の読み込み（公開メソッド）
-    fun onImageLoad(annictId: Int, imageUrl: String) {
-        viewModelScope.launch {
-            try {
-                if (imageUrl.isBlank() || !imageUrl.startsWith("http", ignoreCase = true)) {
-                    logger.logWarning(TAG, "無効な画像URL: '$imageUrl'", "onImageLoad")
-                    return@launch
-                }
-
-                repository.saveWorkImage(annictId.toLong(), imageUrl)
-            } catch (e: Exception) {
-                logger.logError(TAG, e, "画像の保存に失敗: $imageUrl")
-            }
-        }
     }
 
     // 認証開始（公開メソッド）
     fun startAuth() {
-        logger.logInfo(TAG, "authsiteru", "auth")
         _uiState.update { it.copy(isAuthenticating = true) }
 
         viewModelScope.launch {

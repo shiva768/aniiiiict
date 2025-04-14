@@ -12,14 +12,13 @@ query ViewerPrograms {
         hasNextPage
       }
       nodes {
-        annictId
+        id
         startedAt
         channel {
           name
         }
         episode {
           id
-          annictId
           number
           numberText
           title

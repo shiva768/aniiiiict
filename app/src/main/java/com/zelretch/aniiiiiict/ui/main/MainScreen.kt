@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
@@ -79,7 +80,6 @@ import kotlin.reflect.KFunction8
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    onImageLoad: (Int, String) -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onNavigateToHistory: () -> Unit = {},
     onRefresh: () -> Unit = {}
@@ -193,7 +193,7 @@ fun MainScreen(
                     } else {
                         items(
                             items = uiState.programs,
-                            key = { it.program.annictId },
+                            key = { it.program.id },
                             contentType = { "program" }
                         ) { program ->
                             androidx.compose.animation.AnimatedVisibility(
@@ -205,11 +205,6 @@ fun MainScreen(
                             ) {
                                 ProgramCard(
                                     programWithWork = program,
-                                    onImageLoad = {
-                                        program.work.image?.recommendedImageUrl?.let { imageUrl ->
-                                            onImageLoad(program.program.annictId, imageUrl)
-                                        }
-                                    },
                                     onRecordEpisode = onRecordEpisode,
                                     uiState = uiState
                                 )
@@ -241,30 +236,31 @@ fun MainScreen(
 @Composable
 fun ProgramCard(
     programWithWork: ProgramWithWork,
-    onImageLoad: () -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    uiState: MainUiState
+    uiState: MainUiState,
+    modifier: Modifier = Modifier
 ) {
+
     ElevatedCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .testTag("program_card_${programWithWork.program.annictId}")
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .testTag("program_card_${programWithWork.work.id}"),
+        shape = RoundedCornerShape(12.dp),
+        elevation = androidx.compose.material3.CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(16.dp)
         ) {
-            // ヘッダー：画像と基本情報
+            // 上部：作品情報と画像
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 // 画像（左側）
-                val imageUrl =
-                    programWithWork.work.image?.recommendedImageUrl.takeIf { !it.isNullOrEmpty() }
-                        ?: programWithWork.work.image?.facebookOgImageUrl.takeIf { !it.isNullOrEmpty() }
+                val imageUrl = programWithWork.work.image?.imageUrl
 
                 Box(
                     modifier = Modifier
@@ -279,9 +275,6 @@ fun ProgramCard(
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
-
-                        // 常に画像URLがあれば保存を試みる（画像表示の成否に関わらず）
-                        onImageLoad()
                     } else {
                         // 画像がない場合はプレースホルダー
                         Box(
@@ -291,7 +284,7 @@ fun ProgramCard(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Movie,
+                                imageVector = Icons.Default.Image,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -310,7 +303,7 @@ fun ProgramCard(
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag("work_title_${programWithWork.work.annictId}")
+                        modifier = Modifier.testTag("work_title_${programWithWork.work.id}")
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))

@@ -533,7 +533,7 @@ class ProgramFilterTest {
         )
 
         val program = Program(
-            annictId = 1,
+            id = "1",
             startedAt = startedAt,
             channel = Channel(name = channelName),
             episode = Episode(

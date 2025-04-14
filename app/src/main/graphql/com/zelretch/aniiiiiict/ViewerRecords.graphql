@@ -17,7 +17,6 @@ query ViewerRecordsQuery($after: String) {
           viewerDidTrack
           work {
             id
-            annictId
             title
             image {
               recommendedImageUrl
