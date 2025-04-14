@@ -3,12 +3,15 @@ package com.zelretch.aniiiiiict.util
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlin.math.min
 
 /**
  * リトライロジックを提供するユーティリティクラス
  */
-class RetryManager {
+class RetryManager @Inject constructor(
+    private val logger: Logger
+) {
     companion object {
         private const val TAG = "RetryManager"
     }
@@ -38,7 +41,7 @@ class RetryManager {
                 return block()
             } catch (e: Exception) {
                 lastException = e
-                AniiiiiictLogger.logError(
+                logger.logError(
                     TAG,
                     "リトライ失敗 (${attempt + 1}/$maxAttempts): ${e.message}",
                     "retry"

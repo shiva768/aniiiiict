@@ -2,7 +2,6 @@ package com.zelretch.aniiiiiict
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -18,13 +17,17 @@ import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiiict.ui.main.MainViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
-import com.zelretch.aniiiiiict.util.AniiiiiictLogger
+import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
+
+    @Inject
+    lateinit var logger: Logger
 
     // ViewModelを一度だけ初期化して保持する
     private val viewModel: MainViewModel by viewModels()
@@ -117,22 +120,24 @@ class MainActivity : ComponentActivity() {
     }
 
     //    private fun extractAuthCode(intent: Intent) {
-//        Log.d("MainActivity", "Intent解析中: ${intent.action}, data: ${intent.data}")
+//        logger.logDebug(TAG, "Intent解析中: ${intent.action}, data: ${intent.data}", "extractAuthCode")
 //        if (intent.action == Intent.ACTION_VIEW) {
 //            val uri = intent.data
 //            if (uri?.scheme == "aniiiiiict" && uri.host == "oauth" && uri.pathSegments.firstOrNull() == "callback") {
 //                val code = uri.getQueryParameter("code")
-//                Log.d("MainActivity", "認証コードを抽出: ${code?.take(5)}...")
+//                logger.logDebug(TAG, "認証コードを抽出: ${code?.take(5)}...", "extractAuthCode")
 //                if (code != null && pendingAuthCode == null && !isProcessingAuth) {
 //                    pendingAuthCode = code
-//                    AniiiiiictLogger.logInfo(
+//                    logger.logInfo(
+//                        TAG,
 //                        "認証コードを保存: ${code.take(5)}...",
 //                        "extractAuthCode"
 //                    )
 //                } else {
-//                    Log.d(
-//                        "MainActivity",
-//                        "既に認証コードが処理中のため、新しいコードをスキップします"
+//                    logger.logDebug(
+//                        TAG,
+//                        "既に認証コードが処理中のため、新しいコードをスキップします",
+//                        "extractAuthCode"
 //                    )
 //                }
 //            }
@@ -140,16 +145,24 @@ class MainActivity : ComponentActivity() {
 //    }
 
     private fun handleIntent(intent: Intent) {
-        Log.d("MainActivity", "Intent received: ${intent.action}, data: ${intent.data}")
+        logger.logDebug(
+            TAG,
+            "Intent received: ${intent.action}, data: ${intent.data}",
+            "handleIntent"
+        )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                Log.d("MainActivity", "Received OAuth callback: $uri")
+                logger.logDebug(TAG, "Received OAuth callback: $uri", "handleIntent")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
 
-                    Log.d("MainActivity", "Processing authentication code: ${code.take(5)}...")
-                    AniiiiiictLogger.logInfo(
+                    logger.logDebug(
+                        TAG,
+                        "Processing authentication code: ${code.take(5)}...",
+                        "handleIntent"
+                    )
+                    logger.logInfo(
                         TAG,
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
@@ -161,7 +174,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                 } else {
-                    AniiiiiictLogger.logError(
+                    logger.logError(
                         TAG,
                         "認証コードがURIに含まれていません: $uri",
                         "handleIntent"

@@ -9,7 +9,7 @@ import com.apollographql.apollo3.cache.normalized.fetchPolicy
 import com.apollographql.apollo3.network.okHttpClient
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.util.AniiiiiictLogger
+import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
 import javax.inject.Inject
@@ -18,7 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class ApolloClient @Inject constructor(
     private val tokenManager: TokenManager,
-    private val okHttpClient: OkHttpClient
+    private val okHttpClient: OkHttpClient,
+    private val logger: Logger
 ) {
     companion object {
         private const val TAG = "ApolloClient"
@@ -27,7 +28,7 @@ class ApolloClient @Inject constructor(
 
     private val client by lazy {
         val token = tokenManager.getAccessToken()
-        AniiiiiictLogger.logInfo(
+        logger.logInfo(
             TAG,
             "Apollo初期化 - アクセストークンの有無: ${!token.isNullOrBlank()}",
             "ApolloClient.init"
@@ -63,7 +64,7 @@ class ApolloClient @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
-            AniiiiiictLogger.logError(
+            logger.logError(
                 TAG,
                 "GraphQLクエリの実行に失敗: ${operation.name()}",
                 context
@@ -84,7 +85,7 @@ class ApolloClient @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
-            AniiiiiictLogger.logError(
+            logger.logError(
                 TAG,
                 "GraphQLミューテーションの実行に失敗: ${operation.name()}",
                 context

@@ -10,6 +10,8 @@ import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiiict.data.util.ImageDownloader
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
+import com.zelretch.aniiiiiict.util.AndroidLogger
+import com.zelretch.aniiiiiict.util.Logger
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.Module
 import dagger.Provides
@@ -26,8 +28,8 @@ import com.zelretch.aniiiiiict.data.api.ApolloClient as AniiiiiictApolloClient
 object AppModule {
     @Provides
     @Singleton
-    fun provideTokenManager(@ApplicationContext context: Context): TokenManager {
-        return TokenManager(context)
+    fun provideTokenManager(@ApplicationContext context: Context, logger: Logger): TokenManager {
+        return TokenManager(context, logger)
     }
 
     @Provides
@@ -35,8 +37,9 @@ object AppModule {
     fun provideAnnictAuthManager(
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient,
-        retryManager: RetryManager
-    ): AnnictAuthManager = AnnictAuthManager(tokenManager, okHttpClient, retryManager)
+        retryManager: RetryManager,
+        logger: Logger
+    ): AnnictAuthManager = AnnictAuthManager(tokenManager, okHttpClient, retryManager, logger)
 
     @Provides
     @Singleton
@@ -61,17 +64,21 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideImageDownloader(@ApplicationContext context: Context): ImageDownloader {
-        return ImageDownloader(context)
+    fun provideImageDownloader(
+        @ApplicationContext context: Context,
+        logger: Logger
+    ): ImageDownloader {
+        return ImageDownloader(context, logger)
     }
 
     @Provides
     @Singleton
     fun provideApolloClient(
         tokenManager: TokenManager,
-        okHttpClient: OkHttpClient
+        okHttpClient: OkHttpClient,
+        logger: Logger
     ): AniiiiiictApolloClient {
-        return AniiiiiictApolloClient(tokenManager, okHttpClient)
+        return AniiiiiictApolloClient(tokenManager, okHttpClient, logger)
     }
 
     @Provides
@@ -81,22 +88,28 @@ object AppModule {
         authManager: AnnictAuthManager,
         workImagePreferences: WorkImagePreferences,
         imageDownloader: ImageDownloader,
-        apolloClient: ApolloClient
+        apolloClient: ApolloClient,
+        logger: Logger
     ): AnnictRepository {
         return AnnictRepositoryImpl(
             tokenManager = tokenManager,
             authManager = authManager,
             workImagePreferences = workImagePreferences,
             imageDownloader = imageDownloader,
-            apolloClient = apolloClient
+            apolloClient = apolloClient,
+            logger = logger
         )
     }
 
     @Provides
     @Singleton
-    fun provideRetryManager(): RetryManager = RetryManager()
+    fun provideRetryManager(logger: Logger): RetryManager = RetryManager(logger)
 
     @Provides
     @Singleton
     fun provideProgramFilter(): ProgramFilter = ProgramFilter()
+
+    @Provides
+    @Singleton
+    fun provideLogger(): Logger = AndroidLogger()
 }

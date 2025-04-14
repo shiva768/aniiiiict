@@ -2,14 +2,14 @@ package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zelretch.aniiiiiict.util.AniiiiiictLogger
+import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
  * 共通のローディング処理を提供する基底ViewModelクラス
  */
-abstract class BaseViewModel : ViewModel() {
+abstract class BaseViewModel(val logger: Logger) : ViewModel() {
     private val TAG = "BaseViewModel"
 
     /**
@@ -45,7 +45,7 @@ abstract class BaseViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 // エラーを設定
-                AniiiiiictLogger.logError(TAG, e, "ローディング処理中にエラーが発生")
+                logger.logError(TAG, e, "ローディング処理中にエラーが発生")
                 updateErrorState(e.message ?: "処理中にエラーが発生しました")
             } finally {
                 // ローディング状態を終了

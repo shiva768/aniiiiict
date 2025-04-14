@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
-import com.zelretch.aniiiiiict.util.AniiiiiictLogger
+import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +25,9 @@ data class HistoryUiState(
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    private val repository: AnnictRepository
-) : BaseViewModel() {
+    private val repository: AnnictRepository,
+    logger: Logger
+) : BaseViewModel(logger) {
     private val TAG = "HistoryViewModel"
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
@@ -114,7 +115,7 @@ class HistoryViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                AniiiiiictLogger.logError(TAG, e, "記録の削除に失敗")
+                logger.logError(TAG, e, "記録の削除に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "記録の削除に失敗しました"
