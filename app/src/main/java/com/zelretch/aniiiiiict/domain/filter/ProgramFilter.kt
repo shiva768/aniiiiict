@@ -32,7 +32,7 @@ class ProgramFilter {
         filterState.selectedYear.isEmpty() || program.work.seasonYear in filterState.selectedYear
 
     private fun applyChannelFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedChannel.isEmpty() || program.program.channel.name in filterState.selectedChannel
+        filterState.selectedChannel.isEmpty() || program.firstProgram.channel.name in filterState.selectedChannel
 
     private fun applyStatusFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedStatus.isEmpty() || program.work.viewerStatusState in filterState.selectedStatus
@@ -45,15 +45,15 @@ class ProgramFilter {
     }
 
     private fun applyAiredFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        !filterState.showOnlyAired || !program.program.startedAt.isAfter(LocalDateTime.now())
+        !filterState.showOnlyAired || !program.firstProgram.startedAt.isAfter(LocalDateTime.now())
 
     private fun applySortOrder(
         programs: List<ProgramWithWork>,
         sortOrder: SortOrder
     ): List<ProgramWithWork> =
         when (sortOrder) {
-            SortOrder.START_TIME_ASC -> programs.sortedBy { it.program.startedAt }
-            SortOrder.START_TIME_DESC -> programs.sortedByDescending { it.program.startedAt }
+            SortOrder.START_TIME_ASC -> programs.sortedBy { it.firstProgram.startedAt }
+            SortOrder.START_TIME_DESC -> programs.sortedByDescending { it.firstProgram.startedAt }
         }
 
     fun extractAvailableFilters(programs: List<ProgramWithWork>): AvailableFilters {
@@ -73,7 +73,7 @@ class ProgramFilter {
             .sortedWith(compareBy { seasonOrder[it] ?: Int.MAX_VALUE })
 
         val years = programs.mapNotNull { it.work.seasonYear }.distinct().sorted()
-        val channels = programs.map { it.program.channel.name }.distinct().sorted()
+        val channels = programs.map { it.firstProgram.channel.name }.distinct().sorted()
 
         return AvailableFilters(media, seasons, years, channels)
     }

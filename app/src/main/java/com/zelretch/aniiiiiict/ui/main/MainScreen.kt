@@ -193,7 +193,7 @@ fun MainScreen(
                     } else {
                         items(
                             items = uiState.programs,
-                            key = { it.program.id },
+                            key = { it.firstProgram.id },
                             contentType = { "program" }
                         ) { program ->
                             androidx.compose.animation.AnimatedVisibility(
@@ -355,7 +355,7 @@ fun ProgramCard(
 
                             // チャンネル名
                             InfoTag(
-                                text = programWithWork.program.channel.name,
+                                text = programWithWork.firstProgram.channel.name,
                                 color = MaterialTheme.colorScheme.surfaceVariant
                             )
                         }
@@ -374,8 +374,8 @@ fun ProgramCard(
                     // エピソード番号とタイトル
                     val episodeText = buildString {
                         append("Episode ")
-                        append(programWithWork.program.episode.numberText ?: "?")
-                        programWithWork.program.episode.title?.let {
+                        append(programWithWork.firstProgram.episode.numberText ?: "?")
+                        programWithWork.firstProgram.episode.title?.let {
                             append(" ")
                             append(it)
                         }
@@ -389,7 +389,7 @@ fun ProgramCard(
 
                     // 放送日時
                     Text(
-                        text = programWithWork.program.startedAt.format(
+                        text = programWithWork.firstProgram.startedAt.format(
                             DateTimeFormatter.ofPattern(
                                 "yyyy/MM/dd HH:mm"
                             )
@@ -408,14 +408,14 @@ fun ProgramCard(
                     FilledTonalIconButton(
                         onClick = {
                             onRecordEpisode(
-                                programWithWork.program.episode.id,
+                                programWithWork.firstProgram.episode.id,
                                 programWithWork.work.id,
                                 programWithWork.work.viewerStatusState
                             )
                         },
                         modifier = Modifier.size(40.dp),
-                        enabled = !uiState.isLoading && !uiState.isRecording && uiState.recordingSuccess != programWithWork.program.episode.id,
-                        colors = if (uiState.recordingSuccess == programWithWork.program.episode.id) {
+                        enabled = !uiState.isLoading && !uiState.isRecording && uiState.recordingSuccess != programWithWork.firstProgram.episode.id,
+                        colors = if (uiState.recordingSuccess == programWithWork.firstProgram.episode.id) {
                             IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -424,7 +424,7 @@ fun ProgramCard(
                             IconButtonDefaults.filledTonalIconButtonColors()
                         }
                     ) {
-                        if (uiState.recordingSuccess == programWithWork.program.episode.id) {
+                        if (uiState.recordingSuccess == programWithWork.firstProgram.episode.id) {
                             Icon(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = "記録済み",

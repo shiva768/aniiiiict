@@ -238,20 +238,22 @@ class AnnictRepositoryImpl @Inject constructor(
                 episode = episode
             )
 
-            ProgramWithWork(program, work)
+            program to work
         } ?: emptyList()
 
-        // 各作品の最初の未視聴エピソードのみを残す
+        // 各作品のプログラムをすべて保持し、最初のエピソードも特定する
         return programs
-            .groupBy { it.work.title }
-            .mapValues { (_, programs) ->
-                // エピソード番号でソート（nullや変換できない場合は最後に）
-                programs.minByOrNull { program ->
-                    program.program.episode.number ?: Int.MAX_VALUE
-                }!!
+            .groupBy { it.second.title }
+            .map { (_, grouped) ->
+                val sortedPrograms = grouped.sortedBy { it.first.episode.number ?: Int.MAX_VALUE }
+                val firstProgram = sortedPrograms.firstOrNull()!!
+                ProgramWithWork(
+                    programs = sortedPrograms.map { it.first },
+                    firstProgram = firstProgram.first,
+                    work = firstProgram.second
+                )
             }
-            .values
-            .sortedBy { it.program.startedAt }
+            .sortedBy { it.firstProgram.startedAt }
     }
 
     override suspend fun getRecords(after: String?): PaginatedRecords = executeApiRequest(

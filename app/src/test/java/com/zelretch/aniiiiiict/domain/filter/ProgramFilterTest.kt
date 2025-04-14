@@ -206,7 +206,8 @@ class ProgramFilterTest {
 
         // 検証
         assertEquals(2, result.size)
-        assertTrue(result.map { it.program.channel.name }.containsAll(setOf("TOKYO MX", "AT-X")))
+        assertTrue(result.map { it.firstProgram.channel.name }
+            .containsAll(setOf("TOKYO MX", "AT-X")))
     }
 
     @Test
@@ -335,7 +336,7 @@ class ProgramFilterTest {
 
         // 検証
         assertEquals(1, result.size)
-        assertEquals(now.minusHours(1), result[0].program.startedAt)
+        assertEquals(now.minusHours(1), result[0].firstProgram.startedAt)
     }
 
     @Test
@@ -373,9 +374,9 @@ class ProgramFilterTest {
 
         // 検証
         assertEquals(3, result.size)
-        assertEquals(now, result[0].program.startedAt)
-        assertEquals(now.plusHours(1), result[1].program.startedAt)
-        assertEquals(now.plusHours(2), result[2].program.startedAt)
+        assertEquals(now, result[0].firstProgram.startedAt)
+        assertEquals(now.plusHours(1), result[1].firstProgram.startedAt)
+        assertEquals(now.plusHours(2), result[2].firstProgram.startedAt)
     }
 
     @Test
@@ -395,9 +396,9 @@ class ProgramFilterTest {
 
         // 検証
         assertEquals(3, result.size)
-        assertEquals(now.plusHours(2), result[0].program.startedAt)
-        assertEquals(now.plusHours(1), result[1].program.startedAt)
-        assertEquals(now, result[2].program.startedAt)
+        assertEquals(now.plusHours(2), result[0].firstProgram.startedAt)
+        assertEquals(now.plusHours(1), result[1].firstProgram.startedAt)
+        assertEquals(now, result[2].firstProgram.startedAt)
     }
 
     @Test
@@ -438,7 +439,7 @@ class ProgramFilterTest {
         assertEquals(1, result.size)
         assertEquals(SeasonName.WINTER, result[0].work.seasonName)
         assertEquals("TV", result[0].work.media)
-        assertEquals("TOKYO MX", result[0].program.channel.name)
+        assertEquals("TOKYO MX", result[0].firstProgram.channel.name)
         assertEquals(StatusState.WATCHING, result[0].work.viewerStatusState)
     }
 
@@ -544,6 +545,6 @@ class ProgramFilterTest {
             )
         )
 
-        return ProgramWithWork(program, work)
+        return ProgramWithWork(listOf(program), program, work)
     }
 } 
