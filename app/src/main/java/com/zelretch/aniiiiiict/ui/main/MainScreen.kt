@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
@@ -73,6 +74,7 @@ import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
+import com.zelretch.aniiiiiict.ui.unwatched.UnwatchedEpisodesModal
 import java.time.format.DateTimeFormatter
 import kotlin.reflect.KFunction8
 
@@ -81,6 +83,7 @@ import kotlin.reflect.KFunction8
 fun MainScreen(
     viewModel: MainViewModel,
     onRecordEpisode: (String, String, StatusState) -> Unit,
+    onBulkRecordEpisode: (List<String>, String, StatusState) -> Unit,
     onNavigateToHistory: () -> Unit = {},
     onRefresh: () -> Unit = {}
 ) {
@@ -206,6 +209,7 @@ fun MainScreen(
                                 ProgramCard(
                                     programWithWork = program,
                                     onRecordEpisode = onRecordEpisode,
+                                    onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(it) },
                                     uiState = uiState
                                 )
                             }
@@ -229,6 +233,19 @@ fun MainScreen(
                 )
             }
         }
+
+        // 未視聴エピソードモーダル
+        if (uiState.isUnwatchedEpisodesModalVisible) {
+            uiState.selectedProgram?.let { program ->
+                UnwatchedEpisodesModal(
+                    programWithWork = program,
+                    isLoading = uiState.isLoadingUnwatchedEpisodes,
+                    onDismiss = { viewModel.hideUnwatchedEpisodes() },
+                    onRecordEpisode = onRecordEpisode,
+                    onBulkRecordEpisode = onBulkRecordEpisode
+                )
+            }
+        }
     }
 }
 
@@ -237,6 +254,7 @@ fun MainScreen(
 fun ProgramCard(
     programWithWork: ProgramWithWork,
     onRecordEpisode: (String, String, StatusState) -> Unit,
+    onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit,
     uiState: MainUiState,
     modifier: Modifier = Modifier
 ) {
@@ -437,6 +455,20 @@ fun ProgramCard(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // 未視聴エピソードボタン
+                    FilledTonalIconButton(
+                        onClick = { onShowUnwatchedEpisodes(programWithWork) },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "未視聴エピソード",
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }

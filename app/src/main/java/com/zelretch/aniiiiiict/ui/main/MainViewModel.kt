@@ -41,6 +41,9 @@ data class MainUiState(
     val availableYears: List<Int> = emptyList(),
     val availableChannels: List<String> = emptyList(),
     val allPrograms: List<ProgramWithWork> = emptyList(),
+    val selectedProgram: ProgramWithWork? = null,
+    val isUnwatchedEpisodesModalVisible: Boolean = false,
+    val isLoadingUnwatchedEpisodes: Boolean = false
 )
 
 @HiltViewModel
@@ -280,6 +283,45 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // エピソードの記録（公開メソッド）
+    fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isRecording = true) }
+                runCatching {
+                    episodeIds.forEach { id ->
+                        watchEpisodeUseCase(id, workId, currentStatus).getOrThrow()
+                    }
+                }.onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            isRecording = false,
+                            recordingSuccess = episodeIds.lastOrNull(),
+                            error = null
+                        )
+                    }
+
+                    delay(2000)
+                    if (_uiState.value.recordingSuccess == episodeIds.lastOrNull()) {
+                        _uiState.update { it.copy(recordingSuccess = null) }
+                    }
+
+                    loadingPrograms()
+                }.onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isRecording = false,
+                            error = e.message ?: "エピソードの記録に失敗しました"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                handleError(e)
+                _uiState.update { it.copy(isRecording = false) }
+            }
+        }
+    }
+
     // 再読み込み（公開メソッド）
     fun refresh() {
         logger.logInfo(TAG, "プログラム一覧を再読み込み", "MainViewModel.refresh")
@@ -332,5 +374,27 @@ class MainViewModel @Inject constructor(
     private fun handleError(error: Throwable) {
         logger.logError(TAG, error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
+    }
+
+    // 未視聴エピソードモーダルを表示
+    fun showUnwatchedEpisodes(program: ProgramWithWork) {
+        _uiState.update {
+            it.copy(
+                selectedProgram = program,
+                isUnwatchedEpisodesModalVisible = true,
+                isLoadingUnwatchedEpisodes = false
+            )
+        }
+    }
+
+    // 未視聴エピソードモーダルを非表示
+    fun hideUnwatchedEpisodes() {
+        _uiState.update {
+            it.copy(
+                isUnwatchedEpisodesModalVisible = false,
+                selectedProgram = null,
+                isLoadingUnwatchedEpisodes = false
+            )
+        }
     }
 }

@@ -75,7 +75,6 @@ class MainActivity : ComponentActivity() {
                     startDestination = "main"
                 ) {
                     composable("main") {
-
                         MainScreen(
                             viewModel = viewModel,
                             onRecordEpisode = { id, workId, status ->
@@ -84,6 +83,9 @@ class MainActivity : ComponentActivity() {
                                     workId,
                                     status
                                 )
+                            },
+                            onBulkRecordEpisode = { ids, workId, status ->
+                                viewModel.bulkRecordEpisode(ids, workId, status)
                             },
                             onNavigateToHistory = { navController.navigate("history") },
                             onRefresh = { viewModel.refresh() }
