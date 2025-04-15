@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.ui.main
+package com.zelretch.aniiiiiict
 
 import android.content.Context
 import android.content.Intent

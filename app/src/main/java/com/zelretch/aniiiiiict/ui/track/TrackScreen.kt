@@ -36,8 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.zelretch.aniiiiiict.type.StatusState
-import com.zelretch.aniiiiiict.ui.main.components.FilterBar
-import com.zelretch.aniiiiiict.ui.main.components.ProgramCard
+import com.zelretch.aniiiiiict.ui.track.components.FilterBar
+import com.zelretch.aniiiiiict.ui.track.components.ProgramCard
 import com.zelretch.aniiiiiict.ui.unwatched.DetailModal
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)

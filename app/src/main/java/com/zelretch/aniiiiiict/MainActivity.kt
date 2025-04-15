@@ -14,7 +14,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
-import com.zelretch.aniiiiiict.ui.main.MainViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel

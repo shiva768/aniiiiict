@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.ui.main.components
+package com.zelretch.aniiiiiict.ui.track.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
