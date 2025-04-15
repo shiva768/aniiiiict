@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,7 +25,7 @@ import com.zelretch.aniiiiiict.ui.unwatched.components.ConfirmDialog
 import com.zelretch.aniiiiiict.ui.unwatched.components.UnwatchedEpisodesContent
 
 @Composable
-fun UnwatchedEpisodesModal(
+fun DetailModal(
     programWithWork: ProgramWithWork,
     isLoading: Boolean,
     onDismiss: () -> Unit,
@@ -64,7 +65,11 @@ fun UnwatchedEpisodesModal(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("未視聴エピソード (${programs.size}件)")
+                Text(
+                    text = "未視聴エピソード (${programs.size}件)",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
                 IconButton(onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,

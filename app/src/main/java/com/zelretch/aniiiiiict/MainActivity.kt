@@ -14,9 +14,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
-import com.zelretch.aniiiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiiict.ui.main.MainViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
+import com.zelretch.aniiiiiict.ui.track.TrackScreen
+import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -29,8 +30,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var logger: Logger
 
-    // ViewModelを一度だけ初期化して保持する
-    private val viewModel: MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,23 +72,22 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = "main"
+                    startDestination = "track"
                 ) {
-                    composable("main") {
-                        MainScreen(
-                            viewModel = viewModel,
+                    composable("track") {
+                        val trackViewModel: TrackViewModel = hiltViewModel()
+                        val trackUiState by trackViewModel.uiState.collectAsState()
+                        TrackScreen(
+                            viewModel = trackViewModel,
+                            uiState = trackUiState,
                             onRecordEpisode = { id, workId, status ->
-                                viewModel.recordEpisode(
-                                    id,
-                                    workId,
-                                    status
-                                )
+                                trackViewModel.recordEpisode(id, workId, status)
                             },
                             onBulkRecordEpisode = { ids, workId, status ->
-                                viewModel.bulkRecordEpisode(ids, workId, status)
+                                trackViewModel.bulkRecordEpisode(ids, workId, status)
                             },
                             onNavigateToHistory = { navController.navigate("history") },
-                            onRefresh = { viewModel.refresh() }
+                            onRefresh = { trackViewModel.refresh() }
                         )
                     }
 
@@ -143,7 +142,7 @@ class MainActivity : ComponentActivity() {
 
                     // 認証処理は新しいコルーチンで実行して独立性を保つ
                     lifecycleScope.launch {
-                        viewModel.handleAuthCallback(code)
+                        mainViewModel.handleAuthCallback(code)
                     }
 
                 } else {

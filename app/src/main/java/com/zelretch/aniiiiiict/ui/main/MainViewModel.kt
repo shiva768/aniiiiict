@@ -4,15 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
-import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
-import com.zelretch.aniiiiiict.domain.filter.FilterState
-import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
-import com.zelretch.aniiiiiict.domain.filter.SortOrder
-import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,31 +19,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MainUiState(
-    val programs: List<ProgramWithWork> = emptyList(),
-    val records: List<com.zelretch.aniiiiiict.data.model.Record> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val isAuthenticating: Boolean = false,
-    val isRecording: Boolean = false,
-    val recordingSuccess: String? = null,
-    val filterState: FilterState = FilterState(),
-    val isFilterVisible: Boolean = false,
-    val availableMedia: List<String> = emptyList(),
-    val availableSeasons: List<SeasonName> = emptyList(),
-    val availableYears: List<Int> = emptyList(),
-    val availableChannels: List<String> = emptyList(),
-    val allPrograms: List<ProgramWithWork> = emptyList(),
-    val selectedProgram: ProgramWithWork? = null,
-    val isUnwatchedEpisodesModalVisible: Boolean = false,
-    val isLoadingUnwatchedEpisodes: Boolean = false
 )
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: AnnictRepository,
-    private val watchEpisodeUseCase: WatchEpisodeUseCase,
-    private val programFilter: ProgramFilter,
-    private val filterPreferences: FilterPreferences,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
@@ -63,27 +38,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // フィルター状態の復元を待ってから認証状態のチェックを行う
-            filterPreferences.filterState.collect { savedFilterState ->
-                if (_uiState.value.allPrograms.isEmpty()) {
-                    // 初回のみ認証チェックを行う
-                    _uiState.update { currentState ->
-                        currentState.copy(filterState = savedFilterState)
-                    }
-                    checkAuthState()
-                } else {
-                    // 2回目以降はフィルター状態の更新のみ
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            filterState = savedFilterState,
-                            programs = programFilter.applyFilters(
-                                currentState.allPrograms,
-                                savedFilterState
-                            )
-                        )
-                    }
-                }
-            }
+            checkAuthState()
         }
     }
 
@@ -109,8 +64,6 @@ class MainViewModel @Inject constructor(
                         "checkAuthState"
                     )
                     startAuth()
-                } else {
-                    loadingPrograms()
                 }
             } catch (e: Exception) {
                 logger.logError(TAG, e, "認証状態の確認中にエラーが発生")
@@ -122,35 +75,6 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    // 番組一覧の読み込み（内部メソッド）
-    private fun loadingPrograms() {
-        executeWithLoading {
-            loadPrograms()
-        }
-    }
-
-    // 番組一覧の読み込み（内部メソッド）
-    private suspend fun loadPrograms() {
-        repository.getProgramsWithWorks()
-            .collect { programs ->
-                _uiState.update { currentState ->
-                    val availableFilters = programFilter.extractAvailableFilters(programs)
-                    val filteredPrograms =
-                        programFilter.applyFilters(programs, currentState.filterState)
-
-                    currentState.copy(
-                        programs = filteredPrograms,
-                        isAuthenticating = false,
-                        availableMedia = availableFilters.media,
-                        availableSeasons = availableFilters.seasons,
-                        availableYears = availableFilters.years,
-                        availableChannels = availableFilters.channels,
-                        allPrograms = programs
-                    )
-                }
-            }
     }
 
     // 認証開始（公開メソッド）
@@ -197,7 +121,6 @@ class MainViewModel @Inject constructor(
                         println("MainViewModel: 認証成功")
                         delay(300)
                         _uiState.update { it.copy(isAuthenticating = false) }
-                        loadingPrograms()
                     } else {
                         logger.logWarning(
                             TAG,
@@ -245,156 +168,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // エピソードの記録（公開メソッド）
-    fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isRecording = true) }
-
-                watchEpisodeUseCase(episodeId, workId, currentStatus)
-                    .onSuccess {
-                        _uiState.update {
-                            it.copy(
-                                isRecording = false,
-                                recordingSuccess = episodeId,
-                                error = null
-                            )
-                        }
-
-                        delay(2000)
-                        if (_uiState.value.recordingSuccess == episodeId) {
-                            _uiState.update { it.copy(recordingSuccess = null) }
-                        }
-
-                        loadingPrograms()
-                    }
-                    .onFailure { e ->
-                        _uiState.update {
-                            it.copy(
-                                isRecording = false,
-                                error = e.message ?: "エピソードの記録に失敗しました"
-                            )
-                        }
-                    }
-            } catch (e: Exception) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
-            }
-        }
-    }
-
-    // エピソードの記録（公開メソッド）
-    fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {
-        viewModelScope.launch {
-            try {
-                _uiState.update { it.copy(isRecording = true) }
-                runCatching {
-                    episodeIds.forEach { id ->
-                        watchEpisodeUseCase(id, workId, currentStatus).getOrThrow()
-                    }
-                }.onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            isRecording = false,
-                            recordingSuccess = episodeIds.lastOrNull(),
-                            error = null
-                        )
-                    }
-
-                    delay(2000)
-                    if (_uiState.value.recordingSuccess == episodeIds.lastOrNull()) {
-                        _uiState.update { it.copy(recordingSuccess = null) }
-                    }
-
-                    loadingPrograms()
-                }.onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            isRecording = false,
-                            error = e.message ?: "エピソードの記録に失敗しました"
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
-            }
-        }
-    }
-
-    // 再読み込み（公開メソッド）
-    fun refresh() {
-        logger.logInfo(TAG, "プログラム一覧を再読み込み", "MainViewModel.refresh")
-        checkAuthState()
-    }
-
-    // フィルターの更新（公開メソッド）
-    fun updateFilter(
-        selectedMedia: Set<String> = _uiState.value.filterState.selectedMedia,
-        selectedSeason: Set<SeasonName> = _uiState.value.filterState.selectedSeason,
-        selectedYear: Set<Int> = _uiState.value.filterState.selectedYear,
-        selectedChannel: Set<String> = _uiState.value.filterState.selectedChannel,
-        selectedStatus: Set<StatusState> = _uiState.value.filterState.selectedStatus,
-        searchQuery: String = _uiState.value.filterState.searchQuery,
-        showOnlyAired: Boolean = _uiState.value.filterState.showOnlyAired,
-        sortOrder: SortOrder = _uiState.value.filterState.sortOrder
-    ) {
-        _uiState.update { currentState ->
-            val newFilterState = currentState.filterState.copy(
-                selectedMedia = selectedMedia,
-                selectedSeason = selectedSeason,
-                selectedYear = selectedYear,
-                selectedChannel = selectedChannel,
-                selectedStatus = selectedStatus,
-                searchQuery = searchQuery,
-                showOnlyAired = showOnlyAired,
-                sortOrder = sortOrder
-            )
-            currentState.copy(
-                filterState = newFilterState,
-                programs = programFilter.applyFilters(currentState.allPrograms, newFilterState)
-            )
-        }
-        // フィルター状態の保存
-        viewModelScope.launch {
-            filterPreferences.updateFilterState(_uiState.value.filterState)
-        }
-    }
-
-    // フィルターの表示/非表示の切り替え（公開メソッド）
-    fun toggleFilterVisibility() {
-        _uiState.update {
-            it.copy(
-                isFilterVisible = !it.isFilterVisible
-            )
-        }
-    }
-
     // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
         logger.logError(TAG, error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 
-    // 未視聴エピソードモーダルを表示
-    fun showUnwatchedEpisodes(program: ProgramWithWork) {
-        _uiState.update {
-            it.copy(
-                selectedProgram = program,
-                isUnwatchedEpisodesModalVisible = true,
-                isLoadingUnwatchedEpisodes = false
-            )
-        }
-    }
-
-    // 未視聴エピソードモーダルを非表示
-    fun hideUnwatchedEpisodes() {
-        _uiState.update {
-            it.copy(
-                isUnwatchedEpisodesModalVisible = false,
-                selectedProgram = null,
-                isLoadingUnwatchedEpisodes = false
-            )
-        }
+    // エラーをクリアする
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 }

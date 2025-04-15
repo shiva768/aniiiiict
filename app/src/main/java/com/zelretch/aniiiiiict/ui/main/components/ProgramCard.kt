@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.type.StatusState
-import com.zelretch.aniiiiiict.ui.main.MainUiState
+import com.zelretch.aniiiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -48,7 +48,7 @@ fun ProgramCard(
     programWithWork: ProgramWithWork,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit,
-    uiState: MainUiState,
+    uiState: TrackUiState,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
