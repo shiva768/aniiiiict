@@ -2,6 +2,7 @@ package com.zelretch.aniiiiiict
 
 import android.content.Context
 import android.content.Intent
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
@@ -22,6 +23,7 @@ data class MainUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isAuthenticating: Boolean = false,
+    val isAuthenticated: Boolean = false,
 )
 
 @HiltViewModel
@@ -56,6 +58,9 @@ class MainViewModel @Inject constructor(
             try {
                 val isAuthenticated = repository.isAuthenticated()
 
+                // UI状態を更新
+                _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
                     logger.info(
@@ -63,7 +68,7 @@ class MainViewModel @Inject constructor(
                         "認証されていないため、認証を開始します",
                         "checkAuthState"
                     )
-                    startAuth()
+                    // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: Exception) {
                 logger.error(TAG, e, "認証状態の確認中にエラーが発生")
@@ -90,9 +95,15 @@ class MainViewModel @Inject constructor(
 
                 if (!isActive) return@launch
 
-                val intent = Intent(Intent.ACTION_VIEW, authUrl.toUri())
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
+                // Custom Tabsを使用して認証ページを開く
+                val customTabsIntent = CustomTabsIntent.Builder()
+                    .setShowTitle(true)
+                    .setUrlBarHidingEnabled(false)
+                    .build()
+
+                // ApplicationContextから起動する場合はFLAG_ACTIVITY_NEW_TASKフラグが必要
+                customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: Exception) {
                 logger.error(TAG, e, "認証URLの取得に失敗")
                 _uiState.update {
@@ -120,7 +131,7 @@ class MainViewModel @Inject constructor(
                     if (success) {
                         println("MainViewModel: 認証成功")
                         delay(300)
-                        _uiState.update { it.copy(isAuthenticating = false) }
+                        _uiState.update { it.copy(isAuthenticating = false, isAuthenticated = true) }
                     } else {
                         logger.warning(
                             TAG,
@@ -177,5 +188,10 @@ class MainViewModel @Inject constructor(
     // エラーをクリアする
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    // 認証状態を手動で確認する（公開メソッド）
+    fun checkAuthentication() {
+        checkAuthState()
     }
 }

@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.zelretch.aniiiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
@@ -33,6 +34,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check authentication state when activity is created
+        mainViewModel.checkAuthentication()
 
         // サンプルコードではWindowアニメーションが無効化されていないケースが多いため
         // ここで明示的に無効化する
@@ -68,11 +72,29 @@ class MainActivity : ComponentActivity() {
         setContent {
             AniiiiictTheme {
                 val navController = rememberNavController()
+                val mainUiState by mainViewModel.uiState.collectAsState()
 
                 NavHost(
                     navController = navController,
-                    startDestination = "track"
+                    startDestination = "auth"
                 ) {
+                    composable("auth") {
+                        // Use LaunchedEffect to handle navigation based on authentication state
+                        androidx.compose.runtime.LaunchedEffect(mainUiState.isAuthenticated) {
+                            if (mainUiState.isAuthenticated) {
+                                // Navigate to track screen if authenticated
+                                navController.navigate("track") {
+                                    popUpTo("auth") { inclusive = true }
+                                }
+                            }
+                        }
+
+                        AuthScreen(
+                            uiState = mainUiState,
+                            onLoginClick = { mainViewModel.startAuth() }
+                        )
+                    }
+
                     composable("track") {
                         val trackViewModel: TrackViewModel = hiltViewModel()
                         val trackUiState by trackViewModel.uiState.collectAsState()
@@ -142,6 +164,8 @@ class MainActivity : ComponentActivity() {
                     // 認証処理は新しいコルーチンで実行して独立性を保つ
                     lifecycleScope.launch {
                         mainViewModel.handleAuthCallback(code)
+                        // 認証状態を再確認して UI を更新
+                        mainViewModel.checkAuthentication()
                     }
 
                 } else {

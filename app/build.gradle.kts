@@ -1,4 +1,4 @@
-import java.util.Properties
+import java.util.*
 
 plugins {
     alias(libs.plugins.android.application)
@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.browser)
 
     // Compose
     implementation(platform(libs.compose.bom))
