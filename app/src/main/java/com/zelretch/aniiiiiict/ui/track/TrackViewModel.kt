@@ -11,6 +11,7 @@ import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
+import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,8 +27,8 @@ import javax.inject.Inject
 data class TrackUiState(
     val programs: List<ProgramWithWork> = emptyList(),
     val records: List<com.zelretch.aniiiiiict.data.model.Record> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
+    override val isLoading: Boolean = false,
+    override val error: String? = null,
     val isRecording: Boolean = false,
     val recordingSuccess: String? = null,
     val filterState: FilterState = FilterState(),
@@ -40,7 +41,7 @@ data class TrackUiState(
     val selectedProgram: ProgramWithWork? = null,
     val isDetailModalVisible: Boolean = false,
     val isLoadingDetail: Boolean = false
-)
+) : BaseUiState(isLoading, error)
 
 @HiltViewModel
 class TrackViewModel @Inject constructor(
@@ -61,14 +62,21 @@ class TrackViewModel @Inject constructor(
         viewModelScope.launch {
             // フィルター状態の復元を待ってから認証状態のチェックを行う
             filterPreferences.filterState.collect { savedFilterState ->
-                _uiState.update { currentState ->
-                    currentState.copy(
-                        filterState = savedFilterState,
-                        programs = programFilter.applyFilters(
-                            currentState.allPrograms,
-                            savedFilterState
+                if (_uiState.value.allPrograms.isEmpty()) {
+                    _uiState.update { currentState ->
+                        currentState.copy(filterState = savedFilterState)
+                    }
+                    loadingPrograms()
+                } else {
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            filterState = savedFilterState,
+                            programs = programFilter.applyFilters(
+                                currentState.allPrograms,
+                                savedFilterState
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

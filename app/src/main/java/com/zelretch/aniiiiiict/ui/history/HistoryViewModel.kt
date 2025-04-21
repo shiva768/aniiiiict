@@ -3,6 +3,7 @@ package com.zelretch.aniiiiiict.ui.history
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,12 +17,12 @@ import javax.inject.Inject
 data class HistoryUiState(
     val records: List<Record> = emptyList(),
     val allRecords: List<Record> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
+    override val isLoading: Boolean = false,
+    override val error: String? = null,
     val hasNextPage: Boolean = false,
     val endCursor: String? = null,
     val searchQuery: String = ""
-)
+) : BaseUiState(isLoading, error)
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
