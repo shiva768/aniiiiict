@@ -5,17 +5,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.zelretch.aniiiiiict.data.model.Program
@@ -45,7 +36,7 @@ fun DetailModal(
             onConfirm = {
                 val targetEpisodes = programs.filterIndexed { index, _ -> index <= episodeIndex }
                 val episodeIds = targetEpisodes.map { it.episode.id }
-                onBulkRecordEpisode(episodeIds, programWithWork.work.id, StatusState.WATCHED)
+                onBulkRecordEpisode(episodeIds, programWithWork.work.id, programWithWork.work.viewerStatusState)
                 programs.removeAll(targetEpisodes)
                 showConfirmDialog = false
                 selectedEpisodeIndex = null
@@ -83,7 +74,7 @@ fun DetailModal(
                 programs = programs,
                 isLoading = isLoading,
                 onRecordEpisode = { episodeId ->
-                    onRecordEpisode(episodeId, programWithWork.work.id, StatusState.WATCHED)
+                    onRecordEpisode(episodeId, programWithWork.work.id, programWithWork.work.viewerStatusState)
                 },
                 onMarkUpToAsWatched = { index ->
                     selectedEpisodeIndex = index

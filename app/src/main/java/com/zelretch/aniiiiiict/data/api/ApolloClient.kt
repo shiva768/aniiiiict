@@ -28,7 +28,7 @@ class ApolloClient @Inject constructor(
 
     private val client by lazy {
         val token = tokenManager.getAccessToken()
-        logger.logInfo(
+        logger.info(
             TAG,
             "Apollo初期化 - アクセストークンの有無: ${!token.isNullOrBlank()}",
             "ApolloClient.init"
@@ -64,7 +64,7 @@ class ApolloClient @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
-            logger.logError(
+            logger.error(
                 TAG,
                 "GraphQLクエリの実行に失敗: ${operation.name()}",
                 context
@@ -85,7 +85,7 @@ class ApolloClient @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
-            logger.logError(
+            logger.error(
                 TAG,
                 "GraphQLミューテーションの実行に失敗: ${operation.name()}",
                 context

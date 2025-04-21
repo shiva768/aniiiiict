@@ -21,7 +21,7 @@ class TokenManager @Inject constructor(
 
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
-            logger.logError(
+            logger.error(
                 TAG,
                 "空のトークンを保存しようとしました",
                 "saveAccessToken"
@@ -29,7 +29,7 @@ class TokenManager @Inject constructor(
             return
         }
 
-        logger.logInfo(
+        logger.info(
             TAG,
             "アクセストークンを保存: ${token.take(10)}...",
             "saveAccessToken"
@@ -38,20 +38,20 @@ class TokenManager @Inject constructor(
         try {
             prefs.edit { putString(TOKEN_KEY, token) }
         } catch (e: Exception) {
-            logger.logError(TAG, e, "アクセストークンの保存に失敗")
+            logger.error(TAG, e, "アクセストークンの保存に失敗")
         }
     }
 
     fun getAccessToken(): String? {
         val token = prefs.getString(TOKEN_KEY, null)
         if (token == null) {
-            logger.logDebug(
+            logger.debug(
                 TAG,
                 "保存されたアクセストークンがありません",
                 "getAccessToken"
             )
         } else {
-            logger.logInfo(
+            logger.info(
                 TAG,
                 "アクセストークンを取得: ${token.take(10)}...",
                 "getAccessToken"
@@ -63,16 +63,16 @@ class TokenManager @Inject constructor(
     fun clearAccessToken() {
         try {
             prefs.edit { remove(TOKEN_KEY) }
-            logger.logInfo(TAG, "アクセストークンを削除", "clearAccessToken")
+            logger.info(TAG, "アクセストークンを削除", "clearAccessToken")
         } catch (e: Exception) {
-            logger.logError(TAG, e, "アクセストークンの削除に失敗")
+            logger.error(TAG, e, "アクセストークンの削除に失敗")
         }
     }
 
     fun hasValidToken(): Boolean {
         val token = getAccessToken()
         val hasToken = !token.isNullOrEmpty()
-        logger.logDebug(TAG, "有効なトークンがあるか: $hasToken", "hasValidToken")
+        logger.debug(TAG, "有効なトークンがあるか: $hasToken", "hasValidToken")
         return hasToken
     }
 }

@@ -45,7 +45,7 @@ abstract class BaseViewModel(val logger: Logger) : ViewModel() {
                 }
             } catch (e: Exception) {
                 // エラーを設定
-                logger.logError(TAG, e, "ローディング処理中にエラーが発生")
+                logger.error(TAG, e, "ローディング処理中にエラーが発生")
                 updateErrorState(e.message ?: "処理中にエラーが発生しました")
             } finally {
                 // ローディング状態を終了

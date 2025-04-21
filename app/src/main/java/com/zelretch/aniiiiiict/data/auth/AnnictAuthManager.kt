@@ -36,13 +36,13 @@ class AnnictAuthManager @Inject constructor(
 
     suspend fun handleAuthorizationCode(code: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            logger.logInfo(
+            logger.info(
                 TAG,
                 "認証コードの処理を開始: ${code.take(5)}...",
                 "handleAuthorizationCode"
             )
             val tokenResponse = getAccessTokenWithRetry(code)
-            logger.logInfo(
+            logger.info(
                 TAG,
                 "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...",
                 "handleAuthorizationCode"
@@ -50,7 +50,7 @@ class AnnictAuthManager @Inject constructor(
             tokenManager.saveAccessToken(tokenResponse.accessToken)
             Result.success(Unit)
         } catch (e: Exception) {
-            logger.logError(TAG, e, "handleAuthorizationCode")
+            logger.error(TAG, e, "handleAuthorizationCode")
             Result.failure(e)
         }
     }
@@ -74,7 +74,7 @@ class AnnictAuthManager @Inject constructor(
             .add("code", code)
             .build()
 
-        logger.logInfo(TAG, "トークンリクエストを送信", "getAccessToken")
+        logger.info(TAG, "トークンリクエストを送信", "getAccessToken")
 
         val request = Request.Builder()
             .url(AnnictConfig.TOKEN_URL)
@@ -85,18 +85,18 @@ class AnnictAuthManager @Inject constructor(
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string() ?: "レスポンスボディなし"
                 val error = IOException("トークンリクエスト失敗: ${response.code}, $errorBody")
-                logger.logError(TAG, error, "getAccessToken")
+                logger.error(TAG, error, "getAccessToken")
                 throw error
             }
 
             val responseBody = response.body?.string()
             if (responseBody.isNullOrEmpty()) {
                 val error = IOException("空のレスポンスボディ")
-                logger.logError(TAG, error, "getAccessToken")
+                logger.error(TAG, error, "getAccessToken")
                 throw error
             }
 
-            logger.logInfo(
+            logger.info(
                 TAG,
                 "トークンレスポンス受信: ${responseBody.take(50)}...",
                 "getAccessToken"
@@ -105,7 +105,7 @@ class AnnictAuthManager @Inject constructor(
             try {
                 Gson().fromJson(responseBody, TokenResponse::class.java)
             } catch (e: Exception) {
-                logger.logError(TAG, e, "getAccessToken")
+                logger.error(TAG, e, "getAccessToken")
                 throw IOException("Failed to parse token response: ${e.message}")
             }
         }

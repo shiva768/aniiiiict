@@ -41,7 +41,7 @@ class RetryManager @Inject constructor(
                 return block()
             } catch (e: Exception) {
                 lastException = e
-                logger.logError(
+                logger.error(
                     TAG,
                     "リトライ失敗 (${attempt + 1}/$maxAttempts): ${e.message}",
                     "retry"

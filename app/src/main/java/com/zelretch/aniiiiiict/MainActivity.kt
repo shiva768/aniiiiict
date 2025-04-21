@@ -116,24 +116,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        logger.logDebug(
+        logger.debug(
             TAG,
             "Intent received: ${intent.action}, data: ${intent.data}",
             "handleIntent"
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                logger.logDebug(TAG, "Received OAuth callback: $uri", "handleIntent")
+                logger.debug(TAG, "Received OAuth callback: $uri", "handleIntent")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
 
-                    logger.logDebug(
+                    logger.debug(
                         TAG,
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
                     )
-                    logger.logInfo(
+                    logger.info(
                         TAG,
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
@@ -145,7 +145,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                 } else {
-                    logger.logError(
+                    logger.error(
                         TAG,
                         "認証コードがURIに含まれていません: $uri",
                         "handleIntent"

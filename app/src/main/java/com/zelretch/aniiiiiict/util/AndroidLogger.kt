@@ -2,8 +2,7 @@ package com.zelretch.aniiiiiict.util
 
 import android.util.Log
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,23 +15,23 @@ class AndroidLogger @Inject constructor() : Logger {
         return "[$timestamp][$context] $message"
     }
 
-    override fun logError(tag: String, error: Throwable, context: String) {
+    override fun error(tag: String, error: Throwable, context: String) {
         Log.e(tag, formatMessage(error.message ?: "Unknown error", context), error)
     }
 
-    override fun logError(tag: String, errorMessage: String, context: String) {
+    override fun error(tag: String, errorMessage: String, context: String) {
         Log.e(tag, formatMessage(errorMessage, context))
     }
 
-    override fun logWarning(tag: String, message: String, context: String) {
+    override fun warning(tag: String, message: String, context: String) {
         Log.w(tag, formatMessage(message, context))
     }
 
-    override fun logInfo(tag: String, message: String, context: String) {
+    override fun info(tag: String, message: String, context: String) {
         Log.i(tag, formatMessage(message, context))
     }
 
-    override fun logDebug(tag: String, message: String, context: String) {
+    override fun debug(tag: String, message: String, context: String) {
         Log.d(tag, formatMessage(message, context))
     }
 } 

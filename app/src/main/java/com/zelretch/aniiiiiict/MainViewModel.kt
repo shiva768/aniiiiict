@@ -58,7 +58,7 @@ class MainViewModel @Inject constructor(
 
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
-                    logger.logInfo(
+                    logger.info(
                         TAG,
                         "認証されていないため、認証を開始します",
                         "checkAuthState"
@@ -66,7 +66,7 @@ class MainViewModel @Inject constructor(
                     startAuth()
                 }
             } catch (e: Exception) {
-                logger.logError(TAG, e, "認証状態の確認中にエラーが発生")
+                logger.error(TAG, e, "認証状態の確認中にエラーが発生")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証状態の確認に失敗しました",
@@ -84,7 +84,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val authUrl = repository.getAuthUrl()
-                logger.logInfo(TAG, "認証URLを取得: $authUrl", "startAuth")
+                logger.info(TAG, "認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
@@ -94,7 +94,7 @@ class MainViewModel @Inject constructor(
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } catch (e: Exception) {
-                logger.logError(TAG, e, "認証URLの取得に失敗")
+                logger.error(TAG, e, "認証URLの取得に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
@@ -122,7 +122,7 @@ class MainViewModel @Inject constructor(
                         delay(300)
                         _uiState.update { it.copy(isAuthenticating = false) }
                     } else {
-                        logger.logWarning(
+                        logger.warning(
                             TAG,
                             "認証が失敗しました",
                             "handleAuthCallback"
@@ -138,7 +138,7 @@ class MainViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    logger.logWarning(
+                    logger.warning(
                         TAG,
                         "認証コードがnullです",
                         "handleAuthCallback"
@@ -154,7 +154,7 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                logger.logError(TAG, e, "認証処理に失敗")
+                logger.error(TAG, e, "認証処理に失敗")
                 e.printStackTrace()
                 delay(200)
                 _uiState.update {
@@ -170,7 +170,7 @@ class MainViewModel @Inject constructor(
 
     // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
-        logger.logError(TAG, error, "MainViewModel")
+        logger.error(TAG, error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 

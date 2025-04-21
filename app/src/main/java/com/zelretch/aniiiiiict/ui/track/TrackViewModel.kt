@@ -103,7 +103,7 @@ class TrackViewModel @Inject constructor(
 
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
-                    logger.logInfo(
+                    logger.info(
                         TAG,
                         "認証されていないため、認証を開始します",
                         "checkAuthState"
@@ -113,7 +113,7 @@ class TrackViewModel @Inject constructor(
                     loadingPrograms()
                 }
             } catch (e: Exception) {
-                logger.logError(TAG, e, "認証状態の確認中にエラーが発生")
+                logger.error(TAG, e, "認証状態の確認中にエラーが発生")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証状態の確認に失敗しました",
@@ -160,7 +160,7 @@ class TrackViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val authUrl = repository.getAuthUrl()
-                logger.logInfo(TAG, "認証URLを取得: $authUrl", "startAuth")
+                logger.info(TAG, "認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
@@ -170,7 +170,7 @@ class TrackViewModel @Inject constructor(
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(intent)
             } catch (e: Exception) {
-                logger.logError(TAG, e, "認証URLの取得に失敗")
+                logger.error(TAG, e, "認証URLの取得に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
@@ -199,7 +199,7 @@ class TrackViewModel @Inject constructor(
                         _uiState.update { it.copy(isAuthenticating = false) }
                         loadingPrograms()
                     } else {
-                        logger.logWarning(
+                        logger.warning(
                             TAG,
                             "認証が失敗しました",
                             "handleAuthCallback"
@@ -215,7 +215,7 @@ class TrackViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    logger.logWarning(
+                    logger.warning(
                         TAG,
                         "認証コードがnullです",
                         "handleAuthCallback"
@@ -314,7 +314,7 @@ class TrackViewModel @Inject constructor(
 
     // 再読み込み（公開メソッド）
     fun refresh() {
-        logger.logInfo(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
+        logger.info(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
         checkAuthState()
     }
 
@@ -362,7 +362,7 @@ class TrackViewModel @Inject constructor(
 
     // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
-        logger.logError(TAG, error, "TrackViewModel")
+        logger.error(TAG, error, "TrackViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 

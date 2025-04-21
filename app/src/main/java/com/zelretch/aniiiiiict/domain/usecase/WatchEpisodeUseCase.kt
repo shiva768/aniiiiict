@@ -26,7 +26,7 @@ class WatchEpisodeUseCase @Inject constructor(
             if (currentStatus == StatusState.WANNA_WATCH) {
                 val updateSuccess = repository.updateWorkStatus(workId, StatusState.WATCHING)
                 if (!updateSuccess) {
-                    logger.logWarning(
+                    logger.warning(
                         TAG,
                         "ステータスの更新に失敗しました: workId=$workId",
                         "WatchEpisodeUseCase"

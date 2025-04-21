@@ -115,7 +115,7 @@ class HistoryViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                logger.logError(TAG, e, "記録の削除に失敗")
+                logger.error(TAG, e, "記録の削除に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "記録の削除に失敗しました"
