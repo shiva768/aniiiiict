@@ -344,7 +344,7 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean =
+    override suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean =
         executeApiRequest(
             operation = "updateWorkStatus",
             defaultValue = false

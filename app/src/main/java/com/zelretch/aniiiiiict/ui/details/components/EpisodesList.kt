@@ -16,7 +16,6 @@ fun EpisodesList(
     programs: List<Program>,
     onRecordEpisode: (String) -> Unit,
     onMarkUpToAsWatched: (Int) -> Unit,
-    onDeleteEpisode: (Program) -> Unit
 ) {
     AnimatedVisibility(
         visible = true,
@@ -35,7 +34,6 @@ fun EpisodesList(
                     program = program,
                     onRecordEpisode = onRecordEpisode,
                     onMarkUpToAsWatched = { onMarkUpToAsWatched(programs.indexOf(program)) },
-                    onDelete = { onDeleteEpisode(program) }
                 )
             }
         }

@@ -13,5 +13,5 @@ interface AnnictRepository {
     fun getProgramsWithWorks(): Flow<List<ProgramWithWork>>
     suspend fun getRecords(after: String? = null): PaginatedRecords
     suspend fun deleteRecord(recordId: String): Boolean
-    suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean
+    suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean
 } 

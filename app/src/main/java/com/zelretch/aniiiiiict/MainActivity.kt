@@ -104,11 +104,8 @@ class MainActivity : ComponentActivity() {
                             onRecordEpisode = { id, workId, status ->
                                 trackViewModel.recordEpisode(id, workId, status)
                             },
-                            onBulkRecordEpisode = { ids, workId, status ->
-                                trackViewModel.bulkRecordEpisode(ids, workId, status)
-                            },
                             onNavigateToHistory = { navController.navigate("history") },
-                            onRefresh = { trackViewModel.refresh() }
+                            onRefresh = { trackViewModel.refresh() },
                         )
                     }
 

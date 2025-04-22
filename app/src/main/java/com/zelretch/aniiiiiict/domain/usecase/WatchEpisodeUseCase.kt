@@ -2,12 +2,11 @@ package com.zelretch.aniiiiiict.domain.usecase
 
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.type.StatusState
-import com.zelretch.aniiiiiict.util.Logger
 import javax.inject.Inject
 
 class WatchEpisodeUseCase @Inject constructor(
     private val repository: AnnictRepository,
-    private val logger: Logger
+    private val updateViewStateUseCase: UpdateViewStateUseCase,
 ) {
     private val TAG = "WatchEpisodeUseCase"
     suspend operator fun invoke(
@@ -24,14 +23,8 @@ class WatchEpisodeUseCase @Inject constructor(
 
             // WANNA_WATCH状態の作品を視聴した場合はWATCHINGに更新
             if (currentStatus == StatusState.WANNA_WATCH) {
-                val updateSuccess = repository.updateWorkStatus(workId, StatusState.WATCHING)
-                if (!updateSuccess) {
-                    logger.warning(
-                        TAG,
-                        "ステータスの更新に失敗しました: workId=$workId",
-                        "WatchEpisodeUseCase"
-                    )
-                }
+                updateViewStateUseCase(workId, StatusState.WATCHING)
+                repository.updateWorkViewStatus(workId, StatusState.WATCHING)
             }
 
             Result.success(Unit)

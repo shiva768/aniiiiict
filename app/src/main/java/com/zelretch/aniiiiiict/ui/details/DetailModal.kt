@@ -1,49 +1,60 @@
 package com.zelretch.aniiiiiict.ui.details
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.zelretch.aniiiiiict.data.model.Program
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.details.components.ConfirmDialog
 import com.zelretch.aniiiiiict.ui.details.components.UnwatchedEpisodesContent
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailModal(
     programWithWork: ProgramWithWork,
     isLoading: Boolean,
     onDismiss: () -> Unit,
-    onRecordEpisode: (String, String, StatusState) -> Unit,
-    onBulkRecordEpisode: (List<String>, String, StatusState) -> Unit
+    viewModel: DetailModalViewModel = hiltViewModel(),
+    onRefresh: () -> Unit = {},
 ) {
-    val programs =
-        remember { mutableStateListOf<Program>().apply { addAll(programWithWork.programs) } }
-    var showConfirmDialog by remember { mutableStateOf(false) }
-    var selectedEpisodeIndex by remember { mutableStateOf<Int?>(null) }
+    val state by viewModel.state.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
 
-    if (showConfirmDialog && selectedEpisodeIndex != null) {
-        val episodeIndex = selectedEpisodeIndex!!
+    // ViewModelの初期化
+    LaunchedEffect(programWithWork) {
+        viewModel.initialize(programWithWork)
+    }
+
+    // イベントの監視
+    LaunchedEffect(Unit) {
+        viewModel.events.collectLatest { event ->
+            when (event) {
+                is DetailModalEvent.StatusChanged -> onRefresh()
+                is DetailModalEvent.EpisodesRecorded -> onRefresh()
+                is DetailModalEvent.BulkEpisodesRecorded -> onRefresh()
+            }
+        }
+    }
+
+    if (state.showConfirmDialog && state.selectedEpisodeIndex != null) {
+        val episodeIndex = state.selectedEpisodeIndex!!
         ConfirmDialog(
-            episodeNumber = programs[episodeIndex].episode.number ?: 0,
+            episodeNumber = state.programs[episodeIndex].episode.number ?: 0,
             episodeCount = episodeIndex + 1,
             onConfirm = {
-                val targetEpisodes = programs.filterIndexed { index, _ -> index <= episodeIndex }
+                val targetEpisodes = state.programs.filterIndexed { index, _ -> index <= episodeIndex }
                 val episodeIds = targetEpisodes.map { it.episode.id }
-                onBulkRecordEpisode(episodeIds, programWithWork.work.id, programWithWork.work.viewerStatusState)
-                programs.removeAll(targetEpisodes)
-                showConfirmDialog = false
-                selectedEpisodeIndex = null
+                viewModel.bulkRecordEpisodes(episodeIds, programWithWork.work.viewerStatusState)
             },
             onDismiss = {
-                showConfirmDialog = false
-                selectedEpisodeIndex = null
+                viewModel.hideConfirmDialog()
             }
         )
     }
@@ -51,37 +62,89 @@ fun DetailModal(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "未視聴エピソード (${programs.size}件)",
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "未視聴エピソード (${state.programs.size}件)",
+                        style = MaterialTheme.typography.titleMedium
+                    )
 
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "閉じる"
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "閉じる"
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ExposedDropdownMenuBox(
+                        expanded = expanded && !state.isStatusChanging,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        TextField(
+                            value = state.selectedStatus?.toString() ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = !state.isStatusChanging,
+                            trailingIcon = {
+                                if (state.isStatusChanging) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.padding(8.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                }
+                            },
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded && !state.isStatusChanging,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            StatusState.entries.forEach { status ->
+                                DropdownMenuItem(
+                                    text = { Text(status.toString()) },
+                                    onClick = {
+                                        expanded = false
+                                        viewModel.changeStatus(status)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                state.statusChangeError?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
         },
         text = {
             UnwatchedEpisodesContent(
-                programs = programs,
+                programs = state.programs,
                 isLoading = isLoading,
                 onRecordEpisode = { episodeId ->
-                    onRecordEpisode(episodeId, programWithWork.work.id, programWithWork.work.viewerStatusState)
+                    viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
                 },
                 onMarkUpToAsWatched = { index ->
-                    selectedEpisodeIndex = index
-                    showConfirmDialog = true
-                },
-                onDeleteEpisode = { program ->
-                    programs.remove(program)
+                    viewModel.showConfirmDialog(index)
                 }
             )
         },

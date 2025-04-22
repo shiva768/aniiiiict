@@ -19,7 +19,6 @@ fun EpisodeCard(
     program: Program,
     onRecordEpisode: (String) -> Unit,
     onMarkUpToAsWatched: () -> Unit,
-    onDelete: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -62,7 +61,6 @@ fun EpisodeCard(
                 FilledTonalButton(
                     onClick = {
                         onRecordEpisode(program.episode.id)
-                        onDelete()
                     },
                     contentPadding = PaddingValues(),
                     shape = RoundedCornerShape(10.dp),

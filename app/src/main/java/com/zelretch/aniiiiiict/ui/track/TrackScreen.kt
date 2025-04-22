@@ -17,8 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.details.DetailModal
+import com.zelretch.aniiiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiiict.ui.track.components.FilterBar
 import com.zelretch.aniiiiiict.ui.track.components.ProgramCard
 
@@ -28,9 +30,8 @@ fun TrackScreen(
     viewModel: TrackViewModel,
     uiState: TrackUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    onBulkRecordEpisode: (List<String>, String, StatusState) -> Unit,
     onNavigateToHistory: () -> Unit = {},
-    onRefresh: () -> Unit = {}
+    onRefresh: () -> Unit = {},
 ) {
     val pullRefreshState = rememberPullRefreshState(
         refreshing = uiState.isLoading,
@@ -146,13 +147,14 @@ fun TrackScreen(
 
         // 詳細モーダル
         if (uiState.isDetailModalVisible) {
+            val detailModalViewModel = hiltViewModel<DetailModalViewModel>()
             uiState.selectedProgram?.let { program ->
                 DetailModal(
                     programWithWork = program,
                     isLoading = uiState.isLoadingDetail,
                     onDismiss = { viewModel.hideDetail() },
-                    onRecordEpisode = onRecordEpisode,
-                    onBulkRecordEpisode = onBulkRecordEpisode
+                    detailModalViewModel,
+                    onRefresh = onRefresh
                 )
             }
         }

@@ -19,7 +19,6 @@ fun UnwatchedEpisodesContent(
     isLoading: Boolean,
     onRecordEpisode: (String) -> Unit,
     onMarkUpToAsWatched: (Int) -> Unit,
-    onDeleteEpisode: (Program) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -44,7 +43,6 @@ fun UnwatchedEpisodesContent(
                 programs = programs,
                 onRecordEpisode = onRecordEpisode,
                 onMarkUpToAsWatched = onMarkUpToAsWatched,
-                onDeleteEpisode = onDeleteEpisode
             )
         }
     }

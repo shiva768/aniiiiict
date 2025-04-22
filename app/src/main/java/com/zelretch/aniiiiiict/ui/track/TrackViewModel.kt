@@ -179,6 +179,30 @@ class TrackViewModel @Inject constructor(
         }
     }
 
+    fun updateViewState(workId: String, status: StatusState) {
+        viewModelScope.launch {
+            try {
+                runCatching {
+                    updateViewState(workId, status)
+                }.onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            error = null
+                        )
+                    }
+                }.onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            error = e.message ?: "ステータスの更新に失敗しました"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
     fun refresh() {
         logger.info(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
         loadingPrograms()
