@@ -1,8 +1,8 @@
 package com.zelretch.aniiiiiict.ui.history
 
-import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.model.Record
-import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.domain.usecase.LoadRecordsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.SearchRecordsUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HistoryUiState(
@@ -26,7 +25,8 @@ data class HistoryUiState(
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    private val repository: AnnictRepository,
+    private val loadRecordsUseCase: LoadRecordsUseCase,
+    private val searchRecordsUseCase: SearchRecordsUseCase,
     logger: Logger
 ) : BaseViewModel(logger) {
     private val TAG = "HistoryViewModel"
@@ -47,12 +47,12 @@ class HistoryViewModel @Inject constructor(
 
     fun loadRecords() {
         executeWithLoading {
-            val result = repository.getRecords(null)
+            val result = loadRecordsUseCase()
             _uiState.update {
                 val allRecords = result.records
                 it.copy(
                     allRecords = allRecords,
-                    records = filterRecords(allRecords, it.searchQuery),
+                    records = searchRecordsUseCase(allRecords, it.searchQuery),
                     hasNextPage = result.hasNextPage,
                     endCursor = result.endCursor
                 )
@@ -67,12 +67,12 @@ class HistoryViewModel @Inject constructor(
         }
 
         executeWithLoading {
-            val result = repository.getRecords(currentState.endCursor)
+            val result = loadRecordsUseCase(currentState.endCursor)
             _uiState.update {
                 val newAllRecords = it.allRecords + result.records
                 it.copy(
                     allRecords = newAllRecords,
-                    records = filterRecords(newAllRecords, it.searchQuery),
+                    records = searchRecordsUseCase(newAllRecords, it.searchQuery),
                     hasNextPage = result.hasNextPage,
                     endCursor = result.endCursor
                 )
@@ -84,45 +84,12 @@ class HistoryViewModel @Inject constructor(
         _uiState.update { currentState ->
             currentState.copy(
                 searchQuery = query,
-                records = filterRecords(currentState.allRecords, query)
+                records = searchRecordsUseCase(currentState.allRecords, query)
             )
-        }
-
-        _uiState.update {
-            it.copy(
-                hasNextPage = false,
-                endCursor = null
-            )
-        }
-        loadRecords()
-    }
-
-    private fun filterRecords(records: List<Record>, query: String): List<Record> {
-        if (query.isEmpty()) return records
-        return records.filter { record ->
-            record.work.title.contains(query, ignoreCase = true)
         }
     }
 
     fun deleteRecord(recordId: String) {
-        viewModelScope.launch {
-            try {
-                repository.deleteRecord(recordId)
-                _uiState.update { currentState ->
-                    val newAllRecords = currentState.allRecords.filter { it.id != recordId }
-                    currentState.copy(
-                        allRecords = newAllRecords,
-                        records = filterRecords(newAllRecords, currentState.searchQuery)
-                    )
-                }
-            } catch (e: Exception) {
-                logger.error(TAG, e, "記録の削除に失敗")
-                _uiState.update {
-                    it.copy(
-                        error = e.message ?: "記録の削除に失敗しました"
-                    )
-                }
-            }
-        }
+        // TODO: 記録の削除機能を実装
     }
 } 

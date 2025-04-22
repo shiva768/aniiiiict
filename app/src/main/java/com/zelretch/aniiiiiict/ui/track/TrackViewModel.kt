@@ -4,10 +4,11 @@ import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
-import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
+import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.type.SeasonName
 import com.zelretch.aniiiiiict.type.StatusState
@@ -45,22 +46,21 @@ data class TrackUiState(
 
 @HiltViewModel
 class TrackViewModel @Inject constructor(
-    private val repository: AnnictRepository,
+    private val loadProgramsUseCase: LoadProgramsUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
-    private val programFilter: ProgramFilter,
+    private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
+    private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
     private val TAG = "TrackViewModel"
 
-    // UI状態のカプセル化
     private val _uiState = MutableStateFlow(TrackUiState())
     val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            // フィルター状態の復元を待ってから認証状態のチェックを行う
             filterPreferences.filterState.collect { savedFilterState ->
                 if (_uiState.value.allPrograms.isEmpty()) {
                     _uiState.update { currentState ->
@@ -71,10 +71,7 @@ class TrackViewModel @Inject constructor(
                     _uiState.update { currentState ->
                         currentState.copy(
                             filterState = savedFilterState,
-                            programs = programFilter.applyFilters(
-                                currentState.allPrograms,
-                                savedFilterState
-                            )
+                            programs = filterProgramsUseCase(currentState.allPrograms, savedFilterState)
                         )
                     }
                 }
@@ -90,21 +87,12 @@ class TrackViewModel @Inject constructor(
         _uiState.update { it.copy(error = error) }
     }
 
-    // 番組一覧の読み込み（内部メソッド）
     private fun loadingPrograms() {
         executeWithLoading {
-            loadPrograms()
-        }
-    }
-
-    // 番組一覧の読み込み（内部メソッド）
-    private suspend fun loadPrograms() {
-        repository.getProgramsWithWorks()
-            .collect { programs ->
+            loadProgramsUseCase().collect { programs ->
                 _uiState.update { currentState ->
-                    val availableFilters = programFilter.extractAvailableFilters(programs)
-                    val filteredPrograms =
-                        programFilter.applyFilters(programs, currentState.filterState)
+                    val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
+                    val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
 
                     currentState.copy(
                         programs = filteredPrograms,
@@ -116,9 +104,9 @@ class TrackViewModel @Inject constructor(
                     )
                 }
             }
+        }
     }
 
-    // エピソードの記録（公開メソッド）
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         viewModelScope.launch {
             try {
@@ -155,38 +143,35 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    // エピソードの一括記録（公開メソッド）
     fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isRecording = true) }
-                runCatching {
-                    episodeIds.forEach { id ->
-                        watchEpisodeUseCase(id, workId, currentStatus).getOrThrow()
-                    }
-                }.onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            isRecording = false,
-                            recordingSuccess = episodeIds.lastOrNull(),
-                            error = null
-                        )
-                    }
+                bulkRecordEpisodesUseCase(episodeIds, workId, currentStatus)
+                    .onSuccess {
+                        _uiState.update {
+                            it.copy(
+                                isRecording = false,
+                                recordingSuccess = episodeIds.lastOrNull(),
+                                error = null
+                            )
+                        }
 
-                    delay(2000)
-                    if (_uiState.value.recordingSuccess == episodeIds.lastOrNull()) {
-                        _uiState.update { it.copy(recordingSuccess = null) }
-                    }
+                        delay(2000)
+                        if (_uiState.value.recordingSuccess == episodeIds.lastOrNull()) {
+                            _uiState.update { it.copy(recordingSuccess = null) }
+                        }
 
-                    loadingPrograms()
-                }.onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            isRecording = false,
-                            error = e.message ?: "エピソードの記録に失敗しました"
-                        )
+                        loadingPrograms()
                     }
-                }
+                    .onFailure { e ->
+                        _uiState.update {
+                            it.copy(
+                                isRecording = false,
+                                error = e.message ?: "エピソードの記録に失敗しました"
+                            )
+                        }
+                    }
             } catch (e: Exception) {
                 handleError(e)
                 _uiState.update { it.copy(isRecording = false) }
@@ -194,13 +179,11 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    // 再読み込み（公開メソッド）
     fun refresh() {
         logger.info(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
         loadingPrograms()
     }
 
-    // フィルターの更新（公開メソッド）
     fun updateFilter(
         selectedMedia: Set<String> = _uiState.value.filterState.selectedMedia,
         selectedSeason: Set<SeasonName> = _uiState.value.filterState.selectedSeason,
@@ -224,16 +207,14 @@ class TrackViewModel @Inject constructor(
             )
             currentState.copy(
                 filterState = newFilterState,
-                programs = programFilter.applyFilters(currentState.allPrograms, newFilterState)
+                programs = filterProgramsUseCase(currentState.allPrograms, newFilterState)
             )
         }
-        // フィルター状態の保存
         viewModelScope.launch {
             filterPreferences.updateFilterState(_uiState.value.filterState)
         }
     }
 
-    // フィルターの表示/非表示の切り替え（公開メソッド）
     fun toggleFilterVisibility() {
         _uiState.update {
             it.copy(
@@ -242,13 +223,11 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
         logger.error(TAG, error, "TrackViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 
-    // 未視聴エピソードモーダルを表示
     fun showUnwatchedEpisodes(program: ProgramWithWork) {
         _uiState.update {
             it.copy(
@@ -259,7 +238,6 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    // 未視聴エピソードモーダルを非表示
     fun hideDetail() {
         _uiState.update {
             it.copy(

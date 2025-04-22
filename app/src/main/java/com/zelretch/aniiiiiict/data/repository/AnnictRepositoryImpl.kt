@@ -105,7 +105,7 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getProgramsWithWorks(): Flow<List<ProgramWithWork>> {
+    override fun getProgramsWithWorks(): Flow<List<ProgramWithWork>> {
         return flow {
             try {
                 logger.info(

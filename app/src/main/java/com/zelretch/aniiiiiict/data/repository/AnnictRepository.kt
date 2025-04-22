@@ -10,7 +10,7 @@ interface AnnictRepository {
     suspend fun getAuthUrl(): String
     suspend fun handleAuthCallback(code: String): Boolean
     suspend fun createRecord(episodeId: String, workId: String): Boolean
-    suspend fun getProgramsWithWorks(): Flow<List<ProgramWithWork>>
+    fun getProgramsWithWorks(): Flow<List<ProgramWithWork>>
     suspend fun getRecords(after: String? = null): PaginatedRecords
     suspend fun deleteRecord(recordId: String): Boolean
     suspend fun updateWorkStatus(workId: String, state: StatusState): Boolean
