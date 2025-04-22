@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiiict.ui.history
 
 import com.zelretch.aniiiiiict.data.model.Record
+import com.zelretch.aniiiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.SearchRecordsUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
@@ -27,6 +28,7 @@ data class HistoryUiState(
 class HistoryViewModel @Inject constructor(
     private val loadRecordsUseCase: LoadRecordsUseCase,
     private val searchRecordsUseCase: SearchRecordsUseCase,
+    private val deleteRecordUseCase: DeleteRecordUseCase,
     logger: Logger
 ) : BaseViewModel(logger) {
     private val TAG = "HistoryViewModel"
@@ -89,7 +91,25 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
+    // TODO: この部分がドメインと分離できてない
     fun deleteRecord(recordId: String) {
-        // TODO: 記録の削除機能を実装
+        executeWithLoading {
+            deleteRecordUseCase(recordId)
+            _uiState.update { currentState ->
+                val newAllRecords = currentState.allRecords.filter { it.id != recordId }
+                currentState.copy(
+                    allRecords = newAllRecords,
+                    records = filterRecords(newAllRecords, currentState.searchQuery)
+                )
+            }
+        }
+    }
+
+    // TODO: こっちも
+    private fun filterRecords(records: List<Record>, query: String): List<Record> {
+        if (query.isEmpty()) return records
+        return records.filter { record ->
+            record.work.title.contains(query, ignoreCase = true)
+        }
     }
 } 
