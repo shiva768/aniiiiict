@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.ui.unwatched.components
+package com.zelretch.aniiiiiict.ui.details.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

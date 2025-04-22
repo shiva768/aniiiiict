@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.ui.unwatched
+package com.zelretch.aniiiiiict.ui.details
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.type.StatusState
-import com.zelretch.aniiiiiict.ui.unwatched.components.ConfirmDialog
-import com.zelretch.aniiiiiict.ui.unwatched.components.UnwatchedEpisodesContent
+import com.zelretch.aniiiiiict.ui.details.components.ConfirmDialog
+import com.zelretch.aniiiiiict.ui.details.components.UnwatchedEpisodesContent
 
 @Composable
 fun DetailModal(
