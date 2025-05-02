@@ -8,11 +8,11 @@ class WatchEpisodeUseCase @Inject constructor(
     private val repository: AnnictRepository,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
 ) {
-    private val TAG = "WatchEpisodeUseCase"
     suspend operator fun invoke(
         episodeId: String,
         workId: String,
-        currentStatus: StatusState
+        currentStatus: StatusState,
+        firstChild: Boolean = true,
     ): Result<Unit> {
         return try {
             // エピソードの視聴を記録
@@ -22,10 +22,8 @@ class WatchEpisodeUseCase @Inject constructor(
             }
 
             // WANNA_WATCH状態の作品を視聴した場合はWATCHINGに更新
-            if (currentStatus == StatusState.WANNA_WATCH) {
+            if (currentStatus == StatusState.WANNA_WATCH && firstChild)
                 updateViewStateUseCase(workId, StatusState.WATCHING)
-                repository.updateWorkViewStatus(workId, StatusState.WATCHING)
-            }
 
             Result.success(Unit)
         } catch (e: Exception) {

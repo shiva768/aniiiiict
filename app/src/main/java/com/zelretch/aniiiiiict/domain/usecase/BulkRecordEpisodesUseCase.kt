@@ -20,7 +20,7 @@ class BulkRecordEpisodesUseCase @Inject constructor(
 
             chunks.forEachIndexed { index, chunk ->
                 chunk.forEach { id ->
-                    watchEpisodeUseCase(id, workId, currentStatus).getOrThrow()
+                    watchEpisodeUseCase(id, workId, currentStatus, index == 0).getOrThrow()
                     onProgress(index * chunkSize + chunk.indexOf(id) + 1)
                 }
                 // チャンク間で少し待機（APIのレート制限を考慮）
