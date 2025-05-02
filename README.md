@@ -52,9 +52,7 @@ cp local.properties.example local.properties
 
 - `local.properties`を編集し、以下の項目を設定：
     - `sdk.dir`：Android SDKのパス
-    - `ANNICT_CLIENT_ID`：Annictで取得したClient ID
     - `ANNICT_CLIENT_SECRET`：Annictで取得したClient Secret
-  - `ANNICT_ACCESS_TOKEN`：Annictで取得したAccess Token（オプション）
 
 4. ビルドと実行
 

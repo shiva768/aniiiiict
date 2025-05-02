@@ -18,8 +18,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          echo "ANNICT_CLIENT_SECRET=${{ secrets.ANNICT_CLIENT_SECRET }}" >> local.properties
 
       - name: Build with Gradle
         run: ./gradlew assembleDebug

@@ -32,20 +32,17 @@ android {
             useSupportLibrary = true
         }
 
+        // CLIENT_IDは直接埋め込み
         buildConfigField(
             "String",
             "ANNICT_CLIENT_ID",
-            "\"${localProperties.getProperty("ANNICT_CLIENT_ID", "")}\""
+            "\"9TBFInCwtgcRuVcK-F892iXt8vQmSci6rbAYg3eNHgk\""
         )
+        // CLIENT_SECRETはlocal.propertiesから読み込み
         buildConfigField(
             "String",
             "ANNICT_CLIENT_SECRET",
             "\"${localProperties.getProperty("ANNICT_CLIENT_SECRET", "")}\""
-        )
-        buildConfigField(
-            "String",
-            "ANNICT_ACCESS_TOKEN",
-            "\"${localProperties.getProperty("ANNICT_ACCESS_TOKEN", "")}\""
         )
 
         // DEBUGフラグを手動で設定

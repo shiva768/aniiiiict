@@ -7,7 +7,6 @@ import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.cache.normalized.FetchPolicy
 import com.apollographql.apollo3.cache.normalized.fetchPolicy
 import com.apollographql.apollo3.network.okHttpClient
-import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.CancellationException
@@ -39,7 +38,7 @@ class ApolloClient @Inject constructor(
                 val request = chain.request().newBuilder()
                     .addHeader(
                         "Authorization",
-                        "Bearer ${token ?: BuildConfig.ANNICT_ACCESS_TOKEN}"
+                        "Bearer ${token!!}"
                     )
                     .build()
                 chain.proceed(request)
