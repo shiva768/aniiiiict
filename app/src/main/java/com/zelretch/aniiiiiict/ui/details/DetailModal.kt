@@ -59,6 +59,29 @@ fun DetailModal(
         )
     }
 
+    if (state.isBulkRecording) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("エピソードを記録中...") },
+            text = {
+                Column {
+                    Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
+                    LinearProgressIndicator(
+                        progress = if (state.bulkRecordingTotal > 0) {
+                            state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat()
+                        } else {
+                            0f
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                    )
+                }
+            },
+            confirmButton = { }
+        )
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {

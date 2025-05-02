@@ -20,7 +20,10 @@ data class DetailModalState(
     val selectedStatus: StatusState? = null,
     val isStatusChanging: Boolean = false,
     val statusChangeError: String? = null,
-    val workId: String = ""
+    val workId: String = "",
+    val isBulkRecording: Boolean = false,
+    val bulkRecordingProgress: Int = 0,
+    val bulkRecordingTotal: Int = 0
 )
 
 sealed interface DetailModalEvent {
@@ -97,7 +100,23 @@ class DetailModalViewModel @Inject constructor(
         val workId = _state.value.workId
         viewModelScope.launch {
             try {
-                bulkRecordEpisodesUseCase(episodeIds, workId, status)
+                _state.update {
+                    it.copy(
+                        isBulkRecording = true,
+                        bulkRecordingProgress = 0,
+                        bulkRecordingTotal = episodeIds.size
+                    )
+                }
+
+                bulkRecordEpisodesUseCase(
+                    episodeIds = episodeIds,
+                    workId = workId,
+                    currentStatus = status,
+                    onProgress = { progress ->
+                        _state.update { it.copy(bulkRecordingProgress = progress) }
+                    }
+                )
+                
                 val currentPrograms = _state.value.programs
                 val targetEpisodes = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
@@ -106,11 +125,15 @@ class DetailModalViewModel @Inject constructor(
                     it.copy(
                         programs = currentPrograms - targetEpisodes.toSet(),
                         showConfirmDialog = false,
-                        selectedEpisodeIndex = null
+                        selectedEpisodeIndex = null,
+                        isBulkRecording = false,
+                        bulkRecordingProgress = 0,
+                        bulkRecordingTotal = 0
                     )
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
             } catch (e: Exception) {
+                _state.update { it.copy(isBulkRecording = false, bulkRecordingProgress = 0, bulkRecordingTotal = 0) }
                 // エラーハンドリング
             }
         }
