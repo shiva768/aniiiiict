@@ -67,14 +67,16 @@ fun DetailModal(
                 Column {
                     Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
                     LinearProgressIndicator(
-                        progress = if (state.bulkRecordingTotal > 0) {
-                            state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat()
-                        } else {
-                            0f
+                        progress = {
+                            if (state.bulkRecordingTotal > 0) {
+                                state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat()
+                            } else {
+                                0f
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp)
+                            .padding(top = 8.dp),
                     )
                 }
             },
