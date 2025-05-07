@@ -89,6 +89,12 @@ class DetailModalViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 watchEpisodeUseCase(episodeId, workId, status)
+                // 記録したエピソードのプログラムを表示から消す
+                _state.update {
+                    it.copy(
+                        programs = _state.value.programs.filter { it.episode.id != episodeId }
+                    )
+                }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
             } catch (e: Exception) {
                 // エラーハンドリング
@@ -118,12 +124,12 @@ class DetailModalViewModel @Inject constructor(
                 )
                 
                 val currentPrograms = _state.value.programs
-                val targetEpisodes = currentPrograms.filterIndexed { index, _ ->
+                val targetPrograms = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
                 }
                 _state.update {
                     it.copy(
-                        programs = currentPrograms - targetEpisodes.toSet(),
+                        programs = currentPrograms - targetPrograms.toSet(),
                         showConfirmDialog = false,
                         selectedEpisodeIndex = null,
                         isBulkRecording = false,
