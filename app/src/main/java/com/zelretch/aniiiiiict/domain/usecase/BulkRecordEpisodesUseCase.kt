@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.zelretch.aniiiiiict.type.StatusState
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 class BulkRecordEpisodesUseCase @Inject constructor(
@@ -14,19 +13,21 @@ class BulkRecordEpisodesUseCase @Inject constructor(
         onProgress: (Int) -> Unit = {}
     ): Result<Unit> {
         return try {
-            // チャンクサイズを5に設定（APIのレート制限を考慮）
-            val chunkSize = 5
-            val chunks = episodeIds.chunked(chunkSize)
-
-            chunks.forEachIndexed { index, chunk ->
-                chunk.forEach { id ->
-                    watchEpisodeUseCase(id, workId, currentStatus, index == 0).getOrThrow()
-                    onProgress(index * chunkSize + chunk.indexOf(id) + 1)
-                }
-                // チャンク間で少し待機（APIのレート制限を考慮）
-                delay(100)
+            if (episodeIds.isEmpty()) {
+                return Result.success(Unit)
             }
-            
+
+            // 最初のエピソードで状態を更新
+            val firstEpisodeId = episodeIds.first()
+            watchEpisodeUseCase(firstEpisodeId, workId, currentStatus, true).getOrThrow()
+            onProgress(1)
+
+            // 残りのエピソードは視聴記録のみ
+            episodeIds.drop(1).forEachIndexed { index, id ->
+                watchEpisodeUseCase(id, workId, currentStatus, false).getOrThrow()
+                onProgress(index + 2)
+            }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

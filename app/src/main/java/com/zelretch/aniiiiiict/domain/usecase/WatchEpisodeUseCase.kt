@@ -12,7 +12,7 @@ class WatchEpisodeUseCase @Inject constructor(
         episodeId: String,
         workId: String,
         currentStatus: StatusState,
-        firstChild: Boolean = true,
+        shouldUpdateStatus: Boolean = true,
     ): Result<Unit> {
         return try {
             // エピソードの視聴を記録
@@ -21,9 +21,10 @@ class WatchEpisodeUseCase @Inject constructor(
                 return Result.failure(Exception("エピソードの記録に失敗しました"))
             }
 
-            // WANNA_WATCH状態の作品を視聴した場合はWATCHINGに更新
-            if (currentStatus == StatusState.WANNA_WATCH && firstChild)
+            // ステータス更新が必要な場合のみ更新
+            if (shouldUpdateStatus && currentStatus == StatusState.WANNA_WATCH) {
                 updateViewStateUseCase(workId, StatusState.WATCHING)
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
