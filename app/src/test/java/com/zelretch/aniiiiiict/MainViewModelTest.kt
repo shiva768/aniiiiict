@@ -126,5 +126,12 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.uiState.value.error shouldBe null
             }
         }
+
+        `when`("ローディング状態") {
+            then("updateLoadingStateを呼ぶ") {
+                viewModel.updateLoadingState(true)
+                viewModel.uiState.value.isLoading shouldBe true
+            }
+        }
     }
 })

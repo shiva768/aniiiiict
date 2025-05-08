@@ -111,6 +111,7 @@ dependencies {
 
     // Coroutines
     implementation(libs.coroutines.android)
+    testImplementation(libs.coroutines.test)
 
     // Coil
     implementation(libs.coil)
@@ -133,6 +134,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.junit)
+    testImplementation(libs.turbine)
 }
 
 apollo {

@@ -17,6 +17,7 @@ import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,9 +60,17 @@ class TrackViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(TrackUiState())
     val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
+    /**
+     * テスト用: コルーチンスコープ差し替え用
+     */
+    @set:JvmName("setExternalScopeForTest")
+    var externalScope: CoroutineScope? = null
+
     init {
-        viewModelScope.launch {
+        println("[TrackViewModel] init: start collecting filterPreferences.filterState")
+        (externalScope ?: viewModelScope).launch {
             filterPreferences.filterState.collect { savedFilterState ->
+                println("[TrackViewModel] collect: $savedFilterState")
                 if (_uiState.value.allPrograms.isEmpty()) {
                     _uiState.update { currentState ->
                         currentState.copy(filterState = savedFilterState)
@@ -89,26 +98,30 @@ class TrackViewModel @Inject constructor(
 
     private fun loadingPrograms() {
         executeWithLoading {
-            loadProgramsUseCase().collect { programs ->
-                _uiState.update { currentState ->
-                    val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
-                    val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
-
-                    currentState.copy(
-                        programs = filteredPrograms,
-                        availableMedia = availableFilters.media,
-                        availableSeasons = availableFilters.seasons,
-                        availableYears = availableFilters.years,
-                        availableChannels = availableFilters.channels,
-                        allPrograms = programs
-                    )
+            try {
+                loadProgramsUseCase().collect { programs ->
+                    _uiState.update { currentState ->
+                        val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
+                        val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
+                        currentState.copy(
+                            programs = filteredPrograms,
+                            availableMedia = availableFilters.media,
+                            availableSeasons = availableFilters.seasons,
+                            availableYears = availableFilters.years,
+                            availableChannels = availableFilters.channels,
+                            allPrograms = programs,
+                            error = null
+                        )
+                    }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
 
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
-        viewModelScope.launch {
+        (externalScope ?: viewModelScope).launch {
             try {
                 _uiState.update { it.copy(isRecording = true) }
                 runCatching {
@@ -144,7 +157,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {
-        viewModelScope.launch {
+        (externalScope ?: viewModelScope).launch {
             try {
                 _uiState.update { it.copy(isRecording = true) }
                 bulkRecordEpisodesUseCase(episodeIds, workId, currentStatus)
@@ -180,7 +193,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun updateViewState(workId: String, status: StatusState) {
-        viewModelScope.launch {
+        (externalScope ?: viewModelScope).launch {
             try {
                 runCatching {
                     updateViewState(workId, status)
@@ -234,7 +247,7 @@ class TrackViewModel @Inject constructor(
                 programs = filterProgramsUseCase(currentState.allPrograms, newFilterState)
             )
         }
-        viewModelScope.launch {
+        (externalScope ?: viewModelScope).launch {
             filterPreferences.updateFilterState(_uiState.value.filterState)
         }
     }

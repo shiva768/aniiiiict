@@ -50,6 +50,7 @@ arch-testing = "2.2.0"
 robolectric = "4.10.3"
 androidx-test-core = "1.5.0"
 androidx-test-junit = "1.1.5"
+turbine = "1.0.0"
 
 [libraries]
 # Android Core
@@ -110,6 +111,7 @@ androidx-arch-testing = { group = "androidx.arch.core", name = "core-testing", v
 androidx-test-ext = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
 # Robolectric
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
@@ -140,4 +142,4 @@ retrofit = ["retrofit", "retrofit-gson", "gson"]
 okhttp = ["okhttp", "okhttp-logging"]
 apollo = ["apollo-runtime", "apollo-normalized-cache", "apollo-adapters"]
 testing = ["junit", "mockito-core", "mockito-kotlin", "androidx-arch-testing", "coroutines-test", "kotest-runner", "kotest-assertions", "kotest-framework", "mockk"]
-android-testing = ["androidx-test-ext", "espresso-core", "compose-ui-test", "mockito-android"] 
+android-testing = ["androidx-test-ext", "espresso-core", "compose-ui-test", "mockito-android"]
