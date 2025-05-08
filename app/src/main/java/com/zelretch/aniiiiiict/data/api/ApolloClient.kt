@@ -1,12 +1,12 @@
 package com.zelretch.aniiiiiict.data.api
 
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Mutation
-import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.cache.normalized.FetchPolicy
-import com.apollographql.apollo3.cache.normalized.fetchPolicy
-import com.apollographql.apollo3.network.okHttpClient
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Mutation
+import com.apollographql.apollo.api.Query
+import com.apollographql.apollo.cache.normalized.FetchPolicy
+import com.apollographql.apollo.cache.normalized.fetchPolicy
+import com.apollographql.apollo.network.okHttpClient
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.CancellationException

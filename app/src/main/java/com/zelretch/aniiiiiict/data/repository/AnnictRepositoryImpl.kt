@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiiict.data.repository
 
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.zelretch.aniiiiiict.*
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
