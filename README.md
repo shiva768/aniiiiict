@@ -63,16 +63,18 @@ cp local.properties.example local.properties
 ## 技術スタック
 
 - [Kotlin](https://kotlinlang.org/) 2.0.0 - プログラミング言語
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) 2025.04.00 - 最新のUIフレームワーク
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) 2025.05.00 - 最新のUIフレームワーク
 - [Material3](https://m3.material.io/) 1.3.2 - マテリアルデザインコンポーネント
 - [Hilt](https://dagger.dev/hilt/) 2.56 - 依存性注入
-- [Apollo GraphQL](https://www.apollographql.com/docs/kotlin/) 3.8.5 - GraphQLクライアント
+- [Apollo GraphQL](https://www.apollographql.com/docs/kotlin/) 4.2.0 - GraphQLクライアント
 - [Retrofit](https://square.github.io/retrofit/) 2.11.0 - HTTPクライアント
 - [OkHttp](https://square.github.io/okhttp/) 4.12.0 - HTTPクライアント
-- [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) 1.1.4 - データ永続化
-- [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) 1.8.0 - 非同期処理
+- [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) 1.1.6 - データ永続化
+- [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) 1.9.0 - 非同期処理
 - [Coil](https://coil-kt.github.io/coil/) 2.5.0 - 画像読み込み
-- [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.8.9 - 画面遷移
+- [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.9.0 - 画面遷移
+- [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.1.20 - Compose用Kotlinプラグイン
+- [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.1.20-1.0.32 - Kotlin Symbol Processing
 
 ## アーキテクチャ
 
@@ -88,9 +90,15 @@ cp local.properties.example local.properties
 
 - JUnit 4.13.2 - ユニットテスト
 - Mockito 5.10.0 - モックライブラリ
+- MockK 1.13.10 - モックライブラリ（Kotlin向け）
+- Kotest 5.8.1 - テストフレームワーク
 - Robolectric 4.10.3 - Androidテスト
 - Espresso 3.6.1 - UIテスト
 - Compose UIテスト - コンポーザブルテスト
+
+## 依存関係バージョン管理
+
+- 依存関係のバージョンは`gradle/libs.versions.toml`で一元管理しています。
 
 ## ライセンス
 
