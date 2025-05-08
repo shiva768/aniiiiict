@@ -1,8 +1,11 @@
 package com.zelretch.aniiiiiict.ui.track
 
+import android.content.Context
 import app.cash.turbine.test
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.domain.filter.AvailableFilters
+import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
@@ -23,7 +26,7 @@ import kotlinx.coroutines.test.*
 @OptIn(ExperimentalCoroutinesApi::class)
 class TrackViewModelTest : BehaviorSpec({
     val dispatcher = UnconfinedTestDispatcher()
-    val filterStateFlow = MutableStateFlow(com.zelretch.aniiiiiict.domain.filter.FilterState())
+    val filterStateFlow = MutableStateFlow(FilterState())
     val filterPreferences = mockk<FilterPreferences> {
         every { filterState } returns filterStateFlow
     }
@@ -32,7 +35,7 @@ class TrackViewModelTest : BehaviorSpec({
     val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>()
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
     val logger = mockk<Logger>(relaxed = true)
-    val context = mockk<android.content.Context>(relaxed = true)
+    val context = mockk<Context>(relaxed = true)
     lateinit var viewModel: TrackViewModel
     lateinit var testScope: TestScope
 
@@ -42,7 +45,7 @@ class TrackViewModelTest : BehaviorSpec({
         // デフォルトで空リストを返すflow
         coEvery { loadProgramsUseCase.invoke() } returns flowOf(emptyList())
         every { filterProgramsUseCase.invoke(any(), any()) } answers { firstArg() }
-        every { filterProgramsUseCase.extractAvailableFilters(any()) } returns com.zelretch.aniiiiiict.domain.filter.AvailableFilters(
+        every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
             emptyList(),
             emptyList(),
             emptyList(),
@@ -72,7 +75,7 @@ class TrackViewModelTest : BehaviorSpec({
                     val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
                     coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
                     every { filterProgramsUseCase.invoke(any(), any()) } returns fakePrograms
-                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns com.zelretch.aniiiiiict.domain.filter.AvailableFilters(
+                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
                         emptyList(),
                         emptyList(),
                         emptyList(),
