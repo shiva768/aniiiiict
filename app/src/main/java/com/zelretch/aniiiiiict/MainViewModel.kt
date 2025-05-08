@@ -1,13 +1,12 @@
 package com.zelretch.aniiiiiict
 
 import android.content.Context
-import android.content.Intent
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
+import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -30,6 +29,7 @@ data class MainUiState(
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: AnnictRepository,
+    private val customTabsIntentFactory: CustomTabsIntentFactory,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
@@ -97,13 +97,7 @@ class MainViewModel @Inject constructor(
                 if (!isActive) return@launch
 
                 // Custom Tabsを使用して認証ページを開く
-                val customTabsIntent = CustomTabsIntent.Builder()
-                    .setShowTitle(true)
-                    .setUrlBarHidingEnabled(false)
-                    .build()
-
-                // ApplicationContextから起動する場合はFLAG_ACTIVITY_NEW_TASKフラグが必要
-                customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: Exception) {
                 logger.error(TAG, e, "認証URLの取得に失敗")
@@ -145,7 +139,8 @@ class MainViewModel @Inject constructor(
                             it.copy(
                                 error = "認証に失敗しました。再度お試しください。",
                                 isLoading = false,
-                                isAuthenticating = false
+                                isAuthenticating = false,
+                                isAuthenticated = false
                             )
                         }
                     }

@@ -8,6 +8,8 @@ import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
+import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiiict.ui.base.DefaultCustomTabsIntentFactory
 import com.zelretch.aniiiiiict.util.AndroidLogger
 import com.zelretch.aniiiiiict.util.Logger
 import com.zelretch.aniiiiiict.util.RetryManager
@@ -91,4 +93,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideLogger(): Logger = AndroidLogger()
+
+    @Provides
+    @Singleton
+    fun customTabIntentFactory(): CustomTabsIntentFactory = DefaultCustomTabsIntentFactory()
+
 }

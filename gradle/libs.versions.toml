@@ -7,6 +7,8 @@ kotlin-compose = "2.1.20"
 ksp = "2.1.20-1.0.32"
 hilt = "2.56"
 apollo = "3.8.5"
+kotest = "5.8.0"
+mockk = "1.13.9"
 
 # Core
 core-ktx = "1.16.0"
@@ -116,6 +118,12 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test-core" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
 
+# Kotest
+kotest-runner = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+kotest-framework = { group = "io.kotest", name = "kotest-framework-datatest", version.ref = "kotest" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -131,5 +139,5 @@ compose-debug = ["compose-ui-tooling", "compose-ui-test-manifest"]
 retrofit = ["retrofit", "retrofit-gson", "gson"]
 okhttp = ["okhttp", "okhttp-logging"]
 apollo = ["apollo-runtime", "apollo-normalized-cache", "apollo-adapters"]
-testing = ["junit", "mockito-core", "mockito-kotlin", "androidx-arch-testing", "coroutines-test"]
+testing = ["junit", "mockito-core", "mockito-kotlin", "androidx-arch-testing", "coroutines-test", "kotest-runner", "kotest-assertions", "kotest-framework", "mockk"]
 android-testing = ["androidx-test-ext", "espresso-core", "compose-ui-test", "mockito-android"] 
