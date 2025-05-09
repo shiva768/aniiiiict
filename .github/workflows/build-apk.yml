@@ -31,7 +31,7 @@ jobs:
 
       - name: Decode debug keystore
         run: |
-          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > app/debug.keystore
 
       - name: Build APK
         run: |
