@@ -29,11 +29,20 @@ jobs:
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           echo "ANNICT_CLIENT_SECRET=${{ secrets.ANNICT_CLIENT_SECRET }}" >> local.properties
 
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug
+      - name: Decode debug keystore
+        run: |
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+
+      - name: Build APK
+        run: |
+          ./gradlew assembleDebug \
+          -Pandroid.injected.signing.store.file=debug.keystore \
+          -Pandroid.injected.signing.store.password=${{ secrets.DEBUG_STORE_PASSWORD }} \
+          -Pandroid.injected.signing.key.alias=${{ secrets.DEBUG_KEY_ALIAS }} \
+          -Pandroid.injected.signing.key.password=${{ secrets.DEBUG_KEY_PASSWORD }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk 
+          path: app/build/outputs/apk/debug/app-debug.apk
