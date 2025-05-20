@@ -50,11 +50,14 @@ android {
     }
 
     signingConfigs {
-        getByName("debug").apply {
-            storeFile = file("${rootDir}/app/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        // GHAビルド時のみデバッグ署名設定を適用
+        if (System.getenv("CI") != null) {
+            getByName("debug").apply {
+                storeFile = file("${rootDir}/app/debug.keystore")
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
         }
     }
     buildTypes {

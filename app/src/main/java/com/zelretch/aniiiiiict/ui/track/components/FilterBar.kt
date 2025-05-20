@@ -76,6 +76,30 @@ fun FilterBar(
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("作品名やチャンネル名で検索") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "検索") },
+                trailingIcon = {
+                    if (filterState.searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                onFilterChange(
+                                    filterState.selectedMedia,
+                                    filterState.selectedSeason,
+                                    filterState.selectedYear,
+                                    filterState.selectedChannel,
+                                    filterState.selectedStatus,
+                                    "",
+                                    filterState.showOnlyAired,
+                                    filterState.sortOrder
+                                )
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "クリア",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
                 singleLine = true
             )
 
