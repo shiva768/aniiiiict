@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -188,7 +189,12 @@ class AnnictRepositoryImpl @Inject constructor(
         val programs = responsePrograms?.mapNotNull { node ->
             if (node == null) return@mapNotNull null
             val startedAt = try {
-                LocalDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
+                // Parse the UTC datetime string to ZonedDateTime
+                val utcDateTime = ZonedDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
+                // Convert to JST timezone
+                val jstDateTime = utcDateTime.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
+                // Convert to LocalDateTime
+                jstDateTime.toLocalDateTime()
             } catch (_: Exception) {
                 LocalDateTime.now() // パースに失敗した場合は現在時刻を使用
             }
