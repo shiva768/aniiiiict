@@ -3,6 +3,7 @@ package com.zelretch.aniiiiiict.ui.track
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
@@ -108,8 +109,10 @@ fun TrackScreen(
                 }
 
                 // プログラム一覧
+                val listState = rememberLazyListState()
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    state = listState
                 ) {
                     items(
                         items = uiState.programs,

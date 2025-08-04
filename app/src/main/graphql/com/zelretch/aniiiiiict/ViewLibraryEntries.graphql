@@ -1,0 +1,31 @@
+query ViewLibraryEntries{
+  viewer{
+    libraryEntries(states: [WATCHING, WANNA_WATCH]){
+      nodes{
+        work{
+          id
+          title
+          seasonName
+          seasonYear
+          media
+          viewerStatusState
+          image {
+            recommendedImageUrl
+            facebookOgImageUrl
+          }
+          noEpisodes
+          episodesCount
+          episodes(orderBy: {field: SORT_NUMBER, direction: ASC}){
+            nodes{
+              sortNumber
+              number
+              numberText
+              title
+              viewerDidTrack
+            }
+          }
+        }
+      }
+    }
+  }
+}
