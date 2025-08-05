@@ -1,9 +1,9 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.type.StatusState
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime

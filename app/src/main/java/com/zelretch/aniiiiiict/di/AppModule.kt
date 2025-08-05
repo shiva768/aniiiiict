@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiiict.di
 
 import android.content.Context
-import com.apollographql.apollo.ApolloClient
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
@@ -67,29 +66,17 @@ object AppModule {
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient,
         logger: Logger
-    ): ApolloClient {
+    ): AnnictApolloClient {
         return AnnictApolloClient(tokenManager, okHttpClient, logger)
     }
 
-    @Provides
-    @Singleton
-    @Named("AniListApolloClient")
-    fun provideAniListApolloClient(
-        okHttpClient: OkHttpClient,
-        logger: Logger
-    ): ApolloClient {
-        return ApolloClient.Builder()
-            .serverUrl(BuildConfig.ANILIST_API_URL)
-            .okHttpClient(okHttpClient)
-            .build()
-    }
 
     @Provides
     @Singleton
     fun provideAnnictRepository(
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        @Named("AnnictApolloClient") apolloClient: ApolloClient,
+        @Named("AnnictApolloClient") apolloClient: AnnictApolloClient,
         logger: Logger
     ): AnnictRepository {
         return AnnictRepositoryImpl(

@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.domain.filter
 
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe

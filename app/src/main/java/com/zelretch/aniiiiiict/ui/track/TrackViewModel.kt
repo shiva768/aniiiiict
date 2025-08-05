@@ -54,8 +54,6 @@ class TrackViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
-    private val aniListRepository: com.zelretch.aniiiiiict.data.repository.AniListRepository,
-    private val judgeFinaleUseCase: com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
