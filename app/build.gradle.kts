@@ -76,9 +76,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -159,5 +156,23 @@ apollo {
         schemaFile.set(file("src/main/graphql/schema.json.graphqls"))
         generateKotlinModels.set(true)
         generateFragmentImplementations.set(true)
+    }
+}
+
+tasks.register<Exec>("downloadAnilistSchema") {
+    group = "apollo"
+    description = "Downloads the anilist GraphQL schema"
+    commandLine(
+        "./gradlew",
+        ":app:downloadApolloSchema",
+        "--endpoint=https://graphql.anilist.co",
+        "--schema=app/src/main/graphql/anilist/schema.graphqls",
+        "--service=anilist"
+    )
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
