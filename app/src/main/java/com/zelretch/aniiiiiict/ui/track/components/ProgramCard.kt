@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
 

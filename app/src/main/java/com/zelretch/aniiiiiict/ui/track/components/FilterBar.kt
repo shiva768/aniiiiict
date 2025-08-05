@@ -9,10 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
 import kotlin.reflect.KFunction8
 
 @OptIn(ExperimentalLayoutApi::class)

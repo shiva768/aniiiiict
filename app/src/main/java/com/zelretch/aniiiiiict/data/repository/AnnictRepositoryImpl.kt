@@ -1,12 +1,12 @@
 package com.zelretch.aniiiiiict.data.repository
 
+import com.annict.*
+import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
-import com.zelretch.aniiiiiict.*
 import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.*
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow

@@ -2,6 +2,8 @@ package com.zelretch.aniiiiiict.ui.track
 
 import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
@@ -10,8 +12,6 @@ import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger

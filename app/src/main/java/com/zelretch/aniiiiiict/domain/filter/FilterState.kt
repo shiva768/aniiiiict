@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.domain.filter
 
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 
 data class FilterState(
     val selectedMedia: Set<String> = emptySet(),

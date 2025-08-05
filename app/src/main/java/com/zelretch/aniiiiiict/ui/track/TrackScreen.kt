@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.zelretch.aniiiiiict.type.StatusState
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.ui.details.DetailModal
 import com.zelretch.aniiiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiiict.ui.track.components.FilterBar

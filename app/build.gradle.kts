@@ -157,14 +157,17 @@ dependencies {
 
 apollo {
     service("annict") {
-        packageName.set("com.zelretch.aniiiiiict")
-        schemaFile.set(file("src/main/graphql/schema.json.graphqls"))
+        packageName.set("com.annict")
+        srcDir("src/main/graphql/com.annict")
+        schemaFile.set(file("src/main/graphql/com.annict/schema.json.graphqls"))
         generateKotlinModels.set(true)
         generateFragmentImplementations.set(true)
     }
+
     service("anilist") {
-        packageName.set("com.zelretch.aniiiiiict.anilist")
-        schemaFile.set(file("src/main/graphql/anilist/schema.graphqls"))
+        packageName.set("co.anilist")
+        srcDir("src/main/graphql/co.anilist")
+        schemaFile.set(file("src/main/graphql/co.anilist/schema.graphqls"))
         generateKotlinModels.set(true)
         generateFragmentImplementations.set(true)
         // スキーマのダウンロード元（インスペクション設定）
@@ -174,12 +177,6 @@ apollo {
             // headers.put("Authorization", "Bearer xxx")
         }
     }
-}
-
-// 好みでエイリアスを定義（人間が叩きやすくするだけ）
-tasks.register("downloadAnilistSchema") {
-    group = "apollo"
-    dependsOn("downloadApolloSchema")
 }
 
 kotlin {

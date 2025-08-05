@@ -1,9 +1,9 @@
 package com.zelretch.aniiiiiict.data.repository
 
+import co.anilist.GetMediaQuery
+import co.anilist.type.MediaType
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Input
-import com.zelretch.aniiiiiict.anilist.GetMediaQuery
-import com.zelretch.aniiiiiict.anilist.type.MediaType
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
 import com.zelretch.aniiiiiict.util.Logger
@@ -25,13 +25,13 @@ class AniListRepositoryImpl @Inject constructor(
                 .execute()
 
             if (response.hasErrors()) {
-                logger.error(TAG, "AniList GraphQLエラー: ${response.errors}", "AniListRepositoryImpl.getMedia")
+                logger.info(TAG, "AniList GraphQLエラー: ${response.errors}", "AniListRepositoryImpl.getMedia")
                 return Result.failure(RuntimeException(response.errors?.firstOrNull()?.message ?: "Unknown AniList GraphQL error"))
             }
 
-            val media = response.data?.media
+            val media = response.data?.page?.media?.firstOrNull()
             if (media == null) {
-                logger.warn(TAG, "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMedia")
+                logger.info(TAG, "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMedia")
                 return Result.failure(RuntimeException("AniList Media data is null"))
             }
 

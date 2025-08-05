@@ -2,12 +2,12 @@ package com.zelretch.aniiiiiict.ui.details
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.type.StatusState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
