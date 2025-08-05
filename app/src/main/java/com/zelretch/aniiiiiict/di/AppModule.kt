@@ -1,12 +1,14 @@
 package com.zelretch.aniiiiiict.di
 
 import android.content.Context
+import com.apollographql.apollo.ApolloClient
 import com.zelretch.aniiiiiict.BuildConfig
-import com.zelretch.aniiiiiict.data.api.ApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
+import com.zelretch.aniiiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiiict.data.repository.AniListRepositoryImpl
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiiict.ui.base.DefaultCustomTabsIntentFactory
@@ -19,9 +21,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
-import com.zelretch.aniiiiiict.data.api.ApolloClient as AniiiiiictApolloClient
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -44,11 +47,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(okhttp3.logging.HttpLoggingInterceptor().apply {
+        .addInterceptor(HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
-                okhttp3.logging.HttpLoggingInterceptor.Level.BODY
+                HttpLoggingInterceptor.Level.BODY
             } else {
-                okhttp3.logging.HttpLoggingInterceptor.Level.NONE
+                HttpLoggingInterceptor.Level.NONE
             }
         })
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -58,12 +61,26 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideApolloClient(
+    @Named("AnnictApolloClient")
+    fun provideAnnictApolloClient(
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient,
         logger: Logger
-    ): AniiiiiictApolloClient {
-        return AniiiiiictApolloClient(tokenManager, okHttpClient, logger)
+    ): ApolloClient {
+        return com.zelretch.aniiiiiict.data.api.ApolloClient(tokenManager, okHttpClient, logger)
+    }
+
+    @Provides
+    @Singleton
+    @Named("AniListApolloClient")
+    fun provideAniListApolloClient(
+        okHttpClient: OkHttpClient,
+        logger: Logger
+    ): ApolloClient {
+        return ApolloClient.Builder()
+            .serverUrl(BuildConfig.ANILIST_API_URL)
+            .okHttpClient(okHttpClient)
+            .build()
     }
 
     @Provides
@@ -71,12 +88,24 @@ object AppModule {
     fun provideAnnictRepository(
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        apolloClient: ApolloClient,
+        @Named("AnnictApolloClient") apolloClient: ApolloClient,
         logger: Logger
     ): AnnictRepository {
         return AnnictRepositoryImpl(
             tokenManager = tokenManager,
             authManager = authManager,
+            apolloClient = apolloClient,
+            logger = logger
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideAniListRepository(
+        @Named("AniListApolloClient") apolloClient: ApolloClient,
+        logger: Logger
+    ): AniListRepository {
+        return AniListRepositoryImpl(
             apolloClient = apolloClient,
             logger = logger
         )

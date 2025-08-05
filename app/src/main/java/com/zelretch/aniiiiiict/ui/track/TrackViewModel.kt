@@ -42,7 +42,9 @@ data class TrackUiState(
     val allPrograms: List<ProgramWithWork> = emptyList(),
     val selectedProgram: ProgramWithWork? = null,
     val isDetailModalVisible: Boolean = false,
-    val isLoadingDetail: Boolean = false
+    val isLoadingDetail: Boolean = false,
+    val showFinaleConfirmationForWorkId: String? = null,
+    val showFinaleConfirmationForEpisodeNumber: Int? = null
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel
@@ -52,6 +54,8 @@ class TrackViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
+    private val aniListRepository: com.zelretch.aniiiiiict.data.repository.AniListRepository,
+    private val judgeFinaleUseCase: com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
@@ -141,6 +145,24 @@ class TrackViewModel @Inject constructor(
                     }
 
                     loadingPrograms()
+
+                    // AniListから作品情報を取得し、最終話判定を行う
+                    val program = _uiState.value.allPrograms.find { it.work.id == workId }
+                    val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
+
+                    if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
+                        aniListRepository.getMedia(program.work.id.toInt()).onSuccess { anilistMedia ->
+                            val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number!!, anilistMedia)
+                            if (judgeResult.isFinale) {
+                                _uiState.update { it.copy(
+                                    showFinaleConfirmationForWorkId = workId,
+                                    showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                                )}
+                            }
+                        }.onFailure { e ->
+                            logger.error(TAG, e, "AniListからの作品情報取得に失敗しました")
+                        }
+                    }
                 }.onFailure { e ->
                     _uiState.update {
                         it.copy(
@@ -154,6 +176,19 @@ class TrackViewModel @Inject constructor(
                 _uiState.update { it.copy(isRecording = false) }
             }
         }
+    }
+
+    fun confirmWatchedStatus() {
+        _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
+            (externalScope ?: viewModelScope).launch {
+                updateViewState(workId, StatusState.WATCHED)
+                _uiState.update { it.copy(showFinaleConfirmationForWorkId = null, showFinaleConfirmationForEpisodeNumber = null) }
+            }
+        }
+    }
+
+    fun dismissFinaleConfirmation() {
+        _uiState.update { it.copy(showFinaleConfirmationForWorkId = null, showFinaleConfirmationForEpisodeNumber = null) }
     }
 
     fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {

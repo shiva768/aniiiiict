@@ -44,6 +44,11 @@ android {
             "ANNICT_CLIENT_SECRET",
             "\"${localProperties.getProperty("ANNICT_CLIENT_SECRET", "")}\""
         )
+        buildConfigField(
+            "String",
+            "ANILIST_API_URL",
+            "\"https://graphql.anilist.co\""
+        )
 
         // DEBUGフラグを手動で設定
 //        buildConfigField("boolean", "DEBUG", "false")
@@ -157,18 +162,24 @@ apollo {
         generateKotlinModels.set(true)
         generateFragmentImplementations.set(true)
     }
+    service("anilist") {
+        packageName.set("com.zelretch.aniiiiiict.anilist")
+        schemaFile.set(file("src/main/graphql/anilist/schema.graphqls"))
+        generateKotlinModels.set(true)
+        generateFragmentImplementations.set(true)
+        // スキーマのダウンロード元（インスペクション設定）
+        introspection {
+            endpointUrl.set("https://graphql.anilist.co")
+            // 認証が必要ならヘッダー追加:
+            // headers.put("Authorization", "Bearer xxx")
+        }
+    }
 }
 
-tasks.register<Exec>("downloadAnilistSchema") {
+// 好みでエイリアスを定義（人間が叩きやすくするだけ）
+tasks.register("downloadAnilistSchema") {
     group = "apollo"
-    description = "Downloads the anilist GraphQL schema"
-    commandLine(
-        "./gradlew",
-        ":app:downloadApolloSchema",
-        "--endpoint=https://graphql.anilist.co",
-        "--schema=app/src/main/graphql/anilist/schema.graphqls",
-        "--service=anilist"
-    )
+    dependsOn("downloadApolloSchema")
 }
 
 kotlin {

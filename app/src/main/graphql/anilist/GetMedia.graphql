@@ -1,0 +1,12 @@
+query GetMedia($id: Int!, $type: MediaType) {
+  Media(id: $id, type: $type) {
+    id
+    format
+    episodes
+    status
+    nextAiringEpisode {
+      episode
+      airingAt
+    }
+  }
+}
