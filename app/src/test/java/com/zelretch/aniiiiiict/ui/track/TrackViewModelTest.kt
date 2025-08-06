@@ -4,12 +4,10 @@ import android.content.Context
 import app.cash.turbine.test
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiiict.domain.filter.AvailableFilters
 import com.zelretch.aniiiiiict.domain.filter.FilterState
-import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
-import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
-import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
-import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiiict.domain.usecase.*
 import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -34,6 +32,8 @@ class TrackViewModelTest : BehaviorSpec({
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>()
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
+    val anilistRepository = mockk<AniListRepository>()
+    val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
     val logger = mockk<Logger>(relaxed = true)
     val context = mockk<Context>(relaxed = true)
     lateinit var viewModel: TrackViewModel
@@ -57,6 +57,8 @@ class TrackViewModelTest : BehaviorSpec({
             bulkRecordEpisodesUseCase,
             filterProgramsUseCase,
             filterPreferences,
+            anilistRepository,
+            judgeFinalUseCase,
             logger,
             context
         )

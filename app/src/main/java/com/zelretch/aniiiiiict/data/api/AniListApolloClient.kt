@@ -24,17 +24,9 @@ class AniListApolloClient @Inject constructor(
     }
 
     private val client by lazy {
-
-        val httpClient = okHttpClient.newBuilder()
-            .addInterceptor { chain ->
-                val request = chain.request().newBuilder().build()
-                chain.proceed(request)
-            }
-            .build()
-
         ApolloClient.Builder()
             .serverUrl(SERVER_URL)
-            .okHttpClient(httpClient)
+            .okHttpClient(OkHttpClient())
             .build()
     }
 
