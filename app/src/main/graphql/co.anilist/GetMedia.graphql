@@ -1,5 +1,5 @@
-query GetMedia($id: Int!, $type: MediaType) {
-  Media(id: $id, type: $type) {
+query GetMedia($id: Int!) {
+  Media(id: $id) {
     id
     format
     episodes

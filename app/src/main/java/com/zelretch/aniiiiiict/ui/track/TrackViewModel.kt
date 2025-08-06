@@ -6,12 +6,10 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
-import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
-import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
-import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
-import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiiict.domain.usecase.*
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
@@ -54,6 +52,8 @@ class TrackViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
+    private val aniListRepository: AniListRepository,
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
@@ -180,13 +180,23 @@ class TrackViewModel @Inject constructor(
         _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
             (externalScope ?: viewModelScope).launch {
                 updateViewState(workId, StatusState.WATCHED)
-                _uiState.update { it.copy(showFinaleConfirmationForWorkId = null, showFinaleConfirmationForEpisodeNumber = null) }
+                _uiState.update {
+                    it.copy(
+                        showFinaleConfirmationForWorkId = null,
+                        showFinaleConfirmationForEpisodeNumber = null
+                    )
+                }
             }
         }
     }
 
     fun dismissFinaleConfirmation() {
-        _uiState.update { it.copy(showFinaleConfirmationForWorkId = null, showFinaleConfirmationForEpisodeNumber = null) }
+        _uiState.update {
+            it.copy(
+                showFinaleConfirmationForWorkId = null,
+                showFinaleConfirmationForEpisodeNumber = null
+            )
+        }
     }
 
     fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {
