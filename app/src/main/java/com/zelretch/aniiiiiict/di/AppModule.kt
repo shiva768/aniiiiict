@@ -88,8 +88,17 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideAniListApolloClient(
+        okHttpClient: OkHttpClient,
+        logger: Logger
+    ): AniListApolloClient {
+        return AniListApolloClient(okHttpClient, logger)
+    }
+
+    @Provides
+    @Singleton
     fun provideAniListRepository(
-        @Named("AniListApolloClient") apolloClient: ApolloClient,
+        apolloClient: AniListApolloClient,
         logger: Logger
     ): AniListRepository {
         return AniListRepositoryImpl(
