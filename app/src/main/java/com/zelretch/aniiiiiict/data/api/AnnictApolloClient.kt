@@ -15,13 +15,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ApolloClient @Inject constructor(
+class AnnictApolloClient @Inject constructor(
     private val tokenManager: TokenManager,
     private val okHttpClient: OkHttpClient,
     private val logger: Logger
 ) {
     companion object {
-        private const val TAG = "ApolloClient"
+        private const val TAG = "AnnictApolloClient"
         private const val SERVER_URL = "https://api.annict.com/graphql"
     }
 
@@ -30,7 +30,7 @@ class ApolloClient @Inject constructor(
         logger.info(
             TAG,
             "Apollo初期化 - アクセストークンの有無: ${!token.isNullOrBlank()}",
-            "ApolloClient.init"
+            "AnnictApolloClient.init"
         )
 
         val authenticatedClient = okHttpClient.newBuilder()
