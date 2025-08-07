@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zelretch.aniiiiiict.data.model.Record
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -214,7 +215,8 @@ fun RecordItem(
     onDelete: () -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
-    val formattedDate = record.createdAt.format(formatter)
+    val zonedDateTime = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
+    val formattedDate = zonedDateTime.format(formatter)
 
     Card(
         modifier = Modifier
