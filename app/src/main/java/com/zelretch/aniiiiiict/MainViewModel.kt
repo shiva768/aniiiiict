@@ -3,7 +3,7 @@ package com.zelretch.aniiiiiict
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
@@ -28,7 +28,7 @@ data class MainUiState(
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: AnnictRepository,
+    private val annictAuthUseCase: AnnictAuthUseCase,
     private val customTabsIntentFactory: CustomTabsIntentFactory,
     logger: Logger,
     @ApplicationContext private val context: Context
@@ -57,7 +57,7 @@ class MainViewModel @Inject constructor(
     private fun checkAuthState() {
         viewModelScope.launch {
             try {
-                val isAuthenticated = repository.isAuthenticated()
+                val isAuthenticated = annictAuthUseCase.isAuthenticated()
 
                 // UI状態を更新
                 _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
@@ -89,7 +89,7 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val authUrl = repository.getAuthUrl()
+                val authUrl = annictAuthUseCase.getAuthUrl()
                 logger.info(TAG, "認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
@@ -122,7 +122,7 @@ class MainViewModel @Inject constructor(
 
                     if (!isActive) return@launch
 
-                    val success = repository.handleAuthCallback(code)
+                    val success = annictAuthUseCase.handleAuthCallback(code)
                     if (success) {
                         println("MainViewModel: 認証成功")
                         delay(300)
