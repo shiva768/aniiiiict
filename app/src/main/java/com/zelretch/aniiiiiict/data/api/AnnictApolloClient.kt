@@ -7,23 +7,38 @@ import com.apollographql.apollo.api.Query
 import com.apollographql.apollo.cache.normalized.FetchPolicy
 import com.apollographql.apollo.cache.normalized.fetchPolicy
 import com.apollographql.apollo.network.okHttpClient
+import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AnnictApolloClient @Inject constructor(
     private val tokenManager: TokenManager,
-    private val okHttpClient: OkHttpClient,
     private val logger: Logger
 ) {
     companion object {
         private const val TAG = "AnnictApolloClient"
         private const val SERVER_URL = "https://api.annict.com/graphql"
     }
+
+    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        })
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     private val client by lazy {
         val token = tokenManager.getAccessToken()

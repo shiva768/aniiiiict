@@ -11,12 +11,13 @@ import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class AnnictAuthManager @Inject constructor(
     private val tokenManager: TokenManager,
-    private val okHttpClient: OkHttpClient,
     private val retryManager: RetryManager,
     private val logger: Logger
 ) {
@@ -25,6 +26,19 @@ class AnnictAuthManager @Inject constructor(
         private const val TAG = "AnnictAuthManager"
         private const val MAX_RETRIES = 3
     }
+
+    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        })
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     fun getAuthorizationUrl(): String = buildString {
         append(AnnictConfig.AUTH_URL)

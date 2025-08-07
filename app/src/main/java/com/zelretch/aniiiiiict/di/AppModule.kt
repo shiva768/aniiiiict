@@ -39,34 +39,17 @@ object AppModule {
     @Singleton
     fun provideAnnictAuthManager(
         tokenManager: TokenManager,
-        okHttpClient: OkHttpClient,
         retryManager: RetryManager,
         logger: Logger
-    ): AnnictAuthManager = AnnictAuthManager(tokenManager, okHttpClient, retryManager, logger)
-
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
-        })
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+    ): AnnictAuthManager = AnnictAuthManager(tokenManager, retryManager, logger)
 
     @Provides
     @Singleton
     fun provideAnnictApolloClient(
         tokenManager: TokenManager,
-        okHttpClient: OkHttpClient,
         logger: Logger
     ): AnnictApolloClient {
-        return AnnictApolloClient(tokenManager, okHttpClient, logger)
+        return AnnictApolloClient(tokenManager, logger)
     }
 
 
@@ -89,10 +72,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAniListApolloClient(
-        okHttpClient: OkHttpClient,
         logger: Logger
     ): AniListApolloClient {
-        return AniListApolloClient(okHttpClient, logger)
+        return AniListApolloClient(logger)
     }
 
     @Provides
