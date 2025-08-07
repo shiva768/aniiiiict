@@ -2,7 +2,7 @@ package com.zelretch.aniiiiiict
 
 import android.content.Context
 import androidx.browser.customtabs.CustomTabsIntent
-import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
@@ -28,7 +28,7 @@ class MainViewModelTest : BehaviorSpec({
     }
 
     given("MainViewModel") {
-        val repository = mockk<AnnictRepository>(relaxUnitFun = true)
+        val authUseCase = mockk<AnnictAuthUseCase>(relaxUnitFun = true)
         val logger = mockk<Logger> {
             every { info(any<String>(), any<String>(), any<String>()) } returns Unit
             every { warning(any<String>(), any<String>(), any<String>()) } returns Unit
@@ -40,10 +40,10 @@ class MainViewModelTest : BehaviorSpec({
         val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()
         every { customTabsIntentFactory.create() } returns customTabsIntent
         every { customTabsIntent.launchUrl(any(), any()) } just Runs
-        val viewModel = MainViewModel(repository, customTabsIntentFactory, logger, context)
+        val viewModel = MainViewModel(authUseCase, customTabsIntentFactory, logger, context)
 
         beforeTest {
-            coEvery { repository.isAuthenticated() } returns false
+            coEvery { authUseCase.isAuthenticated() } returns false
         }
 
         `when`("初期状態") {
@@ -57,35 +57,35 @@ class MainViewModelTest : BehaviorSpec({
 
         `when`("認証を開始") {
             then("isAuthenticatingがtrueになる") {
-                coEvery { repository.getAuthUrl() } returns "https://example.com/auth"
+                coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
                 viewModel.startAuth()
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.error shouldBe null
                 viewModel.uiState.value.isAuthenticating shouldBe true
-                coVerify { repository.getAuthUrl() }
+                coVerify { authUseCase.getAuthUrl() }
                 verify { logger.info(any<String>(), any<String>(), any<String>()) }
             }
         }
 
         `when`("認証コードを受け取る") {
             then("有効なコードで認証が成功する") {
-                coEvery { repository.handleAuthCallback(any()) } returns true
+                coEvery { authUseCase.handleAuthCallback(any()) } returns true
                 viewModel.handleAuthCallback("valid_code")
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe true
                 viewModel.uiState.value.isAuthenticating shouldBe false
                 viewModel.uiState.value.error shouldBe null
-                coVerify { repository.handleAuthCallback("valid_code") }
+                coVerify { authUseCase.handleAuthCallback("valid_code") }
             }
 
             then("無効なコードでエラーが発生する") {
-                coEvery { repository.handleAuthCallback(any()) } returns false
+                coEvery { authUseCase.handleAuthCallback(any()) } returns false
                 viewModel.handleAuthCallback("invalid_code")
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe false
                 viewModel.uiState.value.isAuthenticating shouldBe false
                 viewModel.uiState.value.error shouldNotBe null
-                coVerify { repository.handleAuthCallback("invalid_code") }
+                coVerify { authUseCase.handleAuthCallback("invalid_code") }
                 verify { logger.warning(any<String>(), any<String>(), any<String>()) }
             }
 
@@ -101,19 +101,19 @@ class MainViewModelTest : BehaviorSpec({
 
         `when`("認証状態を確認") {
             then("認証済みの場合") {
-                coEvery { repository.isAuthenticated() } returns true
+                coEvery { authUseCase.isAuthenticated() } returns true
                 viewModel.checkAuthentication()
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe true
-                coVerify { repository.isAuthenticated() }
+                coVerify { authUseCase.isAuthenticated() }
             }
 
             then("未認証の場合") {
-                coEvery { repository.isAuthenticated() } returns false
+                coEvery { authUseCase.isAuthenticated() } returns false
                 viewModel.checkAuthentication()
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe false
-                coVerify { repository.isAuthenticated() }
+                coVerify { authUseCase.isAuthenticated() }
                 verify { logger.info(any<String>(), any<String>(), any<String>()) }
             }
         }

@@ -32,7 +32,6 @@ class TrackViewModelTest : BehaviorSpec({
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     mockk<BulkRecordEpisodesUseCase>()
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
-    val anilistRepository = mockk<AniListRepository>()
     val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
     val logger = mockk<Logger>(relaxed = true)
     val context = mockk<Context>(relaxed = true)
@@ -56,7 +55,6 @@ class TrackViewModelTest : BehaviorSpec({
             watchEpisodeUseCase,
             filterProgramsUseCase,
             filterPreferences,
-            anilistRepository,
             judgeFinalUseCase,
             logger,
             context

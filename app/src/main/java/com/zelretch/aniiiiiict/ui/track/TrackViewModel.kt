@@ -54,7 +54,6 @@ class TrackViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
-    private val aniListRepository: AniListRepository,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     logger: Logger,
     @ApplicationContext private val context: Context
@@ -151,16 +150,12 @@ class TrackViewModel @Inject constructor(
                     val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
 
                     if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
-                        aniListRepository.getMedia(program.work.id.toInt()).onSuccess { anilistMedia ->
-                            val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number!!, anilistMedia)
-                            if (judgeResult.isFinale) {
-                                _uiState.update { it.copy(
-                                    showFinaleConfirmationForWorkId = workId,
-                                    showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
-                                )}
-                            }
-                        }.onFailure { e ->
-                            logger.error(TAG, e, "AniListからの作品情報取得に失敗しました")
+                        val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number, program.work.id.toInt())
+                        if (judgeResult.isFinale) {
+                            _uiState.update { it.copy(
+                                showFinaleConfirmationForWorkId = workId,
+                                showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                            )}
                         }
                     }
                 }.onFailure { e ->

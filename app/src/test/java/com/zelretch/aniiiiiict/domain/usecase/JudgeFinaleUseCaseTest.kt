@@ -5,11 +5,15 @@ import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
 import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
+import io.mockk.coEvery
+import com.zelretch.aniiiiiict.data.repository.AniListRepository
 
 class JudgeFinaleUseCaseTest : BehaviorSpec({
 
     val logger = TestLogger()
-    val judgeFinaleUseCase = JudgeFinaleUseCase(logger)
+    val aniListRepository = mockk<AniListRepository>()
+    val judgeFinaleUseCase = JudgeFinaleUseCase(logger, aniListRepository)
 
     given("最終話判定ロジック") {
         `when`("次回予定ありかつ nextAiringEpisode.episode > currentEp の場合") {
@@ -21,7 +25,8 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "RELEASING",
                     nextAiringEpisode = NextAiringEpisode(episode = 11, airingAt = 1678886400) // 次回が現在のエピソードより大きい
                 )
-                val result = judgeFinaleUseCase(10, media)
+                coEvery { aniListRepository.getMedia(media.id) } returns Result.success(media)
+                val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.NOT_FINALE
                 result.isFinale shouldBe false
             }
@@ -36,7 +41,8 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "RELEASING",
                     nextAiringEpisode = null
                 )
-                val result = judgeFinaleUseCase(12, media)
+                coEvery { aniListRepository.getMedia(media.id) } returns Result.success(media)
+                val result = judgeFinaleUseCase(12, media.id)
                 result.state shouldBe FinaleState.FINALE_CONFIRMED
                 result.isFinale shouldBe true
             }
@@ -51,7 +57,8 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "FINISHED",
                     nextAiringEpisode = null
                 )
-                val result = judgeFinaleUseCase(10, media)
+                coEvery { aniListRepository.getMedia(media.id) } returns Result.success(media)
+                val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.FINALE_CONFIRMED
                 result.isFinale shouldBe true
             }
@@ -66,7 +73,8 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "RELEASING",
                     nextAiringEpisode = null
                 )
-                val result = judgeFinaleUseCase(10, media)
+                coEvery { aniListRepository.getMedia(media.id) } returns Result.success(media)
+                val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.FINALE_EXPECTED
                 result.isFinale shouldBe false
             }
@@ -81,7 +89,8 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "RELEASING",
                     nextAiringEpisode = NextAiringEpisode(episode = 10, airingAt = 1678886400) // 次回が現在のエピソード以下
                 )
-                val result = judgeFinaleUseCase(10, media)
+                coEvery { aniListRepository.getMedia(media.id) } returns Result.success(media)
+                val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.UNKNOWN
                 result.isFinale shouldBe false
             }
@@ -96,7 +105,8 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "FINISHED",
                     nextAiringEpisode = null
                 )
-                val result = judgeFinaleUseCase(1, media)
+                coEvery { aniListRepository.getMedia(media.id) } returns Result.success(media)
+                val result = judgeFinaleUseCase(1, media.id)
                 result.state shouldBe FinaleState.UNKNOWN
                 result.isFinale shouldBe false
             }
