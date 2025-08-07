@@ -35,11 +35,11 @@ class AniListRepositoryImplTest : BehaviorSpec({
                     )
                 )
                 val mockResponse = ApolloResponse.Builder(
-                    operation,
-                    Uuid(1, 1)
+                    operation = operation,
+                    requestUuid = Uuid(1, 1)
                 ).data(expectedMedia).build()
 
-                coEvery { mockApolloClient.executeQuery(operation, any()) } returns mockResponse
+                coEvery { mockApolloClient.executeQuery(operation, any<String>()) } returns mockResponse
 
                 val result = repository.getMedia(mediaId)
 
@@ -54,47 +54,58 @@ class AniListRepositoryImplTest : BehaviorSpec({
             }
         }
 
-//        `when`("APIエラーが発生した場合") {
-//            then("Result.failureを返す") {
-//                val mediaId = 123
-//                val mockResponse = failure(
-//                    operation = GetMediaQuery(id = mediaId),
-//                    exception = RuntimeException("GraphQL Error")
-//                )
-//
-//                coEvery { mockApolloClient.executeQuery(any(), any()) } returns mockResponse
-//
-//                val result = repository.getMedia(mediaId)
-//
-//                result.isFailure shouldBe true
-//            }
-//        }
+        `when`("APIエラーが発生した場合") {
+            then("Result.failureを返す") {
+                val mediaId = 123
+                val mockResponse = ApolloResponse.Builder(
+                    operation = GetMediaQuery(id = mediaId),
+                    requestUuid = Uuid(1, 1)
+                ).errors(
+                    listOf(
+                        com.apollographql.apollo.api.Error.Builder(
+                            message = "API Error"
+                        ).build()
+                    )
+                ).build()
 
-//        `when`("mediaがnullの場合") {
-//            then("Result.failureを返す") {
-//                val mediaId = 123
-//                val mockResponse = MockResponse(
-//                    operation = GetMediaQuery(id = mediaId),
-//                    data = GetMediaQuery.Data(null)
-//                )
-//
-//                coEvery { mockApolloClient.executeQuery(any(), any()) } returns mockResponse
-//
-//                val result = repository.getMedia(mediaId)
-//
-//                result.isFailure shouldBe true
-//            }
-//        }
-//
-//        `when`("例外が発生した場合") {
-//            then("Result.failureを返す") {
-//                val mediaId = 123
-//                coEvery { mockApolloClient.executeQuery(any(), any()) } throws RuntimeException("Network Error")
-//
-//                val result = repository.getMedia(mediaId)
-//
-//                result.isFailure shouldBe true
-//            }
-//        }
+                coEvery { mockApolloClient.executeQuery(any<GetMediaQuery>(), any<String>()) } returns mockResponse
+
+                val result = repository.getMedia(mediaId)
+
+                result.isFailure shouldBe true
+            }
+        }
+
+        `when`("mediaがnullの場合") {
+            then("Result.failureを返す") {
+                val mediaId = 123
+                val mockResponse = ApolloResponse.Builder(
+                    operation = GetMediaQuery(id = mediaId),
+                    requestUuid = Uuid(1, 1)
+                ).data(GetMediaQuery.Data(null)).build()
+
+                coEvery { mockApolloClient.executeQuery(any<GetMediaQuery>(), any<String>()) } returns mockResponse
+
+                val result = repository.getMedia(mediaId)
+
+                result.isFailure shouldBe true
+            }
+        }
+
+        `when`("例外が発生した場合") {
+            then("Result.failureを返す") {
+                val mediaId = 123
+                coEvery {
+                    mockApolloClient.executeQuery(
+                        any<GetMediaQuery>(),
+                        any<String>()
+                    )
+                } throws RuntimeException("Network Error")
+
+                val result = repository.getMedia(mediaId)
+
+                result.isFailure shouldBe true
+            }
+        }
     }
 })
