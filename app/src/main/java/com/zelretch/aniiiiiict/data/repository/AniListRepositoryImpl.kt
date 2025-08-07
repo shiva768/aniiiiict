@@ -47,17 +47,17 @@ class AniListRepositoryImpl @Inject constructor(
 
             Result.success(
                 AniListMedia(
-                id = media.id,
-                format = media.format?.rawValue,
-                episodes = media.episodes,
-                status = media.status?.rawValue,
-                nextAiringEpisode = media.nextAiringEpisode?.let {
-                    NextAiringEpisode(
-                        episode = it.episode,
-                        airingAt = it.airingAt
-                    )
-                }
-            ))
+                    id = media.id,
+                    format = media.format?.rawValue,
+                    episodes = media.episodes,
+                    status = media.status?.rawValue,
+                    nextAiringEpisode = media.nextAiringEpisode?.let {
+                        NextAiringEpisode(
+                            episode = it.episode,
+                            airingAt = it.airingAt
+                        )
+                    }
+                ))
         } catch (e: Exception) {
             logger.error(TAG, e, "AniList Mediaの取得に失敗しました")
             Result.failure(e)

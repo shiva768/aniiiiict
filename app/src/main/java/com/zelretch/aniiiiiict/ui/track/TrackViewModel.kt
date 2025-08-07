@@ -1,12 +1,10 @@
 package com.zelretch.aniiiiiict.ui.track
 
-import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
@@ -17,7 +15,6 @@ import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,8 +52,7 @@ class TrackViewModel @Inject constructor(
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
-    logger: Logger,
-    @ApplicationContext private val context: Context
+    logger: Logger
 ) : BaseViewModel(logger) {
     private val TAG = "TrackViewModel"
 
@@ -152,10 +148,12 @@ class TrackViewModel @Inject constructor(
                     if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
                         val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number, program.work.id.toInt())
                         if (judgeResult.isFinale) {
-                            _uiState.update { it.copy(
-                                showFinaleConfirmationForWorkId = workId,
-                                showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
-                            )}
+                            _uiState.update {
+                                it.copy(
+                                    showFinaleConfirmationForWorkId = workId,
+                                    showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                                )
+                            }
                         }
                     }
                 }.onFailure { e ->

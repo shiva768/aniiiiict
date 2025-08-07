@@ -96,7 +96,7 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // エラーハンドリング
             }
         }
@@ -122,7 +122,7 @@ class DetailModalViewModel @Inject constructor(
                         _state.update { it.copy(bulkRecordingProgress = progress) }
                     }
                 )
-                
+
                 val currentPrograms = _state.value.programs
                 val targetPrograms = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
@@ -138,7 +138,7 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _state.update { it.copy(isBulkRecording = false, bulkRecordingProgress = 0, bulkRecordingTotal = 0) }
                 // エラーハンドリング
             }

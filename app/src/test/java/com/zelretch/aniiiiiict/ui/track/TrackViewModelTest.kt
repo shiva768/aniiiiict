@@ -4,7 +4,6 @@ import android.content.Context
 import app.cash.turbine.test
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiiict.domain.filter.AvailableFilters
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.usecase.*
@@ -34,7 +33,7 @@ class TrackViewModelTest : BehaviorSpec({
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
     val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
     val logger = mockk<Logger>(relaxed = true)
-    val context = mockk<Context>(relaxed = true)
+    mockk<Context>(relaxed = true)
     lateinit var viewModel: TrackViewModel
     lateinit var testScope: TestScope
 
@@ -56,8 +55,7 @@ class TrackViewModelTest : BehaviorSpec({
             filterProgramsUseCase,
             filterPreferences,
             judgeFinalUseCase,
-            logger,
-            context
+            logger
         )
         viewModel.externalScope = testScope // テスト用スコープをセット
         testScope.testScheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める
