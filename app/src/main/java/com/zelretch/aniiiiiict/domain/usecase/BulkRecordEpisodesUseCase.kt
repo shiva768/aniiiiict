@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
-import com.zelretch.aniiiiiict.type.StatusState
+import com.annict.type.StatusState
 import javax.inject.Inject
 
 class BulkRecordEpisodesUseCase @Inject constructor(

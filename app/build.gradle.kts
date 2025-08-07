@@ -44,6 +44,11 @@ android {
             "ANNICT_CLIENT_SECRET",
             "\"${localProperties.getProperty("ANNICT_CLIENT_SECRET", "")}\""
         )
+        buildConfigField(
+            "String",
+            "ANILIST_API_URL",
+            "\"https://graphql.anilist.co\""
+        )
 
         // DEBUGフラグを手動で設定
 //        buildConfigField("boolean", "DEBUG", "false")
@@ -75,9 +80,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -155,9 +157,30 @@ dependencies {
 
 apollo {
     service("annict") {
-        packageName.set("com.zelretch.aniiiiiict")
-        schemaFile.set(file("src/main/graphql/schema.json.graphqls"))
+        packageName.set("com.annict")
+        srcDir("src/main/graphql/com.annict")
+        schemaFile.set(file("src/main/graphql/com.annict/schema.json.graphqls"))
         generateKotlinModels.set(true)
         generateFragmentImplementations.set(true)
+    }
+
+    service("anilist") {
+        packageName.set("co.anilist")
+        srcDir("src/main/graphql/co.anilist")
+        schemaFile.set(file("src/main/graphql/co.anilist/schema.graphqls"))
+        generateKotlinModels.set(true)
+        generateFragmentImplementations.set(true)
+        // スキーマのダウンロード元（インスペクション設定）
+        introspection {
+            endpointUrl.set("https://graphql.anilist.co")
+            // 認証が必要ならヘッダー追加:
+            // headers.put("Authorization", "Bearer xxx")
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }

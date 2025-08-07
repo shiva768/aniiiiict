@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.zelretch.aniiiiiict.type.StatusState
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.ui.details.DetailModal
 import com.zelretch.aniiiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiiict.ui.track.components.FilterBar
@@ -71,16 +71,32 @@ fun TrackScreen(
             SnackbarHost(
                 hostState = remember { SnackbarHostState() }
             ) {
-                Snackbar(
-                    modifier = Modifier.testTag("snackbar")
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Text(uiState.error ?: "")
-                        Spacer(modifier = Modifier.weight(1f))
-                        TextButton(
-                            onClick = { viewModel.refresh() }
-                        ) {
-                            Text("再読み込み")
+                if (uiState.showFinaleConfirmationForWorkId != null) {
+                    Snackbar(
+                        modifier = Modifier.testTag("finale_confirmation_snackbar"),
+                        action = {
+                            TextButton(onClick = { viewModel.confirmWatchedStatus() }) {
+                                Text("はい")
+                            }
+                            TextButton(onClick = { viewModel.dismissFinaleConfirmation() }) {
+                                Text("いいえ")
+                            }
+                        }
+                    ) {
+                        Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？")
+                    }
+                } else if (uiState.error != null) {
+                    Snackbar(
+                        modifier = Modifier.testTag("snackbar")
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Text(uiState.error ?: "")
+                            Spacer(modifier = Modifier.weight(1f))
+                            TextButton(
+                                onClick = { viewModel.refresh() }
+                            ) {
+                                Text("再読み込み")
+                            }
                         }
                     }
                 }

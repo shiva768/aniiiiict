@@ -2,16 +2,17 @@ package com.zelretch.aniiiiiict.ui.track
 
 import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
-import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.util.Logger
@@ -42,16 +43,19 @@ data class TrackUiState(
     val allPrograms: List<ProgramWithWork> = emptyList(),
     val selectedProgram: ProgramWithWork? = null,
     val isDetailModalVisible: Boolean = false,
-    val isLoadingDetail: Boolean = false
+    val isLoadingDetail: Boolean = false,
+    val showFinaleConfirmationForWorkId: String? = null,
+    val showFinaleConfirmationForEpisodeNumber: Int? = null
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel
 class TrackViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
-    private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
+    private val aniListRepository: AniListRepository,
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
     logger: Logger,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(logger) {
@@ -141,6 +145,24 @@ class TrackViewModel @Inject constructor(
                     }
 
                     loadingPrograms()
+
+                    // AniListから作品情報を取得し、最終話判定を行う
+                    val program = _uiState.value.allPrograms.find { it.work.id == workId }
+                    val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
+
+                    if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
+                        aniListRepository.getMedia(program.work.id.toInt()).onSuccess { anilistMedia ->
+                            val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number!!, anilistMedia)
+                            if (judgeResult.isFinale) {
+                                _uiState.update { it.copy(
+                                    showFinaleConfirmationForWorkId = workId,
+                                    showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                                )}
+                            }
+                        }.onFailure { e ->
+                            logger.error(TAG, e, "AniListからの作品情報取得に失敗しました")
+                        }
+                    }
                 }.onFailure { e ->
                     _uiState.update {
                         it.copy(
@@ -156,39 +178,26 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    fun bulkRecordEpisode(episodeIds: List<String>, workId: String, currentStatus: StatusState) {
-        (externalScope ?: viewModelScope).launch {
-            try {
-                _uiState.update { it.copy(isRecording = true) }
-                bulkRecordEpisodesUseCase(episodeIds, workId, currentStatus)
-                    .onSuccess {
-                        _uiState.update {
-                            it.copy(
-                                isRecording = false,
-                                recordingSuccess = episodeIds.lastOrNull(),
-                                error = null
-                            )
-                        }
-
-                        delay(2000)
-                        if (_uiState.value.recordingSuccess == episodeIds.lastOrNull()) {
-                            _uiState.update { it.copy(recordingSuccess = null) }
-                        }
-
-                        loadingPrograms()
-                    }
-                    .onFailure { e ->
-                        _uiState.update {
-                            it.copy(
-                                isRecording = false,
-                                error = e.message ?: "エピソードの記録に失敗しました"
-                            )
-                        }
-                    }
-            } catch (e: Exception) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
+    fun confirmWatchedStatus() {
+        _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
+            (externalScope ?: viewModelScope).launch {
+                updateViewState(workId, StatusState.WATCHED)
+                _uiState.update {
+                    it.copy(
+                        showFinaleConfirmationForWorkId = null,
+                        showFinaleConfirmationForEpisodeNumber = null
+                    )
+                }
             }
+        }
+    }
+
+    fun dismissFinaleConfirmation() {
+        _uiState.update {
+            it.copy(
+                showFinaleConfirmationForWorkId = null,
+                showFinaleConfirmationForEpisodeNumber = null
+            )
         }
     }
 

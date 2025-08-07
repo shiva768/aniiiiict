@@ -1,8 +1,8 @@
 package com.zelretch.aniiiiiict.data.repository
 
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.type.StatusState
 import kotlinx.coroutines.flow.Flow
 
 interface AnnictRepository {

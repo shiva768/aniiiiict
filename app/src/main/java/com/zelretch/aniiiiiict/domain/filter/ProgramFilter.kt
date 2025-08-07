@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.domain.filter
 
+import com.annict.type.SeasonName
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.type.SeasonName
 import java.time.LocalDateTime
 
 class ProgramFilter {

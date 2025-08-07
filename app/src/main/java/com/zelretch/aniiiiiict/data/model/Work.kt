@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.data.model
 
-import com.zelretch.aniiiiiict.type.SeasonName
-import com.zelretch.aniiiiiict.type.StatusState
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 
 data class Work(
     val id: String,

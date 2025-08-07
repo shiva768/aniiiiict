@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
-import com.zelretch.aniiiiiict.type.StatusState
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery

@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
-import com.zelretch.aniiiiiict.type.StatusState
 import javax.inject.Inject
 
 class WatchEpisodeUseCase @Inject constructor(

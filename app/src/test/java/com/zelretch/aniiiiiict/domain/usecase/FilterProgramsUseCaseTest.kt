@@ -1,9 +1,9 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
+import com.annict.type.SeasonName
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.domain.filter.createProgramWithWork
-import com.zelretch.aniiiiiict.type.SeasonName
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 

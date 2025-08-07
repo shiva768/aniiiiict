@@ -9,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.ui.details.components.ConfirmDialog
 import com.zelretch.aniiiiiict.ui.details.components.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest

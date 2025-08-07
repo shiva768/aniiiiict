@@ -1,6 +1,6 @@
 [versions]
 # Plugins
-agp = "8.9.2"
+agp = "8.10.1"
 datastore-preferences = "1.1.6"
 kotlin = "2.0.0"
 kotlin-compose = "2.1.20"

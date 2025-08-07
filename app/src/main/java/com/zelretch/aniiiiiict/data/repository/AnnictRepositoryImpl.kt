@@ -1,12 +1,12 @@
 package com.zelretch.aniiiiiict.data.repository
 
+import com.annict.*
+import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
-import com.zelretch.aniiiiiict.*
-import com.zelretch.aniiiiiict.data.api.ApolloClient
+import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.*
-import com.zelretch.aniiiiiict.type.StatusState
 import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +24,7 @@ import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 class AnnictRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager,
     private val authManager: AnnictAuthManager,
-    private val apolloClient: ApolloClient,
+    private val annictApolloClient: AnnictApolloClient,
     private val logger: Logger
 ) : AnnictRepository {
     private val TAG = "AnnictRepositoryImpl"
@@ -60,7 +60,7 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             val mutation = CreateRecordMutation(episodeId = episodeId)
-            val response = apolloClient.executeMutation(
+            val response = annictApolloClient.executeMutation(
                 operation = mutation,
                 context = "AnnictRepositoryImpl.createRecord"
             )
@@ -139,7 +139,7 @@ class AnnictRepositoryImpl @Inject constructor(
                 }
 
                 val query = ViewerProgramsQuery()
-                val response = apolloClient.executeQuery(
+                val response = annictApolloClient.executeQuery(
                     operation = query,
                     context = "AnnictRepositoryImpl.getProgramsWithWorks"
                 )
@@ -260,7 +260,7 @@ class AnnictRepositoryImpl @Inject constructor(
 
         val query =
             ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
-        val response = apolloClient.executeQuery(
+        val response = annictApolloClient.executeQuery(
             operation = query,
             context = "AnnictRepositoryImpl.getRecords"
         )
@@ -328,7 +328,7 @@ class AnnictRepositoryImpl @Inject constructor(
         )
 
         val mutation = DeleteRecordMutation(recordId)
-        val response = apolloClient.executeMutation(
+        val response = annictApolloClient.executeMutation(
             operation = mutation,
             context = "AnnictRepositoryImpl.deleteRecord"
         )
@@ -362,7 +362,7 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             val mutation = UpdateStatusMutation(workId = workId, state = state)
-            val response = apolloClient.executeMutation(
+            val response = annictApolloClient.executeMutation(
                 operation = mutation,
                 context = "AnnictRepositoryImpl.updateWorkStatus"
             )
