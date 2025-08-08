@@ -11,7 +11,6 @@ import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
-import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
@@ -167,16 +166,16 @@ class AnnictRepositoryImplTest : BehaviorSpec({
         }
     }
 
-    given("AnnictRepositoryImpl の getProgramsWithWorks メソッド") {
+    given("AnnictRepositoryImpl の getRawProgramsData メソッド") {
         `when`("アクセストークンがない場合") {
             then("空のリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns null
-                repository.getProgramsWithWorks().first() shouldBe emptyList()
+                repository.getRawProgramsData().first() shouldBe emptyList()
             }
         }
 
         `when`("API呼び出しが成功し、データがある場合") {
-            then("変換されたProgramWithWorkのリストをemitする") {
+            then("GraphQLレスポンスのノードリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = ViewerProgramsQuery(),
@@ -198,8 +197,8 @@ class AnnictRepositoryImplTest : BehaviorSpec({
                     )
                 } returns mockResponse
 
-                val result = repository.getProgramsWithWorks().first()
-                result shouldNotBe emptyList<ProgramWithWork>()
+                val result = repository.getRawProgramsData().first()
+                result shouldNotBe emptyList<ViewerProgramsQuery.Node?>()
             }
         }
 
@@ -217,7 +216,7 @@ class AnnictRepositoryImplTest : BehaviorSpec({
                     )
                 } returns mockResponse
 
-                repository.getProgramsWithWorks().first() shouldBe emptyList()
+                repository.getRawProgramsData().first() shouldBe emptyList()
             }
         }
 
@@ -231,7 +230,7 @@ class AnnictRepositoryImplTest : BehaviorSpec({
                     )
                 } throws RuntimeException("Network Error")
 
-                repository.getProgramsWithWorks().first() shouldBe emptyList()
+                repository.getRawProgramsData().first() shouldBe emptyList()
             }
         }
 
@@ -246,7 +245,7 @@ class AnnictRepositoryImplTest : BehaviorSpec({
                 } throws CancellationException("Cancelled")
 
                 try {
-                    repository.getProgramsWithWorks().first()
+                    repository.getRawProgramsData().first()
                 } catch (e: Exception) {
                     (e is CancellationException) shouldBe true
                 }
