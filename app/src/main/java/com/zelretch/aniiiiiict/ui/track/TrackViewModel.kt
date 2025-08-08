@@ -97,24 +97,20 @@ class TrackViewModel @Inject constructor(
 
     private fun loadingPrograms() {
         executeWithLoading {
-            try {
-                loadProgramsUseCase.invoke().collect { programs ->
-                    _uiState.update { currentState ->
-                        val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
-                        val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
-                        currentState.copy(
-                            programs = filteredPrograms,
-                            availableMedia = availableFilters.media,
-                            availableSeasons = availableFilters.seasons,
-                            availableYears = availableFilters.years,
-                            availableChannels = availableFilters.channels,
-                            allPrograms = programs,
-                            error = null
-                        )
-                    }
+            loadProgramsUseCase.invoke().collect { programs ->
+                _uiState.update { currentState ->
+                    val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
+                    val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
+                    currentState.copy(
+                        programs = filteredPrograms,
+                        availableMedia = availableFilters.media,
+                        availableSeasons = availableFilters.seasons,
+                        availableYears = availableFilters.years,
+                        availableChannels = availableFilters.channels,
+                        allPrograms = programs,
+                        error = null
+                    )
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
@@ -143,18 +139,49 @@ class TrackViewModel @Inject constructor(
 
                     // AniListから作品情報を取得し、最終話判定を行う
                     val program = _uiState.value.allPrograms.find { it.work.id == workId }
+                    logger.info(
+                        TAG,
+                        "[DEBUG_LOG] allPrograms size: ${_uiState.value.allPrograms.size}",
+                        "TrackViewModel.recordEpisode"
+                    )
+                    logger.info(TAG, "[DEBUG_LOG] program: $program", "TrackViewModel.recordEpisode")
+                    
                     val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
-
+                    logger.info(TAG, "[DEBUG_LOG] currentEpisode: $currentEpisode", "TrackViewModel.recordEpisode")
+                    
                     if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
+                        logger.info(
+                            TAG,
+                            "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}",
+                            "TrackViewModel.recordEpisode"
+                        )
                         val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number, program.work.id.toInt())
+                        logger.info(TAG, "[DEBUG_LOG] judgeResult: $judgeResult", "TrackViewModel.recordEpisode")
                         if (judgeResult.isFinale) {
+                            logger.info(
+                                TAG,
+                                "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId",
+                                "TrackViewModel.recordEpisode"
+                            )
                             _uiState.update {
                                 it.copy(
                                     showFinaleConfirmationForWorkId = workId,
                                     showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
                                 )
                             }
+                        } else {
+                            logger.info(
+                                TAG,
+                                "[DEBUG_LOG] judgeResult.isFinale is false",
+                                "TrackViewModel.recordEpisode"
+                            )
                         }
+                    } else {
+                        logger.info(
+                            TAG,
+                            "[DEBUG_LOG] program or currentEpisode is null, or episode number is null",
+                            "TrackViewModel.recordEpisode"
+                        )
                     }
                 }.onFailure { e ->
                     _uiState.update {
@@ -197,8 +224,10 @@ class TrackViewModel @Inject constructor(
     fun updateViewState(workId: String, status: StatusState) {
         (externalScope ?: viewModelScope).launch {
             try {
+                // Use a dummy episodeId since we're only updating the status
+                // Set shouldUpdateStatus to true to force status update
                 runCatching {
-                    updateViewState(workId, status)
+                    watchEpisodeUseCase("", workId, status, true).getOrThrow()
                 }.onSuccess {
                     _uiState.update {
                         it.copy(
