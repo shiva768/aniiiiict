@@ -6,19 +6,18 @@ import com.apollographql.apollo.api.Optional
 import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiiict.data.model.*
+import com.zelretch.aniiiiiict.data.model.Episode
+import com.zelretch.aniiiiiict.data.model.PaginatedRecords
+import com.zelretch.aniiiiiict.data.model.Record
+import com.zelretch.aniiiiiict.data.model.Work
 import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(
@@ -106,13 +105,13 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getProgramsWithWorks(): Flow<List<ProgramWithWork>> {
+    override suspend fun getRawProgramsData(): Flow<List<ViewerProgramsQuery.Node?>> {
         return flow {
             try {
                 logger.info(
                     TAG,
                     "プログラム一覧の取得を開始",
-                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                    "AnnictRepositoryImpl.getRawProgramsData"
                 )
 
                 // キャンセルされた場合は例外をスローせずに空のリストを返す
@@ -120,7 +119,7 @@ class AnnictRepositoryImpl @Inject constructor(
                     logger.info(
                         TAG,
                         "処理がキャンセルされたため、実行をスキップします",
-                        "AnnictRepositoryImpl.getProgramsWithWorks"
+                        "AnnictRepositoryImpl.getRawProgramsData"
                     )
                     emit(emptyList())
                     return@flow
@@ -132,7 +131,7 @@ class AnnictRepositoryImpl @Inject constructor(
                     logger.error(
                         TAG,
                         "アクセストークンがありません",
-                        "AnnictRepositoryImpl.getProgramsWithWorks"
+                        "AnnictRepositoryImpl.getRawProgramsData"
                     )
                     emit(emptyList())
                     return@flow
@@ -141,20 +140,20 @@ class AnnictRepositoryImpl @Inject constructor(
                 val query = ViewerProgramsQuery()
                 val response = annictApolloClient.executeQuery(
                     operation = query,
-                    context = "AnnictRepositoryImpl.getProgramsWithWorks"
+                    context = "AnnictRepositoryImpl.getRawProgramsData"
                 )
 
                 logger.info(
                     TAG,
                     "GraphQLのレスポンス: ${response.data != null}",
-                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                    "AnnictRepositoryImpl.getRawProgramsData"
                 )
 
                 if (response.hasErrors()) {
                     logger.error(
                         TAG,
                         "GraphQLエラー: ${response.errors}",
-                        "AnnictRepositoryImpl.getProgramsWithWorks"
+                        "AnnictRepositoryImpl.getRawProgramsData"
                     )
                     emit(emptyList())
                     return@flow
@@ -164,17 +163,10 @@ class AnnictRepositoryImpl @Inject constructor(
                 logger.info(
                     TAG,
                     "取得したプログラム数: ${programs?.size ?: 0}",
-                    "AnnictRepositoryImpl.getProgramsWithWorks"
+                    "AnnictRepositoryImpl.getRawProgramsData"
                 )
 
-                val programsWithWorks = processProgramsResponse(programs)
-                logger.info(
-                    TAG,
-                    "変換後のプログラム数: ${programsWithWorks.size}",
-                    "AnnictRepositoryImpl.getProgramsWithWorks"
-                )
-
-                emit(programsWithWorks)
+                emit(programs ?: emptyList())
             } catch (e: Exception) {
                 // キャンセル例外の場合は再スローして上位で処理
                 if (e is kotlinx.coroutines.CancellationException) throw e
@@ -183,73 +175,6 @@ class AnnictRepositoryImpl @Inject constructor(
                 emit(emptyList())
             }
         }
-    }
-
-    private fun processProgramsResponse(responsePrograms: List<ViewerProgramsQuery.Node?>?): List<ProgramWithWork> {
-        val programs = responsePrograms?.mapNotNull { node ->
-            if (node == null) return@mapNotNull null
-            val startedAt = try {
-                // Parse the UTC datetime string to ZonedDateTime
-                val utcDateTime = ZonedDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
-                // Convert to JST timezone
-                val jstDateTime = utcDateTime.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
-                // Convert to LocalDateTime
-                jstDateTime.toLocalDateTime()
-            } catch (_: Exception) {
-                LocalDateTime.now() // パースに失敗した場合は現在時刻を使用
-            }
-
-            val channel = Channel(
-                name = node.channel.name
-            )
-
-            val episode = Episode(
-                id = node.episode.id,
-                number = node.episode.number,
-                numberText = node.episode.numberText,
-                title = node.episode.title
-            )
-
-            val workImage = node.work.image?.let { image ->
-                WorkImageModel(
-                    recommendedImageUrl = image.recommendedImageUrl,
-                    facebookOgImageUrl = image.facebookOgImageUrl
-                )
-            }
-
-            val work = Work(
-                id = node.work.id,
-                title = node.work.title,
-                seasonName = node.work.seasonName,
-                seasonYear = node.work.seasonYear,
-                media = node.work.media.toString(),
-                viewerStatusState = node.work.viewerStatusState ?: StatusState.UNKNOWN__,
-                image = workImage
-            )
-
-            val program = Program(
-                id = node.id,
-                startedAt = startedAt,
-                channel = channel,
-                episode = episode
-            )
-
-            program to work
-        } ?: emptyList()
-
-        // 各作品のプログラムをすべて保持し、最初のエピソードも特定する
-        return programs
-            .groupBy { it.second.title }
-            .map { (_, grouped) ->
-                val sortedPrograms = grouped.sortedBy { it.first.episode.number ?: Int.MAX_VALUE }
-                val firstProgram = sortedPrograms.firstOrNull()!!
-                ProgramWithWork(
-                    programs = sortedPrograms.map { it.first },
-                    firstProgram = firstProgram.first,
-                    work = firstProgram.second
-                )
-            }
-            .sortedBy { it.firstProgram.startedAt }
     }
 
     override suspend fun getRecords(after: String?): PaginatedRecords = executeApiRequest(

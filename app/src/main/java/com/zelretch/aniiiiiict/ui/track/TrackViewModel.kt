@@ -98,7 +98,7 @@ class TrackViewModel @Inject constructor(
     private fun loadingPrograms() {
         executeWithLoading {
             try {
-                loadProgramsUseCase().collect { programs ->
+                loadProgramsUseCase.invoke().collect { programs ->
                     _uiState.update { currentState ->
                         val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
                         val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
