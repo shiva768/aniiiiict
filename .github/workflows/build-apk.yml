@@ -40,8 +40,15 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleDebug
 
+      - name: Get timestamp
+        id: timestamp
+        run: echo "value=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
+      - name: Rename APK
+        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: app-debug-${{ steps.timestamp.outputs.value }}
+          path: app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
