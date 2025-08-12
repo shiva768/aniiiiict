@@ -91,7 +91,6 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    // TODO: この部分がドメインと分離できてない
     fun deleteRecord(recordId: String) {
         executeWithLoading {
             deleteRecordUseCase(recordId)
@@ -99,17 +98,9 @@ class HistoryViewModel @Inject constructor(
                 val newAllRecords = currentState.allRecords.filter { it.id != recordId }
                 currentState.copy(
                     allRecords = newAllRecords,
-                    records = filterRecords(newAllRecords, currentState.searchQuery)
+                    records = searchRecordsUseCase(newAllRecords, currentState.searchQuery)
                 )
             }
-        }
-    }
-
-    // TODO: こっちも
-    private fun filterRecords(records: List<Record>, query: String): List<Record> {
-        if (query.isEmpty()) return records
-        return records.filter { record ->
-            record.work.title.contains(query, ignoreCase = true)
         }
     }
 } 
