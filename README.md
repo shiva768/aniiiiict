@@ -73,8 +73,9 @@ cp local.properties.example local.properties
 - [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) 1.9.0 - 非同期処理
 - [Coil](https://coil-kt.github.io/coil/) 2.5.0 - 画像読み込み
 - [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.9.0 - 画面遷移
-- [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.1.20 - Compose用Kotlinプラグイン
-- [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.1.20-1.0.32 - Kotlin Symbol Processing
+- [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.0.0 - Compose用Kotlinプラグイン
+- [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.0.0-1.0.21 - Kotlin Symbol Processing
+- [Secrets Gradle Plugin](https://github.com/google/secrets-gradle-plugin) 2.0.1 - APIキー管理プラグイン
 
 ## アーキテクチャ
 
