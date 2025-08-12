@@ -1,5 +1,3 @@
-import java.util.*
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,14 +5,10 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.apollo)
+    alias(libs.plugins.secrets.gradle.plugin)
 }
 
-val localProperties = Properties().apply {
-    val localPropertiesFile = project.rootProject.file("local.properties")
-    if (localPropertiesFile.exists()) {
-        load(localPropertiesFile.inputStream())
-    }
-}
+
 
 android {
     namespace = "com.zelretch.aniiiiiict"
@@ -38,12 +32,7 @@ android {
             "ANNICT_CLIENT_ID",
             "\"9TBFInCwtgcRuVcK-F892iXt8vQmSci6rbAYg3eNHgk\""
         )
-        // CLIENT_SECRETはlocal.propertiesから読み込み
-        buildConfigField(
-            "String",
-            "ANNICT_CLIENT_SECRET",
-            "\"${localProperties.getProperty("ANNICT_CLIENT_SECRET", "")}\""
-        )
+
         buildConfigField(
             "String",
             "ANILIST_API_URL",
@@ -103,11 +92,13 @@ tasks.withType<Test> {
 }
 
 dependencies {
-    // Android Core
+    // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.navigation.compose)
 
     // Compose
     implementation(platform(libs.compose.bom))
@@ -116,33 +107,25 @@ dependencies {
     implementation(libs.compose.material.icons)
     implementation(libs.compose.material)
 
-    // Hilt
+    // DI (Hilt)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    // Retrofit & OkHttp
+    // Network
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.okhttp)
+    implementation(libs.bundles.apollo)
 
-    // Coroutines
+    // Async
     implementation(libs.coroutines.android)
-    testImplementation(libs.coroutines.test)
 
-    // Coil
+    // UI
     implementation(libs.coil)
     implementation(libs.coil.compose)
 
-    // Navigation
-    implementation(libs.navigation.compose)
-
-    // Apollo Client
-    implementation(libs.bundles.apollo)
-
-    // DataStore
-    implementation(libs.androidx.datastore.preferences)
-
     // Testing
+    testImplementation(libs.coroutines.test)
     testImplementation(libs.bundles.testing)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.android.testing)
