@@ -8,3 +8,7 @@ plugins {
     alias(libs.plugins.apollo) apply false
 }
 
+// Note: Static analysis tools (detekt, ktlint) are configured in individual modules
+// to avoid dependency resolution issues in environments with limited network access.
+// See app/build.gradle.kts for static analysis configuration.
+
