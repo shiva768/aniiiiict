@@ -53,14 +53,11 @@ android {
     }
 
     signingConfigs {
-        // GHAビルド時のみデバッグ署名設定を適用
-        if (System.getenv("CI") != null) {
-            getByName("debug").apply {
-                storeFile = file("${rootDir}/app/debug.keystore")
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            }
+        getByName("debug").apply {
+            storeFile = file("${rootDir}/app/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
     buildTypes {
@@ -183,7 +180,7 @@ kotlin {
 // Static Analysis Configuration
 detekt {
     toolVersion = libs.versions.detekt.get()
-    config.setFrom(file("${rootDir}/detekt.yml"))
+    config.setFrom(file("$rootDir/detekt.yml"))
     buildUponDefaultConfig = true
 }
 
@@ -213,4 +210,6 @@ tasks.register("staticAnalysis") {
     group = "verification"
     description = "Run all static analysis tools"
     dependsOn("detekt", "ktlintCheck")
+}
+
 }

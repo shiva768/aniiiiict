@@ -4,6 +4,16 @@
 build:
   maxIssues: 0
   excludeCorrectable: false
+  weights:
+    # Complexity: 2
+    # LongParameterList: 1
+    # LongMethod: 1
+    # LargeClass: 1
+    # complexity: 2
+    # comments: 1
+    # LongParameterList: 1
+    # LongMethod: 1
+    # LargeClass: 1
 
 config:
   validation: true
@@ -12,6 +22,9 @@ config:
 
 processors:
   active: true
+  exclude:
+    # 特定のファイルパターンを除外（必要に応じて調整）
+    - 'DetektProgressListener'
 
 console-reports:
   active: true
@@ -57,7 +70,7 @@ complexity:
     threshold: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
-  CyclomaticComplexMethod:
+  ComplexMethod:
     active: true
     threshold: 15
     ignoreSingleWhenExpression: false
@@ -175,6 +188,7 @@ exceptions:
       - 'toString'
   InstanceOfCheckForException:
     active: true
+    excludeRootException: true
   NotImplementedDeclaration:
     active: false
   ObjectExtendsThrowable:
@@ -200,7 +214,7 @@ exceptions:
     active: false
   ThrowingExceptionsWithoutMessageOrCause:
     active: true
-    exceptions:
+    excludedExceptionTypes:
       - 'IllegalArgumentException'
       - 'IllegalStateException'
       - 'IOException'
@@ -380,6 +394,7 @@ naming:
     parameterPattern: '[a-z][A-Za-z0-9]*'
     privateParameterPattern: '[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
+    ignoreOverridden: true
   EnumNaming:
     active: true
     enumEntryPattern: '[A-Z][_a-zA-Z0-9]*'
@@ -396,11 +411,14 @@ naming:
     active: true
     excludeClassPattern: '$^'
     functionPattern: '[a-z][a-zA-Z0-9]*'
+    excludeAnnotatedFunction: ['Composable']
+    ignoreOverridden: true
     ignoreAnnotated: ['Composable']
   FunctionParameterNaming:
     active: true
     parameterPattern: '[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
+    ignoreOverridden: true
   InvalidPackageDeclaration:
     active: true
     rootPackage: ''
@@ -442,6 +460,7 @@ naming:
     variablePattern: '[a-z][A-Za-z0-9]*'
     privateVariablePattern: '(_)?[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
+    ignoreOverridden: true
 
 performance:
   active: true
@@ -452,8 +471,10 @@ performance:
     threshold: 3
   ForEachOnRange:
     active: true
+    excludeAnnotatedFunction: []
   SpreadOperator:
     active: true
+    excludeAnnotatedFunction: []
   UnnecessaryTemporaryInstantiation:
     active: true
 
@@ -471,6 +492,8 @@ potential-bugs:
     active: false
   DoubleMutabilityForCollection:
     active: true
+  DuplicateCaseInWhenExpression:
+    active: true
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
   EqualsWithHashCodeExist:
@@ -483,7 +506,7 @@ potential-bugs:
     active: false
   IgnoredReturnValue:
     active: false
-    restrictToConfig: true
+    restrictToAnnotatedMethods: true
     returnValueAnnotations:
       - 'CheckReturnValue'
       - '*.CheckReturnValue'
@@ -502,15 +525,20 @@ potential-bugs:
     active: true
   LateinitUsage:
     active: false
-    ignoreAnnotated: []
+    excludeAnnotatedProperties: []
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
     active: true
   MissingPackageDeclaration:
     active: false
     excludes: ['**/*.kts']
+  MissingWhenCase:
+    active: true
+    allowElseExpression: true
   NullableToStringCall:
     active: false
+  RedundantElseInWhen:
+    active: true
   UnconditionalJumpStatementInLoop:
     active: true
   UnnecessaryNotNullOperator:
@@ -545,6 +573,8 @@ style:
     active: false
   CollapsibleIfStatements:
     active: false
+  DataClassContainsFunction:
+    active: false
   DataClassShouldBeImmutable:
     active: false
   DestructuringDeclarationWithTooManyEntries:
@@ -563,7 +593,7 @@ style:
     includeLineWrapping: false
   ForbiddenComment:
     active: true
-    comments:
+    values:
       - 'FIXME:'
       - 'STOPSHIP:'
       - 'TODO:'
@@ -577,6 +607,9 @@ style:
     methods:
       - 'kotlin.io.print'
       - 'kotlin.io.println'
+  ForbiddenPublicDataClass:
+    active: false
+    excludes: ['**']
   ForbiddenVoid:
     active: true
     ignoreOverridden: false
@@ -586,6 +619,12 @@ style:
     ignoreOverridableFunction: true
     ignoreActualFunction: true
     excludedFunctions: []
+  LibraryCodeMustSpecifyReturnType:
+    active: true
+    excludes: ['**']
+  LibraryEntitiesShouldNotBePublic:
+    active: false
+    excludes: ['**']
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
@@ -607,9 +646,9 @@ style:
     ignoreEnums: false
     ignoreRanges: false
     ignoreExtensionFunctions: true
-  BracesOnIfStatements:
+  MandatoryBracesIfStatements:
     active: false
-  BracesOnWhenStatements:
+  MandatoryBracesLoops:
     active: false
   MaxLineLength:
     active: true
@@ -636,6 +675,8 @@ style:
   OptionalAbstractKeyword:
     active: true
   OptionalUnit:
+    active: false
+  OptionalWhenBraces:
     active: false
   PreferToOverPairSyntax:
     active: false
