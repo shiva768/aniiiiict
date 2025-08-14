@@ -118,6 +118,33 @@ chmod +x .git/hooks/pre-commit
 - [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.0.0 - Compose用Kotlinプラグイン
 - [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.0.0-1.0.21 - Kotlin Symbol Processing
 - [Secrets Gradle Plugin](https://github.com/google/secrets-gradle-plugin) 2.0.1 - APIキー管理プラグイン
+
+## ビルド要件
+
+### ネットワークアクセス要件
+
+このプロジェクトを正常にビルドするには、以下のリポジトリへのアクセスが必要です：
+
+- **Google Maven Repository** (`dl.google.com`) - Android Gradle Plugin
+- **Gradle Plugin Portal** (`plugins.gradle.org`) - 静的解析プラグイン
+- **Maven Central** (`repo1.maven.org`) - その他の依存関係
+
+### 推奨開発環境
+
+1. **Android Studio** - 事前キャッシュされた依存関係で最も確実
+2. **直接インターネットアクセスのあるローカル環境**
+3. **適切に設定された企業プロキシ環境**
+
+### トラブルシューティング
+
+ビルドに問題がある場合：
+
+```bash
+# 環境診断スクリプトを実行
+./scripts/setup-dev-tools.sh
+```
+
+詳細なトラブルシューティングガイド: [docs/BUILD_ENVIRONMENT.md](docs/BUILD_ENVIRONMENT.md)
 - [Detekt](https://detekt.dev/) 1.23.7 - 静的解析ツール
 - [ktlint](https://ktlint.github.io/) 12.1.1 - Kotlinコードフォーマッター
 
