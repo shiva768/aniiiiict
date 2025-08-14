@@ -40,6 +40,9 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleDebug
 
+      - name: Run static analysis
+        run: ./gradlew staticAnalysis
+
       - name: Get timestamp
         id: timestamp
         run: echo "value=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT

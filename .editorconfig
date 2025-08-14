@@ -1,0 +1,52 @@
+# EditorConfig は複数の開発者とエディター間でコーディングスタイルを統一するためのファイルです
+# https://editorconfig.org
+
+# トップレベルの EditorConfig ファイルであることを示します
+root = true
+
+# すべてのファイルに適用
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Kotlin ファイル
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
+
+# XML ファイル (Android layout等)
+[*.xml]
+indent_style = space
+indent_size = 4
+
+# Gradle ファイル
+[*.gradle.kts]
+indent_style = space
+indent_size = 4
+
+[*.gradle]
+indent_style = space
+indent_size = 4
+
+# YAML ファイル
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON ファイル
+[*.json]
+indent_style = space
+indent_size = 2
+
+# Markdown ファイル
+[*.md]
+trim_trailing_whitespace = false
+
+# Properties ファイル
+[*.properties]
+indent_style = space
+indent_size = 4

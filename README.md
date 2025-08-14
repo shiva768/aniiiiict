@@ -20,7 +20,7 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 - Android Studio Hedgehog | 2023.1.1 以上
 - JDK 17以上
 - Android SDK 35以上
-- Gradle 8.9.1以上
+- Gradle 8.5以上
 
 ### セットアップ手順
 
@@ -60,6 +60,37 @@ cp local.properties.example local.properties
 - Gradleの同期を実行
 - アプリをビルドして実行
 
+## 開発ツール
+
+### 静的解析ツール
+
+コードの品質と一貫性を維持するため、以下の静的解析ツールを導入しています：
+
+#### Detekt
+- **目的**: コードの複雑度、潜在的なバグ、アンチパターンの検出
+- **設定ファイル**: `detekt.yml`
+- **実行**: `./gradlew detekt`
+
+#### ktlint
+- **目的**: Kotlinコーディングスタイルの強制とフォーマット統一
+- **設定ファイル**: `.editorconfig`
+- **実行**: 
+  - チェック: `./gradlew ktlintCheck`
+  - フォーマット: `./gradlew ktlintFormat`
+
+#### 便利なコマンド
+
+```bash
+# 全ての静的解析を実行
+./gradlew staticAnalysis
+
+# コードフォーマットを実行
+./gradlew formatCode
+
+# コードスタイルをチェック
+./gradlew checkCodeStyle
+```
+
 ## 技術スタック
 
 - [Kotlin](https://kotlinlang.org/) 2.0.0 - プログラミング言語
@@ -76,6 +107,8 @@ cp local.properties.example local.properties
 - [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.0.0 - Compose用Kotlinプラグイン
 - [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.0.0-1.0.21 - Kotlin Symbol Processing
 - [Secrets Gradle Plugin](https://github.com/google/secrets-gradle-plugin) 2.0.1 - APIキー管理プラグイン
+- [Detekt](https://detekt.dev/) 1.23.7 - 静的解析ツール
+- [ktlint](https://ktlint.github.io/) 12.1.1 - Kotlinコードフォーマッター
 
 ## アーキテクチャ
 

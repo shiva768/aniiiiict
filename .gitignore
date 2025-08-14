@@ -9,3 +9,10 @@
 .cxx
 local.properties 
 /app/build/
+
+# Static analysis reports
+/reports/
+**/reports/
+detekt-report.html
+detekt-report.xml
+ktlint-report.xml

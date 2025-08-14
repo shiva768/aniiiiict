@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.apollo)
     alias(libs.plugins.secrets.gradle.plugin)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.ktlint)
 }
 
 
@@ -136,6 +138,9 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
+
+    // Static Analysis
+    detektPlugins(libs.detekt.formatting)
 }
 
 apollo {
@@ -166,4 +171,17 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+// Additional tasks for static analysis
+tasks.register("formatCode") {
+    group = "formatting"
+    description = "Format code using ktlint and detekt"
+    dependsOn("ktlintFormat")
+}
+
+tasks.register("checkCodeStyle") {
+    group = "verification"
+    description = "Check code style using ktlint and detekt"
+    dependsOn("ktlintCheck", "detekt")
 }
