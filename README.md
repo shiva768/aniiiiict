@@ -24,19 +24,7 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 
 ### セットアップ手順
 
-#### ⚠️ ネットワーク要件
 
-Android開発には以下のドメインへのアクセスが必要です：
-- `dl.google.com` (Google Maven Repository) - **必須**
-- `repo.maven.apache.org` (Maven Central)
-- `plugins.gradle.org` (Gradle Plugin Portal)
-
-企業ネットワークやCI環境でビルドエラーが発生する場合は、[ネットワーク要件](docs/NETWORK_REQUIREMENTS.md)を確認してください。
-
-```bash
-# ネットワーク接続診断
-./scripts/network-check.sh
-```
 
 #### 1. リポジトリをクローン
 
@@ -158,7 +146,7 @@ chmod +x .git/hooks/pre-commit
 ./scripts/setup-dev-tools.sh
 ```
 
-詳細なトラブルシューティングガイド: [docs/BUILD_ENVIRONMENT.md](docs/BUILD_ENVIRONMENT.md)
+
 - [Detekt](https://detekt.dev/) 1.23.7 - 静的解析ツール
 - [ktlint](https://ktlint.github.io/) 12.1.1 - Kotlinコードフォーマッター
 

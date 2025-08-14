@@ -88,8 +88,6 @@ else
     echo "      gradle.properties: systemProp.https.proxyPort=8080"
     echo "   3. Use Android Studio IDE (pre-cached dependencies)"
     echo "   4. Check firewall/allowlist settings"
-    echo ""
-    echo "📖 For detailed troubleshooting, see: docs/BUILD_ENVIRONMENT.md"
     
     exit 1
 fi
@@ -114,5 +112,4 @@ fi
 
 echo ""
 echo "📖 For more information:"
-echo "   - Build troubleshooting: docs/BUILD_ENVIRONMENT.md"
 echo "   - Static analysis guide: docs/STATIC_ANALYSIS_GUIDE.md"
