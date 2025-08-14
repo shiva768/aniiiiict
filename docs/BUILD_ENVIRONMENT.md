@@ -1,53 +1,50 @@
-# ビルド環境に関する重要な注意事項
+# ビルド環境設定ガイド
 
-## 概要
+## ⚠️ 重要: ネットワーク接続の要件
 
-このプロジェクトにはAndroid開発と静的解析ツールが含まれており、適切なビルドにはインターネットアクセスが必要です。
+このプロジェクトのビルドには、以下のドメインへのアクセスが必要です：
 
-## 前提条件
+- `https://dl.google.com` (Google Maven Repository)
+- `https://maven.pkg.jetbrains.space` (JetBrains Space)
+- `https://www.jitpack.io` (JitPack)
+- `https://repo.maven.apache.org` (Maven Central)
+- `https://plugins.gradle.org` (Gradle Plugin Portal)
 
-### 必要なネットワークアクセス
+## 🔍 ネットワーク接続の診断
 
-ビルドが成功するには、以下のリポジトリへのアクセスが必要です：
+プロジェクトルートで以下のコマンドを実行してください：
 
-1. **Google Maven Repository** (`https://dl.google.com`)
-   - Android Gradle Plugin
-   - Android SDK関連の依存関係
+```bash
+./scripts/network-check.sh
+```
 
-2. **Gradle Plugin Portal** (`https://plugins.gradle.org`)
-   - Detekt、ktlint等の静的解析プラグイン
+このスクリプトは必要なドメインへの接続を確認し、問題がある場合は解決方法を提示します。
 
-3. **Maven Central** (`https://repo1.maven.org`)
-   - その他のライブラリ依存関係
+## 🚨 ビルドエラーの解決
 
-### ビルド問題のトラブルシューティング
-
-#### 問題: Android Gradle Plugin が見つからない
+### エラー: "Plugin was not found"
 
 ```
 Plugin [id: 'com.android.application', version: 'X.X.X', apply: false] was not found
 ```
 
-**原因**: Google Maven Repositoryにアクセスできません。
+**原因**: 必要なリポジトリにアクセスできません。
 
 **解決方法**:
-1. インターネット接続を確認
-2. 企業ネットワークの場合、プロキシ設定を確認
-3. Android Studioの環境で実行（キャッシュされた依存関係を使用）
 
-#### 問題: 静的解析プラグインが利用できない
+1. **ネットワーク管理者への連絡** (推奨)
+   - 上記のドメインをallowlistに追加してもらう
 
-**解決方法**:
-環境変数を設定して静的解析をスキップ：
+2. **プロキシ設定**
+   ```bash
+   export GRADLE_OPTS="-Dhttp.proxyHost=proxy.company.com -Dhttp.proxyPort=8080"
+   export GRADLE_OPTS="$GRADLE_OPTS -Dhttps.proxyHost=proxy.company.com -Dhttps.proxyPort=8080"
+   ```
 
-```bash
-export SKIP_STATIC_ANALYSIS=true
-./gradlew build
-```
+3. **Android Studio使用** (オフライン対応)
+   - 初回セットアップ後はキャッシュされた依存関係を使用
 
-## 開発環境の設定
-
-### 推奨する開発環境
+## 📋 環境別の対応方法
 
 1. **Android Studio**
    - 事前に依存関係がキャッシュされているため最も確実

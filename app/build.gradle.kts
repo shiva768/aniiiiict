@@ -1,3 +1,10 @@
+// NOTE: Android build requires network access to Google Maven Repository
+// This build file is designed to work when network access is available
+// If you encounter "Plugin was not found" errors, check network connectivity to:
+// - https://dl.google.com (Google Maven Repository)
+// - https://maven.pkg.jetbrains.space
+// - https://www.jitpack.io
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
