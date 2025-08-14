@@ -91,6 +91,17 @@ cp local.properties.example local.properties
 ./gradlew checkCodeStyle
 ```
 
+詳細な設定方法や使用方法については、[静的解析ガイド](docs/STATIC_ANALYSIS_GUIDE.md)を参照してください。
+
+#### オプション：プリコミットフック
+
+コミット前に自動で静的解析を実行したい場合は、以下のコマンドでプリコミットフックを設定できます：
+
+```bash
+cp scripts/pre-commit-hook.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
 ## 技術スタック
 
 - [Kotlin](https://kotlinlang.org/) 2.0.0 - プログラミング言語
