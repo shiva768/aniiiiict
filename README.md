@@ -24,14 +24,28 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 
 ### セットアップ手順
 
-1. リポジトリをクローン
+#### ⚠️ ネットワーク要件
+
+Android開発には以下のドメインへのアクセスが必要です：
+- `dl.google.com` (Google Maven Repository) - **必須**
+- `repo.maven.apache.org` (Maven Central)
+- `plugins.gradle.org` (Gradle Plugin Portal)
+
+企業ネットワークやCI環境でビルドエラーが発生する場合は、[ネットワーク要件](docs/NETWORK_REQUIREMENTS.md)を確認してください。
+
+```bash
+# ネットワーク接続診断
+./scripts/network-check.sh
+```
+
+#### 1. リポジトリをクローン
 
 ```bash
 git clone https://github.com/your-username/aniiiiiict.git
 cd aniiiiiict
 ```
 
-2. Annictの開発者アカウントを作成
+#### 2. Annictの開発者アカウントを作成
 
 - [Annict](https://annict.com)にアクセス
 - アカウントを作成（まだの場合）
@@ -42,7 +56,7 @@ cd aniiiiiict
     - コールバックURL：`aniiiiiict://oauth/callback`
     - スコープ：`read write`
 
-3. 認証情報の設定
+#### 3. 認証情報の設定
 
 - `local.properties.example`を`local.properties`にコピー
 
