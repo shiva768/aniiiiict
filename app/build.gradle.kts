@@ -211,5 +211,3 @@ tasks.register("staticAnalysis") {
     description = "Run all static analysis tools"
     dependsOn("detekt", "ktlintCheck")
 }
-
-}
