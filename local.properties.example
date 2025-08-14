@@ -1,6 +1,12 @@
-# SDK location
-sdk.dir=/path/to/your/android/sdk
+# Android SDK location
+# For standard Android Studio installations:
+# - Windows: C:\Users\<username>\AppData\Local\Android\Sdk
+# - macOS: /Users/<username>/Library/Android/sdk
+# - Linux: /home/<username>/Android/Sdk
+# - CI/CD environments: /usr/local/lib/android/sdk
+sdk.dir=/usr/local/lib/android/sdk
 
 # Annict API credentials
 # Get these from https://annict.com/oauth/applications
+# For development, you can use a dummy value if you're not testing API functionality
 ANNICT_CLIENT_SECRET=your_client_secret_here 

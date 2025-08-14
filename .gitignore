@@ -9,6 +9,7 @@
 .cxx
 local.properties 
 /app/build/
+.kotlin
 
 # Static analysis reports
 /reports/
