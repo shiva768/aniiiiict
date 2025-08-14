@@ -1,14 +1,12 @@
 [versions]
 # Plugins
-agp = "8.3.2"
+agp = "8.10.1"
 kotlin = "2.0.0"
 kotlin-compose = "2.0.0"
 ksp = "2.0.0-1.0.21"
 hilt = "2.56"
 apollo = "4.2.0"
 secrets-gradle-plugin = "2.0.1"
-detekt = "1.23.7"
-ktlint = "12.1.1"
 
 # AndroidX
 core-ktx = "1.16.0"
@@ -111,9 +109,6 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidx-test-core" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
 
-# Static Analysis
-detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
-
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -124,8 +119,6 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }
 secrets-gradle-plugin = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secrets-gradle-plugin" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 
 [bundles]
 compose-ui = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview"]
