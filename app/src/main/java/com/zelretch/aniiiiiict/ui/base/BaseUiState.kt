@@ -5,5 +5,5 @@ package com.zelretch.aniiiiiict.ui.base
  */
 open class BaseUiState(
     open val isLoading: Boolean = false,
-    open val error: String? = null
+    open val error: String? = null,
 )

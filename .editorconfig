@@ -17,6 +17,7 @@ indent_style = space
 indent_size = 4
 max_line_length = 120
 ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
+ij_kotlin_packages_to_use_import_on_demand = java.util.*
 
 # XML ファイル (Android layout等)
 [*.xml]
@@ -50,3 +51,6 @@ trim_trailing_whitespace = false
 [*.properties]
 indent_style = space
 indent_size = 4
+
+[**/ui/**/*.kt]
+ktlint_standard_function-naming = disabled

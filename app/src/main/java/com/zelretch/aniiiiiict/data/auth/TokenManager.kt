@@ -7,72 +7,74 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TokenManager @Inject constructor(
-    context: Context,
-    private val logger: Logger
-) {
-    companion object {
-        private const val TAG = "TokenManager"
-        private const val PREFS_NAME = "annict_prefs"
-        private const val TOKEN_KEY = "access_token"
-    }
-
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    fun saveAccessToken(token: String) {
-        if (token.isBlank()) {
-            logger.error(
-                TAG,
-                "空のトークンを保存しようとしました",
-                "saveAccessToken"
-            )
-            return
+class TokenManager
+    @Inject
+    constructor(
+        context: Context,
+        private val logger: Logger,
+    ) {
+        companion object {
+            private const val TAG = "TokenManager"
+            private const val PREFS_NAME = "annict_prefs"
+            private const val TOKEN_KEY = "access_token"
         }
 
-        logger.info(
-            TAG,
-            "アクセストークンを保存: ${token.take(10)}...",
-            "saveAccessToken"
-        )
+        private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-        try {
-            prefs.edit { putString(TOKEN_KEY, token) }
-        } catch (e: Exception) {
-            logger.error(TAG, e, "アクセストークンの保存に失敗")
-        }
-    }
+        fun saveAccessToken(token: String) {
+            if (token.isBlank()) {
+                logger.error(
+                    TAG,
+                    "空のトークンを保存しようとしました",
+                    "saveAccessToken",
+                )
+                return
+            }
 
-    fun getAccessToken(): String? {
-        val token = prefs.getString(TOKEN_KEY, null)
-        if (token == null) {
-            logger.debug(
-                TAG,
-                "保存されたアクセストークンがありません",
-                "getAccessToken"
-            )
-        } else {
             logger.info(
                 TAG,
-                "アクセストークンを取得: ${token.take(10)}...",
-                "getAccessToken"
+                "アクセストークンを保存: ${token.take(10)}...",
+                "saveAccessToken",
             )
-        }
-        return token
-    }
 
-    fun clearAccessToken() {
-        try {
-            prefs.edit { remove(TOKEN_KEY) }
-            logger.info(TAG, "アクセストークンを削除", "clearAccessToken")
-        } catch (e: Exception) {
-            logger.error(TAG, e, "アクセストークンの削除に失敗")
+            try {
+                prefs.edit { putString(TOKEN_KEY, token) }
+            } catch (e: Exception) {
+                logger.error(TAG, e, "アクセストークンの保存に失敗")
+            }
+        }
+
+        fun getAccessToken(): String? {
+            val token = prefs.getString(TOKEN_KEY, null)
+            if (token == null) {
+                logger.debug(
+                    TAG,
+                    "保存されたアクセストークンがありません",
+                    "getAccessToken",
+                )
+            } else {
+                logger.info(
+                    TAG,
+                    "アクセストークンを取得: ${token.take(10)}...",
+                    "getAccessToken",
+                )
+            }
+            return token
+        }
+
+        fun clearAccessToken() {
+            try {
+                prefs.edit { remove(TOKEN_KEY) }
+                logger.info(TAG, "アクセストークンを削除", "clearAccessToken")
+            } catch (e: Exception) {
+                logger.error(TAG, e, "アクセストークンの削除に失敗")
+            }
+        }
+
+        fun hasValidToken(): Boolean {
+            val token = getAccessToken()
+            val hasToken = !token.isNullOrEmpty()
+            logger.debug(TAG, "有効なトークンがあるか: $hasToken", "hasValidToken")
+            return hasToken
         }
     }
-
-    fun hasValidToken(): Boolean {
-        val token = getAccessToken()
-        val hasToken = !token.isNullOrEmpty()
-        logger.debug(TAG, "有効なトークンがあるか: $hasToken", "hasValidToken")
-        return hasToken
-    }
-}

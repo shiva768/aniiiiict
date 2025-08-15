@@ -14,61 +14,66 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AniListApolloClient @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-    private val logger: Logger
-) {
-    companion object {
-        private const val TAG = "AniListApolloClient"
-        private const val SERVER_URL = "https://graphql.anilist.co"
-    }
+class AniListApolloClient
+    @Inject
+    constructor(
+        private val okHttpClient: OkHttpClient,
+        private val logger: Logger,
+    ) {
+        companion object {
+            private const val TAG = "AniListApolloClient"
+            private const val SERVER_URL = "https://graphql.anilist.co"
+        }
 
-    private val client by lazy {
-        ApolloClient.Builder()
-            .serverUrl(SERVER_URL)
-            .okHttpClient(OkHttpClient())
-            .build()
-    }
+        private val client by lazy {
+            ApolloClient
+                .Builder()
+                .serverUrl(SERVER_URL)
+                .okHttpClient(OkHttpClient())
+                .build()
+        }
 
-    suspend fun <D : Query.Data> executeQuery(
-        operation: Query<D>,
-        context: String,
-        cachePolicy: FetchPolicy = FetchPolicy.NetworkFirst
-    ): ApolloResponse<D> {
-        try {
-            return client.query(operation)
-                .fetchPolicy(cachePolicy)
-                .execute()
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
+        suspend fun <D : Query.Data> executeQuery(
+            operation: Query<D>,
+            context: String,
+            cachePolicy: FetchPolicy = FetchPolicy.NetworkFirst,
+        ): ApolloResponse<D> {
+            try {
+                return client
+                    .query(operation)
+                    .fetchPolicy(cachePolicy)
+                    .execute()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
 
-            logger.error(
-                TAG,
-                "GraphQLクエリの実行に失敗: ${operation.name()}",
-                context
-            )
-            throw e
+                logger.error(
+                    TAG,
+                    "GraphQLクエリの実行に失敗: ${operation.name()}",
+                    context,
+                )
+                throw e
+            }
+        }
+
+        suspend fun <D : Mutation.Data> executeMutation(
+            operation: Mutation<D>,
+            context: String,
+            cachePolicy: FetchPolicy = FetchPolicy.NetworkOnly,
+        ): ApolloResponse<D> {
+            try {
+                return client
+                    .mutation(operation)
+                    .fetchPolicy(cachePolicy)
+                    .execute()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
+                logger.error(
+                    TAG,
+                    "GraphQLミューテーションの実行に失敗: ${operation.name()}",
+                    context,
+                )
+                throw e
+            }
         }
     }
-
-    suspend fun <D : Mutation.Data> executeMutation(
-        operation: Mutation<D>,
-        context: String,
-        cachePolicy: FetchPolicy = FetchPolicy.NetworkOnly
-    ): ApolloResponse<D> {
-        try {
-            return client.mutation(operation)
-                .fetchPolicy(cachePolicy)
-                .execute()
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-
-            logger.error(
-                TAG,
-                "GraphQLミューテーションの実行に失敗: ${operation.name()}",
-                context
-            )
-            throw e
-        }
-    }
-} 

@@ -27,167 +27,171 @@ data class MainUiState(
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
-    private val annictAuthUseCase: AnnictAuthUseCase,
-    private val customTabsIntentFactory: CustomTabsIntentFactory,
-    logger: Logger,
-    @ApplicationContext private val context: Context
-) : BaseViewModel(logger) {
-    private val TAG = "MainViewModel"
-
-    // UI状態のカプセル化
-    private val _uiState = MutableStateFlow(MainUiState())
-    val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            checkAuthState()
+class MainViewModel
+    @Inject
+    constructor(
+        private val annictAuthUseCase: AnnictAuthUseCase,
+        private val customTabsIntentFactory: CustomTabsIntentFactory,
+        logger: Logger,
+        @ApplicationContext private val context: Context,
+    ) : BaseViewModel(logger) {
+        companion object {
+            private const val TAG = "MainViewModel"
         }
-    }
 
-    override fun updateLoadingState(isLoading: Boolean) {
-        _uiState.update { it.copy(isLoading = isLoading) }
-    }
+        // UI状態のカプセル化
+        private val _uiState = MutableStateFlow(MainUiState())
+        val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    override fun updateErrorState(error: String?) {
-        _uiState.update { it.copy(error = error) }
-    }
+        init {
+            viewModelScope.launch {
+                checkAuthState()
+            }
+        }
 
-    // 認証状態の確認（内部メソッド）
-    private fun checkAuthState() {
-        viewModelScope.launch {
-            try {
-                val isAuthenticated = annictAuthUseCase.isAuthenticated()
+        override fun updateLoadingState(isLoading: Boolean) {
+            _uiState.update { it.copy(isLoading = isLoading) }
+        }
 
-                // UI状態を更新
-                _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+        override fun updateErrorState(error: String?) {
+            _uiState.update { it.copy(error = error) }
+        }
 
-                // 認証されていない場合は認証を開始
-                if (!isAuthenticated) {
-                    logger.info(
-                        TAG,
-                        "認証されていないため、認証を開始します",
-                        "checkAuthState"
-                    )
-                    // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
-                }
-            } catch (e: Exception) {
-                logger.error(TAG, e, "認証状態の確認中にエラーが発生")
-                _uiState.update {
-                    it.copy(
-                        error = e.message ?: "認証状態の確認に失敗しました",
-                        isLoading = false
-                    )
+        // 認証状態の確認（内部メソッド）
+        private fun checkAuthState() {
+            viewModelScope.launch {
+                try {
+                    val isAuthenticated = annictAuthUseCase.isAuthenticated()
+
+                    // UI状態を更新
+                    _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+
+                    // 認証されていない場合は認証を開始
+                    if (!isAuthenticated) {
+                        logger.info(
+                            TAG,
+                            "認証されていないため、認証を開始します",
+                            "checkAuthState",
+                        )
+                        // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
+                    }
+                } catch (e: Exception) {
+                    logger.error(TAG, e, "認証状態の確認中にエラーが発生")
+                    _uiState.update {
+                        it.copy(
+                            error = e.message ?: "認証状態の確認に失敗しました",
+                            isLoading = false,
+                        )
+                    }
                 }
             }
         }
-    }
 
-    // 認証開始（公開メソッド）
-    fun startAuth() {
-        _uiState.update { it.copy(isAuthenticating = true) }
+        // 認証開始（公開メソッド）
+        fun startAuth() {
+            _uiState.update { it.copy(isAuthenticating = true) }
 
-        viewModelScope.launch {
-            try {
-                val authUrl = annictAuthUseCase.getAuthUrl()
-                logger.info(TAG, "認証URLを取得: $authUrl", "startAuth")
+            viewModelScope.launch {
+                try {
+                    val authUrl = annictAuthUseCase.getAuthUrl()
+                    logger.info(TAG, "認証URLを取得: $authUrl", "startAuth")
 
-                delay(200)
-
-                if (!isActive) return@launch
-
-                // Custom Tabsを使用して認証ページを開く
-                val customTabsIntent = customTabsIntentFactory.create()
-                customTabsIntent.launchUrl(context, authUrl.toUri())
-            } catch (e: Exception) {
-                logger.error(TAG, e, "認証URLの取得に失敗")
-                _uiState.update {
-                    it.copy(
-                        error = e.message ?: "認証に失敗しました",
-                        isLoading = false,
-                        isAuthenticating = false
-                    )
-                }
-            }
-        }
-    }
-
-    // 認証コールバック処理（公開メソッド）
-    fun handleAuthCallback(code: String?) {
-        viewModelScope.launch {
-            try {
-                if (code != null) {
-                    println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
                     delay(200)
 
                     if (!isActive) return@launch
 
-                    val success = annictAuthUseCase.handleAuthCallback(code)
-                    if (success) {
-                        println("MainViewModel: 認証成功")
-                        delay(300)
-                        _uiState.update { it.copy(isAuthenticating = false, isAuthenticated = true) }
+                    // Custom Tabsを使用して認証ページを開く
+                    val customTabsIntent = customTabsIntentFactory.create()
+                    customTabsIntent.launchUrl(context, authUrl.toUri())
+                } catch (e: Exception) {
+                    logger.error(TAG, e, "認証URLの取得に失敗")
+                    _uiState.update {
+                        it.copy(
+                            error = e.message ?: "認証に失敗しました",
+                            isLoading = false,
+                            isAuthenticating = false,
+                        )
+                    }
+                }
+            }
+        }
+
+        // 認証コールバック処理（公開メソッド）
+        fun handleAuthCallback(code: String?) {
+            viewModelScope.launch {
+                try {
+                    if (code != null) {
+                        println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
+                        delay(200)
+
+                        if (!isActive) return@launch
+
+                        val success = annictAuthUseCase.handleAuthCallback(code)
+                        if (success) {
+                            println("MainViewModel: 認証成功")
+                            delay(300)
+                            _uiState.update { it.copy(isAuthenticating = false, isAuthenticated = true) }
+                        } else {
+                            logger.warning(
+                                TAG,
+                                "認証が失敗しました",
+                                "handleAuthCallback",
+                            )
+                            println("MainViewModel: 認証失敗")
+                            delay(200)
+                            _uiState.update {
+                                it.copy(
+                                    error = "認証に失敗しました。再度お試しください。",
+                                    isLoading = false,
+                                    isAuthenticating = false,
+                                    isAuthenticated = false,
+                                )
+                            }
+                        }
                     } else {
                         logger.warning(
                             TAG,
-                            "認証が失敗しました",
-                            "handleAuthCallback"
+                            "認証コードがnullです",
+                            "handleAuthCallback",
                         )
-                        println("MainViewModel: 認証失敗")
+                        println("MainViewModel: 認証コードなし")
                         delay(200)
                         _uiState.update {
                             it.copy(
                                 error = "認証に失敗しました。再度お試しください。",
                                 isLoading = false,
                                 isAuthenticating = false,
-                                isAuthenticated = false
                             )
                         }
                     }
-                } else {
-                    logger.warning(
-                        TAG,
-                        "認証コードがnullです",
-                        "handleAuthCallback"
-                    )
-                    println("MainViewModel: 認証コードなし")
+                } catch (e: Exception) {
+                    logger.error(TAG, e, "認証処理に失敗")
+                    e.printStackTrace()
                     delay(200)
                     _uiState.update {
                         it.copy(
-                            error = "認証に失敗しました。再度お試しください。",
+                            error = e.message ?: "認証に失敗しました",
                             isLoading = false,
-                            isAuthenticating = false
+                            isAuthenticating = false,
                         )
                     }
                 }
-            } catch (e: Exception) {
-                logger.error(TAG, e, "認証処理に失敗")
-                e.printStackTrace()
-                delay(200)
-                _uiState.update {
-                    it.copy(
-                        error = e.message ?: "認証に失敗しました",
-                        isLoading = false,
-                        isAuthenticating = false
-                    )
-                }
             }
         }
-    }
 
-    // エラー処理（内部メソッド）
-    private fun handleError(error: Throwable) {
-        logger.error(TAG, error, "MainViewModel")
-        _uiState.update { it.copy(error = error.message) }
-    }
+        // エラー処理（内部メソッド）
+        private fun handleError(error: Throwable) {
+            logger.error(TAG, error, "MainViewModel")
+            _uiState.update { it.copy(error = error.message) }
+        }
 
-    // エラーをクリアする
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
+        // エラーをクリアする
+        fun clearError() {
+            _uiState.update { it.copy(error = null) }
+        }
 
-    // 認証状態を手動で確認する（公開メソッド）
-    fun checkAuthentication() {
-        checkAuthState()
+        // 認証状態を手動で確認する（公開メソッド）
+        fun checkAuthentication() {
+            checkAuthState()
+        }
     }
-}

@@ -21,22 +21,24 @@ fun UnwatchedEpisodesContent(
     onMarkUpToAsWatched: (Int) -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 400.dp)
-            .padding(vertical = 8.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(max = 400.dp)
+                .padding(vertical = 8.dp),
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
             )
         } else if (programs.isEmpty()) {
             Text(
                 text = "未視聴のエピソードはありません",
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(16.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.Center)
+                        .padding(16.dp),
             )
         } else {
             EpisodesList(
@@ -46,4 +48,4 @@ fun UnwatchedEpisodesContent(
             )
         }
     }
-} 
+}

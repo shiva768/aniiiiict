@@ -9,8 +9,12 @@ import kotlinx.coroutines.launch
 /**
  * 共通のローディング処理を提供する基底ViewModelクラス
  */
-abstract class BaseViewModel(val logger: Logger) : ViewModel() {
-    private val TAG = "BaseViewModel"
+abstract class BaseViewModel(
+    val logger: Logger,
+) : ViewModel() {
+    companion object {
+        private const val TAG = "BaseViewModel"
+    }
 
     /**
      * ローディング状態を更新する関数
@@ -53,4 +57,4 @@ abstract class BaseViewModel(val logger: Logger) : ViewModel() {
             }
         }
     }
-} 
+}

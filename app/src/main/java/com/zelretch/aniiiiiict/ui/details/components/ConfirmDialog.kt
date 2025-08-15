@@ -10,7 +10,7 @@ fun ConfirmDialog(
     episodeNumber: Int,
     episodeCount: Int,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -25,6 +25,6 @@ fun ConfirmDialog(
             TextButton(onClick = onDismiss) {
                 Text("キャンセル")
             }
-        }
+        },
     )
-} 
+}

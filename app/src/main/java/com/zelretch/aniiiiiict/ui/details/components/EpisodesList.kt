@@ -20,15 +20,15 @@ fun EpisodesList(
     AnimatedVisibility(
         visible = true,
         enter = fadeIn(),
-        exit = fadeOut()
+        exit = fadeOut(),
     ) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(
                 items = programs,
-                key = { it.id }
+                key = { it.id },
             ) { program ->
                 EpisodeCard(
                     program = program,
@@ -38,4 +38,4 @@ fun EpisodesList(
             }
         }
     }
-} 
+}

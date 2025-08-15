@@ -6,5 +6,5 @@ data class Program(
     val id: String,
     val startedAt: LocalDateTime,
     val channel: Channel,
-    val episode: Episode
-) 
+    val episode: Episode,
+)

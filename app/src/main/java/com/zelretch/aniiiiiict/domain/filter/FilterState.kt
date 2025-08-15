@@ -11,10 +11,10 @@ data class FilterState(
     val selectedStatus: Set<StatusState> = emptySet(),
     val searchQuery: String = "",
     val showOnlyAired: Boolean = true,
-    val sortOrder: SortOrder = SortOrder.START_TIME_DESC
+    val sortOrder: SortOrder = SortOrder.START_TIME_DESC,
 )
 
 enum class SortOrder {
-    START_TIME_ASC,  // 放送開始時間（昇順）
-    START_TIME_DESC  // 放送開始時間（降順）
-} 
+    START_TIME_ASC, // 放送開始時間（昇順）
+    START_TIME_DESC, // 放送開始時間（降順）
+}

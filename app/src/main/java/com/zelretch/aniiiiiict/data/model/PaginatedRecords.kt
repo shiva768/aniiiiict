@@ -10,5 +10,5 @@ package com.zelretch.aniiiiiict.data.model
 data class PaginatedRecords(
     val records: List<Record>,
     val hasNextPage: Boolean = false,
-    val endCursor: String? = null
-) 
+    val endCursor: String? = null,
+)

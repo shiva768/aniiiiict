@@ -3,23 +3,23 @@
     <cloud-backup>
         <include
             domain="sharedpref"
-            path="." />
+            path="."/>
         <include
             domain="database"
-            path="." />
+            path="."/>
         <include
             domain="file"
-            path="." />
+            path="."/>
     </cloud-backup>
     <device-transfer>
         <include
             domain="sharedpref"
-            path="." />
+            path="."/>
         <include
             domain="database"
-            path="." />
+            path="."/>
         <include
             domain="file"
-            path="." />
+            path="."/>
     </device-transfer>
-</data-extraction-rules> 
+</data-extraction-rules>

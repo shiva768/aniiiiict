@@ -1,11 +1,36 @@
 package com.zelretch.aniiiiiict.ui.track.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -13,7 +38,6 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
-import kotlin.reflect.KFunction8
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -23,7 +47,16 @@ fun FilterBar(
     availableSeasons: List<SeasonName>,
     availableYears: List<Int>,
     availableChannels: List<String>,
-    onFilterChange: KFunction8<Set<String>, Set<SeasonName>, Set<Int>, Set<String>, Set<StatusState>, String, Boolean, SortOrder, Unit>
+    onFilterChange: (
+        Set<String>,
+        Set<SeasonName>,
+        Set<Int>,
+        Set<String>,
+        Set<StatusState>,
+        String,
+        Boolean,
+        SortOrder,
+    ) -> Unit,
 ) {
     var showMediaDialog by remember { mutableStateOf(false) }
     var showSeasonDialog by remember { mutableStateOf(false) }
@@ -40,7 +73,7 @@ fun FilterBar(
         selectedStatus: Set<StatusState> = filterState.selectedStatus,
         searchQuery: String = filterState.searchQuery,
         showOnlyAired: Boolean = filterState.showOnlyAired,
-        sortOrder: SortOrder = filterState.sortOrder
+        sortOrder: SortOrder = filterState.sortOrder,
     ) {
         onFilterChange(
             selectedMedia,
@@ -50,22 +83,24 @@ fun FilterBar(
             selectedStatus,
             searchQuery,
             showOnlyAired,
-            sortOrder
+            sortOrder,
         )
     }
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(8.dp),
-        tonalElevation = 2.dp
+        tonalElevation = 2.dp,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             // 検索フィールド
             OutlinedTextField(
@@ -88,33 +123,33 @@ fun FilterBar(
                                     filterState.selectedStatus,
                                     "",
                                     filterState.showOnlyAired,
-                                    filterState.sortOrder
+                                    filterState.sortOrder,
                                 )
-                            }
+                            },
                         ) {
                             Icon(
                                 Icons.Default.Clear,
                                 contentDescription = "クリア",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 },
-                singleLine = true
+                singleLine = true,
             )
 
             // フィルターボタン
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 // メディアフィルター
                 FilterChip(
                     selected = filterState.selectedMedia.isNotEmpty(),
                     onClick = { showMediaDialog = true },
                     label = { Text("メディア") },
-                    leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) },
                 )
 
                 // シーズンフィルター
@@ -122,7 +157,7 @@ fun FilterBar(
                     selected = filterState.selectedSeason.isNotEmpty(),
                     onClick = { showSeasonDialog = true },
                     label = { Text("シーズン") },
-                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
                 )
 
                 // 年フィルター
@@ -130,7 +165,7 @@ fun FilterBar(
                     selected = filterState.selectedYear.isNotEmpty(),
                     onClick = { showYearDialog = true },
                     label = { Text("年") },
-                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
                 )
 
                 // チャンネルフィルター
@@ -138,7 +173,7 @@ fun FilterBar(
                     selected = filterState.selectedChannel.isNotEmpty(),
                     onClick = { showChannelDialog = true },
                     label = { Text("チャンネル") },
-                    leadingIcon = { Icon(Icons.Default.LiveTv, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Default.LiveTv, contentDescription = null) },
                 )
 
                 // ステータスフィルター
@@ -146,31 +181,31 @@ fun FilterBar(
                     selected = filterState.selectedStatus.isNotEmpty(),
                     onClick = { showStatusDialog = true },
                     label = { Text("ステータス") },
-                    leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) },
                 )
             }
 
             // 放送済みのみ表示チェックボックス
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Checkbox(
                     checked = filterState.showOnlyAired,
                     onCheckedChange = { checked ->
                         updateFilter(showOnlyAired = checked)
-                    }
+                    },
                 )
                 Text(
                     text = "放送済",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
 
                 // 並び順
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text("並び順：")
                     FilterChip(
@@ -178,14 +213,14 @@ fun FilterBar(
                         onClick = {
                             updateFilter(sortOrder = SortOrder.START_TIME_ASC)
                         },
-                        label = { Text("昇順") }
+                        label = { Text("昇順") },
                     )
                     FilterChip(
                         selected = filterState.sortOrder == SortOrder.START_TIME_DESC,
                         onClick = {
                             updateFilter(sortOrder = SortOrder.START_TIME_DESC)
                         },
-                        label = { Text("降順") }
+                        label = { Text("降順") },
                     )
                 }
             }
@@ -207,7 +242,7 @@ fun FilterBar(
                 }
                 updateFilter(selectedMedia = newSelection)
             },
-            onDismiss = { showMediaDialog = false }
+            onDismiss = { showMediaDialog = false },
         )
     }
 
@@ -226,7 +261,7 @@ fun FilterBar(
                 }
                 updateFilter(selectedSeason = newSelection)
             },
-            onDismiss = { showSeasonDialog = false }
+            onDismiss = { showSeasonDialog = false },
         )
     }
 
@@ -245,7 +280,7 @@ fun FilterBar(
                 }
                 updateFilter(selectedYear = newSelection)
             },
-            onDismiss = { showYearDialog = false }
+            onDismiss = { showYearDialog = false },
         )
     }
 
@@ -263,7 +298,7 @@ fun FilterBar(
                 }
                 updateFilter(selectedChannel = newSelection)
             },
-            onDismiss = { showChannelDialog = false }
+            onDismiss = { showChannelDialog = false },
         )
     }
 
@@ -282,7 +317,7 @@ fun FilterBar(
                 }
                 updateFilter(selectedStatus = newSelection)
             },
-            onDismiss = { showStatusDialog = false }
+            onDismiss = { showStatusDialog = false },
         )
     }
 }
@@ -293,7 +328,7 @@ fun FilterSelectionDialog(
     items: List<String>,
     selectedItems: Set<String>,
     onItemSelected: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -301,13 +336,13 @@ fun FilterSelectionDialog(
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 items.forEach { item ->
                     FilterChip(
                         selected = item in selectedItems,
                         onClick = { onItemSelected(item) },
-                        label = { Text(item) }
+                        label = { Text(item) },
                     )
                 }
             }
@@ -316,6 +351,6 @@ fun FilterSelectionDialog(
             TextButton(onClick = onDismiss) {
                 Text("閉じる")
             }
-        }
+        },
     )
-} 
+}

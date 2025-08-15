@@ -25,7 +25,9 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val TAG = "MainActivity"
+    companion object {
+        private const val TAG = "MainActivity"
+    }
 
     @Inject
     lateinit var logger: Logger
@@ -40,34 +42,37 @@ class MainActivity : ComponentActivity() {
 
         // サンプルコードではWindowアニメーションが無効化されていないケースが多いため
         // ここで明示的に無効化する
-        (window.decorView.context as android.content.Context).theme?.obtainStyledAttributes(
-            intArrayOf(android.R.attr.windowAnimationStyle)
-        )?.let {
-            try {
-                val windowAnimationStyleResId = it.getResourceId(0, 0)
-                if (windowAnimationStyleResId != 0) {
-                    val windowAnimationStyle = resources.newTheme()
-                    windowAnimationStyle.applyStyle(windowAnimationStyleResId, false)
-                    windowAnimationStyle.obtainStyledAttributes(
-                        intArrayOf(
-                            android.R.attr.activityOpenEnterAnimation,
-                            android.R.attr.activityOpenExitAnimation,
-                            android.R.attr.activityCloseEnterAnimation,
-                            android.R.attr.activityCloseExitAnimation
-                        )
-                    ).let { animAttrs ->
-                        try {
-                            // アニメーションの期間を0に設定して実質的に無効化
-                            window.setWindowAnimations(0)
-                        } finally {
-                            animAttrs.recycle()
-                        }
+        (window.decorView.context as android.content.Context)
+            .theme
+            ?.obtainStyledAttributes(
+                intArrayOf(android.R.attr.windowAnimationStyle),
+            )?.let {
+                try {
+                    val windowAnimationStyleResId = it.getResourceId(0, 0)
+                    if (windowAnimationStyleResId != 0) {
+                        val windowAnimationStyle = resources.newTheme()
+                        windowAnimationStyle.applyStyle(windowAnimationStyleResId, false)
+                        windowAnimationStyle
+                            .obtainStyledAttributes(
+                                intArrayOf(
+                                    android.R.attr.activityOpenEnterAnimation,
+                                    android.R.attr.activityOpenExitAnimation,
+                                    android.R.attr.activityCloseEnterAnimation,
+                                    android.R.attr.activityCloseExitAnimation,
+                                ),
+                            ).let { animAttrs ->
+                                try {
+                                    // アニメーションの期間を0に設定して実質的に無効化
+                                    window.setWindowAnimations(0)
+                                } finally {
+                                    animAttrs.recycle()
+                                }
+                            }
                     }
+                } finally {
+                    it.recycle()
                 }
-            } finally {
-                it.recycle()
             }
-        }
 
         setContent {
             AniiiiictTheme {
@@ -76,7 +81,7 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = "auth"
+                    startDestination = "auth",
                 ) {
                     composable("auth") {
                         // Use LaunchedEffect to handle navigation based on authentication state
@@ -91,7 +96,7 @@ class MainActivity : ComponentActivity() {
 
                         AuthScreen(
                             uiState = mainUiState,
-                            onLoginClick = { mainViewModel.startAuth() }
+                            onLoginClick = { mainViewModel.startAuth() },
                         )
                     }
 
@@ -120,7 +125,7 @@ class MainActivity : ComponentActivity() {
                             onDeleteRecord = { historyViewModel.deleteRecord(it) },
                             onRefresh = { historyViewModel.loadRecords() },
                             onLoadNextPage = { historyViewModel.loadNextPage() },
-                            onSearchQueryChange = { historyViewModel.updateSearchQuery(it) }
+                            onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
                         )
                     }
                 }
@@ -138,7 +143,7 @@ class MainActivity : ComponentActivity() {
         logger.debug(
             TAG,
             "Intent received: ${intent.action}, data: ${intent.data}",
-            "handleIntent"
+            "handleIntent",
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
@@ -146,16 +151,15 @@ class MainActivity : ComponentActivity() {
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-
                     logger.debug(
                         TAG,
                         "Processing authentication code: ${code.take(5)}...",
-                        "handleIntent"
+                        "handleIntent",
                     )
                     logger.info(
                         TAG,
                         "Processing authentication code: ${code.take(5)}...",
-                        "handleIntent"
+                        "handleIntent",
                     )
 
                     // 認証処理は新しいコルーチンで実行して独立性を保つ
@@ -164,15 +168,14 @@ class MainActivity : ComponentActivity() {
                         // 認証状態を再確認して UI を更新
                         mainViewModel.checkAuthentication()
                     }
-
                 } else {
                     logger.error(
                         TAG,
                         "認証コードがURIに含まれていません: $uri",
-                        "handleIntent"
+                        "handleIntent",
                     )
                 }
             }
         }
     }
-} 
+}

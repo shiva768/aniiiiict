@@ -5,5 +5,5 @@ data class AniListMedia(
     val format: String?,
     val episodes: Int?,
     val status: String?,
-    val nextAiringEpisode: NextAiringEpisode?
+    val nextAiringEpisode: NextAiringEpisode?,
 )

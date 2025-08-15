@@ -8,5 +8,5 @@ data class Record(
     val rating: Double?,
     val createdAt: ZonedDateTime,
     val episode: Episode,
-    val work: Work
-) 
+    val work: Work,
+)

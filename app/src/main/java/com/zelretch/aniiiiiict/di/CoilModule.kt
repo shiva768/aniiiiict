@@ -17,26 +17,26 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object CoilModule {
-
     @Provides
     @Singleton
     fun provideImageLoader(
         @ApplicationContext context: Context,
-        okHttpClient: OkHttpClient
-    ): ImageLoader {
-        return ImageLoader.Builder(context)
+        okHttpClient: OkHttpClient,
+    ): ImageLoader =
+        ImageLoader
+            .Builder(context)
             .memoryCache {
-                MemoryCache.Builder(context)
+                MemoryCache
+                    .Builder(context)
                     .maxSizePercent(0.25) // メモリの25%までキャッシュを使用
                     .build()
-            }
-            .diskCache {
-                DiskCache.Builder()
+            }.diskCache {
+                DiskCache
+                    .Builder()
                     .directory(context.cacheDir.resolve("image_cache"))
                     .maxSizePercent(0.05) // ストレージの5%までキャッシュを使用
                     .build()
-            }
-            .okHttpClient(okHttpClient)
+            }.okHttpClient(okHttpClient)
             .crossfade(true) // 画像切り替え時にクロスフェード効果を追加
             // ネットワークからの読み込みを優先し、キャッシュをフォールバックとして使用
             .diskCachePolicy(CachePolicy.ENABLED)
@@ -45,5 +45,4 @@ object CoilModule {
             // デバッグログを有効化（開発中のみ）
             .logger(DebugLogger())
             .build()
-    }
-} 
+}

@@ -2,11 +2,11 @@
 <full-backup-content>
     <include
         domain="sharedpref"
-        path="." />
+        path="."/>
     <include
         domain="database"
-        path="." />
+        path="."/>
     <include
         domain="file"
-        path="." />
-</full-backup-content> 
+        path="."/>
+</full-backup-content>
