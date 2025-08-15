@@ -4,9 +4,11 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
+import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiiict.ui.base.TestableViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,12 +34,12 @@ class MainViewModel @Inject constructor(
     private val customTabsIntentFactory: CustomTabsIntentFactory,
     logger: Logger,
     @ApplicationContext private val context: Context
-) : BaseViewModel(logger) {
+) : BaseViewModel(logger), MainViewModelContract, TestableViewModel<MainUiState> {
     private val TAG = "MainViewModel"
 
     // UI状態のカプセル化
     private val _uiState = MutableStateFlow(MainUiState())
-    val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -84,7 +86,7 @@ class MainViewModel @Inject constructor(
     }
 
     // 認証開始（公開メソッド）
-    fun startAuth() {
+    override fun startAuth() {
         _uiState.update { it.copy(isAuthenticating = true) }
 
         viewModelScope.launch {
@@ -113,7 +115,7 @@ class MainViewModel @Inject constructor(
     }
 
     // 認証コールバック処理（公開メソッド）
-    fun handleAuthCallback(code: String?) {
+    override fun handleAuthCallback(code: String?) {
         viewModelScope.launch {
             try {
                 if (code != null) {
@@ -182,12 +184,26 @@ class MainViewModel @Inject constructor(
     }
 
     // エラーをクリアする
-    fun clearError() {
+    override fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
 
     // 認証状態を手動で確認する（公開メソッド）
-    fun checkAuthentication() {
+    override fun checkAuthentication() {
         checkAuthState()
+    }
+
+    // === テスト用メソッド（TestableViewModelインターフェースの実装） ===
+    
+    override fun setUiStateForTest(state: MainUiState) {
+        _uiState.value = state
+    }
+    
+    override fun setErrorForTest(error: String?) {
+        _uiState.update { it.copy(error = error) }
+    }
+    
+    override fun setLoadingForTest(isLoading: Boolean) {
+        _uiState.update { it.copy(isLoading = isLoading) }
     }
 }
