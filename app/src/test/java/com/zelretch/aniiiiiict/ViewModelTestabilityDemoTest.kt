@@ -1,10 +1,9 @@
 package com.zelretch.aniiiiiict
 
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
-import com.zelretch.aniiiiiict.ui.base.TestableViewModel
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.resetToInitialState
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setErrorState
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setLoadingState
+import com.zelretch.aniiiiiict.testing.TestableMainViewModel
+import com.zelretch.aniiiiiict.testing.asTestable
+import com.zelretch.aniiiiiict.testing.MainUiStateBuilder
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
@@ -37,7 +36,7 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 
                 // インターフェースとして参照
                 val viewModelContract: MainViewModelContract = viewModel
-                val testableViewModel: TestableViewModel<MainUiState> = viewModel
+                val testableViewModel: TestableMainViewModel = viewModel.asTestable()
                 
                 // インターフェース経由でのアクセス
                 val initialState = viewModelContract.uiState.value
@@ -66,12 +65,12 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                     mockContext
                 )
                 
-                val testableViewModel: TestableViewModel<MainUiState> = viewModel
+                val testableViewModel: TestableMainViewModel = viewModel.asTestable()
                 val viewModelContract: MainViewModelContract = viewModel
                 
                 // 複雑な状態をワンステップで設定
                 testableViewModel.setUiStateForTest(
-                    MainUiState(
+                    MainUiStateBuilder.custom(
                         isLoading = false,
                         error = "テストエラー",
                         isAuthenticating = true,
@@ -87,11 +86,11 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 }
                 
                 // ユーティリティメソッドでエラーを設定
-                testableViewModel.setErrorState("新しいエラー")
+                testableViewModel.setErrorForTest("新しいエラー")
                 viewModelContract.uiState.value.error shouldBe "新しいエラー"
                 
                 // ローディング状態を設定
-                testableViewModel.setLoadingState(true)
+                testableViewModel.setLoadingForTest(true)
                 viewModelContract.uiState.value.isLoading shouldBe true
                 
                 // 状態をリセット
@@ -123,11 +122,11 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                     mockContext
                 )
                 
-                val testableViewModel: TestableViewModel<MainUiState> = viewModel
+                val testableViewModel: TestableMainViewModel = viewModel.asTestable()
                 val viewModelContract: MainViewModelContract = viewModel
                 
                 // エラー状態を直接設定してテストを開始
-                testableViewModel.setErrorState("認証エラー")
+                testableViewModel.setErrorForTest("認証エラー")
                 
                 // エラー状態からの回復をテスト
                 viewModelContract.clearError()
@@ -135,7 +134,7 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 
                 // 認証済み状態を直接設定
                 testableViewModel.setUiStateForTest(
-                    MainUiState(isAuthenticated = true)
+                    MainUiStateBuilder.authenticated()
                 )
                 
                 viewModelContract.uiState.value.isAuthenticated shouldBe true

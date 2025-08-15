@@ -8,7 +8,6 @@ import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiiict.ui.base.TestableViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,7 +33,7 @@ class MainViewModel @Inject constructor(
     private val customTabsIntentFactory: CustomTabsIntentFactory,
     logger: Logger,
     @ApplicationContext private val context: Context
-) : BaseViewModel(logger), MainViewModelContract, TestableViewModel<MainUiState> {
+) : BaseViewModel(logger), MainViewModelContract {
     private val TAG = "MainViewModel"
 
     // UI状態のカプセル化
@@ -193,19 +192,5 @@ class MainViewModel @Inject constructor(
     // 認証状態を手動で確認する（公開メソッド）
     override fun checkAuthentication() {
         checkAuthState()
-    }
-
-    // === テスト用メソッド（TestableViewModelインターフェースの実装） ===
-    
-    override fun setUiStateForTest(state: MainUiState) {
-        _uiState.value = state
-    }
-    
-    override fun setErrorForTest(error: String?) {
-        _uiState.update { it.copy(error = error) }
-    }
-    
-    override fun setLoadingForTest(isLoading: Boolean) {
-        _uiState.update { it.copy(isLoading = isLoading) }
     }
 }
