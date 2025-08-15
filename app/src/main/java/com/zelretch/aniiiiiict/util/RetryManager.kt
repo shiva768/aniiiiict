@@ -9,9 +9,7 @@ import kotlin.math.min
 /**
  * リトライロジックを提供するユーティリティクラス
  */
-class RetryManager @Inject constructor(
-    private val logger: Logger
-) {
+class RetryManager @Inject constructor(private val logger: Logger) {
     companion object {
         private const val TAG = "RetryManager"
     }
@@ -83,4 +81,4 @@ class RetryManager @Inject constructor(
     ): T = withTimeout(timeUnit.toMillis(timeout)) {
         retry(maxAttempts, initialDelay, maxDelay, factor, block)
     }
-} 
+}

@@ -55,31 +55,27 @@ class AnnictAuthManager @Inject constructor(
         }
     }
 
-    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse =
-        retryManager.retry(
-            maxAttempts = MAX_RETRIES,
-            initialDelay = 1000L,
-            maxDelay = 5000L,
-            factor = 2.0
-        ) {
-            getAccessToken(code)
-        }
+    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse = retryManager.retry(
+        maxAttempts = MAX_RETRIES,
+        initialDelay = 1000L,
+        maxDelay = 5000L,
+        factor = 2.0
+    ) {
+        getAccessToken(code)
+    }
 
     private fun getAccessToken(code: String): TokenResponse {
-        val formBody = FormBody.Builder()
-            .add("client_id", BuildConfig.ANNICT_CLIENT_ID)
-            .add("client_secret", BuildConfig.ANNICT_CLIENT_SECRET)
-            .add("grant_type", "authorization_code")
-            .add("redirect_uri", REDIRECT_URI)
-            .add("code", code)
-            .build()
+        val formBody = FormBody.Builder().add("client_id", BuildConfig.ANNICT_CLIENT_ID).add(
+            "client_secret",
+            BuildConfig.ANNICT_CLIENT_SECRET
+        ).add(
+            "grant_type",
+            "authorization_code"
+        ).add("redirect_uri", REDIRECT_URI).add("code", code).build()
 
         logger.info(TAG, "トークンリクエストを送信", "getAccessToken")
 
-        val request = Request.Builder()
-            .url(AnnictConfig.TOKEN_URL)
-            .post(formBody)
-            .build()
+        val request = Request.Builder().url(AnnictConfig.TOKEN_URL).post(formBody).build()
 
         return okHttpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {

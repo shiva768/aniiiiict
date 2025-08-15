@@ -1,3 +1,14 @@
 [*.{kt,kts}]
+ktlint_standard_class-signature = disabled
 ktlint_code_style = android_studio
 ktlint_function_naming_ignore_when_annotated_with=Composable
+ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**
+max_line_length = 120
+
+[*.xml]
+indent_style = space
+indent_size = 2
+ij_xml_wrap_attributes = wrap_if_long
+ij_xml_align_attributes = false
+ij_xml_keep_first_attribute_in_one_line = true
+ij_xml_new_line_after_last_attribute = false

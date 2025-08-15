@@ -10,9 +10,7 @@ data class RecordsResult(
     val endCursor: String?
 )
 
-class LoadRecordsUseCase @Inject constructor(
-    private val repository: AnnictRepository
-) {
+class LoadRecordsUseCase @Inject constructor(private val repository: AnnictRepository) {
     suspend operator fun invoke(cursor: String? = null): RecordsResult {
         val result = repository.getRecords(cursor)
         return RecordsResult(
@@ -21,4 +19,4 @@ class LoadRecordsUseCase @Inject constructor(
             endCursor = result.endCursor
         )
     }
-} 
+}

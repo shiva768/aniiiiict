@@ -10,22 +10,17 @@ class UpdateViewStateUseCase @Inject constructor(
     private val logger: Logger
 ) {
     private val TAG = "UpdateViewStateUseCase"
-    suspend operator fun invoke(
-        workId: String,
-        status: StatusState
-    ): Result<Unit> {
-        return try {
-            val updateSuccess = repository.updateWorkViewStatus(workId, status)
-            if (!updateSuccess) {
-                logger.warning(
-                    TAG,
-                    "ステータスの更新に失敗しました: workId=$workId",
-                    "UpdateViewStateUseCase"
-                )
-            }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend operator fun invoke(workId: String, status: StatusState): Result<Unit> = try {
+        val updateSuccess = repository.updateWorkViewStatus(workId, status)
+        if (!updateSuccess) {
+            logger.warning(
+                TAG,
+                "ステータスの更新に失敗しました: workId=$workId",
+                "UpdateViewStateUseCase"
+            )
         }
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 }

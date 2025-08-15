@@ -53,4 +53,4 @@ abstract class BaseViewModel(val logger: Logger) : ViewModel() {
             }
         }
     }
-} 
+}

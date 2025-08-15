@@ -19,7 +19,12 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 /**
  * E2Eスタイルのテスト
@@ -128,7 +133,12 @@ class DetailModalViewModelE2ETest : BehaviorSpec({
                     }
 
                     // 最初のエピソードで状態が更新されたことを検証
-                    coVerify { annictRepository.updateWorkViewStatus("work-id-123", StatusState.WATCHING) }
+                    coVerify {
+                        annictRepository.updateWorkViewStatus(
+                            "work-id-123",
+                            StatusState.WATCHING
+                        )
+                    }
                 }
             }
         }

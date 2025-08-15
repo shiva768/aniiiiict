@@ -9,4 +9,4 @@ data class Record(
     val createdAt: ZonedDateTime,
     val episode: Episode,
     val work: Work
-) 
+)

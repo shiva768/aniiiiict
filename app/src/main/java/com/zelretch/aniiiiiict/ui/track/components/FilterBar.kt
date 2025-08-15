@@ -1,11 +1,36 @@
 package com.zelretch.aniiiiiict.ui.track.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,7 +48,8 @@ fun FilterBar(
     availableSeasons: List<SeasonName>,
     availableYears: List<Int>,
     availableChannels: List<String>,
-    onFilterChange: KFunction8<Set<String>, Set<SeasonName>, Set<Int>, Set<String>, Set<StatusState>, String, Boolean, SortOrder, Unit>
+    onFilterChange:
+    KFunction8<Set<String>, Set<SeasonName>, Set<Int>, Set<String>, Set<StatusState>, String, Boolean, SortOrder, Unit>
 ) {
     var showMediaDialog by remember { mutableStateOf(false) }
     var showSeasonDialog by remember { mutableStateOf(false) }
@@ -55,16 +81,12 @@ fun FilterBar(
     }
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(8.dp),
         tonalElevation = 2.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // 検索フィールド
@@ -78,20 +100,18 @@ fun FilterBar(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "検索") },
                 trailingIcon = {
                     if (filterState.searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                onFilterChange(
-                                    filterState.selectedMedia,
-                                    filterState.selectedSeason,
-                                    filterState.selectedYear,
-                                    filterState.selectedChannel,
-                                    filterState.selectedStatus,
-                                    "",
-                                    filterState.showOnlyAired,
-                                    filterState.sortOrder
-                                )
-                            }
-                        ) {
+                        IconButton(onClick = {
+                            onFilterChange(
+                                filterState.selectedMedia,
+                                filterState.selectedSeason,
+                                filterState.selectedYear,
+                                filterState.selectedChannel,
+                                filterState.selectedStatus,
+                                "",
+                                filterState.showOnlyAired,
+                                filterState.sortOrder
+                            )
+                        }) {
                             Icon(
                                 Icons.Default.Clear,
                                 contentDescription = "クリア",
@@ -155,12 +175,9 @@ fun FilterBar(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Checkbox(
-                    checked = filterState.showOnlyAired,
-                    onCheckedChange = { checked ->
-                        updateFilter(showOnlyAired = checked)
-                    }
-                )
+                Checkbox(checked = filterState.showOnlyAired, onCheckedChange = { checked ->
+                    updateFilter(showOnlyAired = checked)
+                })
                 Text(
                     text = "放送済",
                     style = MaterialTheme.typography.bodyMedium
@@ -173,20 +190,12 @@ fun FilterBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("並び順：")
-                    FilterChip(
-                        selected = filterState.sortOrder == SortOrder.START_TIME_ASC,
-                        onClick = {
-                            updateFilter(sortOrder = SortOrder.START_TIME_ASC)
-                        },
-                        label = { Text("昇順") }
-                    )
-                    FilterChip(
-                        selected = filterState.sortOrder == SortOrder.START_TIME_DESC,
-                        onClick = {
-                            updateFilter(sortOrder = SortOrder.START_TIME_DESC)
-                        },
-                        label = { Text("降順") }
-                    )
+                    FilterChip(selected = filterState.sortOrder == SortOrder.START_TIME_ASC, onClick = {
+                        updateFilter(sortOrder = SortOrder.START_TIME_ASC)
+                    }, label = { Text("昇順") })
+                    FilterChip(selected = filterState.sortOrder == SortOrder.START_TIME_DESC, onClick = {
+                        updateFilter(sortOrder = SortOrder.START_TIME_DESC)
+                    }, label = { Text("降順") })
                 }
             }
         }
@@ -295,27 +304,20 @@ fun FilterSelectionDialog(
     onItemSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items.forEach { item ->
-                    FilterChip(
-                        selected = item in selectedItems,
-                        onClick = { onItemSelected(item) },
-                        label = { Text(item) }
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("閉じる")
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(title) }, text = {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items.forEach { item ->
+                FilterChip(selected = item in selectedItems, onClick = {
+                    onItemSelected(item)
+                }, label = { Text(item) })
             }
         }
-    )
-} 
+    }, confirmButton = {
+        TextButton(onClick = onDismiss) {
+            Text("閉じる")
+        }
+    })
+}

@@ -2,7 +2,8 @@ package com.zelretch.aniiiiiict.util
 
 import android.util.Log
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,4 +35,4 @@ class AndroidLogger @Inject constructor() : Logger {
     override fun debug(tag: String, message: String, context: String) {
         Log.d(tag, formatMessage(message, context))
     }
-} 
+}

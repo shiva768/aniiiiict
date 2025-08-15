@@ -5,22 +5,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AnnictAuthUseCase @Inject constructor(
-    private val repository: AnnictRepository
-) {
-    suspend fun isAuthenticated(): Boolean {
-        return repository.isAuthenticated()
-    }
+class AnnictAuthUseCase @Inject constructor(private val repository: AnnictRepository) {
+    suspend fun isAuthenticated(): Boolean = repository.isAuthenticated()
 
-    suspend fun getAuthUrl(): String {
-        return repository.getAuthUrl()
-    }
+    suspend fun getAuthUrl(): String = repository.getAuthUrl()
 
-    suspend fun handleAuthCallback(code: String?): Boolean {
-        return if (code != null) {
-            repository.handleAuthCallback(code)
-        } else {
-            false
-        }
+    suspend fun handleAuthCallback(code: String?): Boolean = if (code != null) {
+        repository.handleAuthCallback(code)
+    } else {
+        false
     }
 }

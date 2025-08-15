@@ -1,8 +1,22 @@
 package com.zelretch.aniiiiiict.ui.auth
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -15,10 +29,7 @@ import com.zelretch.aniiiiiict.MainUiState
 import com.zelretch.aniiiiiict.R
 
 @Composable
-fun AuthScreen(
-    uiState: MainUiState,
-    onLoginClick: () -> Unit
-) {
+fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Show error in snackbar if present
@@ -28,19 +39,13 @@ fun AuthScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -74,9 +79,7 @@ fun AuthScreen(
                 // Login button
                 Button(
                     onClick = onLoginClick,
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(48.dp),
+                    modifier = Modifier.fillMaxWidth(0.7f).height(48.dp),
                     enabled = !uiState.isAuthenticating && !uiState.isLoading
                 ) {
                     Text("Annictでログイン")

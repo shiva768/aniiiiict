@@ -31,7 +31,10 @@ class AniListRepositoryImplTest : BehaviorSpec({
                         format = MediaFormat.TV,
                         episodes = 12,
                         status = MediaStatus.RELEASING,
-                        nextAiringEpisode = GetMediaQuery.NextAiringEpisode(episode = 10, airingAt = 1678886400)
+                        nextAiringEpisode = GetMediaQuery.NextAiringEpisode(
+                            episode = 10,
+                            airingAt = 1678886400
+                        )
                     )
                 )
                 val mockResponse = ApolloResponse.Builder(
@@ -39,7 +42,8 @@ class AniListRepositoryImplTest : BehaviorSpec({
                     requestUuid = Uuid(1, 1)
                 ).data(expectedMedia).build()
 
-                coEvery { mockApolloClient.executeQuery(operation, any<String>()) } returns mockResponse
+                coEvery { mockApolloClient.executeQuery(operation, any<String>()) } returns
+                    mockResponse
 
                 val result = repository.getMedia(mediaId)
 
@@ -68,7 +72,9 @@ class AniListRepositoryImplTest : BehaviorSpec({
                     )
                 ).build()
 
-                coEvery { mockApolloClient.executeQuery(any<GetMediaQuery>(), any<String>()) } returns mockResponse
+                coEvery {
+                    mockApolloClient.executeQuery(any<GetMediaQuery>(), any<String>())
+                } returns mockResponse
 
                 val result = repository.getMedia(mediaId)
 
@@ -84,7 +90,9 @@ class AniListRepositoryImplTest : BehaviorSpec({
                     requestUuid = Uuid(1, 1)
                 ).data(GetMediaQuery.Data(null)).build()
 
-                coEvery { mockApolloClient.executeQuery(any<GetMediaQuery>(), any<String>()) } returns mockResponse
+                coEvery {
+                    mockApolloClient.executeQuery(any<GetMediaQuery>(), any<String>())
+                } returns mockResponse
 
                 val result = repository.getMedia(mediaId)
 

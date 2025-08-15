@@ -12,7 +12,13 @@ import com.zelretch.aniiiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
-import com.zelretch.aniiiiiict.domain.usecase.*
+import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.FinaleState
+import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleResult
+import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
+import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.UpdateViewStateUseCase
+import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -25,7 +31,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 /**
  * E2Eスタイルのテスト
@@ -123,10 +133,12 @@ class TrackViewModelE2ETest : BehaviorSpec({
             then("UIStateにエラーがセットされる") {
                 runTest {
                     // モックリポジトリにエラーを発生させる
-                    coEvery { annictRepository.getRawProgramsData() } throws RuntimeException("テストエラー")
+                    coEvery { annictRepository.getRawProgramsData() } throws
+                        RuntimeException("テストエラー")
 
                     // フィルター変更をトリガーにしてロード処理を実行
-                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+                    filterStateFlow.value =
+                        filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
                     testScope.testScheduler.advanceUntilIdle()
 
                     // テストスケジューラを進めて、すべての非同期処理が完了するのを待つ
@@ -150,7 +162,8 @@ class TrackViewModelE2ETest : BehaviorSpec({
                 runTest {
                     // モックリポジトリの動作を設定
                     coEvery { annictRepository.createRecord(any(), any()) } returns true
-                    coEvery { annictRepository.getRawProgramsData() } returns flowOf(createMockPrograms())
+                    coEvery { annictRepository.getRawProgramsData() } returns
+                        flowOf(createMockPrograms())
 
                     // エピソード視聴を記録
                     viewModel.recordEpisode("ep-id", "work-id", StatusState.WATCHING)
@@ -173,7 +186,8 @@ class TrackViewModelE2ETest : BehaviorSpec({
             then("UIStateにエラーがセットされる") {
                 runTest {
                     // モックリポジトリにエラーを発生させる
-                    coEvery { annictRepository.createRecord(any(), any()) } throws RuntimeException("記録エラー")
+                    coEvery { annictRepository.createRecord(any(), any()) } throws
+                        RuntimeException("記録エラー")
 
                     // エピソード視聴を記録
                     viewModel.recordEpisode("ep-id", "work-id", StatusState.WATCHING)
@@ -297,32 +311,30 @@ class TrackViewModelE2ETest : BehaviorSpec({
 })
 
 // テスト用のモックプログラムデータを作成
-private fun createMockPrograms(): List<ViewerProgramsQuery.Node?> {
-    return listOf(
-        mockk<ViewerProgramsQuery.Node> {
-            every { id } returns "prog-id-1"
-            every { startedAt } returns "2025-01-01T12:00:00Z"
-            every { channel } returns mockk {
-                every { name } returns "テレビ東京"
-            }
-            every { episode } returns mockk {
-                every { id } returns "ep-id"
-                every { number } returns 1
-                every { numberText } returns "#1"
-                every { title } returns "エピソードタイトル"
-            }
-            every { work } returns mockk {
-                every { id } returns "123"
-                every { title } returns "作品タイトル"
-                every { seasonName } returns SeasonName.WINTER
-                every { seasonYear } returns 2025
-                every { media } returns Media.TV
-                every { viewerStatusState } returns StatusState.WATCHING
-                every { image } returns mockk {
-                    every { recommendedImageUrl } returns "https://example.com/image.jpg"
-                    every { facebookOgImageUrl } returns "https://example.com/og_image.jpg"
-                }
+private fun createMockPrograms(): List<ViewerProgramsQuery.Node?> = listOf(
+    mockk<ViewerProgramsQuery.Node> {
+        every { id } returns "prog-id-1"
+        every { startedAt } returns "2025-01-01T12:00:00Z"
+        every { channel } returns mockk {
+            every { name } returns "テレビ東京"
+        }
+        every { episode } returns mockk {
+            every { id } returns "ep-id"
+            every { number } returns 1
+            every { numberText } returns "#1"
+            every { title } returns "エピソードタイトル"
+        }
+        every { work } returns mockk {
+            every { id } returns "123"
+            every { title } returns "作品タイトル"
+            every { seasonName } returns SeasonName.WINTER
+            every { seasonYear } returns 2025
+            every { media } returns Media.TV
+            every { viewerStatusState } returns StatusState.WATCHING
+            every { image } returns mockk {
+                every { recommendedImageUrl } returns "https://example.com/image.jpg"
+                every { facebookOgImageUrl } returns "https://example.com/og_image.jpg"
             }
         }
-    )
-}
+    }
+)

@@ -15,6 +15,6 @@ data class FilterState(
 )
 
 enum class SortOrder {
-    START_TIME_ASC,  // 放送開始時間（昇順）
-    START_TIME_DESC  // 放送開始時間（降順）
-} 
+    START_TIME_ASC, // 放送開始時間（昇順）
+    START_TIME_DESC // 放送開始時間（降順）
+}

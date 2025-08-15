@@ -2,7 +2,11 @@ package com.zelretch.aniiiiiict.domain.filter
 
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.zelretch.aniiiiiict.data.model.*
+import com.zelretch.aniiiiiict.data.model.Channel
+import com.zelretch.aniiiiiict.data.model.Episode
+import com.zelretch.aniiiiiict.data.model.Program
+import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.data.model.Work
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.time.LocalDateTime
@@ -65,10 +69,12 @@ class ProgramFilterTest : BehaviorSpec({
                     createProgramWithWork(seasonName = SeasonName.SPRING),
                     createProgramWithWork(seasonName = SeasonName.SUMMER)
                 )
-                val filterState = FilterState(selectedSeason = setOf(SeasonName.WINTER, SeasonName.SUMMER))
+                val filterState =
+                    FilterState(selectedSeason = setOf(SeasonName.WINTER, SeasonName.SUMMER))
                 val result = programFilter.applyFilters(programs, filterState)
                 result.size shouldBe 2
-                result.map { it.work.seasonName }.toSet() shouldBe setOf(SeasonName.WINTER, SeasonName.SUMMER)
+                result.map { it.work.seasonName }.toSet() shouldBe
+                    setOf(SeasonName.WINTER, SeasonName.SUMMER)
             }
             then("シーズンフィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
@@ -159,7 +165,8 @@ class ProgramFilterTest : BehaviorSpec({
                 val filterState = FilterState(selectedChannel = setOf("TOKYO MX", "AT-X"))
                 val result = programFilter.applyFilters(programs, filterState)
                 result.size shouldBe 2
-                result.map { it.firstProgram.channel.name }.toSet() shouldBe setOf("TOKYO MX", "AT-X")
+                result.map { it.firstProgram.channel.name }.toSet() shouldBe
+                    setOf("TOKYO MX", "AT-X")
             }
             then("チャンネルフィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
@@ -233,7 +240,7 @@ class ProgramFilterTest : BehaviorSpec({
                 val now = LocalDateTime.now()
                 val programs = listOf(
                     createProgramWithWork(startedAt = now.minusHours(1)), // 放送済み
-                    createProgramWithWork(startedAt = now.plusHours(1))   // 未放送
+                    createProgramWithWork(startedAt = now.plusHours(1)) // 未放送
                 )
                 val filterState = FilterState(showOnlyAired = true)
                 val result = programFilter.applyFilters(programs, filterState)
@@ -259,7 +266,8 @@ class ProgramFilterTest : BehaviorSpec({
                     createProgramWithWork(startedAt = now),
                     createProgramWithWork(startedAt = now.plusHours(1))
                 )
-                val filterState = FilterState(sortOrder = SortOrder.START_TIME_ASC, showOnlyAired = false)
+                val filterState =
+                    FilterState(sortOrder = SortOrder.START_TIME_ASC, showOnlyAired = false)
                 val result = programFilter.applyFilters(programs, filterState)
                 result.size shouldBe 3
                 result[0].firstProgram.startedAt shouldBe now
@@ -275,7 +283,8 @@ class ProgramFilterTest : BehaviorSpec({
                     createProgramWithWork(startedAt = now.plusHours(2)),
                     createProgramWithWork(startedAt = now.plusHours(1))
                 )
-                val filterState = FilterState(sortOrder = SortOrder.START_TIME_DESC, showOnlyAired = false)
+                val filterState =
+                    FilterState(sortOrder = SortOrder.START_TIME_DESC, showOnlyAired = false)
                 val result = programFilter.applyFilters(programs, filterState)
                 result.size shouldBe 3
                 result[0].firstProgram.startedAt shouldBe now.plusHours(2)
@@ -373,5 +382,4 @@ class ProgramFilterTest : BehaviorSpec({
             }
         }
     }
-
 })

@@ -14,4 +14,4 @@ interface AnnictRepository {
     suspend fun getRecords(after: String? = null): PaginatedRecords
     suspend fun deleteRecord(recordId: String): Boolean
     suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean
-} 
+}
