@@ -2,9 +2,7 @@ package com.zelretch.aniiiiiict.samples.ui
 
 import com.zelretch.aniiiiiict.MainUiState
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
-import com.zelretch.aniiiiiict.ui.base.TestableViewModel
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setErrorState
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setLoadingState
+import com.zelretch.aniiiiiict.testing.TestableViewModel
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe

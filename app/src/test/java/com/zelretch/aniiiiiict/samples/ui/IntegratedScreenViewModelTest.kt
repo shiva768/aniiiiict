@@ -2,10 +2,7 @@ package com.zelretch.aniiiiiict.samples.ui
 
 import com.zelretch.aniiiiiict.MainUiState
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
-import com.zelretch.aniiiiiict.ui.base.TestableViewModel
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.resetToInitialState
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setErrorState
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setLoadingState
+import com.zelretch.aniiiiiict.testing.TestableViewModel
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -52,10 +49,10 @@ class IntegratedScreenViewModelTest : BehaviorSpec({
                 verify { viewModelContract.startAuth() }
 
                 // Step 3: ローディング状態をシミュレート
-                testableViewModel.setLoadingState(true)
+                testableViewModel.setLoadingForTest(true)
                 
                 // Step 4: エラー状態をシミュレート
-                testableViewModel.setErrorState("ネットワークエラー")
+                testableViewModel.setErrorForTest("ネットワークエラー")
 
                 // Step 5: 成功状態をシミュレート
                 testableViewModel.resetToInitialState()
@@ -167,8 +164,8 @@ class IntegratedScreenViewModelTest : BehaviorSpec({
                 // ユーティリティ関数を使用した状態操作例
                 // (実際のViewModelTestUtilsの拡張関数として実装されている)
                 
-                // エラー状態設定: testableViewModel.setErrorState("エラー")
-                // ローディング状態設定: testableViewModel.setLoadingState(true)
+                // エラー状態設定: testableViewModel.setErrorForTest("エラー")
+                // ローディング状態設定: testableViewModel.setLoadingForTest(true)
                 // 初期状態リセット: testableViewModel.resetToInitialState()
                 
                 // これらの関数により:
@@ -193,8 +190,8 @@ class IntegratedScreenViewModelTest : BehaviorSpec({
  * ```kotlin
  * // 従来: 複雑な依存関係の設定
  * // 改善後: 状態の直接操作で簡潔に
- * testableViewModel.setLoadingState(true)
- * testableViewModel.setErrorState("エラー")
+ * testableViewModel.setLoadingForTest(true)
+ * testableViewModel.setErrorForTest("エラー")
  * testableViewModel.resetToInitialState()
  * ```
  * 

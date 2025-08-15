@@ -7,7 +7,7 @@ import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiiict.ui.base.TestableViewModel
+import com.zelretch.aniiiiiict.testing.TestableViewModel
 import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe

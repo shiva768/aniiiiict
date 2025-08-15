@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiiict.samples.viewmodel
 
+import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.testing.TestableMainViewModel
 import com.zelretch.aniiiiiict.testing.asTestable

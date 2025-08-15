@@ -2,6 +2,9 @@ package com.zelretch.aniiiiiict.samples.architecture
 
 import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
+import com.zelretch.aniiiiiict.testing.TestableMainViewModel
+import com.zelretch.aniiiiiict.testing.asTestable
+import com.zelretch.aniiiiiict.testing.MainUiStateBuilder
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*

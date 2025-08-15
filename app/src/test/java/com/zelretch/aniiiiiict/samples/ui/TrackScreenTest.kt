@@ -4,9 +4,7 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.ui.base.TestableViewModel
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setErrorState
-import com.zelretch.aniiiiiict.ui.base.ViewModelTestUtils.setLoadingState
+import com.zelretch.aniiiiiict.testing.TestableViewModel
 import com.zelretch.aniiiiiict.ui.track.TrackUiState
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import com.zelretch.aniiiiiict.ui.track.TrackViewModelContract
@@ -93,7 +91,7 @@ class TrackScreenTest : BehaviorSpec({
                 currentState.isLoading shouldBe true
                 
                 // TestableViewModelのユーティリティ関数の使用例
-                // testableViewModel.setLoadingState(true)
+                // testableViewModel.setLoadingForTest(true)
                 // この方法により、複雑な非同期処理のセットアップが不要
             }
         }
