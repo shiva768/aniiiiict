@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.apollo)
     alias(libs.plugins.secrets.gradle.plugin)
+    alias(libs.plugins.detekt)
 }
 
 
@@ -166,4 +167,8 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+detekt {
+    baseline = file("detekt-baseline.xml")
 }
