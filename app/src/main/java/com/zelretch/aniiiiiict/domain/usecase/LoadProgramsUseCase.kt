@@ -2,7 +2,12 @@ package com.zelretch.aniiiiiict.domain.usecase
 
 import com.annict.ViewerProgramsQuery
 import com.annict.type.StatusState
-import com.zelretch.aniiiiiict.data.model.*
+import com.zelretch.aniiiiiict.data.model.Channel
+import com.zelretch.aniiiiiict.data.model.Episode
+import com.zelretch.aniiiiiict.data.model.Program
+import com.zelretch.aniiiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiiict.data.model.Work
+import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -11,23 +16,24 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 
-class LoadProgramsUseCase @Inject constructor(
-    private val repository: AnnictRepository
-) {
-    suspend operator fun invoke(): Flow<List<ProgramWithWork>> {
-        return repository.getRawProgramsData().map { rawPrograms ->
+class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepository) {
+    suspend operator fun invoke(): Flow<List<ProgramWithWork>> =
+        repository.getRawProgramsData().map { rawPrograms ->
             processProgramsResponse(rawPrograms)
         }
-    }
 
-    private fun processProgramsResponse(responsePrograms: List<ViewerProgramsQuery.Node?>): List<ProgramWithWork> {
+    private fun processProgramsResponse(
+        responsePrograms: List<ViewerProgramsQuery.Node?>
+    ): List<ProgramWithWork> {
         val programs = responsePrograms.mapNotNull { node ->
             if (node == null) return@mapNotNull null
             val startedAt = try {
                 // Parse the UTC datetime string to ZonedDateTime
-                val utcDateTime = ZonedDateTime.parse(node.startedAt.toString(), DateTimeFormatter.ISO_DATE_TIME)
+                val utcDateTime = ZonedDateTime.parse(
+                    node.startedAt.toString(),
+                    DateTimeFormatter.ISO_DATE_TIME
+                )
                 // Convert to JST timezone
                 val jstDateTime = utcDateTime.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
                 // Convert to LocalDateTime
@@ -75,17 +81,14 @@ class LoadProgramsUseCase @Inject constructor(
         }
 
         // 各作品のプログラムをすべて保持し、最初のエピソードも特定する
-        return programs
-            .groupBy { it.second.title }
-            .map { (_, grouped) ->
-                val sortedPrograms = grouped.sortedBy { it.first.episode.number ?: Int.MAX_VALUE }
-                val firstProgram = sortedPrograms.firstOrNull()!!
-                ProgramWithWork(
-                    programs = sortedPrograms.map { it.first },
-                    firstProgram = firstProgram.first,
-                    work = firstProgram.second
-                )
-            }
-            .sortedBy { it.firstProgram.startedAt }
+        return programs.groupBy { it.second.title }.map { (_, grouped) ->
+            val sortedPrograms = grouped.sortedBy { it.first.episode.number ?: Int.MAX_VALUE }
+            val firstProgram = sortedPrograms.firstOrNull()!!
+            ProgramWithWork(
+                programs = sortedPrograms.map { it.first },
+                firstProgram = firstProgram.first,
+                work = firstProgram.second
+            )
+        }.sortedBy { it.firstProgram.startedAt }
     }
-} 
+}

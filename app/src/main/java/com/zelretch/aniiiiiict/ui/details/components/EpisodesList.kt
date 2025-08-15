@@ -15,7 +15,7 @@ import com.zelretch.aniiiiiict.data.model.Program
 fun EpisodesList(
     programs: List<Program>,
     onRecordEpisode: (String) -> Unit,
-    onMarkUpToAsWatched: (Int) -> Unit,
+    onMarkUpToAsWatched: (Int) -> Unit
 ) {
     AnimatedVisibility(
         visible = true,
@@ -26,16 +26,13 @@ fun EpisodesList(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(
-                items = programs,
-                key = { it.id }
-            ) { program ->
+            items(items = programs, key = { it.id }) { program ->
                 EpisodeCard(
                     program = program,
                     onRecordEpisode = onRecordEpisode,
-                    onMarkUpToAsWatched = { onMarkUpToAsWatched(programs.indexOf(program)) },
+                    onMarkUpToAsWatched = { onMarkUpToAsWatched(programs.indexOf(program)) }
                 )
             }
         }
     }
-} 
+}

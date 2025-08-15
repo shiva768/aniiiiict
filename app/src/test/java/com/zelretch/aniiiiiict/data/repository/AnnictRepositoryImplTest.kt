@@ -1,6 +1,10 @@
 package com.zelretch.aniiiiiict.data.repository
 
-import com.annict.*
+import com.annict.CreateRecordMutation
+import com.annict.DeleteRecordMutation
+import com.annict.UpdateStatusMutation
+import com.annict.ViewerProgramsQuery
+import com.annict.ViewerRecordsQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Error
@@ -153,14 +157,16 @@ class AnnictRepositoryImplTest : BehaviorSpec({
 
         `when`("認証が失敗した場合") {
             then("falseを返す") {
-                coEvery { authManager.handleAuthorizationCode(code) } returns Result.failure(RuntimeException("Auth failed"))
+                coEvery { authManager.handleAuthorizationCode(code) } returns
+                    Result.failure(RuntimeException("Auth failed"))
                 repository.handleAuthCallback(code) shouldBe false
             }
         }
 
         `when`("認証中に例外が発生した場合") {
             then("falseを返す") {
-                coEvery { authManager.handleAuthorizationCode(code) } throws RuntimeException("Network error")
+                coEvery { authManager.handleAuthorizationCode(code) } throws
+                    RuntimeException("Network error")
                 repository.handleAuthCallback(code) shouldBe false
             }
         }
@@ -279,7 +285,9 @@ class AnnictRepositoryImplTest : BehaviorSpec({
                                         comment = "",
                                         rating = 1.1,
                                         createdAt = "2020-01-01T00:00:00+09:00",
-                                        episode = mockk<ViewerRecordsQuery.Episode>(relaxed = true),
+                                        episode = mockk<ViewerRecordsQuery.Episode>(
+                                            relaxed = true
+                                        )
                                     )
                                 ),
                                 pageInfo = mockk<ViewerRecordsQuery.PageInfo>(relaxed = true)

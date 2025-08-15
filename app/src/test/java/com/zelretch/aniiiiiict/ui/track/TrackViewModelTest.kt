@@ -6,7 +6,11 @@ import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.AvailableFilters
 import com.zelretch.aniiiiiict.domain.filter.FilterState
-import com.zelretch.aniiiiiict.domain.usecase.*
+import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
+import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -18,7 +22,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TrackViewModelTest : BehaviorSpec({
@@ -72,16 +80,18 @@ class TrackViewModelTest : BehaviorSpec({
                     val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
                     coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
                     every { filterProgramsUseCase.invoke(any(), any()) } returns fakePrograms
-                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
-                        emptyList(),
-                        emptyList(),
-                        emptyList(),
-                        emptyList()
-                    )
+                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns
+                        AvailableFilters(
+                            emptyList(),
+                            emptyList(),
+                            emptyList(),
+                            emptyList()
+                        )
                     runTest(dispatcher) {
                         viewModel.uiState.test {
                             awaitItem() // 初期値を必ず受け取る
-                            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
+                            filterStateFlow.value =
+                                filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
                             testScope.testScheduler.advanceUntilIdle() // emitを確実に進める
                             awaitItem() // 状態遷移1: ローディングやfilter反映（isLoading=true）
                             awaitItem() // 状態遷移2: データ反映・ローディング完了（isLoading=false）
@@ -103,7 +113,8 @@ class TrackViewModelTest : BehaviorSpec({
                     runTest(dispatcher) {
                         viewModel.uiState.test {
                             awaitItem() // 初期値を必ず受け取る
-                            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+                            filterStateFlow.value =
+                                filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
                             testScope.testScheduler.advanceUntilIdle() // emitを確実に進める
                             awaitItem() // 状態遷移1: ローディングやfilter反映
                             val errorState = awaitItem() // 状態遷移2: error反映

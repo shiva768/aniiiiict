@@ -9,7 +9,13 @@ import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -91,9 +97,7 @@ class DetailModalViewModel @Inject constructor(
                 watchEpisodeUseCase(episodeId, workId, status)
                 // 記録したエピソードのプログラムを表示から消す
                 _state.update {
-                    it.copy(
-                        programs = _state.value.programs.filter { it.episode.id != episodeId }
-                    )
+                    it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
                 }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
             } catch (_: Exception) {
@@ -139,9 +143,15 @@ class DetailModalViewModel @Inject constructor(
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
             } catch (_: Exception) {
-                _state.update { it.copy(isBulkRecording = false, bulkRecordingProgress = 0, bulkRecordingTotal = 0) }
+                _state.update {
+                    it.copy(
+                        isBulkRecording = false,
+                        bulkRecordingProgress = 0,
+                        bulkRecordingTotal = 0
+                    )
+                }
                 // エラーハンドリング
             }
         }
     }
-} 
+}

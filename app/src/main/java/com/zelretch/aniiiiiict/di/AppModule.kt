@@ -31,9 +31,8 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideTokenManager(@ApplicationContext context: Context, logger: Logger): TokenManager {
-        return TokenManager(context, logger)
-    }
+    fun provideTokenManager(@ApplicationContext context: Context, logger: Logger): TokenManager =
+        TokenManager(context, logger)
 
     @Provides
     @Singleton
@@ -46,18 +45,18 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(HttpLoggingInterceptor().apply {
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder().addInterceptor(
+        HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
             } else {
                 HttpLoggingInterceptor.Level.NONE
             }
-        })
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+        }
+    ).connectTimeout(
+        30,
+        TimeUnit.SECONDS
+    ).readTimeout(30, TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).build()
 
     @Provides
     @Singleton
@@ -65,10 +64,7 @@ object AppModule {
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient,
         logger: Logger
-    ): AnnictApolloClient {
-        return AnnictApolloClient(tokenManager, okHttpClient, logger)
-    }
-
+    ): AnnictApolloClient = AnnictApolloClient(tokenManager, okHttpClient, logger)
 
     @Provides
     @Singleton
@@ -77,35 +73,29 @@ object AppModule {
         authManager: AnnictAuthManager,
         apolloClient: AnnictApolloClient,
         logger: Logger
-    ): AnnictRepository {
-        return AnnictRepositoryImpl(
-            tokenManager = tokenManager,
-            authManager = authManager,
-            annictApolloClient = apolloClient,
-            logger = logger
-        )
-    }
+    ): AnnictRepository = AnnictRepositoryImpl(
+        tokenManager = tokenManager,
+        authManager = authManager,
+        annictApolloClient = apolloClient,
+        logger = logger
+    )
 
     @Provides
     @Singleton
     fun provideAniListApolloClient(
         okHttpClient: OkHttpClient,
         logger: Logger
-    ): AniListApolloClient {
-        return AniListApolloClient(okHttpClient, logger)
-    }
+    ): AniListApolloClient = AniListApolloClient(okHttpClient, logger)
 
     @Provides
     @Singleton
     fun provideAniListRepository(
         apolloClient: AniListApolloClient,
         logger: Logger
-    ): AniListRepository {
-        return AniListRepositoryImpl(
-            apolloClient = apolloClient,
-            logger = logger
-        )
-    }
+    ): AniListRepository = AniListRepositoryImpl(
+        apolloClient = apolloClient,
+        logger = logger
+    )
 
     @Provides
     @Singleton
@@ -122,5 +112,4 @@ object AppModule {
     @Provides
     @Singleton
     fun customTabIntentFactory(): CustomTabsIntentFactory = DefaultCustomTabsIntentFactory()
-
 }

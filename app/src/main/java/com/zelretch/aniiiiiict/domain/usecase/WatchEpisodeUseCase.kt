@@ -6,13 +6,13 @@ import javax.inject.Inject
 
 class WatchEpisodeUseCase @Inject constructor(
     private val repository: AnnictRepository,
-    private val updateViewStateUseCase: UpdateViewStateUseCase,
+    private val updateViewStateUseCase: UpdateViewStateUseCase
 ) {
     suspend operator fun invoke(
         episodeId: String,
         workId: String,
         currentStatus: StatusState,
-        shouldUpdateStatus: Boolean = true,
+        shouldUpdateStatus: Boolean = true
     ): Result<Unit> {
         return try {
             // エピソードの視聴を記録
@@ -31,4 +31,4 @@ class WatchEpisodeUseCase @Inject constructor(
             Result.failure(e)
         }
     }
-} 
+}

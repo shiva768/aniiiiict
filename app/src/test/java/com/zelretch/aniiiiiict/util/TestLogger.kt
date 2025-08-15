@@ -20,4 +20,4 @@ class TestLogger : Logger {
     override fun debug(tag: String, message: String, context: String) {
         // テスト時はログ出力は不要
     }
-} 
+}

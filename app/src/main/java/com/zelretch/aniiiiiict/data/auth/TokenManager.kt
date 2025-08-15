@@ -7,10 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TokenManager @Inject constructor(
-    context: Context,
-    private val logger: Logger
-) {
+class TokenManager @Inject constructor(context: Context, private val logger: Logger) {
     companion object {
         private const val TAG = "TokenManager"
         private const val PREFS_NAME = "annict_prefs"

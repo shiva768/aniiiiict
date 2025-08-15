@@ -6,4 +6,4 @@ data class Episode(
     val numberText: String? = null,
     val title: String? = null,
     val viewerDidTrack: Boolean? = null
-) 
+)

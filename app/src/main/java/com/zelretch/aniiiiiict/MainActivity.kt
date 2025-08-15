@@ -89,10 +89,9 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        AuthScreen(
-                            uiState = mainUiState,
-                            onLoginClick = { mainViewModel.startAuth() }
-                        )
+                        AuthScreen(uiState = mainUiState, onLoginClick = {
+                            mainViewModel.startAuth()
+                        })
                     }
 
                     composable("track") {
@@ -105,7 +104,7 @@ class MainActivity : ComponentActivity() {
                                 trackViewModel.recordEpisode(id, workId, status)
                             },
                             onNavigateToHistory = { navController.navigate("history") },
-                            onRefresh = { trackViewModel.refresh() },
+                            onRefresh = { trackViewModel.refresh() }
                         )
                     }
 
@@ -146,7 +145,6 @@ class MainActivity : ComponentActivity() {
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-
                     logger.debug(
                         TAG,
                         "Processing authentication code: ${code.take(5)}...",
@@ -164,7 +162,6 @@ class MainActivity : ComponentActivity() {
                         // 認証状態を再確認して UI を更新
                         mainViewModel.checkAuthentication()
                     }
-
                 } else {
                     logger.error(
                         TAG,
@@ -175,4 +172,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-} 
+}

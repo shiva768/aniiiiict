@@ -17,12 +17,12 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.filterDataStore: DataStore<Preferences> by preferencesDataStore(name = "filter_preferences")
+private val Context.filterDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "filter_preferences"
+)
 
 @Singleton
-class FilterPreferences @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
+class FilterPreferences @Inject constructor(@ApplicationContext private val context: Context) {
     private val dataStore = context.filterDataStore
 
     private object PreferencesKeys {
@@ -38,21 +38,21 @@ class FilterPreferences @Inject constructor(
 
     val filterState: Flow<FilterState> = dataStore.data.map { preferences ->
         FilterState(
-            selectedMedia = preferences[PreferencesKeys.SELECTED_MEDIA]?.split(",")
-                ?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
-            selectedSeason = preferences[PreferencesKeys.SELECTED_SEASON]?.split(",")
-                ?.filter { it.isNotEmpty() }
+            selectedMedia =
+            preferences[PreferencesKeys.SELECTED_MEDIA]?.split(",")?.filter { it.isNotEmpty() }
+                ?.toSet() ?: emptySet(),
+            selectedSeason =
+            preferences[PreferencesKeys.SELECTED_SEASON]?.split(",")?.filter { it.isNotEmpty() }
                 ?.mapNotNull { runCatching { SeasonName.valueOf(it) }.getOrNull() }?.toSet()
                 ?: emptySet(),
-            selectedYear = preferences[PreferencesKeys.SELECTED_YEAR]?.split(",")
-                ?.filter { it.isNotEmpty() }
-                ?.mapNotNull { it.toIntOrNull() }
-                ?.filter { it > 0 }?.toSet()
-                ?: emptySet(),
-            selectedChannel = preferences[PreferencesKeys.SELECTED_CHANNEL]?.split(",")
-                ?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
-            selectedStatus = preferences[PreferencesKeys.SELECTED_STATUS]?.split(",")
-                ?.filter { it.isNotEmpty() }
+            selectedYear =
+            preferences[PreferencesKeys.SELECTED_YEAR]?.split(",")?.filter { it.isNotEmpty() }
+                ?.mapNotNull { it.toIntOrNull() }?.filter { it > 0 }?.toSet() ?: emptySet(),
+            selectedChannel = preferences[PreferencesKeys.SELECTED_CHANNEL]?.split(",")?.filter {
+                it.isNotEmpty()
+            }?.toSet() ?: emptySet(),
+            selectedStatus =
+            preferences[PreferencesKeys.SELECTED_STATUS]?.split(",")?.filter { it.isNotEmpty() }
                 ?.mapNotNull { runCatching { StatusState.valueOf(it) }.getOrNull() }?.toSet()
                 ?: emptySet(),
             searchQuery = preferences[PreferencesKeys.SEARCH_QUERY] ?: "",
@@ -80,4 +80,4 @@ class FilterPreferences @Inject constructor(
             preferences[PreferencesKeys.SORT_ORDER] = filterState.sortOrder.name
         }
     }
-} 
+}

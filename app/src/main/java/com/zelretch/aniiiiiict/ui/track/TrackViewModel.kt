@@ -79,7 +79,10 @@ class TrackViewModel @Inject constructor(
                     _uiState.update { currentState ->
                         currentState.copy(
                             filterState = savedFilterState,
-                            programs = filterProgramsUseCase(currentState.allPrograms, savedFilterState)
+                            programs = filterProgramsUseCase(
+                                currentState.allPrograms,
+                                savedFilterState
+                            )
                         )
                     }
                 }
@@ -144,19 +147,36 @@ class TrackViewModel @Inject constructor(
                         "[DEBUG_LOG] allPrograms size: ${_uiState.value.allPrograms.size}",
                         "TrackViewModel.recordEpisode"
                     )
-                    logger.info(TAG, "[DEBUG_LOG] program: $program", "TrackViewModel.recordEpisode")
-                    
+                    logger.info(
+                        TAG,
+                        "[DEBUG_LOG] program: $program",
+                        "TrackViewModel.recordEpisode"
+                    )
+
                     val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
-                    logger.info(TAG, "[DEBUG_LOG] currentEpisode: $currentEpisode", "TrackViewModel.recordEpisode")
-                    
-                    if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
+                    logger.info(
+                        TAG,
+                        "[DEBUG_LOG] currentEpisode: $currentEpisode",
+                        "TrackViewModel.recordEpisode"
+                    )
+
+                    if (program != null && currentEpisode != null &&
+                        currentEpisode.episode.number != null
+                    ) {
                         logger.info(
                             TAG,
                             "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}",
                             "TrackViewModel.recordEpisode"
                         )
-                        val judgeResult = judgeFinaleUseCase(currentEpisode.episode.number, program.work.id.toInt())
-                        logger.info(TAG, "[DEBUG_LOG] judgeResult: $judgeResult", "TrackViewModel.recordEpisode")
+                        val judgeResult = judgeFinaleUseCase(
+                            currentEpisode.episode.number,
+                            program.work.id.toInt()
+                        )
+                        logger.info(
+                            TAG,
+                            "[DEBUG_LOG] judgeResult: $judgeResult",
+                            "TrackViewModel.recordEpisode"
+                        )
                         if (judgeResult.isFinale) {
                             logger.info(
                                 TAG,
@@ -315,4 +335,4 @@ class TrackViewModel @Inject constructor(
             )
         }
     }
-} 
+}

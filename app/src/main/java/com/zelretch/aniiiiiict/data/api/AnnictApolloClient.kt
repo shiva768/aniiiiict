@@ -33,22 +33,15 @@ class AnnictApolloClient @Inject constructor(
             "AnnictApolloClient.init"
         )
 
-        val authenticatedClient = okHttpClient.newBuilder()
-            .addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .addHeader(
-                        "Authorization",
-                        "Bearer ${token!!}"
-                    )
-                    .build()
-                chain.proceed(request)
-            }
-            .build()
+        val authenticatedClient = okHttpClient.newBuilder().addInterceptor { chain ->
+            val request = chain.request().newBuilder().addHeader(
+                "Authorization",
+                "Bearer ${token!!}"
+            ).build()
+            chain.proceed(request)
+        }.build()
 
-        ApolloClient.Builder()
-            .serverUrl(SERVER_URL)
-            .okHttpClient(authenticatedClient)
-            .build()
+        ApolloClient.Builder().serverUrl(SERVER_URL).okHttpClient(authenticatedClient).build()
     }
 
     suspend fun <D : Query.Data> executeQuery(
@@ -57,9 +50,7 @@ class AnnictApolloClient @Inject constructor(
         cachePolicy: FetchPolicy = FetchPolicy.NetworkFirst
     ): ApolloResponse<D> {
         try {
-            return client.query(operation)
-                .fetchPolicy(cachePolicy)
-                .execute()
+            return client.query(operation).fetchPolicy(cachePolicy).execute()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
@@ -78,9 +69,7 @@ class AnnictApolloClient @Inject constructor(
         cachePolicy: FetchPolicy = FetchPolicy.NetworkOnly
     ): ApolloResponse<D> {
         try {
-            return client.mutation(operation)
-                .fetchPolicy(cachePolicy)
-                .execute()
+            return client.mutation(operation).fetchPolicy(cachePolicy).execute()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
@@ -92,4 +81,4 @@ class AnnictApolloClient @Inject constructor(
             throw e
         }
     }
-} 
+}
