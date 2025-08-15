@@ -58,6 +58,22 @@ object ViewModelTestUtils {
 }
 ```
 
+## 実装されたファイル
+
+### 新規作成したファイル
+
+1. **`ViewModelContract.kt`** - 基本的なViewModel契約とテスト用インターフェース
+2. **`MainViewModelContract.kt`** - MainViewModel専用のインターフェース
+3. **`TrackViewModelContract.kt`** - TrackViewModel専用のインターフェース
+4. **`ViewModelTestUtils.kt`** - テスト用のユーティリティ関数
+5. **`ViewModelTestabilityDemoTest.kt`** - 改善されたテスト容易性のデモンストレーション
+6. **`HiltTestingExamples.kt`** - Hiltテスト機能の活用例（コメント形式）
+
+### 更新したファイル
+
+1. **`MainViewModel.kt`** - インターフェースの実装とテスト用メソッドの追加
+2. **`TrackViewModel.kt`** - インターフェースの実装とテスト用メソッドの追加
+
 ## 新しいテスト手法
 
 ### 1. インターフェースベースのテスト
@@ -65,69 +81,38 @@ object ViewModelTestUtils {
 ViewModelを具象クラスではなくインターフェースとして参照することで、テストの意図を明確にし、将来的な実装変更に対する耐性を向上させます。
 
 ```kotlin
-class MainViewModelImprovedTest : BehaviorSpec({
-    lateinit var viewModelContract: MainViewModelContract
-    lateinit var testableViewModel: TestableViewModel<MainUiState>
-    
-    beforeTest {
-        val viewModel = MainViewModel(/* dependencies */)
-        viewModelContract = viewModel  // インターフェースとして参照
-        testableViewModel = viewModel   // テスト機能として参照
-    }
-    
-    `when`("認証テスト") {
-        then("インターフェース経由で認証開始") {
-            viewModelContract.startAuth()
-            // アサーション
-        }
-    }
-})
+// 従来のアプローチ
+val viewModel = MainViewModel(dependencies...)
+viewModel.startAuth() // 具象クラスに依存
+
+// 改善されたアプローチ
+val viewModel = MainViewModel(dependencies...)
+val viewModelContract: MainViewModelContract = viewModel // インターフェースとして参照
+viewModelContract.startAuth() // インターフェースの契約に依存
 ```
 
-### 2. Hiltテスト機能の活用
-
-`@BindValue`を使用して、テスト用の依存関係を簡単に注入できます。
-
-```kotlin
-@HiltAndroidTest
-class MainViewModelImprovedTest : BehaviorSpec({
-    @BindValue @JvmField 
-    val mockAuthUseCase: AnnictAuthUseCase = mockk(relaxUnitFun = true)
-    
-    @Inject
-    lateinit var viewModel: MainViewModel
-    
-    beforeTest {
-        hiltRule.inject()
-        // ViewModelは自動的に正しい依存関係で構築される
-    }
-})
-```
-
-### 3. 直接的な状態操作によるテストシナリオ作成
+### 2. 直接的な状態操作によるテストシナリオ作成
 
 複雑なUI状態を直接設定することで、特定のシナリオを効率的にテストできます。
 
 ```kotlin
-`when`("エラーハンドリングテスト") {
-    then("複雑な状態をワンステップで設定") {
-        testableViewModel.setUiStateForTest(
-            MainUiState(
-                isLoading = false,
-                error = "ネットワークエラー",
-                isAuthenticating = false,
-                isAuthenticated = false
-            )
-        )
-        
-        // 設定した状態からのテストを開始
-        viewModelContract.clearError()
-        // アサーション
-    }
-}
+val testableViewModel: TestableViewModel<MainUiState> = viewModel
+
+// 複雑な状態をワンステップで設定
+testableViewModel.setUiStateForTest(
+    MainUiState(
+        isLoading = false,
+        error = "ネットワークエラー",
+        isAuthenticating = false,
+        isAuthenticated = false
+    )
+)
+
+// 設定した状態からのテストを開始
+viewModelContract.clearError()
 ```
 
-### 4. テスト用ユーティリティによる簡潔なテスト
+### 3. テスト用ユーティリティによる簡潔なテスト
 
 ```kotlin
 // ユーティリティメソッドで状態操作を簡潔に
@@ -136,45 +121,38 @@ testableViewModel.setLoadingState(true)
 testableViewModel.resetToInitialState()
 ```
 
-## 実装例
+## デモンストレーション
 
-### TrackViewModelの改善
+`ViewModelTestabilityDemoTest.kt` では以下の改善点をデモンストレーションしています：
+
+1. **インターフェースベースのアクセス**: ViewModelをインターフェース経由で操作
+2. **直接的な状態設定**: 複雑な状態をワンステップで作成
+3. **ユーティリティメソッドの活用**: 簡潔な状態操作
+4. **従来手法との比較**: セットアップの簡素化効果
+
+## Hiltテスト機能の活用（将来実装予定）
+
+`HiltTestingExamples.kt` で以下のパターンを例示しています：
+
+### 1. @BindValue による簡単なモック注入
 
 ```kotlin
-// インターフェース定義
-interface TrackViewModelContract : ViewModelContract<TrackUiState> {
-    fun watchEpisode(program: ProgramWithWork, episodeNumber: Int)
-    fun toggleFilterVisibility()
-    fun showDetailModal(program: ProgramWithWork)
-    // ...
-}
+@BindValue @JvmField 
+val mockAuthUseCase: AnnictAuthUseCase = mockk(relaxUnitFun = true)
 
-// テスト専用インターフェース
-interface TestableTrackViewModel {
-    var externalScope: CoroutineScope?
-    fun setUiStateForTest(state: TrackUiState)
-}
+@Inject
+lateinit var viewModel: MainViewModel
+```
 
-// 実装
-@HiltViewModel
-class TrackViewModel @Inject constructor(
-    // ... dependencies
-) : BaseViewModel(logger), TrackViewModelContract, TestableTrackViewModel {
-    
-    // === 既存の実装 ===
-    
-    // === インターフェース実装 ===
-    override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {
-        val episode = program.programs.find { it.episode.number == episodeNumber }
-        episode?.let {
-            recordEpisode(it.episode.id, program.work.id, program.work.viewerStatusState)
-        }
-    }
-    
-    // === テスト用実装 ===
-    override fun setUiStateForTest(state: TrackUiState) {
-        _uiState.value = state
-    }
+### 2. @UninstallModules による完全なモジュール置き換え
+
+```kotlin
+@UninstallModules(RepositoryModule::class)
+@TestInstallIn(component = SingletonComponent::class, replaces = [RepositoryModule::class])
+@Module
+object TestRepositoryModule {
+    @Provides
+    fun provideTestRepository(): Repository = mockk(relaxed = true)
 }
 ```
 
@@ -183,8 +161,8 @@ class TrackViewModel @Inject constructor(
 1. **テストの意図明確化**: インターフェースベースのテストにより、何をテストしているかが明確
 2. **実装詳細からの分離**: ViewModelの内部実装変更がテストに与える影響を最小限に
 3. **複雑なシナリオの簡潔な記述**: 直接的な状態操作により、セットアップコードを削減
-4. **Hiltテスト機能の活用**: `@BindValue`などによる依存関係注入の簡素化
-5. **保守性の向上**: 一貫したテストパターンによる保守性の向上
+4. **保守性の向上**: 一貫したテストパターンによる保守性の向上
+5. **拡張性**: 新しいViewModelでも同じパターンを適用可能
 
 ## 注意事項
 
@@ -198,4 +176,4 @@ class TrackViewModel @Inject constructor(
 
 1. まずインターフェースベースの参照に変更
 2. 複雑なセットアップが必要な部分で`TestableViewModel`を活用
-3. Hiltテストの活用は既存のモックベースから段階的に移行
+3. 新しいViewModelではこのパターンを最初から適用
