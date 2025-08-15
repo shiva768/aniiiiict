@@ -52,7 +52,88 @@
 - **バージョン管理**: `gradle/libs.versions.toml` を使用して、すべての依存関係を集中管理しています（バージョンカタログ）。
 - **APIキー管理**: `local.properties` に記述されたAPIキーは、**Secrets Gradle Plugin** を通じて `BuildConfig` に自動で追加され、安全に参照されます。
 
-## 6. 開発ルール
+## 6. テストアーキテクチャ (Testing Architecture)
+
+このプロジェクトでは、**プロダクションコードを汚染しない拡張ベースのテストアプローチ**を採用しています。
+
+### テスト設計の原則
+
+1. **プロダクションコードの純度**: ViewModelやその他のクラスには、ビジネスロジックのみを含める
+2. **テストコードの分離**: テスト用の機能は `app/src/test` 配下の拡張として実装
+3. **安全性の確保**: テスト専用メソッドが本番環境で呼ばれるリスクを完全に排除
+
+### ViewModelテストの実装
+
+#### プロダクションコード（純粋）
+```kotlin
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val annictAuthUseCase: AnnictAuthUseCase,
+    // その他の依存関係...
+) : BaseViewModel(logger), MainViewModelContract {
+    // ✅ ビジネスロジックのみ、テスト専用コードは一切含まれない
+}
+```
+
+#### テスト専用拡張（app/src/test配下）
+```kotlin
+// ViewModelTestExtensions.kt
+interface TestableMainViewModel {
+    fun setUiStateForTest(state: MainUiState)
+    fun setErrorForTest(error: String?)
+    fun setLoadingForTest(isLoading: Boolean)
+}
+
+class MainViewModelTestWrapper(private val viewModel: MainViewModel) : TestableMainViewModel {
+    // リフレクションベースの実装でプライベートフィールドにアクセス
+}
+
+// 拡張関数で簡潔なテストコードを実現
+fun MainViewModel.asTestable(): TestableMainViewModel {
+    return MainViewModelTestWrapper(this)
+}
+```
+
+#### テストでの使用方法
+```kotlin
+class MainViewModelTest {
+    @Test
+    fun `エラー状態のテスト`() {
+        val viewModel = MainViewModel(...)
+        
+        // プロダクション用インターフェース
+        val contract: MainViewModelContract = viewModel
+        
+        // テスト専用機能（拡張として分離）
+        val testable = viewModel.asTestable()
+        
+        // 状態を直接設定（テスト用）
+        testable.setErrorForTest("テストエラー")
+        
+        // 結果を検証
+        assertEquals("テストエラー", contract.uiState.value.error)
+    }
+}
+```
+
+### テストの種類と使い分け
+
+1. **インターフェースベースのテスト**: UI画面やコンポーネントのテスト（高速・簡単）
+2. **実装テスト**: ビジネスロジックの詳細なテスト（実際のロジック実行）
+3. **統合テスト**: エンドツーエンドのフロー全体をテスト
+
+### メリット
+
+- **プロダクションビルドの最適化**: テストコードが本番に含まれない
+- **安全性**: テストメソッドの誤用リスクがゼロ
+- **保守性**: テスト機能とビジネスロジックが明確に分離
+- **拡張性**: 他のViewModelでも同じパターンを適用可能
+
+詳細な実装例とガイドは以下のドキュメントを参照してください：
+- [CLEAN_TESTING_APPROACH.md](./CLEAN_TESTING_APPROACH.md)
+- [VIEWMODEL_TESTING_GUIDE.md](./VIEWMODEL_TESTING_GUIDE.md)
+
+## 7. 開発ルール
 
 - **ブランチ戦略**
   - メインブランチは `master` です。
