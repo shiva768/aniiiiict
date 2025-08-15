@@ -32,22 +32,24 @@ class LoadProgramsUseCaseTest : BehaviorSpec({
                 val result = useCase().first()
 
                 // 結果の検証
-                result shouldHaveSize 2  // 2つの異なる作品
+                result shouldHaveSize 2 // 2つの異なる作品
 
                 // 作品1の検証
                 val anime1 = result.find { it.work.title == "アニメ1" }
                 anime1 shouldNotBe null
-                anime1!!.programs shouldHaveSize 2  // アニメ1は2つのエピソード
-                anime1.firstProgram.episode.numberText shouldBe "#1"  // 最初のエピソードが設定されている
+                anime1!!.programs shouldHaveSize 2 // アニメ1は2つのエピソード
+                anime1.firstProgram.episode.numberText shouldBe "#1" // 最初のエピソードが設定されている
 
                 // 作品2の検証
                 val anime2 = result.find { it.work.title == "アニメ2" }
                 anime2 shouldNotBe null
-                anime2!!.programs shouldHaveSize 1  // アニメ2は1つのエピソード
-                anime2.firstProgram.episode.numberText shouldBe "#1"  // 最初のエピソード
+                anime2!!.programs shouldHaveSize 1 // アニメ2は1つのエピソード
+                anime2.firstProgram.episode.numberText shouldBe "#1" // 最初のエピソード
 
                 // 日付順にソートされているか検証
-                result[0].firstProgram.startedAt.isBefore(result[1].firstProgram.startedAt) shouldBe true
+                result[0].firstProgram.startedAt.isBefore(
+                    result[1].firstProgram.startedAt
+                ) shouldBe true
             }
         }
 
@@ -59,9 +61,9 @@ class LoadProgramsUseCaseTest : BehaviorSpec({
 
                 val result = useCase().first()
 
-                result shouldHaveSize 1  // 1つの作品
+                result shouldHaveSize 1 // 1つの作品
                 val anime = result[0]
-                anime.programs shouldHaveSize 3  // 3つのエピソード
+                anime.programs shouldHaveSize 3 // 3つのエピソード
 
                 // エピソードが番号順にソートされているか検証
                 anime.programs[0].episode.number shouldBe 1
@@ -126,7 +128,7 @@ class LoadProgramsUseCaseTest : BehaviorSpec({
             )
 
             return listOf(anime1Episode1, anime1Episode2, anime2Episode1)
-    }
+        }
 
         fun createMockEpisodesForSameAnime(): List<ViewerProgramsQuery.Node> {
             // エピソード順をわざと入れ替えて、ソートが正しく機能するか確認

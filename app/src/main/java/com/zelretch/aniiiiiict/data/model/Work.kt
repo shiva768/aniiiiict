@@ -12,5 +12,5 @@ data class Work(
     val mediaText: String? = null,
     val viewerStatusState: StatusState,
     val seasonNameText: String? = null,
-    val image: WorkImage? = null,
+    val image: WorkImage? = null
 )

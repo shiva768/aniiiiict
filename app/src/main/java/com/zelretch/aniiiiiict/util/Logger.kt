@@ -6,4 +6,4 @@ interface Logger {
     fun warning(tag: String, message: String, context: String)
     fun info(tag: String, message: String, context: String)
     fun debug(tag: String, message: String, context: String)
-} 
+}

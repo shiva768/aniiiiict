@@ -23,27 +23,17 @@ object CoilModule {
     fun provideImageLoader(
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient
-    ): ImageLoader {
-        return ImageLoader.Builder(context)
-            .memoryCache {
-                MemoryCache.Builder(context)
-                    .maxSizePercent(0.25) // メモリの25%までキャッシュを使用
-                    .build()
-            }
-            .diskCache {
-                DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizePercent(0.05) // ストレージの5%までキャッシュを使用
-                    .build()
-            }
-            .okHttpClient(okHttpClient)
-            .crossfade(true) // 画像切り替え時にクロスフェード効果を追加
-            // ネットワークからの読み込みを優先し、キャッシュをフォールバックとして使用
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .networkCachePolicy(CachePolicy.ENABLED)
-            // デバッグログを有効化（開発中のみ）
-            .logger(DebugLogger())
+    ): ImageLoader = ImageLoader.Builder(context).memoryCache {
+        MemoryCache.Builder(context).maxSizePercent(0.25) // メモリの25%までキャッシュを使用
             .build()
-    }
-} 
+    }.diskCache {
+        DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
+            .maxSizePercent(0.05) // ストレージの5%までキャッシュを使用
+            .build()
+    }.okHttpClient(okHttpClient).crossfade(true) // 画像切り替え時にクロスフェード効果を追加
+        // ネットワークからの読み込みを優先し、キャッシュをフォールバックとして使用
+        .diskCachePolicy(CachePolicy.ENABLED).memoryCachePolicy(CachePolicy.ENABLED)
+        .networkCachePolicy(CachePolicy.ENABLED)
+        // デバッグログを有効化（開発中のみ）
+        .logger(DebugLogger()).build()
+}

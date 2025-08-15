@@ -57,7 +57,8 @@ class AniListRepositoryImpl @Inject constructor(
                             airingAt = it.airingAt
                         )
                     }
-                ))
+                )
+            )
         } catch (e: Exception) {
             logger.error(TAG, e, "AniList Mediaの取得に失敗しました")
             Result.failure(e)

@@ -7,4 +7,4 @@ data class Program(
     val startedAt: LocalDateTime,
     val channel: Channel,
     val episode: Episode
-) 
+)

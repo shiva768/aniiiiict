@@ -24,10 +24,7 @@ class AniListApolloClient @Inject constructor(
     }
 
     private val client by lazy {
-        ApolloClient.Builder()
-            .serverUrl(SERVER_URL)
-            .okHttpClient(OkHttpClient())
-            .build()
+        ApolloClient.Builder().serverUrl(SERVER_URL).okHttpClient(OkHttpClient()).build()
     }
 
     suspend fun <D : Query.Data> executeQuery(
@@ -36,9 +33,7 @@ class AniListApolloClient @Inject constructor(
         cachePolicy: FetchPolicy = FetchPolicy.NetworkFirst
     ): ApolloResponse<D> {
         try {
-            return client.query(operation)
-                .fetchPolicy(cachePolicy)
-                .execute()
+            return client.query(operation).fetchPolicy(cachePolicy).execute()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
@@ -57,9 +52,7 @@ class AniListApolloClient @Inject constructor(
         cachePolicy: FetchPolicy = FetchPolicy.NetworkOnly
     ): ApolloResponse<D> {
         try {
-            return client.mutation(operation)
-                .fetchPolicy(cachePolicy)
-                .execute()
+            return client.mutation(operation).fetchPolicy(cachePolicy).execute()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
@@ -71,4 +64,4 @@ class AniListApolloClient @Inject constructor(
             throw e
         }
     }
-} 
+}

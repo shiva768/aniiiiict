@@ -25,7 +25,7 @@ data class MainUiState(
     override val isLoading: Boolean = false,
     override val error: String? = null,
     val isAuthenticating: Boolean = false,
-    val isAuthenticated: Boolean = false,
+    val isAuthenticated: Boolean = false
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel
@@ -128,7 +128,9 @@ class MainViewModel @Inject constructor(
                     if (success) {
                         println("MainViewModel: 認証成功")
                         delay(300)
-                        _uiState.update { it.copy(isAuthenticating = false, isAuthenticated = true) }
+                        _uiState.update {
+                            it.copy(isAuthenticating = false, isAuthenticated = true)
+                        }
                     } else {
                         logger.warning(
                             TAG,

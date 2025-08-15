@@ -1,6 +1,10 @@
 package com.zelretch.aniiiiiict.data.repository
 
-import com.annict.*
+import com.annict.CreateRecordMutation
+import com.annict.DeleteRecordMutation
+import com.annict.UpdateStatusMutation
+import com.annict.ViewerProgramsQuery
+import com.annict.ViewerRecordsQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
 import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
@@ -33,9 +37,7 @@ class AnnictRepositoryImpl @Inject constructor(
         return result
     }
 
-    override suspend fun getAuthUrl(): String {
-        return authManager.getAuthorizationUrl()
-    }
+    override suspend fun getAuthUrl(): String = authManager.getAuthorizationUrl()
 
     override suspend fun createRecord(episodeId: String, workId: String): Boolean {
         // パラメータバリデーション（APIリクエスト前に行う必要あり）
@@ -81,20 +83,17 @@ class AnnictRepositoryImpl @Inject constructor(
             "AnnictRepositoryImpl.handleAuthCallback"
         )
         return try {
-            authManager.handleAuthorizationCode(code).fold(
-                onSuccess = {
-                    logger.info(TAG, "認証成功", "AnnictRepositoryImpl.handleAuthCallback")
-                    true
-                },
-                onFailure = { e ->
-                    logger.error(
-                        TAG,
-                        "認証失敗 - ${e.message}",
-                        "AnnictRepositoryImpl.handleAuthCallback"
-                    )
-                    false
-                }
-            )
+            authManager.handleAuthorizationCode(code).fold(onSuccess = {
+                logger.info(TAG, "認証成功", "AnnictRepositoryImpl.handleAuthCallback")
+                true
+            }, onFailure = { e ->
+                logger.error(
+                    TAG,
+                    "認証失敗 - ${e.message}",
+                    "AnnictRepositoryImpl.handleAuthCallback"
+                )
+                false
+            })
         } catch (e: Exception) {
             logger.error(
                 TAG,
@@ -183,8 +182,10 @@ class AnnictRepositoryImpl @Inject constructor(
     ) {
         logger.info(TAG, "記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
 
-        val query =
-            ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
+        val query = ViewerRecordsQuery(
+            after =
+            after?.let { Optional.present(it) } ?: Optional.absent()
+        )
         val response = annictApolloClient.executeQuery(
             operation = query,
             context = "AnnictRepositoryImpl.getRecords"
@@ -216,7 +217,7 @@ class AnnictRepositoryImpl @Inject constructor(
                             media = null,
                             mediaText = "",
                             viewerStatusState = StatusState.UNKNOWN__,
-                            seasonNameText = "",
+                            seasonNameText = ""
                         )
                     )
                 }

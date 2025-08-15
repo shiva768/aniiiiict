@@ -8,34 +8,33 @@ class ProgramFilter {
     fun applyFilters(
         programs: List<ProgramWithWork>,
         filterState: FilterState
-    ): List<ProgramWithWork> {
-        return programs
-            .asSequence()
-            .filter { program -> applyMediaFilter(program, filterState) }
-            .filter { program -> applySeasonFilter(program, filterState) }
-            .filter { program -> applyYearFilter(program, filterState) }
-            .filter { program -> applyChannelFilter(program, filterState) }
-            .filter { program -> applyStatusFilter(program, filterState) }
-            .filter { program -> applySearchFilter(program, filterState) }
-            .filter { program -> applyAiredFilter(program, filterState) }
-            .toList()
-            .let { filteredPrograms -> applySortOrder(filteredPrograms, filterState.sortOrder) }
-    }
+    ): List<ProgramWithWork> = programs.asSequence().filter { program ->
+        applyMediaFilter(program, filterState)
+    }.filter { program -> applySeasonFilter(program, filterState) }
+        .filter { program -> applyYearFilter(program, filterState) }
+        .filter { program -> applyChannelFilter(program, filterState) }
+        .filter { program -> applyStatusFilter(program, filterState) }
+        .filter { program -> applySearchFilter(program, filterState) }
+        .filter { program -> applyAiredFilter(program, filterState) }.toList()
+        .let { filteredPrograms -> applySortOrder(filteredPrograms, filterState.sortOrder) }
 
     private fun applyMediaFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedMedia.isEmpty() || program.work.media in filterState.selectedMedia
 
     private fun applySeasonFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedSeason.isEmpty() || program.work.seasonName in filterState.selectedSeason
+        filterState.selectedSeason.isEmpty() ||
+            program.work.seasonName in filterState.selectedSeason
 
     private fun applyYearFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedYear.isEmpty() || program.work.seasonYear in filterState.selectedYear
 
     private fun applyChannelFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedChannel.isEmpty() || program.firstProgram.channel.name in filterState.selectedChannel
+        filterState.selectedChannel.isEmpty() ||
+            program.firstProgram.channel.name in filterState.selectedChannel
 
     private fun applyStatusFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedStatus.isEmpty() || program.work.viewerStatusState in filterState.selectedStatus
+        filterState.selectedStatus.isEmpty() ||
+            program.work.viewerStatusState in filterState.selectedStatus
 
     private fun applySearchFilter(program: ProgramWithWork, filterState: FilterState): Boolean {
         if (filterState.searchQuery.isEmpty()) return true
@@ -50,11 +49,10 @@ class ProgramFilter {
     private fun applySortOrder(
         programs: List<ProgramWithWork>,
         sortOrder: SortOrder
-    ): List<ProgramWithWork> =
-        when (sortOrder) {
-            SortOrder.START_TIME_ASC -> programs.sortedBy { it.firstProgram.startedAt }
-            SortOrder.START_TIME_DESC -> programs.sortedByDescending { it.firstProgram.startedAt }
-        }
+    ): List<ProgramWithWork> = when (sortOrder) {
+        SortOrder.START_TIME_ASC -> programs.sortedBy { it.firstProgram.startedAt }
+        SortOrder.START_TIME_DESC -> programs.sortedByDescending { it.firstProgram.startedAt }
+    }
 
     fun extractAvailableFilters(programs: List<ProgramWithWork>): AvailableFilters {
         val media = programs.mapNotNull { it.work.media }.distinct().sorted()
@@ -68,8 +66,7 @@ class ProgramFilter {
         )
 
         // シーズンをカスタム順序でソート
-        val seasons = programs.mapNotNull { it.work.seasonName }
-            .distinct()
+        val seasons = programs.mapNotNull { it.work.seasonName }.distinct()
             .sortedWith(compareBy { seasonOrder[it] ?: Int.MAX_VALUE })
 
         val years = programs.mapNotNull { it.work.seasonYear }.distinct().sorted()
@@ -84,4 +81,4 @@ data class AvailableFilters(
     val seasons: List<SeasonName>,
     val years: List<Int>,
     val channels: List<String>
-) 
+)

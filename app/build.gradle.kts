@@ -6,9 +6,9 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.apollo)
     alias(libs.plugins.secrets.gradle.plugin)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.detekt)
 }
-
-
 
 android {
     namespace = "com.zelretch.aniiiiiict"
@@ -47,7 +47,7 @@ android {
         // GHAビルド時のみデバッグ署名設定を適用
         if (System.getenv("CI") != null) {
             getByName("debug").apply {
-                storeFile = file("${rootDir}/app/debug.keystore")
+                storeFile = file("$rootDir/app/debug.keystore")
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
@@ -162,8 +162,20 @@ apollo {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+ktlint {
+    // IDE側のエンジン（ログに 1.5.0 と出ている）に合わせる
+    version.set("1.5.0")
+
+    // 違反があってもビルド失敗にしない（検出は残す）
+    ignoreFailures.set(true)
+
+    // コンソール出力＋レポート
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
     }
+}
+
+detekt {
+    ignoreFailures = true
 }

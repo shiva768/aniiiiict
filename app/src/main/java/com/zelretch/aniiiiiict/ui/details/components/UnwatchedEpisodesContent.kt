@@ -18,13 +18,10 @@ fun UnwatchedEpisodesContent(
     programs: List<Program>,
     isLoading: Boolean,
     onRecordEpisode: (String) -> Unit,
-    onMarkUpToAsWatched: (Int) -> Unit,
+    onMarkUpToAsWatched: (Int) -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = 400.dp)
-            .padding(vertical = 8.dp)
+        modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).padding(vertical = 8.dp)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -34,16 +31,14 @@ fun UnwatchedEpisodesContent(
             Text(
                 text = "未視聴のエピソードはありません",
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(16.dp)
+                modifier = Modifier.align(Alignment.Center).padding(16.dp)
             )
         } else {
             EpisodesList(
                 programs = programs,
                 onRecordEpisode = onRecordEpisode,
-                onMarkUpToAsWatched = onMarkUpToAsWatched,
+                onMarkUpToAsWatched = onMarkUpToAsWatched
             )
         }
     }
-} 
+}

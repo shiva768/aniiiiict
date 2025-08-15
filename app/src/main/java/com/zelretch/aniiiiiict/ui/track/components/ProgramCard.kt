@@ -1,14 +1,32 @@
 package com.zelretch.aniiiiiict.ui.track.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,17 +52,13 @@ fun ProgramCard(
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag("program_card_${programWithWork.work.id}"),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             // 上部：作品情報と画像
             Row(
@@ -55,9 +69,7 @@ fun ProgramCard(
                 val imageUrl = programWithWork.work.image?.imageUrl
 
                 Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp))
                 ) {
                     if (imageUrl != null) {
                         AsyncImage(
@@ -68,9 +80,9 @@ fun ProgramCard(
                         )
                     } else {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            modifier = Modifier.fillMaxSize().background(
+                                MaterialTheme.colorScheme.surfaceVariant
+                            ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -204,8 +216,12 @@ fun ProgramCard(
                             )
                         },
                         modifier = Modifier.size(40.dp),
-                        enabled = !uiState.isLoading && !uiState.isRecording && uiState.recordingSuccess != programWithWork.firstProgram.episode.id,
-                        colors = if (uiState.recordingSuccess == programWithWork.firstProgram.episode.id) {
+                        enabled =
+                        !uiState.isLoading && !uiState.isRecording &&
+                            uiState.recordingSuccess != programWithWork.firstProgram.episode.id,
+                        colors = if (uiState.recordingSuccess ==
+                            programWithWork.firstProgram.episode.id
+                        ) {
                             IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -233,7 +249,9 @@ fun ProgramCard(
 
                     // 未視聴エピソードボタン
                     FilledTonalIconButton(
-                        onClick = { onShowUnwatchedEpisodes(programWithWork) },
+                        onClick = {
+                            onShowUnwatchedEpisodes(programWithWork)
+                        },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
@@ -264,4 +282,4 @@ fun InfoTag(text: String, color: Color) {
             overflow = TextOverflow.Ellipsis
         )
     }
-} 
+}
