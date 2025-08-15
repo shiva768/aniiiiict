@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.ui.screen
+package com.zelretch.aniiiiiict.samples.ui
 
 import com.zelretch.aniiiiiict.MainUiState
 import com.zelretch.aniiiiiict.ui.MainViewModelContract

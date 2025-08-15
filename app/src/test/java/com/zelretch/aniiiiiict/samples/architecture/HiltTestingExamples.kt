@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.examples
+package com.zelretch.aniiiiiict.samples.architecture
 
 /**
  * Hiltテスト機能を活用したViewModelテストの例

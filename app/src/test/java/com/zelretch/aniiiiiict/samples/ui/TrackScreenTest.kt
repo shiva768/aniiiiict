@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.ui.screen
+package com.zelretch.aniiiiiict.samples.ui
 
 import com.annict.type.SeasonName
 import com.annict.type.StatusState

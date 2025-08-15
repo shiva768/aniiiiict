@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.examples
+package com.zelretch.aniiiiiict.samples.viewmodel
 
 import android.content.Context
 import androidx.browser.customtabs.CustomTabsIntent

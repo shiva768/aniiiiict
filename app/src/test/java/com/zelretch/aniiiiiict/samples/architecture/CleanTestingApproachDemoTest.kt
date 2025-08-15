@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiiict.testing
+package com.zelretch.aniiiiiict.samples.architecture
 
 import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
