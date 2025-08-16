@@ -1,3 +1,4 @@
+import timber.log.Timber
 package com.zelretch.aniiiiiict
 
 import android.content.Context
@@ -8,7 +9,6 @@ import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -63,7 +63,7 @@ class MainViewModel @Inject constructor(
 
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
-                    logger.info(
+                    Timber.i(
                         "MainViewModel",
                         "認証されていないため、認証を開始します",
                         "checkAuthState"
@@ -71,7 +71,7 @@ class MainViewModel @Inject constructor(
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: Exception) {
-                logger.error("MainViewModel", e, "認証状態の確認中にエラーが発生")
+                Timber.e("MainViewModel", e, "認証状態の確認中にエラーが発生")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証状態の確認に失敗しました",
@@ -89,7 +89,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val authUrl = annictAuthUseCase.getAuthUrl()
-                logger.info("MainViewModel", "認証URLを取得: $authUrl", "startAuth")
+                Timber.i("MainViewModel", "認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
@@ -99,7 +99,7 @@ class MainViewModel @Inject constructor(
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: Exception) {
-                logger.error("MainViewModel", e, "認証URLの取得に失敗")
+                Timber.e("MainViewModel", e, "認証URLの取得に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
@@ -129,7 +129,7 @@ class MainViewModel @Inject constructor(
                             it.copy(isAuthenticating = false, isAuthenticated = true)
                         }
                     } else {
-                        logger.warning(
+                        Timber.w(
                             "MainViewModel",
                             "認証が失敗しました",
                             "handleAuthCallback"
@@ -146,7 +146,7 @@ class MainViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    logger.warning(
+                    Timber.w(
                         "MainViewModel",
                         "認証コードがnullです",
                         "handleAuthCallback"
@@ -162,7 +162,7 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                logger.error("MainViewModel", e, "認証処理に失敗")
+                Timber.e("MainViewModel", e, "認証処理に失敗")
                 e.printStackTrace()
                 delay(200)
                 _uiState.update {
@@ -178,7 +178,7 @@ class MainViewModel @Inject constructor(
 
     // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
-        logger.error("MainViewModel", error, "MainViewModel")
+        Timber.e("MainViewModel", error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 

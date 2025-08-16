@@ -13,8 +13,6 @@ import com.zelretch.aniiiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiiict.ui.base.DefaultCustomTabsIntentFactory
-import com.zelretch.aniiiiiict.util.AndroidLogger
-import com.zelretch.aniiiiiict.util.Logger
 import com.zelretch.aniiiiiict.util.RetryManager
 import dagger.Module
 import dagger.Provides
@@ -31,17 +29,16 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideTokenManager(@ApplicationContext context: Context, logger: Logger): TokenManager =
-        TokenManager(context, logger)
+    fun provideTokenManager(@ApplicationContext context: Context): TokenManager =
+        TokenManager(context)
 
     @Provides
     @Singleton
     fun provideAnnictAuthManager(
         tokenManager: TokenManager,
         okHttpClient: OkHttpClient,
-        retryManager: RetryManager,
-        logger: Logger
-    ): AnnictAuthManager = AnnictAuthManager(tokenManager, okHttpClient, retryManager, logger)
+        retryManager: RetryManager
+    ): AnnictAuthManager = AnnictAuthManager(tokenManager, okHttpClient, retryManager)
 
     @Provides
     @Singleton
@@ -62,52 +59,42 @@ object AppModule {
     @Singleton
     fun provideAnnictApolloClient(
         tokenManager: TokenManager,
-        okHttpClient: OkHttpClient,
-        logger: Logger
-    ): AnnictApolloClient = AnnictApolloClient(tokenManager, okHttpClient, logger)
+        okHttpClient: OkHttpClient
+    ): AnnictApolloClient = AnnictApolloClient(tokenManager, okHttpClient)
 
     @Provides
     @Singleton
     fun provideAnnictRepository(
         tokenManager: TokenManager,
         authManager: AnnictAuthManager,
-        apolloClient: AnnictApolloClient,
-        logger: Logger
+        apolloClient: AnnictApolloClient
     ): AnnictRepository = AnnictRepositoryImpl(
         tokenManager = tokenManager,
         authManager = authManager,
-        annictApolloClient = apolloClient,
-        logger = logger
+        annictApolloClient = apolloClient
     )
 
     @Provides
     @Singleton
     fun provideAniListApolloClient(
-        okHttpClient: OkHttpClient,
-        logger: Logger
-    ): AniListApolloClient = AniListApolloClient(okHttpClient, logger)
+        okHttpClient: OkHttpClient
+    ): AniListApolloClient = AniListApolloClient(okHttpClient)
 
     @Provides
     @Singleton
     fun provideAniListRepository(
-        apolloClient: AniListApolloClient,
-        logger: Logger
+        apolloClient: AniListApolloClient
     ): AniListRepository = AniListRepositoryImpl(
-        apolloClient = apolloClient,
-        logger = logger
+        apolloClient = apolloClient
     )
 
     @Provides
     @Singleton
-    fun provideRetryManager(logger: Logger): RetryManager = RetryManager(logger)
+    fun provideRetryManager(): RetryManager = RetryManager()
 
     @Provides
     @Singleton
     fun provideProgramFilter(): ProgramFilter = ProgramFilter()
-
-    @Provides
-    @Singleton
-    fun provideLogger(): Logger = AndroidLogger()
 
     @Provides
     @Singleton

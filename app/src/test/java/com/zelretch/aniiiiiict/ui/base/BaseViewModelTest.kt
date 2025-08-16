@@ -1,11 +1,8 @@
 package com.zelretch.aniiiiiict.ui.base
 
-import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -28,7 +25,6 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 class BaseViewModelTest : BehaviorSpec({
     
-    val logger = mockk<Logger>(relaxed = true)
     lateinit var testDispatcher: TestDispatcher
     
     beforeTest {
@@ -45,7 +41,7 @@ class BaseViewModelTest : BehaviorSpec({
         lateinit var viewModel: TestableBaseViewModel
         
         beforeEach {
-            viewModel = TestableBaseViewModel(logger)
+            viewModel = TestableBaseViewModel()
         }
         
         `when`("executeWithLoadingが正常に完了する場合") {
@@ -93,11 +89,6 @@ class BaseViewModelTest : BehaviorSpec({
                     // エラー処理の確認
                     viewModel.loadingState shouldBe false
                     viewModel.errorState shouldBe errorMessage
-                    
-                    // ログが適切に出力されることを確認
-                    verify { 
-                        logger.error("BaseViewModel", exception, "ローディング処理中にエラーが発生") 
-                    }
                 }
             }
         }
@@ -225,7 +216,7 @@ class BaseViewModelTest : BehaviorSpec({
  * テスト用のBaseViewModel実装
  * 抽象メソッドを実装してテスト可能にする
  */
-private class TestableBaseViewModel(logger: Logger) : BaseViewModel(logger) {
+private class TestableBaseViewModel : BaseViewModel() {
     data class TestUiState(
         override val isLoading: Boolean = false,
         override val error: String? = null

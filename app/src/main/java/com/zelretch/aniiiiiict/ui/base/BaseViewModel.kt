@@ -1,15 +1,16 @@
+import timber.log.Timber
 package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * 共通のローディング処理を提供する基底ViewModelクラス
  */
-abstract class BaseViewModel(val logger: Logger) : ViewModel() {
+abstract class BaseViewModel : ViewModel() {
     /**
      * ローディング状態を更新する関数
      */
@@ -43,7 +44,7 @@ abstract class BaseViewModel(val logger: Logger) : ViewModel() {
                 }
             } catch (e: Exception) {
                 // エラーを設定
-                logger.error("BaseViewModel", e, "ローディング処理中にエラーが発生")
+                Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
                 updateErrorState(e.message ?: "処理中にエラーが発生しました")
             } finally {
                 // ローディング状態を終了

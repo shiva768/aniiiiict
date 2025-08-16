@@ -1,3 +1,4 @@
+import timber.log.Timber
 package com.zelretch.aniiiiiict
 
 import android.app.Application

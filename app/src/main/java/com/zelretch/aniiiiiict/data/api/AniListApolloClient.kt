@@ -1,3 +1,4 @@
+import timber.log.Timber
 package com.zelretch.aniiiiiict.data.api
 
 import com.apollographql.apollo.ApolloClient
@@ -7,16 +8,15 @@ import com.apollographql.apollo.api.Query
 import com.apollographql.apollo.cache.normalized.FetchPolicy
 import com.apollographql.apollo.cache.normalized.fetchPolicy
 import com.apollographql.apollo.network.okHttpClient
-import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AniListApolloClient @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-    private val logger: Logger
+    private val okHttpClient: OkHttpClient
 ) {
     companion object {
         private const val SERVER_URL = "https://graphql.anilist.co"
@@ -36,11 +36,7 @@ class AniListApolloClient @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
-            logger.error(
-                "AniListApolloClient",
-                "GraphQLクエリの実行に失敗: ${operation.name()}",
-                context
-            )
+            Timber.e(e, "[AniListApolloClient][%s] GraphQLクエリの実行に失敗: %s", context, operation.name())
             throw e
         }
     }
@@ -55,11 +51,7 @@ class AniListApolloClient @Inject constructor(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
 
-            logger.error(
-                "AniListApolloClient",
-                "GraphQLミューテーションの実行に失敗: ${operation.name()}",
-                context
-            )
+            Timber.e(e, "[AniListApolloClient][%s] GraphQLミューテーションの実行に失敗: %s", context, operation.name())
             throw e
         }
     }

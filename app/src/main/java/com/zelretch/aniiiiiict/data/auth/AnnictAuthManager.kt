@@ -1,24 +1,24 @@
+import timber.log.Timber
 package com.zelretch.aniiiiiict.data.auth
 
 import com.google.gson.Gson
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.AnnictConfig
 import com.zelretch.aniiiiiict.data.model.TokenResponse
-import com.zelretch.aniiiiiict.util.Logger
 import com.zelretch.aniiiiiict.util.RetryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
 
 class AnnictAuthManager @Inject constructor(
     private val tokenManager: TokenManager,
     private val okHttpClient: OkHttpClient,
-    private val retryManager: RetryManager,
-    private val logger: Logger
+    private val retryManager: RetryManager
 ) {
     companion object {
         private const val REDIRECT_URI = "aniiiiiict://oauth/callback"
@@ -35,21 +35,13 @@ class AnnictAuthManager @Inject constructor(
 
     suspend fun handleAuthorizationCode(code: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            logger.info(
-                "AnnictAuthManager",
-                "認証コードの処理を開始: ${code.take(5)}...",
-                "handleAuthorizationCode"
-            )
+            Timber.i("[AnnictAuthManager][handleAuthorizationCode] 認証コードの処理を開始: ${code.take(5)}...")
             val tokenResponse = getAccessTokenWithRetry(code)
-            logger.info(
-                "AnnictAuthManager",
-                "アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...",
-                "handleAuthorizationCode"
-            )
+            Timber.i("[AnnictAuthManager][handleAuthorizationCode] アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...")
             tokenManager.saveAccessToken(tokenResponse.accessToken)
             Result.success(Unit)
         } catch (e: Exception) {
-            logger.error("AnnictAuthManager", e, "handleAuthorizationCode")
+            Timber.e(e, "[AnnictAuthManager][handleAuthorizationCode] %s", e.message ?: "Unknown error")
             Result.failure(e)
         }
     }
@@ -72,7 +64,7 @@ class AnnictAuthManager @Inject constructor(
             "authorization_code"
         ).add("redirect_uri", REDIRECT_URI).add("code", code).build()
 
-        logger.info("AnnictAuthManager", "トークンリクエストを送信", "getAccessToken")
+        Timber.i("[AnnictAuthManager][getAccessToken] トークンリクエストを送信")
 
         val request = Request.Builder().url(AnnictConfig.TOKEN_URL).post(formBody).build()
 
@@ -80,27 +72,23 @@ class AnnictAuthManager @Inject constructor(
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string() ?: "レスポンスボディなし"
                 val error = IOException("トークンリクエスト失敗: ${response.code}, $errorBody")
-                logger.error("AnnictAuthManager", error, "getAccessToken")
+                Timber.e(error, "[AnnictAuthManager][getAccessToken] %s", error.message)
                 throw error
             }
 
             val responseBody = response.body?.string()
             if (responseBody.isNullOrEmpty()) {
                 val error = IOException("空のレスポンスボディ")
-                logger.error("AnnictAuthManager", error, "getAccessToken")
+                Timber.e(error, "[AnnictAuthManager][getAccessToken] %s", error.message)
                 throw error
             }
 
-            logger.info(
-                "AnnictAuthManager",
-                "トークンレスポンス受信: ${responseBody.take(50)}...",
-                "getAccessToken"
-            )
+            Timber.i("[AnnictAuthManager][getAccessToken] トークンレスポンス受信: ${responseBody.take(50)}...")
 
             try {
                 Gson().fromJson(responseBody, TokenResponse::class.java)
             } catch (e: Exception) {
-                logger.error("AnnictAuthManager", e, "getAccessToken")
+                Timber.e(e, "[AnnictAuthManager][getAccessToken] %s", e.message ?: "Failed to parse token response")
                 throw IOException("Failed to parse token response: ${e.message}")
             }
         }

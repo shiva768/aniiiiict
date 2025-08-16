@@ -1,3 +1,4 @@
+import timber.log.Timber
 package com.zelretch.aniiiiiict
 
 import android.content.Intent
@@ -18,7 +19,6 @@ import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -132,23 +132,23 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        logger.debug(
+        Timber.d(
             "MainActivity",
             "Intent received: ${intent.action}, data: ${intent.data}",
             "handleIntent"
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                logger.debug("MainActivity", "Received OAuth callback: $uri", "handleIntent")
+                Timber.d("MainActivity", "Received OAuth callback: $uri", "handleIntent")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    logger.debug(
+                    Timber.d(
                         "MainActivity",
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
                     )
-                    logger.info(
+                    Timber.i(
                         "MainActivity",
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
@@ -161,7 +161,7 @@ class MainActivity : ComponentActivity() {
                         mainViewModel.checkAuthentication()
                     }
                 } else {
-                    logger.error(
+                    Timber.e(
                         "MainActivity",
                         "認証コードがURIに含まれていません: $uri",
                         "handleIntent"
