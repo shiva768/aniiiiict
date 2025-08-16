@@ -10,3 +10,6 @@
 local.properties 
 /app/build/
 local.properties
+
+# Debug keystore (generated for testing, don't commit)
+app/debug.keystore
