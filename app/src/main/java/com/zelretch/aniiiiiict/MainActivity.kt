@@ -18,17 +18,12 @@ import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val TAG = "MainActivity"
-
-    @Inject
-    lateinit var logger: Logger
 
     private val mainViewModel: MainViewModel by viewModels()
 
@@ -134,24 +129,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        logger.debug(
-            TAG,
+        Timber.d(
+            "MainActivity",
             "Intent received: ${intent.action}, data: ${intent.data}",
             "handleIntent"
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                logger.debug(TAG, "Received OAuth callback: $uri", "handleIntent")
+                Timber.d("MainActivity", "Received OAuth callback: $uri", "handleIntent")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    logger.debug(
-                        TAG,
+                    Timber.d(
+                        "MainActivity",
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
                     )
-                    logger.info(
-                        TAG,
+                    Timber.i(
+                        "MainActivity",
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
                     )
@@ -163,8 +158,8 @@ class MainActivity : ComponentActivity() {
                         mainViewModel.checkAuthentication()
                     }
                 } else {
-                    logger.error(
-                        TAG,
+                    Timber.e(
+                        "MainActivity",
                         "認証コードがURIに含まれていません: $uri",
                         "handleIntent"
                     )

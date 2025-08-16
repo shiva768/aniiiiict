@@ -6,7 +6,6 @@ import com.zelretch.aniiiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.SearchRecordsUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,10 +27,8 @@ data class HistoryUiState(
 class HistoryViewModel @Inject constructor(
     private val loadRecordsUseCase: LoadRecordsUseCase,
     private val searchRecordsUseCase: SearchRecordsUseCase,
-    private val deleteRecordUseCase: DeleteRecordUseCase,
-    logger: Logger
-) : BaseViewModel(logger) {
-    private val TAG = "HistoryViewModel"
+    private val deleteRecordUseCase: DeleteRecordUseCase
+) : BaseViewModel() {
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
