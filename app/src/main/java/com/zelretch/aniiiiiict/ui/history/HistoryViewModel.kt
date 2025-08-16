@@ -31,7 +31,6 @@ class HistoryViewModel @Inject constructor(
     private val deleteRecordUseCase: DeleteRecordUseCase,
     logger: Logger
 ) : BaseViewModel(logger) {
-    private val TAG = "HistoryViewModel"
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 

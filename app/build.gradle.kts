@@ -123,6 +123,9 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.coil.compose)
 
+    // Logging
+    implementation(libs.timber)
+
     // Testing
     testImplementation(libs.coroutines.test)
     testImplementation(libs.bundles.testing)

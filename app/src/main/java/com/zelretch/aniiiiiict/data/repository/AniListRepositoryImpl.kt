@@ -14,7 +14,7 @@ class AniListRepositoryImpl @Inject constructor(
     private val logger: Logger
 ) : AniListRepository {
 
-    private val TAG = "AniListRepositoryImpl"
+    private val "AniListRepositoryImpl" = "AniListRepositoryImpl"
 
     override suspend fun getMedia(mediaId: Int): Result<AniListMedia> {
         return try {
@@ -28,7 +28,7 @@ class AniListRepositoryImpl @Inject constructor(
 
             if (response.hasErrors()) {
                 logger.info(
-                    TAG,
+                    "AniListRepositoryImpl",
                     "AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}",
                     "AniListRepositoryImpl.getMedia"
                 )
@@ -41,7 +41,7 @@ class AniListRepositoryImpl @Inject constructor(
 
             val media = response.data?.Media
             if (media == null) {
-                logger.info(TAG, "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMedia")
+                logger.info("AniListRepositoryImpl", "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMedia")
                 return Result.failure(RuntimeException("AniList Media data is null"))
             }
 
@@ -60,7 +60,7 @@ class AniListRepositoryImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            logger.error(TAG, e, "AniList Mediaの取得に失敗しました")
+            logger.error("AniListRepositoryImpl", e, "AniList Mediaの取得に失敗しました")
             Result.failure(e)
         }
     }

@@ -19,7 +19,6 @@ class AniListApolloClient @Inject constructor(
     private val logger: Logger
 ) {
     companion object {
-        private const val TAG = "AniListApolloClient"
         private const val SERVER_URL = "https://graphql.anilist.co"
     }
 
@@ -38,7 +37,7 @@ class AniListApolloClient @Inject constructor(
             if (e is CancellationException) throw e
 
             logger.error(
-                TAG,
+                "AniListApolloClient",
                 "GraphQLクエリの実行に失敗: ${operation.name()}",
                 context
             )
@@ -57,7 +56,7 @@ class AniListApolloClient @Inject constructor(
             if (e is CancellationException) throw e
 
             logger.error(
-                TAG,
+                "AniListApolloClient",
                 "GraphQLミューテーションの実行に失敗: ${operation.name()}",
                 context
             )

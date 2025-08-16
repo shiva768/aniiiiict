@@ -30,10 +30,9 @@ class AnnictRepositoryImpl @Inject constructor(
     private val annictApolloClient: AnnictApolloClient,
     private val logger: Logger
 ) : AnnictRepository {
-    private val TAG = "AnnictRepositoryImpl"
     override suspend fun isAuthenticated(): Boolean {
         val result = tokenManager.hasValidToken()
-        logger.info(TAG, "認証状態 = $result", "AnnictRepositoryImpl.isAuthenticated")
+        logger.info("AnnictRepositoryImpl", "認証状態 = $result", "AnnictRepositoryImpl.isAuthenticated")
         return result
     }
 

@@ -54,8 +54,6 @@ class TrackViewModel @Inject constructor(
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     logger: Logger
 ) : BaseViewModel(logger), TrackViewModelContract, TestableTrackViewModel {
-    private val TAG = "TrackViewModel"
-
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
@@ -146,19 +144,19 @@ class TrackViewModel @Inject constructor(
                     // AniListから作品情報を取得し、最終話判定を行う
                     val program = _uiState.value.allPrograms.find { it.work.id == workId }
                     logger.info(
-                        TAG,
+                        "TrackViewModel",
                         "[DEBUG_LOG] allPrograms size: ${_uiState.value.allPrograms.size}",
                         "TrackViewModel.recordEpisode"
                     )
                     logger.info(
-                        TAG,
+                        "TrackViewModel",
                         "[DEBUG_LOG] program: $program",
                         "TrackViewModel.recordEpisode"
                     )
 
                     val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
                     logger.info(
-                        TAG,
+                        "TrackViewModel",
                         "[DEBUG_LOG] currentEpisode: $currentEpisode",
                         "TrackViewModel.recordEpisode"
                     )
@@ -167,7 +165,7 @@ class TrackViewModel @Inject constructor(
                         currentEpisode.episode.number != null
                     ) {
                         logger.info(
-                            TAG,
+                            "TrackViewModel",
                             "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}",
                             "TrackViewModel.recordEpisode"
                         )
@@ -176,13 +174,13 @@ class TrackViewModel @Inject constructor(
                             program.work.id.toInt()
                         )
                         logger.info(
-                            TAG,
+                            "TrackViewModel",
                             "[DEBUG_LOG] judgeResult: $judgeResult",
                             "TrackViewModel.recordEpisode"
                         )
                         if (judgeResult.isFinale) {
                             logger.info(
-                                TAG,
+                                "TrackViewModel",
                                 "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId",
                                 "TrackViewModel.recordEpisode"
                             )
@@ -194,14 +192,14 @@ class TrackViewModel @Inject constructor(
                             }
                         } else {
                             logger.info(
-                                TAG,
+                                "TrackViewModel",
                                 "[DEBUG_LOG] judgeResult.isFinale is false",
                                 "TrackViewModel.recordEpisode"
                             )
                         }
                     } else {
                         logger.info(
-                            TAG,
+                            "TrackViewModel",
                             "[DEBUG_LOG] program or currentEpisode is null, or episode number is null",
                             "TrackViewModel.recordEpisode"
                         )
@@ -271,7 +269,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun refresh() {
-        logger.info(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
+        logger.info("TrackViewModel", "プログラム一覧を再読み込み", "TrackViewModel.refresh")
         loadingPrograms()
     }
 
@@ -315,7 +313,7 @@ class TrackViewModel @Inject constructor(
     }
 
     private fun handleError(error: Throwable) {
-        logger.error(TAG, error, "TrackViewModel")
+        logger.error("TrackViewModel", error, "TrackViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 

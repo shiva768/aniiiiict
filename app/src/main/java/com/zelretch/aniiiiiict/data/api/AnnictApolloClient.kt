@@ -21,14 +21,13 @@ class AnnictApolloClient @Inject constructor(
     private val logger: Logger
 ) {
     companion object {
-        private const val TAG = "AnnictApolloClient"
         private const val SERVER_URL = "https://api.annict.com/graphql"
     }
 
     private val client by lazy {
         val token = tokenManager.getAccessToken()
         logger.info(
-            TAG,
+            "AnnictApolloClient",
             "Apollo初期化 - アクセストークンの有無: ${!token.isNullOrBlank()}",
             "AnnictApolloClient.init"
         )
@@ -55,7 +54,7 @@ class AnnictApolloClient @Inject constructor(
             if (e is CancellationException) throw e
 
             logger.error(
-                TAG,
+                "AnnictApolloClient",
                 "GraphQLクエリの実行に失敗: ${operation.name()}",
                 context
             )
@@ -74,7 +73,7 @@ class AnnictApolloClient @Inject constructor(
             if (e is CancellationException) throw e
 
             logger.error(
-                TAG,
+                "AnnictApolloClient",
                 "GraphQLミューテーションの実行に失敗: ${operation.name()}",
                 context
             )

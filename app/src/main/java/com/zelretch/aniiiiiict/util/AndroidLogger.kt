@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiiict.util
 
-import android.util.Log
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -17,22 +17,22 @@ class AndroidLogger @Inject constructor() : Logger {
     }
 
     override fun error(tag: String, error: Throwable, context: String) {
-        Log.e(tag, formatMessage(error.message ?: "Unknown error", context), error)
+        Timber.e(error, formatMessage(error.message ?: "Unknown error", context))
     }
 
     override fun error(tag: String, errorMessage: String, context: String) {
-        Log.e(tag, formatMessage(errorMessage, context))
+        Timber.e(formatMessage(errorMessage, context))
     }
 
     override fun warning(tag: String, message: String, context: String) {
-        Log.w(tag, formatMessage(message, context))
+        Timber.w(formatMessage(message, context))
     }
 
     override fun info(tag: String, message: String, context: String) {
-        Log.i(tag, formatMessage(message, context))
+        Timber.i(formatMessage(message, context))
     }
 
     override fun debug(tag: String, message: String, context: String) {
-        Log.d(tag, formatMessage(message, context))
+        Timber.d(formatMessage(message, context))
     }
 }

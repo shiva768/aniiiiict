@@ -1,5 +1,9 @@
 package com.zelretch.aniiiiiict.util
 
+/**
+ * テスト用のLogger実装
+ * Timber移行後もLoggerインターフェースとの互換性を保持
+ */
 class TestLogger : Logger {
     override fun error(tag: String, error: Throwable, context: String) {
         // テスト時はログ出力は不要

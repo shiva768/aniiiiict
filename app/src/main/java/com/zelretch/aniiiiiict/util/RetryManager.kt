@@ -11,7 +11,6 @@ import kotlin.math.min
  */
 class RetryManager @Inject constructor(private val logger: Logger) {
     companion object {
-        private const val TAG = "RetryManager"
     }
 
     /**
@@ -40,7 +39,7 @@ class RetryManager @Inject constructor(private val logger: Logger) {
             } catch (e: Exception) {
                 lastException = e
                 logger.error(
-                    TAG,
+                    "RetryManager",
                     "リトライ失敗 (${attempt + 1}/$maxAttempts): ${e.message}",
                     "retry"
                 )

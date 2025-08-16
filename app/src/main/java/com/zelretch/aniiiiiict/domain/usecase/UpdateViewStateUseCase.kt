@@ -9,12 +9,12 @@ class UpdateViewStateUseCase @Inject constructor(
     private val repository: AnnictRepository,
     private val logger: Logger
 ) {
-    private val TAG = "UpdateViewStateUseCase"
+    private val "UpdateViewStateUseCase" = "UpdateViewStateUseCase"
     suspend operator fun invoke(workId: String, status: StatusState): Result<Unit> = try {
         val updateSuccess = repository.updateWorkViewStatus(workId, status)
         if (!updateSuccess) {
             logger.warning(
-                TAG,
+                "UpdateViewStateUseCase",
                 "ステータスの更新に失敗しました: workId=$workId",
                 "UpdateViewStateUseCase"
             )
