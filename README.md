@@ -71,6 +71,7 @@ cp local.properties.example local.properties
 - [OkHttp](https://square.github.io/okhttp/) 4.12.0 - HTTPクライアント
 - [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) 1.1.6 - データ永続化
 - [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) 1.9.0 - 非同期処理
+- [Timber](https://github.com/JakeWharton/timber) 5.0.1 - ログ出力ライブラリ
 - [Coil](https://coil-kt.github.io/coil/) 2.5.0 - 画像読み込み
 - [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.9.0 - 画面遷移
 - [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.0.0 - Compose用Kotlinプラグイン
