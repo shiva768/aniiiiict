@@ -105,7 +105,6 @@ dependencies {
     implementation(libs.bundles.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons)
-    implementation(libs.compose.material)
 
     // DI (Hilt)
     implementation(libs.hilt.android)
