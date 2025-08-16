@@ -17,9 +17,6 @@ class JudgeFinaleUseCase @Inject constructor(
     private val logger: Logger,
     private val aniListRepository: AniListRepository
 ) {
-
-    private val "JudgeFinaleUseCase" = "JudgeFinaleUseCase"
-
     suspend operator fun invoke(currentEpisodeNumber: Int, mediaId: Int): JudgeFinaleResult {
         logger.info(
             "JudgeFinaleUseCase",

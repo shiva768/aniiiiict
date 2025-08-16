@@ -13,9 +13,6 @@ class AniListRepositoryImpl @Inject constructor(
     private val apolloClient: AniListApolloClient,
     private val logger: Logger
 ) : AniListRepository {
-
-    private val "AniListRepositoryImpl" = "AniListRepositoryImpl"
-
     override suspend fun getMedia(mediaId: Int): Result<AniListMedia> {
         return try {
             val query = GetMediaQuery(

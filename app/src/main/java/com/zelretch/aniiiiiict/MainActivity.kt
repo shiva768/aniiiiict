@@ -25,8 +25,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val "MainActivity" = "MainActivity"
-
     @Inject
     lateinit var logger: Logger
 
