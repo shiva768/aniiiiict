@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict
 
 import android.content.Intent
@@ -21,12 +20,10 @@ import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject
-    lateinit var logger: Logger
 
     private val mainViewModel: MainViewModel by viewModels()
 

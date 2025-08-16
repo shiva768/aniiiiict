@@ -1,7 +1,7 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.zelretch.aniiiiiict.data.repository.AniListRepository
+import timber.log.Timber
 import javax.inject.Inject
 
 enum class FinaleState {
@@ -14,7 +14,6 @@ enum class FinaleState {
 data class JudgeFinaleResult(val state: FinaleState, val isFinale: Boolean)
 
 class JudgeFinaleUseCase @Inject constructor(
-    private val logger: Logger,
     private val aniListRepository: AniListRepository
 ) {
     suspend operator fun invoke(currentEpisodeNumber: Int, mediaId: Int): JudgeFinaleResult {

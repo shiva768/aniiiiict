@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict
 
 import android.content.Context
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 data class MainUiState(
@@ -31,9 +31,8 @@ data class MainUiState(
 class MainViewModel @Inject constructor(
     private val annictAuthUseCase: AnnictAuthUseCase,
     private val customTabsIntentFactory: CustomTabsIntentFactory,
-    logger: Logger,
     @ApplicationContext private val context: Context
-) : BaseViewModel(logger), MainViewModelContract {
+) : BaseViewModel(), MainViewModelContract {
     // UI状態のカプセル化
     private val _uiState = MutableStateFlow(MainUiState())
     override val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()

@@ -1,13 +1,12 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import timber.log.Timber
 import javax.inject.Inject
 
 class UpdateViewStateUseCase @Inject constructor(
-    private val repository: AnnictRepository,
-    private val logger: Logger
+    private val repository: AnnictRepository
 ) {
     suspend operator fun invoke(workId: String, status: StatusState): Result<Unit> = try {
         val updateSuccess = repository.updateWorkViewStatus(workId, status)
