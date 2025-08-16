@@ -128,6 +128,7 @@ dependencies {
     testImplementation(libs.bundles.testing)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.android.testing)
+    androidTestImplementation(libs.mockk)
     debugImplementation(libs.bundles.compose.debug)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
