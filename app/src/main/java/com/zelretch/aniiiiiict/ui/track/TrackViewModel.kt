@@ -53,17 +53,16 @@ class TrackViewModel @Inject constructor(
     private val filterPreferences: FilterPreferences,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     logger: Logger
-) : BaseViewModel(logger) {
+) : BaseViewModel(logger), TrackViewModelContract, TestableTrackViewModel {
     private val TAG = "TrackViewModel"
 
     private val _uiState = MutableStateFlow(TrackUiState())
-    val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
     /**
      * テスト用: コルーチンスコープ差し替え用
      */
-    @set:JvmName("setExternalScopeForTest")
-    var externalScope: CoroutineScope? = null
+    override var externalScope: CoroutineScope? = null
 
     init {
         println("[TrackViewModel] init: start collecting filterPreferences.filterState")
@@ -96,6 +95,10 @@ class TrackViewModel @Inject constructor(
 
     override fun updateErrorState(error: String?) {
         _uiState.update { it.copy(error = error) }
+    }
+
+    override fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 
     private fun loadingPrograms() {
@@ -303,7 +306,7 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    fun toggleFilterVisibility() {
+    override fun toggleFilterVisibility() {
         _uiState.update {
             it.copy(
                 isFilterVisible = !it.isFilterVisible
@@ -335,4 +338,44 @@ class TrackViewModel @Inject constructor(
             )
         }
     }
-}
+
+    // === TrackViewModelContract interface implementation ===
+    
+    override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {
+        val episode = program.programs.find { it.episode.number == episodeNumber }
+        episode?.let {
+            recordEpisode(it.episode.id, program.work.id, program.work.viewerStatusState)
+        }
+    }
+    
+    override fun showDetailModal(program: ProgramWithWork) {
+        showUnwatchedEpisodes(program)
+    }
+    
+    override fun hideDetailModal() {
+        hideDetail()
+    }
+    
+    override fun showFinaleConfirmation(workId: String, episodeNumber: Int) {
+        _uiState.update {
+            it.copy(
+                showFinaleConfirmationForWorkId = workId,
+                showFinaleConfirmationForEpisodeNumber = episodeNumber
+            )
+        }
+    }
+    
+    override fun hideFinaleConfirmation() {
+        dismissFinaleConfirmation()
+    }
+    
+    override fun recordFinale(workId: String, episodeNumber: Int) {
+        confirmWatchedStatus()
+    }
+
+    // === TestableTrackViewModel interface implementation ===
+    
+    override fun setUiStateForTest(state: TrackUiState) {
+        _uiState.value = state
+    }
+} 
