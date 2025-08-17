@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.data.repository
 
 import com.annict.CreateRecordMutation
@@ -19,10 +18,10 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
-import timber.log.Timber
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
+import timber.log.Timber
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(

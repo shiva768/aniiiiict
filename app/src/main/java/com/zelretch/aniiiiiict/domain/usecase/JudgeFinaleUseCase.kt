@@ -1,8 +1,8 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.zelretch.aniiiiiict.data.repository.AniListRepository
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
 enum class FinaleState {
     NOT_FINALE,

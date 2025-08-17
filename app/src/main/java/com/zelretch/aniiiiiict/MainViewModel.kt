@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
 data class MainUiState(
     override val isLoading: Boolean = false,

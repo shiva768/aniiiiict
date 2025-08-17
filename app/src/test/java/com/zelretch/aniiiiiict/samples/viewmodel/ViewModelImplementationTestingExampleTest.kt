@@ -8,7 +8,6 @@ import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiiict.testing.TestableViewModel
-import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -83,7 +82,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
             it("実際のViewModelの実装をテスト") {
                 // 実際のViewModelインスタンスを作成
                 val authUseCase = mockk<AnnictAuthUseCase>()
-                val logger = mockk<Logger>(relaxUnitFun = true)
                 val context = mockk<Context>()
                 val customTabsIntent = mockk<CustomTabsIntent>(relaxUnitFun = true)
                 val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()
@@ -174,7 +172,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
         context("4. 実装の詳細テスト - エラー処理") {
             it("ViewModelの内部エラー処理ロジックをテスト") {
                 val authUseCase = mockk<AnnictAuthUseCase>()
-                val logger = mockk<Logger>(relaxUnitFun = true)
                 val context = mockk<Context>()
                 val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()
                 
@@ -205,7 +202,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
         context("5. パフォーマンステスト - 非同期処理") {
             it("ViewModelの非同期処理タイミングをテスト") {
                 val authUseCase = mockk<AnnictAuthUseCase>()
-                val logger = mockk<Logger>(relaxUnitFun = true)
                 val context = mockk<Context>()
                 val customTabsIntent = mockk<CustomTabsIntent>(relaxUnitFun = true)
                 val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()

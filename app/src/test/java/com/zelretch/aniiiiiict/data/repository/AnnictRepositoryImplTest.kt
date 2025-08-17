@@ -16,7 +16,6 @@ import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
-import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -30,8 +29,7 @@ class AnnictRepositoryImplTest : BehaviorSpec({
     val tokenManager = mockk<TokenManager>()
     val authManager = mockk<AnnictAuthManager>()
     val annictApolloClient = mockk<AnnictApolloClient>()
-    val logger = TestLogger()
-    val repository = AnnictRepositoryImpl(tokenManager, authManager, annictApolloClient, logger)
+    val repository = AnnictRepositoryImpl(tokenManager, authManager, annictApolloClient)
 
     given("AnnictRepositoryImpl の isAuthenticated メソッド") {
         `when`("有効なトークンがある場合") {

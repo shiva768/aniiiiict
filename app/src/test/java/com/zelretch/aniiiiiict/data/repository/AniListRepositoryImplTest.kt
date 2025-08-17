@@ -8,7 +8,6 @@ import com.benasher44.uuid.Uuid
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
-import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -17,8 +16,7 @@ import io.mockk.mockk
 class AniListRepositoryImplTest : BehaviorSpec({
 
     val mockApolloClient = mockk<AniListApolloClient>()
-    val logger = TestLogger()
-    val repository = AniListRepositoryImpl(mockApolloClient, logger)
+    val repository = AniListRepositoryImpl(mockApolloClient)
 
     given("AniListRepositoryImpl の getMedia メソッド") {
         `when`("API呼び出しが成功した場合") {

@@ -1,11 +1,10 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.data.auth
 
 import android.content.Context
 import androidx.core.content.edit
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import timber.log.Timber
 
 @Singleton
 class TokenManager @Inject constructor(context: Context) {

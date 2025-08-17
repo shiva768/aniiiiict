@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.ui.track
 
 import androidx.lifecycle.viewModelScope
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import timber.log.Timber
 
 data class TrackUiState(
     val programs: List<ProgramWithWork> = emptyList(),

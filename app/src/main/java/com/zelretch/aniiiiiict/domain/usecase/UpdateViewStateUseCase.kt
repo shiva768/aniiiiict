@@ -2,8 +2,8 @@ package com.zelretch.aniiiiiict.domain.usecase
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
 class UpdateViewStateUseCase @Inject constructor(
     private val repository: AnnictRepository

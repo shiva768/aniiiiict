@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.data.auth
 
 import com.google.gson.Gson

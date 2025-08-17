@@ -19,7 +19,6 @@ import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -56,7 +55,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
     // 実際のUseCaseを使用
     val loadProgramsUseCase = LoadProgramsUseCase(annictRepository)
-    val updateViewStateUseCase = UpdateViewStateUseCase(annictRepository, TestLogger())
+    val updateViewStateUseCase = UpdateViewStateUseCase(annictRepository)
     val watchEpisodeUseCase = WatchEpisodeUseCase(annictRepository, updateViewStateUseCase)
     val programFilter = ProgramFilter()
     val filterProgramsUseCase = FilterProgramsUseCase(programFilter)

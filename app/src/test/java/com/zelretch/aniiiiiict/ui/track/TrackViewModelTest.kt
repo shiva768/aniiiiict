@@ -11,7 +11,6 @@ import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -40,7 +39,6 @@ class TrackViewModelTest : BehaviorSpec({
     mockk<BulkRecordEpisodesUseCase>()
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
     val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
-    val logger = mockk<Logger>(relaxed = true)
     mockk<Context>(relaxed = true)
     lateinit var viewModel: TrackViewModel
     lateinit var testScope: TestScope
@@ -62,8 +60,7 @@ class TrackViewModelTest : BehaviorSpec({
             watchEpisodeUseCase,
             filterProgramsUseCase,
             filterPreferences,
-            judgeFinalUseCase,
-            logger
+            judgeFinalUseCase
         )
         viewModel.externalScope = testScope // テスト用スコープをセット
         testScope.testScheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める

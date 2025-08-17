@@ -3,7 +3,6 @@ package com.zelretch.aniiiiiict.domain.usecase
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
 import com.zelretch.aniiiiiict.data.repository.AniListRepository
-import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -11,9 +10,8 @@ import io.mockk.mockk
 
 class JudgeFinaleUseCaseTest : BehaviorSpec({
 
-    val logger = TestLogger()
     val aniListRepository = mockk<AniListRepository>()
-    val judgeFinaleUseCase = JudgeFinaleUseCase(logger, aniListRepository)
+    val judgeFinaleUseCase = JudgeFinaleUseCase(aniListRepository)
 
     given("最終話判定ロジック") {
         `when`("次回予定ありかつ nextAiringEpisode.episode > currentEp の場合") {

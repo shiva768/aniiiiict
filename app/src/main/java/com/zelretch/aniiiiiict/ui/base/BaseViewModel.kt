@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel

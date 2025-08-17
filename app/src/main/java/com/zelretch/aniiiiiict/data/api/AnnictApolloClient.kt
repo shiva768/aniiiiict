@@ -1,4 +1,3 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.data.api
 
 import com.apollographql.apollo.ApolloClient
@@ -11,9 +10,9 @@ import com.apollographql.apollo.network.okHttpClient
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
-import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import timber.log.Timber
 
 @Singleton
 class AnnictApolloClient @Inject constructor(

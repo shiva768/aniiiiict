@@ -1,12 +1,11 @@
-import timber.log.Timber
 package com.zelretch.aniiiiiict.util
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.math.min
+import timber.log.Timber
 
 /**
  * リトライロジックを提供するユーティリティクラス
