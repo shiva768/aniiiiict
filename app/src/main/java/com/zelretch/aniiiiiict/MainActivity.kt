@@ -15,7 +15,6 @@ import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
-import com.zelretch.aniiiiiict.ui.mypage.MyPageScreen
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
@@ -38,6 +37,37 @@ class MainActivity : ComponentActivity() {
 
         // Check authentication state when activity is created
         mainViewModel.checkAuthentication()
+
+        // サンプルコードではWindowアニメーションが無効化されていないケースが多いため
+        // ここで明示的に無効化する
+        (window.decorView.context as android.content.Context).theme?.obtainStyledAttributes(
+            intArrayOf(android.R.attr.windowAnimationStyle)
+        )?.let {
+            try {
+                val windowAnimationStyleResId = it.getResourceId(0, 0)
+                if (windowAnimationStyleResId != 0) {
+                    val windowAnimationStyle = resources.newTheme()
+                    windowAnimationStyle.applyStyle(windowAnimationStyleResId, false)
+                    windowAnimationStyle.obtainStyledAttributes(
+                        intArrayOf(
+                            android.R.attr.activityOpenEnterAnimation,
+                            android.R.attr.activityOpenExitAnimation,
+                            android.R.attr.activityCloseEnterAnimation,
+                            android.R.attr.activityCloseExitAnimation
+                        )
+                    ).let { animAttrs ->
+                        try {
+                            // アニメーションの期間を0に設定して実質的に無効化
+                            window.setWindowAnimations(0)
+                        } finally {
+                            animAttrs.recycle()
+                        }
+                    }
+                }
+            } finally {
+                it.recycle()
+            }
+        }
 
         setContent {
             AniiiiictTheme {
@@ -73,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             onRecordEpisode = { id, workId, status ->
                                 trackViewModel.recordEpisode(id, workId, status)
                             },
-                            onNavigateToMyPage = { navController.navigate("mypage") },
+                            onNavigateToHistory = { navController.navigate("history") },
                             onRefresh = { trackViewModel.refresh() }
                         )
                     }
@@ -91,10 +121,6 @@ class MainActivity : ComponentActivity() {
                             onLoadNextPage = { historyViewModel.loadNextPage() },
                             onSearchQueryChange = { historyViewModel.updateSearchQuery(it) }
                         )
-                    }
-
-                    composable("mypage") {
-                        MyPageScreen()
                     }
                 }
             }

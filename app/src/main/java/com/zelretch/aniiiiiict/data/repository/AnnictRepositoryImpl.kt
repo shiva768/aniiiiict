@@ -214,7 +214,6 @@ class AnnictRepositoryImpl @Inject constructor(
                         work = Work(
                             id = work.id,
                             title = work.title,
-                            malAnimeId = work.malAnimeId,
                             media = null,
                             mediaText = "",
                             viewerStatusState = StatusState.UNKNOWN__,
@@ -242,20 +241,6 @@ class AnnictRepositoryImpl @Inject constructor(
             )
             PaginatedRecords(emptyList())
         }
-    }
-
-    override suspend fun getAllRecords(): List<Record> {
-        val allRecords = mutableListOf<Record>()
-        var cursor: String? = null
-        var hasNextPage = true
-
-        while (hasNextPage) {
-            val result = getRecords(cursor)
-            allRecords.addAll(result.records)
-            hasNextPage = result.hasNextPage
-            cursor = result.endCursor
-        }
-        return allRecords
     }
 
     override suspend fun deleteRecord(recordId: String): Boolean = executeApiRequest(

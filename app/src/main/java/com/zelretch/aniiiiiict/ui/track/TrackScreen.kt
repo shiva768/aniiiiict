@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,7 +47,7 @@ fun TrackScreen(
     viewModel: TrackViewModel,
     uiState: TrackUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    onNavigateToMyPage: () -> Unit = {},
+    onNavigateToHistory: () -> Unit = {},
     onRefresh: () -> Unit = {}
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -63,13 +63,13 @@ fun TrackScreen(
                 )
             }
 
-            // マイページ画面へのナビゲーションボタン
+            // 履歴画面へのナビゲーションボタン
             IconButton(
-                onClick = onNavigateToMyPage
+                onClick = onNavigateToHistory
             ) {
                 Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "マイページ"
+                    imageVector = Icons.Default.History,
+                    contentDescription = "履歴"
                 )
             }
         })

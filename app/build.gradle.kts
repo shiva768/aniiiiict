@@ -128,8 +128,6 @@ dependencies {
     // UI
     implementation(libs.coil)
     implementation(libs.coil.compose)
-    implementation(libs.vico.compose)
-    implementation(libs.vico.compose.m3)
 
     // Testing
     testImplementation(libs.coroutines.test)

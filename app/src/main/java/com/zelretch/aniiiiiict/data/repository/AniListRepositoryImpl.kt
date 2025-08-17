@@ -1,11 +1,9 @@
 package com.zelretch.aniiiiiict.data.repository
 
 import co.anilist.GetMediaQuery
-import co.anilist.GetMediaByMalIdQuery
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
-import co.anilist.GetMediaByMalIdQuery
 import com.zelretch.aniiiiiict.util.Logger
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -58,58 +56,7 @@ class AniListRepositoryImpl @Inject constructor(
                             episode = it.episode,
                             airingAt = it.airingAt
                         )
-                    },
-                    genres = emptyList(),
-                    studios = emptyList()
-                )
-            )
-        } catch (e: Exception) {
-            logger.error(TAG, e, "AniList Mediaの取得に失敗しました")
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun getMediaByMalId(malId: Int): Result<AniListMedia> {
-        return try {
-            val query = GetMediaByMalIdQuery(idMal = malId)
-            val response = apolloClient.executeQuery(
-                operation = query,
-                context = "AniListRepositoryImpl.getMediaByMalId"
-            )
-
-            if (response.hasErrors()) {
-                logger.info(
-                    TAG,
-                    "AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}",
-                    "AniListRepositoryImpl.getMediaByMalId"
-                )
-                return Result.failure(
-                    RuntimeException(
-                        response.errors?.firstOrNull()?.message ?: "Unknown AniList GraphQL error"
-                    )
-                )
-            }
-
-            val media = response.data?.Media
-            if (media == null) {
-                logger.info(TAG, "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMediaByMalId")
-                return Result.failure(RuntimeException("AniList Media data is null"))
-            }
-
-            Result.success(
-                AniListMedia(
-                    id = media.id,
-                    format = media.format?.rawValue,
-                    episodes = media.episodes,
-                    status = media.status?.rawValue,
-                    nextAiringEpisode = media.nextAiringEpisode?.let {
-                        NextAiringEpisode(
-                            episode = it.episode,
-                            airingAt = it.airingAt
-                        )
-                    },
-                    genres = media.genres.orEmpty().filterNotNull(),
-                    studios = media.studios?.nodes.orEmpty().mapNotNull { it?.name }
+                    }
                 )
             )
         } catch (e: Exception) {
