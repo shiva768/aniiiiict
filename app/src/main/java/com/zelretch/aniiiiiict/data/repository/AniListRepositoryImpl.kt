@@ -56,7 +56,9 @@ class AniListRepositoryImpl @Inject constructor(
                             episode = it.episode,
                             airingAt = it.airingAt
                         )
-                    }
+                    },
+                    genres = media.genres?.filterNotNull(),
+                    studios = media.studios?.nodes?.filterNotNull()?.map { it.name }
                 )
             )
         } catch (e: Exception) {

@@ -34,7 +34,9 @@ class AniListRepositoryImplTest : BehaviorSpec({
                         nextAiringEpisode = GetMediaQuery.NextAiringEpisode(
                             episode = 10,
                             airingAt = 1678886400
-                        )
+                        ),
+                        genres = listOf("Action", "Adventure"),
+                        studios = GetMediaQuery.Studios(listOf(GetMediaQuery.Node("Studio Ghibli")))
                     )
                 )
                 val mockResponse = ApolloResponse.Builder(
@@ -53,7 +55,9 @@ class AniListRepositoryImplTest : BehaviorSpec({
                     format = "TV",
                     episodes = 12,
                     status = "RELEASING",
-                    nextAiringEpisode = NextAiringEpisode(episode = 10, airingAt = 1678886400)
+                    nextAiringEpisode = NextAiringEpisode(episode = 10, airingAt = 1678886400),
+                    genres = listOf("Action", "Adventure"),
+                    studios = listOf("Studio Ghibli")
                 )
             }
         }

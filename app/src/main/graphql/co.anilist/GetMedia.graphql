@@ -8,5 +8,11 @@ query GetMedia($id: Int!) {
       episode
       airingAt
     }
+    genres
+    studios(isMain: true) {
+      nodes {
+        name
+      }
+    }
   }
 }

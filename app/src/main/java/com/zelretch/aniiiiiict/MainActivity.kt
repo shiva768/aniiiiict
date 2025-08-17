@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiiict.ui.history.HistoryViewModel
+import com.zelretch.aniiiiiict.ui.mypage.MyPageScreen
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
@@ -103,9 +104,13 @@ class MainActivity : ComponentActivity() {
                             onRecordEpisode = { id, workId, status ->
                                 trackViewModel.recordEpisode(id, workId, status)
                             },
-                            onNavigateToHistory = { navController.navigate("history") },
+                            onNavigateToHistory = { navController.navigate("mypage") },
                             onRefresh = { trackViewModel.refresh() }
                         )
+                    }
+
+                    composable("mypage") {
+                        MyPageScreen(onNavigateToHistory = { navController.navigate("history") })
                     }
 
                     composable("history") {
