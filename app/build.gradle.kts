@@ -77,6 +77,12 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/*.md"
         }
     }
     testOptions {
@@ -128,6 +134,7 @@ dependencies {
     testImplementation(libs.bundles.testing)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.android.testing)
+    androidTestImplementation(libs.mockk)
     debugImplementation(libs.bundles.compose.debug)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
