@@ -90,8 +90,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
             watchEpisodeUseCase,
             filterProgramsUseCase,
             filterPreferences,
-            judgeFinaleUseCase,
-            TestLogger()
+            judgeFinaleUseCase
         )
         viewModel.externalScope = testScope // テスト用スコープをセット
         testScope.testScheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める

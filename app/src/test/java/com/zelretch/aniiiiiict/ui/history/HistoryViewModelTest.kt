@@ -44,8 +44,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
+                        deleteRecordUseCase
                     )
                     val state = viewModel.uiState.first { !it.isLoading }
                     state.records shouldBe emptyList()
@@ -74,7 +73,6 @@ open class HistoryViewModelTest : BehaviorSpec({
                         loadRecordsUseCase,
                         searchRecordsUseCase,
                         deleteRecordUseCase,
-                        logger
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.updateSearchQuery("foo")
@@ -103,7 +101,6 @@ open class HistoryViewModelTest : BehaviorSpec({
                         loadRecordsUseCase,
                         searchRecordsUseCase,
                         deleteRecordUseCase,
-                        logger
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.deleteRecord("id1")
@@ -141,7 +138,6 @@ open class HistoryViewModelTest : BehaviorSpec({
                         loadRecordsUseCase,
                         searchRecordsUseCase,
                         deleteRecordUseCase,
-                        logger
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.loadNextPage()
@@ -170,7 +166,6 @@ open class HistoryViewModelTest : BehaviorSpec({
                         loadRecordsUseCase,
                         searchRecordsUseCase,
                         deleteRecordUseCase,
-                        logger
                     )
                     val initialState = viewModel.uiState.first { !it.isLoading }
 
@@ -211,7 +206,6 @@ open class HistoryViewModelTest : BehaviorSpec({
                         loadRecordsUseCase,
                         searchRecordsUseCase,
                         deleteRecordUseCase,
-                        logger
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.updateSearchQuery("Anime")

@@ -43,7 +43,6 @@ class CleanTestingApproachDemoTest : BehaviorSpec({
             then("プロダクションコードは純粋でテスト機能は分離されている") {
                 // Mock dependencies
                 val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
-                val mockLogger = mockk<com.zelretch.aniiiiiict.util.Logger>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
                 val mockCustomTabsIntentFactory = mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
                 
@@ -54,7 +53,6 @@ class CleanTestingApproachDemoTest : BehaviorSpec({
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
-                    mockLogger,
                     mockContext
                 )
                 
@@ -91,14 +89,12 @@ class CleanTestingApproachDemoTest : BehaviorSpec({
             
             then("テスト容易性は維持される") {
                 val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
-                val mockLogger = mockk<com.zelretch.aniiiiiict.util.Logger>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
                 val mockCustomTabsIntentFactory = mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
                 
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
-                    mockLogger,
                     mockContext
                 )
                 
@@ -121,7 +117,6 @@ class CleanTestingApproachDemoTest : BehaviorSpec({
             
             then("実装テストも変わらずサポートされる") {
                 val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
-                val mockLogger = mockk<com.zelretch.aniiiiiict.util.Logger>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
                 val mockCustomTabsIntentFactory = mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
                 
@@ -130,7 +125,6 @@ class CleanTestingApproachDemoTest : BehaviorSpec({
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
-                    mockLogger,
                     mockContext
                 )
                 

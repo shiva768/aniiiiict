@@ -21,7 +21,6 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
             then("ViewModelContractを通じてUI状態にアクセスできる") {
                 // Mock dependencies
                 val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
-                val mockLogger = mockk<com.zelretch.aniiiiiict.util.Logger>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
                 val mockCustomTabsIntentFactory = mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
                 
@@ -31,7 +30,6 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
-                    mockLogger,
                     mockContext
                 )
                 
@@ -55,14 +53,12 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
         `when`("TestableViewModelによる状態操作") {
             then("UI状態を直接設定できる") {
                 val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
-                val mockLogger = mockk<com.zelretch.aniiiiiict.util.Logger>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
                 val mockCustomTabsIntentFactory = mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
                 
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
-                    mockLogger,
                     mockContext
                 )
                 
@@ -112,14 +108,12 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
             
             then("改善後: 状態を直接設定してテストを簡素化") {
                 val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
-                val mockLogger = mockk<com.zelretch.aniiiiiict.util.Logger>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
                 val mockCustomTabsIntentFactory = mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
                 
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
-                    mockLogger,
                     mockContext
                 )
                 

@@ -94,7 +94,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
                 val viewModel = MainViewModel(
                     authUseCase, 
                     customTabsIntentFactory, 
-                    logger, 
                     context
                 )
                 
@@ -121,7 +120,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
             it("実際の認証フローをエンドツーエンドでテスト") {
                 // 実際のViewModelと一部の実装を使用
                 val authUseCase = mockk<AnnictAuthUseCase>()
-                val logger = spyk<Logger>() // spyを使用して実際のロガーを部分的にモック
                 val context = mockk<Context>()
                 val customTabsIntent = mockk<CustomTabsIntent>(relaxUnitFun = true)
                 val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()
@@ -137,7 +135,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
                 val viewModel = MainViewModel(
                     authUseCase, 
                     customTabsIntentFactory, 
-                    logger, 
                     context
                 )
                 
@@ -181,7 +178,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
                 val viewModel = MainViewModel(
                     authUseCase, 
                     customTabsIntentFactory, 
-                    logger, 
                     context
                 )
                 
@@ -191,9 +187,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
                 viewModel.uiState.value.error shouldNotBe null
                 viewModel.uiState.value.error shouldBe "ネットワークエラー"
                 viewModel.uiState.value.isLoading shouldBe false
-                
-                // エラーログが出力されることを確認
-                verify { logger.error(any<String>(), any<Throwable>(), any<String>()) }
                 
                 println("✅ エラー処理テスト: 実装の詳細な動作を検証")
             }
@@ -214,7 +207,6 @@ class ViewModelImplementationTestingExampleTest : DescribeSpec({
                 val viewModel = MainViewModel(
                     authUseCase, 
                     customTabsIntentFactory, 
-                    logger, 
                     context
                 )
                 
