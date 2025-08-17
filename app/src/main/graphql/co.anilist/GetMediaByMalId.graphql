@@ -1,0 +1,17 @@
+query GetMediaByMalId($idMal: Int) {
+  Media(idMal: $idMal, type: ANIME) {
+    id
+    title {
+      romaji
+      english
+      native
+    }
+    genres
+    studios(isMain: true) {
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}

@@ -18,6 +18,7 @@ query ViewerRecordsQuery($after: String) {
           work {
             id
             title
+            malAnimeId
             image {
               recommendedImageUrl
               facebookOgImageUrl
