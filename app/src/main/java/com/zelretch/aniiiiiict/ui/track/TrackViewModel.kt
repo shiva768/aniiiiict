@@ -13,7 +13,6 @@ import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import timber.log.Timber
 
 data class TrackUiState(
     val programs: List<ProgramWithWork> = emptyList(),
@@ -51,11 +51,8 @@ class TrackViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
-    private val judgeFinaleUseCase: JudgeFinaleUseCase,
-    logger: Logger
-) : BaseViewModel(logger), TrackViewModelContract, TestableTrackViewModel {
-    private val TAG = "TrackViewModel"
-
+    private val judgeFinaleUseCase: JudgeFinaleUseCase
+) : BaseViewModel(), TrackViewModelContract, TestableTrackViewModel {
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
@@ -145,20 +142,20 @@ class TrackViewModel @Inject constructor(
 
                     // AniListから作品情報を取得し、最終話判定を行う
                     val program = _uiState.value.allPrograms.find { it.work.id == workId }
-                    logger.info(
-                        TAG,
+                    Timber.i(
+                        "TrackViewModel",
                         "[DEBUG_LOG] allPrograms size: ${_uiState.value.allPrograms.size}",
                         "TrackViewModel.recordEpisode"
                     )
-                    logger.info(
-                        TAG,
+                    Timber.i(
+                        "TrackViewModel",
                         "[DEBUG_LOG] program: $program",
                         "TrackViewModel.recordEpisode"
                     )
 
                     val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
-                    logger.info(
-                        TAG,
+                    Timber.i(
+                        "TrackViewModel",
                         "[DEBUG_LOG] currentEpisode: $currentEpisode",
                         "TrackViewModel.recordEpisode"
                     )
@@ -166,8 +163,8 @@ class TrackViewModel @Inject constructor(
                     if (program != null && currentEpisode != null &&
                         currentEpisode.episode.number != null
                     ) {
-                        logger.info(
-                            TAG,
+                        Timber.i(
+                            "TrackViewModel",
                             "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}",
                             "TrackViewModel.recordEpisode"
                         )
@@ -175,14 +172,14 @@ class TrackViewModel @Inject constructor(
                             currentEpisode.episode.number,
                             program.work.id.toInt()
                         )
-                        logger.info(
-                            TAG,
+                        Timber.i(
+                            "TrackViewModel",
                             "[DEBUG_LOG] judgeResult: $judgeResult",
                             "TrackViewModel.recordEpisode"
                         )
                         if (judgeResult.isFinale) {
-                            logger.info(
-                                TAG,
+                            Timber.i(
+                                "TrackViewModel",
                                 "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId",
                                 "TrackViewModel.recordEpisode"
                             )
@@ -193,15 +190,15 @@ class TrackViewModel @Inject constructor(
                                 )
                             }
                         } else {
-                            logger.info(
-                                TAG,
+                            Timber.i(
+                                "TrackViewModel",
                                 "[DEBUG_LOG] judgeResult.isFinale is false",
                                 "TrackViewModel.recordEpisode"
                             )
                         }
                     } else {
-                        logger.info(
-                            TAG,
+                        Timber.i(
+                            "TrackViewModel",
                             "[DEBUG_LOG] program or currentEpisode is null, or episode number is null",
                             "TrackViewModel.recordEpisode"
                         )
@@ -271,7 +268,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun refresh() {
-        logger.info(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
+        Timber.i("TrackViewModel", "プログラム一覧を再読み込み", "TrackViewModel.refresh")
         loadingPrograms()
     }
 
@@ -315,7 +312,7 @@ class TrackViewModel @Inject constructor(
     }
 
     private fun handleError(error: Throwable) {
-        logger.error(TAG, error, "TrackViewModel")
+        Timber.e("TrackViewModel", error, "TrackViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 

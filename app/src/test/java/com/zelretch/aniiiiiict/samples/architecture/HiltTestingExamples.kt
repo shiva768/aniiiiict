@@ -28,9 +28,6 @@ class MainViewModelHiltTest : BehaviorSpec({
         }
         
         @BindValue @JvmField
-        val mockLogger: Logger = mockk(relaxed = true)
-        
-        @BindValue @JvmField
         val mockContext: Context = mockk(relaxed = true)
         
         @BindValue @JvmField

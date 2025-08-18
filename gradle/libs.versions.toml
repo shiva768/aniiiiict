@@ -36,6 +36,9 @@ coroutines = "1.9.0"
 # UI
 coil = "2.5.0"
 
+# Logging
+timber = "5.0.1"
+
 # Testing
 junit = "4.13.2"
 mockito-core = "5.10.0"
@@ -91,6 +94,9 @@ coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-
 # UI
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Logging
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -28,8 +28,9 @@ interface MainViewModelContract : ViewModelContract<MainUiState> {
 @HiltViewModel
 class MainViewModel @Inject constructor(
     // ... dependencies
-) : BaseViewModel(logger), MainViewModelContract, TestableViewModel<MainUiState> {
+) : BaseViewModel(), MainViewModelContract, TestableViewModel<MainUiState> {
     // ... implementation
+    // ✅ Timberを直接使用してログ出力（Logger interfaceは不要）
 }
 ```
 
