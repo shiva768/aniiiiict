@@ -8,7 +8,6 @@ import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -19,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import timber.log.Timber
 
 data class MainUiState(
     override val isLoading: Boolean = false,
@@ -31,11 +31,8 @@ data class MainUiState(
 class MainViewModel @Inject constructor(
     private val annictAuthUseCase: AnnictAuthUseCase,
     private val customTabsIntentFactory: CustomTabsIntentFactory,
-    logger: Logger,
     @ApplicationContext private val context: Context
-) : BaseViewModel(logger), MainViewModelContract {
-    private val TAG = "MainViewModel"
-
+) : BaseViewModel(), MainViewModelContract {
     // UI状態のカプセル化
     private val _uiState = MutableStateFlow(MainUiState())
     override val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -65,15 +62,15 @@ class MainViewModel @Inject constructor(
 
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
-                    logger.info(
-                        TAG,
+                    Timber.i(
+                        "MainViewModel",
                         "認証されていないため、認証を開始します",
                         "checkAuthState"
                     )
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: Exception) {
-                logger.error(TAG, e, "認証状態の確認中にエラーが発生")
+                Timber.e("MainViewModel", e, "認証状態の確認中にエラーが発生")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証状態の確認に失敗しました",
@@ -91,7 +88,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val authUrl = annictAuthUseCase.getAuthUrl()
-                logger.info(TAG, "認証URLを取得: $authUrl", "startAuth")
+                Timber.i("MainViewModel", "認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
@@ -101,7 +98,7 @@ class MainViewModel @Inject constructor(
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: Exception) {
-                logger.error(TAG, e, "認証URLの取得に失敗")
+                Timber.e("MainViewModel", e, "認証URLの取得に失敗")
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
@@ -131,8 +128,8 @@ class MainViewModel @Inject constructor(
                             it.copy(isAuthenticating = false, isAuthenticated = true)
                         }
                     } else {
-                        logger.warning(
-                            TAG,
+                        Timber.w(
+                            "MainViewModel",
                             "認証が失敗しました",
                             "handleAuthCallback"
                         )
@@ -148,8 +145,8 @@ class MainViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    logger.warning(
-                        TAG,
+                    Timber.w(
+                        "MainViewModel",
                         "認証コードがnullです",
                         "handleAuthCallback"
                     )
@@ -164,7 +161,7 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                logger.error(TAG, e, "認証処理に失敗")
+                Timber.e("MainViewModel", e, "認証処理に失敗")
                 e.printStackTrace()
                 delay(200)
                 _uiState.update {
@@ -180,7 +177,7 @@ class MainViewModel @Inject constructor(
 
     // エラー処理（内部メソッド）
     private fun handleError(error: Throwable) {
-        logger.error(TAG, error, "MainViewModel")
+        Timber.e("MainViewModel", error, "MainViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 

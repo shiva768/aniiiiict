@@ -5,13 +5,13 @@ import kotlinx.coroutines.withTimeout
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.math.min
+import timber.log.Timber
 
 /**
  * リトライロジックを提供するユーティリティクラス
  */
-class RetryManager @Inject constructor(private val logger: Logger) {
+class RetryManager @Inject constructor() {
     companion object {
-        private const val TAG = "RetryManager"
     }
 
     /**
@@ -39,11 +39,7 @@ class RetryManager @Inject constructor(private val logger: Logger) {
                 return block()
             } catch (e: Exception) {
                 lastException = e
-                logger.error(
-                    TAG,
-                    "リトライ失敗 (${attempt + 1}/$maxAttempts): ${e.message}",
-                    "retry"
-                )
+                Timber.e(e, "[RetryManager][retry] リトライ失敗 (${attempt + 1}/$maxAttempts): %s", e.message)
 
                 // 最後の試行でない場合のみ待機
                 if (attempt < maxAttempts - 1) {
