@@ -1,11 +1,11 @@
 package com.zelretch.aniiiiiict.samples.architecture
 
 import com.zelretch.aniiiiiict.MainViewModel
+import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.testing.MainUiStateBuilder
 import com.zelretch.aniiiiiict.testing.TestableMainViewModel
 import com.zelretch.aniiiiiict.testing.asTestable
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
-import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe

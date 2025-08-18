@@ -50,9 +50,7 @@ open class ViewModelTestWrapper<T : BaseUiState>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun getMutableUiState(): MutableStateFlow<T> {
-        return uiStateField.get(viewModel) as MutableStateFlow<T>
-    }
+    private fun getMutableUiState(): MutableStateFlow<T> = uiStateField.get(viewModel) as MutableStateFlow<T>
 
     override fun setUiStateForTest(state: T) {
         getMutableUiState().value = state
