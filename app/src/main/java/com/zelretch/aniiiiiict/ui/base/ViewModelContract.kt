@@ -11,7 +11,7 @@ interface ViewModelContract<T : BaseUiState> {
      * UI状態のStateFlow
      */
     val uiState: StateFlow<T>
-    
+
     /**
      * エラーをクリアする
      */

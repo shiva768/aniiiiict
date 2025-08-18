@@ -14,7 +14,6 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.domain.filter.FilterState
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -110,7 +109,7 @@ class TrackScreenComposeTest {
     fun trackScreen_番組リスト_プログラムカードが表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
-        
+
         // Create sample program data
         val sampleWork = Work(
             id = "1",
@@ -121,31 +120,31 @@ class TrackScreenComposeTest {
             mediaText = "TV",
             viewerStatusState = StatusState.WATCHING
         )
-        
+
         val sampleEpisode = Episode(
             id = "ep1",
             title = "第1話",
             numberText = "1",
             number = 1
         )
-        
+
         val sampleChannel = Channel(
             name = "テストチャンネル"
         )
-        
+
         val sampleProgram = Program(
             id = "prog1",
             startedAt = LocalDateTime.now(),
             channel = sampleChannel,
             episode = sampleEpisode
         )
-        
+
         val programWithWork = ProgramWithWork(
             programs = listOf(sampleProgram),
             firstProgram = sampleProgram,
             work = sampleWork
         )
-        
+
         val stateWithPrograms = TrackUiState(programs = listOf(programWithWork))
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithPrograms)
 

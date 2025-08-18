@@ -6,11 +6,8 @@ import com.zelretch.aniiiiiict.domain.filter.ProgramFilter
 import javax.inject.Inject
 
 class FilterProgramsUseCase @Inject constructor(private val programFilter: ProgramFilter) {
-    operator fun invoke(
-        programs: List<ProgramWithWork>,
-        filterState: FilterState
-    ): List<ProgramWithWork> = programFilter.applyFilters(programs, filterState)
+    operator fun invoke(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> =
+        programFilter.applyFilters(programs, filterState)
 
-    fun extractAvailableFilters(programs: List<ProgramWithWork>) =
-        programFilter.extractAvailableFilters(programs)
+    fun extractAvailableFilters(programs: List<ProgramWithWork>) = programFilter.extractAvailableFilters(programs)
 }

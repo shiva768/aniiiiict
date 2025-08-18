@@ -9,9 +9,9 @@ import com.apollographql.apollo.cache.normalized.fetchPolicy
 import com.apollographql.apollo.network.okHttpClient
 import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-import timber.log.Timber
 
 @Singleton
 class AniListApolloClient @Inject constructor(

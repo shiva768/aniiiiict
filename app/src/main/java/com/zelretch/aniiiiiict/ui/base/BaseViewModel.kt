@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import kotlin.system.measureTimeMillis
 
 /**
  * 共通のローディング処理を提供する基底ViewModelクラス
@@ -40,7 +39,7 @@ abstract class BaseViewModel : ViewModel() {
 
                 // 処理を実行
                 block()
-                
+
                 // 最小ローディング時間の完了を待つ
                 loadingJob.join()
             } catch (e: Exception) {

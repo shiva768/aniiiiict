@@ -72,7 +72,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.updateSearchQuery("foo")
@@ -100,7 +100,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.deleteRecord("id1")
@@ -137,7 +137,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.loadNextPage()
@@ -165,7 +165,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
+                        deleteRecordUseCase
                     )
                     val initialState = viewModel.uiState.first { !it.isLoading }
 
@@ -205,7 +205,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.updateSearchQuery("Anime")

@@ -4,9 +4,9 @@ import co.anilist.GetMediaQuery
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-import timber.log.Timber
 
 @Singleton
 class AniListRepositoryImpl @Inject constructor(

@@ -1,8 +1,8 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.zelretch.aniiiiiict.data.repository.AniListRepository
-import javax.inject.Inject
 import timber.log.Timber
+import javax.inject.Inject
 
 enum class FinaleState {
     NOT_FINALE,
@@ -49,7 +49,8 @@ class JudgeFinaleUseCase @Inject constructor(
             }
 
             // 2. episodes が数値 かつ currentEp >= episodes かつ nextAiringEpisode == null → finale_confirmed
-            if (media.episodes != null && currentEpisodeNumber >= media.episodes &&
+            if (media.episodes != null &&
+                currentEpisodeNumber >= media.episodes &&
                 media.nextAiringEpisode == null
             ) {
                 Timber.i(

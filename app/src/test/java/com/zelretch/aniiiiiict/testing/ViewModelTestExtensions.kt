@@ -1,10 +1,10 @@
 package com.zelretch.aniiiiiict.testing
 
-import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.MainUiState
+import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
-import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import com.zelretch.aniiiiiict.ui.track.TrackUiState
+import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.lang.reflect.Field
@@ -42,21 +42,21 @@ open class ViewModelTestWrapper<T : BaseUiState>(
     private val initialStateFactory: () -> T,
     private val uiStateFieldName: String = "_uiState"
 ) : TestableViewModel<T> {
-    
+
     private val uiStateField: Field by lazy {
         viewModel::class.java.getDeclaredField(uiStateFieldName).apply {
             isAccessible = true
         }
     }
-    
+
     @Suppress("UNCHECKED_CAST")
     private val _uiState: MutableStateFlow<T>
         get() = uiStateField.get(viewModel) as MutableStateFlow<T>
-    
+
     override fun setUiStateForTest(state: T) {
         _uiState.value = state
     }
-    
+
     override fun setErrorForTest(error: String?) {
         val currentState = _uiState.value
         // BaseUiStateのコピーメソッドを使用（リフレクションで型安全に）
@@ -69,7 +69,7 @@ open class ViewModelTestWrapper<T : BaseUiState>(
             setErrorDirectly(error)
         }
     }
-    
+
     override fun setLoadingForTest(isLoading: Boolean) {
         val currentState = _uiState.value
         try {
@@ -81,18 +81,18 @@ open class ViewModelTestWrapper<T : BaseUiState>(
             setLoadingDirectly(isLoading)
         }
     }
-    
+
     override fun resetToInitialState() {
         _uiState.value = initialStateFactory()
     }
-    
+
     private fun setErrorDirectly(error: String?) {
         val currentState = _uiState.value
         val errorField = BaseUiState::class.java.getDeclaredField("error")
         errorField.isAccessible = true
         errorField.set(currentState, error)
     }
-    
+
     private fun setLoadingDirectly(isLoading: Boolean) {
         val currentState = _uiState.value
         val loadingField = BaseUiState::class.java.getDeclaredField("isLoading")
@@ -104,49 +104,41 @@ open class ViewModelTestWrapper<T : BaseUiState>(
 /**
  * MainViewModel専用ラッパー
  */
-class MainViewModelTestWrapper(viewModel: MainViewModel) 
-    : ViewModelTestWrapper<MainUiState>(viewModel, { MainUiState() }), TestableMainViewModel
+class MainViewModelTestWrapper(viewModel: MainViewModel) :
+    ViewModelTestWrapper<MainUiState>(viewModel, { MainUiState() }), TestableMainViewModel
 
 /**
  * TrackViewModel専用ラッパー
  */
-class TrackViewModelTestWrapper(viewModel: TrackViewModel) 
-    : ViewModelTestWrapper<TrackUiState>(viewModel, { TrackUiState() }), TestableTrackViewModel
+class TrackViewModelTestWrapper(viewModel: TrackViewModel) :
+    ViewModelTestWrapper<TrackUiState>(viewModel, { TrackUiState() }), TestableTrackViewModel
 
 /**
  * MainViewModel用の拡張関数
  */
-fun MainViewModel.asTestable(): TestableMainViewModel {
-    return MainViewModelTestWrapper(this)
-}
+fun MainViewModel.asTestable(): TestableMainViewModel = MainViewModelTestWrapper(this)
 
 /**
  * TrackViewModel用の拡張関数
  */
-fun TrackViewModel.asTestable(): TestableTrackViewModel {
-    return TrackViewModelTestWrapper(this)
-}
+fun TrackViewModel.asTestable(): TestableTrackViewModel = TrackViewModelTestWrapper(this)
 
 /**
  * 汎用的なViewModel状態操作のためのヘルパー関数群
  */
 object ViewModelTestHelpers {
-    
+
     /**
      * 任意のViewModelの状態を直接設定する（リフレクション使用）
      */
-    inline fun <reified T : BaseUiState> setViewModelState(
-        viewModel: Any,
-        state: T,
-        fieldName: String = "_uiState"
-    ) {
+    inline fun <reified T : BaseUiState> setViewModelState(viewModel: Any, state: T, fieldName: String = "_uiState") {
         val field = viewModel::class.java.getDeclaredField(fieldName)
         field.isAccessible = true
         @Suppress("UNCHECKED_CAST")
         val stateFlow = field.get(viewModel) as MutableStateFlow<T>
         stateFlow.value = state
     }
-    
+
     /**
      * ViewModelの状態フィールドにアクセスする
      */
@@ -166,13 +158,13 @@ object ViewModelTestHelpers {
  */
 object MainUiStateBuilder {
     fun loading() = MainUiState(isLoading = true)
-    
+
     fun error(message: String) = MainUiState(error = message)
-    
+
     fun authenticating() = MainUiState(isAuthenticating = true)
-    
+
     fun authenticated() = MainUiState(isAuthenticated = true)
-    
+
     fun custom(
         isLoading: Boolean = false,
         error: String? = null,
@@ -191,16 +183,16 @@ object MainUiStateBuilder {
  */
 object TrackUiStateBuilder {
     fun loading() = TrackUiState(isLoading = true)
-    
+
     fun error(message: String) = TrackUiState(error = message)
-    
-    fun withPrograms(programs: List<com.zelretch.aniiiiiict.data.model.ProgramWithWork>) = 
+
+    fun withPrograms(programs: List<com.zelretch.aniiiiiict.data.model.ProgramWithWork>) =
         TrackUiState(programs = programs)
-    
+
     fun recording() = TrackUiState(isRecording = true)
-    
+
     fun filterVisible() = TrackUiState(isFilterVisible = true)
-    
+
     fun custom(
         programs: List<com.zelretch.aniiiiiict.data.model.ProgramWithWork> = emptyList(),
         isLoading: Boolean = false,

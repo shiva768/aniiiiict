@@ -18,10 +18,10 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
+import timber.log.Timber
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
-import timber.log.Timber
 
 @Singleton
 class AnnictRepositoryImpl @Inject constructor(
@@ -274,46 +274,41 @@ class AnnictRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean =
-        executeApiRequest(
-            operation = "updateWorkStatus",
-            defaultValue = false
-        ) {
+    override suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean = executeApiRequest(
+        operation = "updateWorkStatus",
+        defaultValue = false
+    ) {
+        Timber.i(
+            "AnnictRepositoryImpl",
+            "作品ステータスを更新中: workId=$workId, state=$state",
+            "AnnictRepositoryImpl.updateWorkStatus"
+        )
+
+        val mutation = UpdateStatusMutation(workId = workId, state = state)
+        val response = annictApolloClient.executeMutation(
+            operation = mutation,
+            context = "AnnictRepositoryImpl.updateWorkStatus"
+        )
+
+        if (!response.hasErrors()) {
             Timber.i(
                 "AnnictRepositoryImpl",
-                "作品ステータスを更新中: workId=$workId, state=$state",
+                "作品ステータスを更新しました: workId=$workId, state=$state",
                 "AnnictRepositoryImpl.updateWorkStatus"
             )
-
-            val mutation = UpdateStatusMutation(workId = workId, state = state)
-            val response = annictApolloClient.executeMutation(
-                operation = mutation,
-                context = "AnnictRepositoryImpl.updateWorkStatus"
+            true
+        } else {
+            Timber.e(
+                "AnnictRepositoryImpl",
+                "GraphQLエラー: ${response.errors}",
+                "AnnictRepositoryImpl.updateWorkStatus"
             )
-
-            if (!response.hasErrors()) {
-                Timber.i(
-                    "AnnictRepositoryImpl",
-                    "作品ステータスを更新しました: workId=$workId, state=$state",
-                    "AnnictRepositoryImpl.updateWorkStatus"
-                )
-                true
-            } else {
-                Timber.e(
-                    "AnnictRepositoryImpl",
-                    "GraphQLエラー: ${response.errors}",
-                    "AnnictRepositoryImpl.updateWorkStatus"
-                )
-                false
-            }
+            false
         }
+    }
 
     // 共通のAPIリクエスト処理を行うヘルパーメソッド
-    private suspend fun <T> executeApiRequest(
-        operation: String,
-        defaultValue: T,
-        request: suspend () -> T
-    ): T {
+    private suspend fun <T> executeApiRequest(operation: String, defaultValue: T, request: suspend () -> T): T {
         if (!currentCoroutineContext().isActive) {
             Timber.i(
                 "AnnictRepositoryImpl",

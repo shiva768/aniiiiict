@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import timber.log.Timber
+import javax.inject.Inject
 
 data class TrackUiState(
     val programs: List<ProgramWithWork> = emptyList(),
@@ -160,7 +160,8 @@ class TrackViewModel @Inject constructor(
                         "TrackViewModel.recordEpisode"
                     )
 
-                    if (program != null && currentEpisode != null &&
+                    if (program != null &&
+                        currentEpisode != null &&
                         currentEpisode.episode.number != null
                     ) {
                         Timber.i(
@@ -337,22 +338,22 @@ class TrackViewModel @Inject constructor(
     }
 
     // === TrackViewModelContract interface implementation ===
-    
+
     override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {
         val episode = program.programs.find { it.episode.number == episodeNumber }
         episode?.let {
             recordEpisode(it.episode.id, program.work.id, program.work.viewerStatusState)
         }
     }
-    
+
     override fun showDetailModal(program: ProgramWithWork) {
         showUnwatchedEpisodes(program)
     }
-    
+
     override fun hideDetailModal() {
         hideDetail()
     }
-    
+
     override fun showFinaleConfirmation(workId: String, episodeNumber: Int) {
         _uiState.update {
             it.copy(
@@ -361,18 +362,18 @@ class TrackViewModel @Inject constructor(
             )
         }
     }
-    
+
     override fun hideFinaleConfirmation() {
         dismissFinaleConfirmation()
     }
-    
+
     override fun recordFinale(workId: String, episodeNumber: Int) {
         confirmWatchedStatus()
     }
 
     // === TestableTrackViewModel interface implementation ===
-    
+
     override fun setUiStateForTest(state: TrackUiState) {
         _uiState.value = state
     }
-} 
+}
