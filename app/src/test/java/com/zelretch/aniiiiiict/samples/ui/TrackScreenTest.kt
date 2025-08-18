@@ -14,7 +14,13 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 
 /**
  * TrackScreen用ViewModel状態管理のテスト
@@ -23,7 +29,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * このテストでは、実際のUI描画はテストせず、ViewModelの契約とTestableViewModelの
  * 機能を活用したロジックテストに焦点を当てる
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class TrackScreenTest : BehaviorSpec({
+
+    lateinit var testDispatcher: TestDispatcher
+    
+    beforeTest {
+        testDispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(testDispatcher)
+    }
+    
+    afterTest {
+        Dispatchers.resetMain()
+    }
 
     given("TrackScreenのViewModel契約テスト") {
         

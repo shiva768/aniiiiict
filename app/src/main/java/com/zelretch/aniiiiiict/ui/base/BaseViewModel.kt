@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import kotlin.system.measureTimeMillis
 
 /**
  * 共通のローディング処理を提供する基底ViewModelクラス
@@ -32,15 +33,15 @@ abstract class BaseViewModel : ViewModel() {
                 updateLoadingState(true)
                 updateErrorState(null)
 
-                // 処理を実行
-                val startTime = System.currentTimeMillis()
-                block()
-
-                // 最小限のローディング時間を確保（1秒）
-                val elapsedTime = System.currentTimeMillis() - startTime
-                if (elapsedTime < 1000) {
-                    delay(1000 - elapsedTime)
-                }
+                // 処理の実行と最小ローディング時間を並行実行
+                val minLoadingTimeTask = async { delay(1000) }
+                val blockTask = async { block() }
+                
+                // 処理の完了を待つ
+                blockTask.await()
+                
+                // 最小ローディング時間の完了も待つ
+                minLoadingTimeTask.await()
             } catch (e: Exception) {
                 // エラーを設定
                 Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")

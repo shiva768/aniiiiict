@@ -8,6 +8,12 @@ import com.zelretch.aniiiiiict.testing.MainUiStateBuilder
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 
 /**
  * プロダクションコードを汚染しない新しいテストアプローチのデモンストレーション
@@ -17,7 +23,19 @@ import io.mockk.*
  * 2. テスト用インターフェースの実装がプロダクションに漏れる問題
  * 3. プロダクションビルドにテストコードが含まれる問題
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class CleanTestingApproachDemoTest : BehaviorSpec({
+
+    lateinit var testDispatcher: TestDispatcher
+    
+    beforeTest {
+        testDispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(testDispatcher)
+    }
+    
+    afterTest {
+        Dispatchers.resetMain()
+    }
 
     given("プロダクションコードを汚染しないテストアプローチ") {
         
