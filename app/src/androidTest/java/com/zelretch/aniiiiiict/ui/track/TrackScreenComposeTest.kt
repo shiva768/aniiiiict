@@ -14,7 +14,6 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.domain.filter.FilterState
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -35,7 +34,7 @@ class TrackScreenComposeTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun trackScreen_初期状態_基本要素が表示される() {
+    fun trackScreen_initialState_displaysBasicElements() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val initialState = TrackUiState()
@@ -59,7 +58,7 @@ class TrackScreenComposeTest {
     }
 
     @Test
-    fun trackScreen_エラー状態_スナックバーとエラーメッセージが表示される() {
+    fun trackScreen_errorState_displaysSnackbarAndErrorMessage() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val errorState = TrackUiState(error = "ネットワークエラーが発生しました")
@@ -83,7 +82,7 @@ class TrackScreenComposeTest {
     }
 
     @Test
-    fun trackScreen_フィルターボタンクリック_ViewModelメソッドが呼ばれる() {
+    fun trackScreen_filterButtonClick_callsViewModelMethod() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val initialState = TrackUiState()
@@ -107,10 +106,10 @@ class TrackScreenComposeTest {
     }
 
     @Test
-    fun trackScreen_番組リスト_プログラムカードが表示される() {
+    fun trackScreen_programList_displaysProgramCard() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
-        
+
         // Create sample program data
         val sampleWork = Work(
             id = "1",
@@ -121,31 +120,31 @@ class TrackScreenComposeTest {
             mediaText = "TV",
             viewerStatusState = StatusState.WATCHING
         )
-        
+
         val sampleEpisode = Episode(
             id = "ep1",
             title = "第1話",
             numberText = "1",
             number = 1
         )
-        
+
         val sampleChannel = Channel(
             name = "テストチャンネル"
         )
-        
+
         val sampleProgram = Program(
             id = "prog1",
             startedAt = LocalDateTime.now(),
             channel = sampleChannel,
             episode = sampleEpisode
         )
-        
+
         val programWithWork = ProgramWithWork(
             programs = listOf(sampleProgram),
             firstProgram = sampleProgram,
             work = sampleWork
         )
-        
+
         val stateWithPrograms = TrackUiState(programs = listOf(programWithWork))
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithPrograms)
 
@@ -165,7 +164,7 @@ class TrackScreenComposeTest {
     }
 
     @Test
-    fun trackScreen_フィナーレ確認_適切なスナックバーが表示される() {
+    fun trackScreen_finaleConfirmation_displaysAppropriateSnackbar() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val finaleState = TrackUiState(
@@ -194,7 +193,7 @@ class TrackScreenComposeTest {
     }
 
     @Test
-    fun trackScreen_フィナーレ確認_はいボタンクリック() {
+    fun trackScreen_finaleConfirmation_yesButtonClick() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val finaleState = TrackUiState(
@@ -221,7 +220,7 @@ class TrackScreenComposeTest {
     }
 
     @Test
-    fun trackScreen_履歴ナビゲーション_コールバックが呼ばれる() {
+    fun trackScreen_navigateToHistory_callsCallback() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val mockOnNavigateToHistory = mockk<() -> Unit>(relaxed = true)

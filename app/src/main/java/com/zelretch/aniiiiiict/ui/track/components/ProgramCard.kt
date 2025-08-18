@@ -217,7 +217,8 @@ fun ProgramCard(
                         },
                         modifier = Modifier.size(40.dp),
                         enabled =
-                        !uiState.isLoading && !uiState.isRecording &&
+                        !uiState.isLoading &&
+                            !uiState.isRecording &&
                             uiState.recordingSuccess != programWithWork.firstProgram.episode.id,
                         colors = if (uiState.recordingSuccess ==
                             programWithWork.firstProgram.episode.id

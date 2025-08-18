@@ -54,7 +54,7 @@ class TrackViewModel @Inject constructor(
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     logger: Logger
 ) : BaseViewModel(logger), TrackViewModelContract, TestableTrackViewModel {
-    private val TAG = "TrackViewModel"
+    private val tag = "TrackViewModel"
 
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
@@ -146,28 +146,29 @@ class TrackViewModel @Inject constructor(
                     // AniListから作品情報を取得し、最終話判定を行う
                     val program = _uiState.value.allPrograms.find { it.work.id == workId }
                     logger.info(
-                        TAG,
+                        tag,
                         "[DEBUG_LOG] allPrograms size: ${_uiState.value.allPrograms.size}",
                         "TrackViewModel.recordEpisode"
                     )
                     logger.info(
-                        TAG,
+                        tag,
                         "[DEBUG_LOG] program: $program",
                         "TrackViewModel.recordEpisode"
                     )
 
                     val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
                     logger.info(
-                        TAG,
+                        tag,
                         "[DEBUG_LOG] currentEpisode: $currentEpisode",
                         "TrackViewModel.recordEpisode"
                     )
 
-                    if (program != null && currentEpisode != null &&
+                    if (program != null &&
+                        currentEpisode != null &&
                         currentEpisode.episode.number != null
                     ) {
                         logger.info(
-                            TAG,
+                            tag,
                             "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}",
                             "TrackViewModel.recordEpisode"
                         )
@@ -176,13 +177,13 @@ class TrackViewModel @Inject constructor(
                             program.work.id.toInt()
                         )
                         logger.info(
-                            TAG,
+                            tag,
                             "[DEBUG_LOG] judgeResult: $judgeResult",
                             "TrackViewModel.recordEpisode"
                         )
                         if (judgeResult.isFinale) {
                             logger.info(
-                                TAG,
+                                tag,
                                 "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId",
                                 "TrackViewModel.recordEpisode"
                             )
@@ -194,14 +195,14 @@ class TrackViewModel @Inject constructor(
                             }
                         } else {
                             logger.info(
-                                TAG,
+                                tag,
                                 "[DEBUG_LOG] judgeResult.isFinale is false",
                                 "TrackViewModel.recordEpisode"
                             )
                         }
                     } else {
                         logger.info(
-                            TAG,
+                            tag,
                             "[DEBUG_LOG] program or currentEpisode is null, or episode number is null",
                             "TrackViewModel.recordEpisode"
                         )
@@ -271,7 +272,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun refresh() {
-        logger.info(TAG, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
+        logger.info(tag, "プログラム一覧を再読み込み", "TrackViewModel.refresh")
         loadingPrograms()
     }
 
@@ -315,7 +316,7 @@ class TrackViewModel @Inject constructor(
     }
 
     private fun handleError(error: Throwable) {
-        logger.error(TAG, error, "TrackViewModel")
+        logger.error(tag, error, "TrackViewModel")
         _uiState.update { it.copy(error = error.message) }
     }
 
@@ -340,22 +341,22 @@ class TrackViewModel @Inject constructor(
     }
 
     // === TrackViewModelContract interface implementation ===
-    
+
     override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {
         val episode = program.programs.find { it.episode.number == episodeNumber }
         episode?.let {
             recordEpisode(it.episode.id, program.work.id, program.work.viewerStatusState)
         }
     }
-    
+
     override fun showDetailModal(program: ProgramWithWork) {
         showUnwatchedEpisodes(program)
     }
-    
+
     override fun hideDetailModal() {
         hideDetail()
     }
-    
+
     override fun showFinaleConfirmation(workId: String, episodeNumber: Int) {
         _uiState.update {
             it.copy(
@@ -364,18 +365,18 @@ class TrackViewModel @Inject constructor(
             )
         }
     }
-    
+
     override fun hideFinaleConfirmation() {
         dismissFinaleConfirmation()
     }
-    
+
     override fun recordFinale(workId: String, episodeNumber: Int) {
         confirmWatchedStatus()
     }
 
     // === TestableTrackViewModel interface implementation ===
-    
+
     override fun setUiStateForTest(state: TrackUiState) {
         _uiState.value = state
     }
-} 
+}

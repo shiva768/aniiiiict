@@ -7,15 +7,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
-import com.annict.type.SeasonName
-import com.annict.type.StatusState
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,7 +30,7 @@ class HistoryScreenComposeTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun historyScreen_初期状態_基本要素が表示される() {
+    fun historyScreen_initialState_displaysBasicElements() {
         // Arrange
         val initialState = HistoryUiState()
 
@@ -63,7 +61,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_空の状態_適切なメッセージが表示される() {
+    fun historyScreen_emptyState_displaysAppropriateMessage() {
         // Arrange
         val emptyState = HistoryUiState(
             records = emptyList(),
@@ -89,7 +87,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_履歴データ_レコードが表示される() {
+    fun historyScreen_withRecords_displaysRecords() {
         // Arrange
         val sampleWork = Work(
             id = "work1",
@@ -142,7 +140,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_戻るボタンクリック_ナビゲーションコールバックが呼ばれる() {
+    fun historyScreen_backButtonClick_callsNavigationCallback() {
         // Arrange
         val mockOnNavigateBack = mockk<() -> Unit>(relaxed = true)
         val initialState = HistoryUiState()
@@ -167,7 +165,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_検索入力_コールバックが呼ばれる() {
+    fun historyScreen_searchInput_callsCallback() {
         // Arrange
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
         val initialState = HistoryUiState()
@@ -192,7 +190,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_検索文字入力済み_クリアボタンが表示される() {
+    fun historyScreen_withSearchQuery_displaysClearButton() {
         // Arrange
         val stateWithSearchQuery = HistoryUiState(searchQuery = "テストクエリ")
 
@@ -214,7 +212,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_クリアボタンクリック_検索文字がクリアされる() {
+    fun historyScreen_clearButtonClick_clearsSearchQuery() {
         // Arrange
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
         val stateWithSearchQuery = HistoryUiState(searchQuery = "テストクエリ")
@@ -239,10 +237,10 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_削除ボタンクリック_削除コールバックが呼ばれる() {
+    fun historyScreen_deleteButtonClick_callsDeleteCallback() {
         // Arrange
         val mockOnDeleteRecord = mockk<(String) -> Unit>(relaxed = true)
-        
+
         val sampleWork = Work(
             id = "work1",
             title = "テストアニメ",
@@ -291,7 +289,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_エラー状態_エラーメッセージと再試行ボタンが表示される() {
+    fun historyScreen_errorState_displaysErrorMessageAndRetryButton() {
         // Arrange
         val errorState = HistoryUiState(
             records = emptyList(),
@@ -320,7 +318,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_再試行ボタンクリック_再試行コールバックが呼ばれる() {
+    fun historyScreen_retryButtonClick_callsRetryCallback() {
         // Arrange
         val mockOnRetry = mockk<() -> Unit>(relaxed = true)
         val errorState = HistoryUiState(
@@ -349,10 +347,10 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_次のページあり_もっと見るボタンが表示される() {
+    fun historyScreen_hasNextPage_displaysLoadMoreButton() {
         // Arrange
         val stateWithNextPage = HistoryUiState(
-            records = listOf(), // レコードは空でも可
+            records = listOf(), // Can be empty
             hasNextPage = true,
             isLoading = false
         )
@@ -375,7 +373,7 @@ class HistoryScreenComposeTest {
     }
 
     @Test
-    fun historyScreen_もっと見るボタンクリック_次ページ読み込みコールバックが呼ばれる() {
+    fun historyScreen_loadMoreButtonClick_callsLoadNextPageCallback() {
         // Arrange
         val mockOnLoadNextPage = mockk<() -> Unit>(relaxed = true)
         val stateWithNextPage = HistoryUiState(

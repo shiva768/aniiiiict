@@ -25,7 +25,7 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val TAG = "MainActivity"
+    private val tag = "MainActivity"
 
     @Inject
     lateinit var logger: Logger
@@ -135,23 +135,23 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent) {
         logger.debug(
-            TAG,
+            tag,
             "Intent received: ${intent.action}, data: ${intent.data}",
             "handleIntent"
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                logger.debug(TAG, "Received OAuth callback: $uri", "handleIntent")
+                logger.debug(tag, "Received OAuth callback: $uri", "handleIntent")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
                     logger.debug(
-                        TAG,
+                        tag,
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
                     )
                     logger.info(
-                        TAG,
+                        tag,
                         "Processing authentication code: ${code.take(5)}...",
                         "handleIntent"
                     )
@@ -164,7 +164,7 @@ class MainActivity : ComponentActivity() {
                     }
                 } else {
                     logger.error(
-                        TAG,
+                        tag,
                         "認証コードがURIに含まれていません: $uri",
                         "handleIntent"
                     )

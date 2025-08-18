@@ -26,11 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.zelretch.aniiiiiict.data.model.Program
 
 @Composable
-fun EpisodeCard(
-    program: Program,
-    onRecordEpisode: (String) -> Unit,
-    onMarkUpToAsWatched: () -> Unit
-) {
+fun EpisodeCard(program: Program, onRecordEpisode: (String) -> Unit, onMarkUpToAsWatched: () -> Unit) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = RoundedCornerShape(16.dp),
