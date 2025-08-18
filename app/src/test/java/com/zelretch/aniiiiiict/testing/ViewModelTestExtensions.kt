@@ -50,20 +50,21 @@ open class ViewModelTestWrapper<T : BaseUiState>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private val _uiState: MutableStateFlow<T>
-        get() = uiStateField.get(viewModel) as MutableStateFlow<T>
+    private fun getMutableUiState(): MutableStateFlow<T> {
+        return uiStateField.get(viewModel) as MutableStateFlow<T>
+    }
 
     override fun setUiStateForTest(state: T) {
-        _uiState.value = state
+        getMutableUiState().value = state
     }
 
     override fun setErrorForTest(error: String?) {
-        val currentState = _uiState.value
+        val currentState = getMutableUiState().value
         // BaseUiStateのコピーメソッドを使用（リフレクションで型安全に）
         try {
             val copyMethod = currentState::class.java.getMethod("copy", String::class.java)
             @Suppress("UNCHECKED_CAST")
-            _uiState.value = copyMethod.invoke(currentState, error) as T
+            getMutableUiState().value = copyMethod.invoke(currentState, error) as T
         } catch (e: Exception) {
             // Fallback: 直接フィールドを更新
             setErrorDirectly(error)
@@ -71,11 +72,11 @@ open class ViewModelTestWrapper<T : BaseUiState>(
     }
 
     override fun setLoadingForTest(isLoading: Boolean) {
-        val currentState = _uiState.value
+        val currentState = getMutableUiState().value
         try {
             val copyMethod = currentState::class.java.getMethod("copy", Boolean::class.java)
             @Suppress("UNCHECKED_CAST")
-            _uiState.value = copyMethod.invoke(currentState, isLoading) as T
+            getMutableUiState().value = copyMethod.invoke(currentState, isLoading) as T
         } catch (e: Exception) {
             // Fallback: 直接フィールドを更新
             setLoadingDirectly(isLoading)
@@ -83,7 +84,7 @@ open class ViewModelTestWrapper<T : BaseUiState>(
     }
 
     override fun resetToInitialState() {
-        _uiState.value = initialStateFactory()
+        getMutableUiState().value = initialStateFactory()
     }
 
     private fun setErrorDirectly(error: String?) {
