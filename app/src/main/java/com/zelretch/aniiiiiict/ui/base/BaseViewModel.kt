@@ -33,15 +33,16 @@ abstract class BaseViewModel : ViewModel() {
                 updateLoadingState(true)
                 updateErrorState(null)
 
-                // 処理の実行と最小ローディング時間を並行実行
-                val minLoadingTimeTask = async { delay(1000) }
-                val blockTask = async { block() }
+                // 最小ローディング時間のジョブを開始
+                val loadingJob = launch {
+                    delay(1000) // Minimum loading time
+                }
+
+                // 処理を実行
+                block()
                 
-                // 処理の完了を待つ
-                blockTask.await()
-                
-                // 最小ローディング時間の完了も待つ
-                minLoadingTimeTask.await()
+                // 最小ローディング時間の完了を待つ
+                loadingJob.join()
             } catch (e: Exception) {
                 // エラーを設定
                 Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
