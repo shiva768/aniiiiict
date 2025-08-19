@@ -32,7 +32,7 @@ import com.zelretch.aniiiiiict.R
 fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Show error in snackbar if present
+    // Show error in the snackbar if present
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -51,7 +51,7 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
             ) {
                 // App logo or icon
                 Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    painter = painterResource(id = R.mipmap.ic_launcher_foreground),
                     contentDescription = "App Logo",
                     modifier = Modifier.size(120.dp)
                 )
