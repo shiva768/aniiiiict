@@ -44,15 +44,13 @@ cd aniiiiiict
 
 3. 認証情報の設定
 
-- `local.properties.example`を`local.properties`にコピー
+- 環境変数にAnnict API認証情報を設定：
 
 ```bash
-cp local.properties.example local.properties
+export ANNICT_CLIENT_SECRET=your_client_secret_here
 ```
 
-- `local.properties`を編集し、以下の項目を設定：
-    - `sdk.dir`：Android SDKのパス
-    - `ANNICT_CLIENT_SECRET`：Annictで取得したClient Secret
+または、IDEの実行設定で環境変数を設定してください。
 
 4. ビルドと実行
 
@@ -62,21 +60,20 @@ cp local.properties.example local.properties
 
 ## 技術スタック
 
-- [Kotlin](https://kotlinlang.org/) 2.0.0 - プログラミング言語
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) 2025.05.00 - 最新のUIフレームワーク
+- [Kotlin](https://kotlinlang.org/) 2.1.21 - プログラミング言語
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) 2025.06.00 - 最新のUIフレームワーク
 - [Material3](https://m3.material.io/) 1.3.2 - マテリアルデザインコンポーネント
-- [Hilt](https://dagger.dev/hilt/) 2.56 - 依存性注入
-- [Apollo GraphQL](https://www.apollographql.com/docs/kotlin/) 4.2.0 - GraphQLクライアント
-- [Retrofit](https://square.github.io/retrofit/) 2.11.0 - HTTPクライアント
+- [Hilt](https://dagger.dev/hilt/) 2.57 - 依存性注入
+- [Apollo GraphQL](https://www.apollographql.com/docs/kotlin/) 4.3.2 - GraphQLクライアント
+- [Retrofit](https://square.github.io/retrofit/) 3.0.0 - HTTPクライアント
 - [OkHttp](https://square.github.io/okhttp/) 4.12.0 - HTTPクライアント
 - [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) 1.1.6 - データ永続化
 - [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) 1.9.0 - 非同期処理
 - [Timber](https://github.com/JakeWharton/timber) 5.0.1 - ログ出力ライブラリ
 - [Coil](https://coil-kt.github.io/coil/) 2.5.0 - 画像読み込み
 - [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.9.0 - 画面遷移
-- [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.0.0 - Compose用Kotlinプラグイン
-- [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.0.0-1.0.21 - Kotlin Symbol Processing
-- [Secrets Gradle Plugin](https://github.com/google/secrets-gradle-plugin) 2.0.1 - APIキー管理プラグイン
+- [Kotlin Compose Plugin](https://developer.android.com/jetpack/compose) 2.1.21 - Compose用Kotlinプラグイン
+- [KSP](https://kotlinlang.org/docs/ksp-overview.html) 2.1.21-2.0.1 - Kotlin Symbol Processing
 
 ## アーキテクチャ
 

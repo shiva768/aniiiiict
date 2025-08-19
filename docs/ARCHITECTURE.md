@@ -56,7 +56,7 @@
 ## 5. ビルドと依存関係
 
 - **バージョン管理**: `gradle/libs.versions.toml` を使用して、すべての依存関係を集中管理しています（バージョンカタログ）。
-- **APIキー管理**: `local.properties` に記述されたAPIキーは、**Secrets Gradle Plugin** を通じて `BuildConfig` に自動で追加され、安全に参照されます。
+- **APIキー管理**: 環境変数（`ANNICT_CLIENT_SECRET`）から取得したAPIキーが `BuildConfig` に設定され、安全に参照されます。CIやローカル開発では環境変数として設定します。
 
 ## 6. テストアーキテクチャ (Testing Architecture)
 
