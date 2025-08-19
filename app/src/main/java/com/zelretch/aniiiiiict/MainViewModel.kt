@@ -111,21 +111,21 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (code != null) {
-                    println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
+                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
                     delay(200)
 
                     if (!isActive) return@launch
 
                     val success = annictAuthUseCase.handleAuthCallback(code)
                     if (success) {
-                        println("MainViewModel: 認証成功")
+                        Timber.d("MainViewModel: 認証成功")
                         delay(300)
                         internalUiState.update {
                             it.copy(isAuthenticating = false, isAuthenticated = true)
                         }
                     } else {
                         Timber.w("認証が失敗しました")
-                        println("MainViewModel: 認証失敗")
+                        Timber.d("MainViewModel: 認証失敗")
                         delay(200)
                         internalUiState.update {
                             it.copy(
@@ -138,7 +138,6 @@ class MainViewModel @Inject constructor(
                     }
                 } else {
                     Timber.w("認証コードがnullです")
-                    println("MainViewModel: 認証コードなし")
                     delay(200)
                     internalUiState.update {
                         it.copy(
