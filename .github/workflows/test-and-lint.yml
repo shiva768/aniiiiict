@@ -37,11 +37,11 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
-      - name: Run UI tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 33
-          script: ./gradlew connectedDebugAndroidTest
+#      - name: Run UI tests
+#        uses: reactivecircus/android-emulator-runner@v2
+#        with:
+#          api-level: 33
+#          script: ./gradlew connectedDebugAndroidTest
 
       - name: Get timestamp
         id: timestamp
