@@ -9,6 +9,30 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+val annictClientSecret =
+    providers.environmentVariable("ANNICT_CLIENT_SECRET").orNull
+val isCi = providers.environmentVariable("CI").isPresent
+val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ignoreCase = true) } &&
+    gradle.startParameter.taskNames.none {
+        it.contains("assemble", ignoreCase = true) ||
+            it.contains("bundle", ignoreCase = true)
+    }
+
+// assemble/bundle の時だけ必須にする（Release は常に必須、Debug は CI のときだけ必須）
+tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") }.configureEach {
+    doFirst {
+        val isRelease = name.contains("Release", ignoreCase = true)
+        val isDebug = name.contains("Debug", ignoreCase = true)
+        val requireSecret = !isCheckOnly && (isRelease || (isDebug && isCi))
+        if (requireSecret && annictClientSecret.isNullOrEmpty()) {
+            throw GradleException(
+                "ANNICT_CLIENT_SECRET (or -PannictClientSecret) is required for " +
+                    (if (isRelease) "Release" else "CI Debug") + " builds"
+            )
+        }
+    }
+}
+
 android {
     namespace = "com.zelretch.aniiiiiict"
     compileSdk = 36
@@ -36,6 +60,13 @@ android {
             "String",
             "ANILIST_API_URL",
             "\"https://graphql.anilist.co\""
+        )
+
+        // ←ここで BuildConfig に渡す
+        buildConfigField(
+            "String",
+            "ANNICT_CLIENT_SECRET",
+            "\"${annictClientSecret ?: ""}\""
         )
 
         // DEBUGフラグを手動で設定
