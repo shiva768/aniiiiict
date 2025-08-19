@@ -1,12 +1,8 @@
 package com.zelretch.aniiiiiict.samples.ui
 
-import com.annict.type.SeasonName
-import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.testing.TestableViewModel
 import com.zelretch.aniiiiiict.ui.track.TrackUiState
-import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import com.zelretch.aniiiiiict.ui.track.TrackViewModelContract
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe

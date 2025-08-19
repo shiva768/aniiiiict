@@ -57,13 +57,13 @@ class CleanTestingApproachDemoTest : BehaviorSpec({
                 contract.clearError()
 
                 // `internal`フィールドに直接アクセスして状態を操作
-                viewModel._uiState.value = MainUiStateBuilder.authenticated()
+                viewModel.internalUiState.value = MainUiStateBuilder.authenticated()
                 contract.uiState.value.isAuthenticated shouldBe true
 
-                viewModel._uiState.value = MainUiStateBuilder.error("テストエラー")
+                viewModel.internalUiState.value = MainUiStateBuilder.error("テストエラー")
                 contract.uiState.value.error shouldBe "テストエラー"
 
-                viewModel._uiState.value = MainUiStateBuilder.custom() // 初期状態に戻す
+                viewModel.internalUiState.value = MainUiStateBuilder.custom() // 初期状態に戻す
                 contract.uiState.value.error shouldBe null
                 contract.uiState.value.isAuthenticated shouldBe false
             }

@@ -12,9 +12,7 @@ class UpdateViewStateUseCase @Inject constructor(
         val updateSuccess = repository.updateWorkViewStatus(workId, status)
         if (!updateSuccess) {
             Timber.w(
-                "UpdateViewStateUseCase",
-                "ステータスの更新に失敗しました: workId=$workId",
-                "UpdateViewStateUseCase"
+                "ステータスの更新に失敗しました: workId=$workId"
             )
         }
         Result.success(Unit)

@@ -181,7 +181,7 @@ ktlint {
     // IDE側のエンジン（ログに 1.5.0 と出ている）に合わせる
     version.set("1.5.0")
     // 違反があってもビルド失敗にしない（検出は残す）
-    ignoreFailures.set(true)
+    ignoreFailures.set(false)
 
     // コンソール出力＋レポート
     reporters {

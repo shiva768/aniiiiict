@@ -87,7 +87,7 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 val viewModelContract: MainViewModelContract = viewModel
 
                 // 複雑な状態をワンステップで設定
-                viewModel._uiState.value = MainUiStateBuilder.custom(
+                viewModel.internalUiState.value = MainUiStateBuilder.custom(
                     isLoading = false,
                     error = "テストエラー",
                     isAuthenticating = true,
@@ -102,15 +102,15 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 }
 
                 // エラーを設定
-                viewModel._uiState.value = viewModel.uiState.value.copy(error = "新しいエラー")
+                viewModel.internalUiState.value = viewModel.uiState.value.copy(error = "新しいエラー")
                 viewModelContract.uiState.value.error shouldBe "新しいエラー"
 
                 // ローディング状態を設定
-                viewModel._uiState.value = viewModel.uiState.value.copy(isLoading = true)
+                viewModel.internalUiState.value = viewModel.uiState.value.copy(isLoading = true)
                 viewModelContract.uiState.value.isLoading shouldBe true
 
                 // 状態をリセット
-                viewModel._uiState.value = MainUiStateBuilder.custom()
+                viewModel.internalUiState.value = MainUiStateBuilder.custom()
                 with(viewModelContract.uiState.value) {
                     isLoading shouldBe false
                     error shouldBe null
@@ -135,14 +135,14 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                 val viewModelContract: MainViewModelContract = viewModel
 
                 // エラー状態を直接設定してテストを開始
-                viewModel._uiState.value = MainUiStateBuilder.error("認証エラー")
+                viewModel.internalUiState.value = MainUiStateBuilder.error("認証エラー")
 
                 // エラー状態からの回復をテスト
                 viewModelContract.clearError()
                 viewModelContract.uiState.value.error shouldBe null
 
                 // 認証済み状態を直接設定
-                viewModel._uiState.value = MainUiStateBuilder.authenticated()
+                viewModel.internalUiState.value = MainUiStateBuilder.authenticated()
 
                 viewModelContract.uiState.value.isAuthenticated shouldBe true
             }
