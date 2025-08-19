@@ -137,8 +137,8 @@ class MainViewModelTest {
 - **拡張性**: 他のViewModelでも同じパターンを適用可能
 
 詳細な実装例とガイドは以下のドキュメントを参照してください：
-- [CLEAN_TESTING_APPROACH.md](./CLEAN_TESTING_APPROACH.md)
-- [VIEWMODEL_TESTING_GUIDE.md](./VIEWMODEL_TESTING_GUIDE.md)
+- [CLEAN_TESTING_APPROACH.md](CLEAN_TESTING_APPROACH.md)
+- [VIEWMODEL_TESTING_GUIDE.md](VIEWMODEL_TESTING_GUIDE.md)
 
 ## 7. 開発ルール
 
