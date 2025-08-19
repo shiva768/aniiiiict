@@ -34,7 +34,7 @@ class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : BaseViewModel(), MainViewModelContract {
     // UI状態のカプセル化
-    private val _uiState = MutableStateFlow(MainUiState())
+    internal val _uiState = MutableStateFlow(MainUiState())
     override val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {

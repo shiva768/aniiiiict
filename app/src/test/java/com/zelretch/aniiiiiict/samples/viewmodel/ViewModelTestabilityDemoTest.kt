@@ -3,8 +3,6 @@ package com.zelretch.aniiiiiict.samples.viewmodel
 import com.zelretch.aniiiiiict.MainViewModel
 import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.testing.MainUiStateBuilder
-import com.zelretch.aniiiiiict.testing.TestableMainViewModel
-import com.zelretch.aniiiiiict.testing.asTestable
 import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
 import io.kotest.core.spec.style.BehaviorSpec
@@ -41,10 +39,9 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
         `when`("インターフェースベースのテスト") {
             then("ViewModelContractを通じてUI状態にアクセスできる") {
                 // Mock dependencies
-                val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
+                val mockAuthUseCase = mockk<AnnictAuthUseCase>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
-                val mockCustomTabsIntentFactory =
-                    mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
+                val mockCustomTabsIntentFactory = mockk<CustomTabsIntentFactory>(relaxed = true)
 
                 coEvery { mockAuthUseCase.isAuthenticated() } returns false
 
@@ -54,10 +51,11 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                     mockCustomTabsIntentFactory,
                     mockContext
                 )
+                // initブロックの処理を待機
+                testDispatcher.scheduler.runCurrent()
 
                 // インターフェースとして参照
                 val viewModelContract: MainViewModelContract = viewModel
-                val testableViewModel: TestableMainViewModel = viewModel.asTestable()
 
                 // インターフェース経由でのアクセス
                 val initialState = viewModelContract.uiState.value
@@ -74,28 +72,26 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
 
         `when`("TestableViewModelによる状態操作") {
             then("UI状態を直接設定できる") {
-                val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
+                val mockAuthUseCase = mockk<AnnictAuthUseCase>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
-                val mockCustomTabsIntentFactory =
-                    mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
+                val mockCustomTabsIntentFactory = mockk<CustomTabsIntentFactory>(relaxed = true)
 
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
                     mockContext
                 )
+                // initブロックの処理を待機
+                testDispatcher.scheduler.runCurrent()
 
-                val testableViewModel: TestableMainViewModel = viewModel.asTestable()
                 val viewModelContract: MainViewModelContract = viewModel
 
                 // 複雑な状態をワンステップで設定
-                testableViewModel.setUiStateForTest(
-                    MainUiStateBuilder.custom(
-                        isLoading = false,
-                        error = "テストエラー",
-                        isAuthenticating = true,
-                        isAuthenticated = false
-                    )
+                viewModel._uiState.value = MainUiStateBuilder.custom(
+                    isLoading = false,
+                    error = "テストエラー",
+                    isAuthenticating = true,
+                    isAuthenticated = false
                 )
 
                 // 設定した状態が反映されることを確認
@@ -105,16 +101,16 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
                     isAuthenticated shouldBe false
                 }
 
-                // ユーティリティメソッドでエラーを設定
-                testableViewModel.setErrorForTest("新しいエラー")
+                // エラーを設定
+                viewModel._uiState.value = viewModel.uiState.value.copy(error = "新しいエラー")
                 viewModelContract.uiState.value.error shouldBe "新しいエラー"
 
                 // ローディング状態を設定
-                testableViewModel.setLoadingForTest(true)
+                viewModel._uiState.value = viewModel.uiState.value.copy(isLoading = true)
                 viewModelContract.uiState.value.isLoading shouldBe true
 
                 // 状態をリセット
-                testableViewModel.resetToInitialState()
+                viewModel._uiState.value = MainUiStateBuilder.custom()
                 with(viewModelContract.uiState.value) {
                     isLoading shouldBe false
                     error shouldBe null
@@ -123,38 +119,30 @@ class ViewModelTestabilityDemoTest : BehaviorSpec({
         }
 
         `when`("既存のテスト手法との比較") {
-            then("従来: 複雑なセットアップが必要") {
-                // 従来の方法では、特定の状態に到達するために
-                // 複数のメソッド呼び出しとモックの設定が必要だった
-                // 例: エラー状態をテストするために実際にエラーを発生させる必要があった
-            }
-
             then("改善後: 状態を直接設定してテストを簡素化") {
-                val mockAuthUseCase = mockk<com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase>(relaxed = true)
+                val mockAuthUseCase = mockk<AnnictAuthUseCase>(relaxed = true)
                 val mockContext = mockk<android.content.Context>(relaxed = true)
-                val mockCustomTabsIntentFactory =
-                    mockk<com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory>(relaxed = true)
+                val mockCustomTabsIntentFactory = mockk<CustomTabsIntentFactory>(relaxed = true)
 
                 val viewModel = MainViewModel(
                     mockAuthUseCase,
                     mockCustomTabsIntentFactory,
                     mockContext
                 )
+                // initブロックの処理を待機
+                testDispatcher.scheduler.runCurrent()
 
-                val testableViewModel: TestableMainViewModel = viewModel.asTestable()
                 val viewModelContract: MainViewModelContract = viewModel
 
                 // エラー状態を直接設定してテストを開始
-                testableViewModel.setErrorForTest("認証エラー")
+                viewModel._uiState.value = MainUiStateBuilder.error("認証エラー")
 
                 // エラー状態からの回復をテスト
                 viewModelContract.clearError()
                 viewModelContract.uiState.value.error shouldBe null
 
                 // 認証済み状態を直接設定
-                testableViewModel.setUiStateForTest(
-                    MainUiStateBuilder.authenticated()
-                )
+                viewModel._uiState.value = MainUiStateBuilder.authenticated()
 
                 viewModelContract.uiState.value.isAuthenticated shouldBe true
             }
