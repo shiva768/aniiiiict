@@ -1,44 +1,34 @@
-name: Test and Lint
+name: Build Debug APK (#${{ github.run_number }})
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ubuntu-latest
     env:
       ANNICT_CLIENT_SECRET: ${{ secrets.ANNICT_CLIENT_SECRET }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run ktlint
-        run: ./gradlew ktlintCheck
-
-      - name: Run detekt
-        run: ./gradlew detekt
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
-
-#      - name: Run UI tests
-#        uses: reactivecircus/android-emulator-runner@v2
-#        with:
-#          api-level: 33
-#          script: ./gradlew connectedDebugAndroidTest
+      - name: Decode debug keystore
+        run: |
+          mkdir -p app
+          printf '%s' "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > app/debug.keystore
 
       - name: Build APK
         run: ./gradlew assembleDebug -PannictClientSecret="$ANNICT_CLIENT_SECRET" --stacktrace
@@ -47,10 +37,10 @@ jobs:
         id: timestamp
         run: echo "value=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
 
-      - name: Rename debug APK
+      - name: Rename APK
         run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
 
-      - name: Upload debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-${{ steps.timestamp.outputs.value }}
