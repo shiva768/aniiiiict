@@ -14,11 +14,11 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.util.Logger
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
+import timber.log.Timber
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,13 +27,11 @@ import javax.inject.Singleton
 class AnnictRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager,
     private val authManager: AnnictAuthManager,
-    private val annictApolloClient: AnnictApolloClient,
-    private val logger: Logger
+    private val annictApolloClient: AnnictApolloClient
 ) : AnnictRepository {
-    private val TAG = "AnnictRepositoryImpl"
     override suspend fun isAuthenticated(): Boolean {
         val result = tokenManager.hasValidToken()
-        logger.info(TAG, "認証状態 = $result", "AnnictRepositoryImpl.isAuthenticated")
+        Timber.i("認証状態 = $result")
         return result
     }
 
@@ -42,10 +40,8 @@ class AnnictRepositoryImpl @Inject constructor(
     override suspend fun createRecord(episodeId: String, workId: String): Boolean {
         // パラメータバリデーション（APIリクエスト前に行う必要あり）
         if (episodeId.isEmpty() || workId.isEmpty()) {
-            logger.error(
-                TAG,
-                "エピソードIDまたは作品IDがnullまたは空です",
-                "AnnictRepositoryImpl.createRecord"
+            Timber.e(
+                "エピソードIDまたは作品IDがnullまたは空です"
             )
             return false
         }
@@ -54,10 +50,8 @@ class AnnictRepositoryImpl @Inject constructor(
             operation = "createRecord",
             defaultValue = false
         ) {
-            logger.info(
-                TAG,
-                "エピソード記録を実行: episodeId=$episodeId, workId=$workId",
-                "AnnictRepositoryImpl.createRecord"
+            Timber.i(
+                "エピソード記録を実行: episodeId=$episodeId, workId=$workId"
             )
 
             val mutation = CreateRecordMutation(episodeId = episodeId)
@@ -66,10 +60,8 @@ class AnnictRepositoryImpl @Inject constructor(
                 context = "AnnictRepositoryImpl.createRecord"
             )
 
-            logger.info(
-                TAG,
-                "GraphQLのレスポンス: ${response.data != null}, エラー: ${response.errors}",
-                "AnnictRepositoryImpl.createRecord"
+            Timber.i(
+                "GraphQLのレスポンス: ${response.data != null}, エラー: ${response.errors}"
             )
 
             !response.hasErrors()
@@ -77,28 +69,24 @@ class AnnictRepositoryImpl @Inject constructor(
     }
 
     override suspend fun handleAuthCallback(code: String): Boolean {
-        logger.info(
-            TAG,
-            "認証コールバック処理開始 - コード: ${code.take(5)}...",
-            "AnnictRepositoryImpl.handleAuthCallback"
+        Timber.i(
+            "認証コールバック処理開始 - コード: ${code.take(5)}..."
         )
         return try {
             authManager.handleAuthorizationCode(code).fold(onSuccess = {
-                logger.info(TAG, "認証成功", "AnnictRepositoryImpl.handleAuthCallback")
+                Timber.i("認証成功")
                 true
             }, onFailure = { e ->
-                logger.error(
-                    TAG,
-                    "認証失敗 - ${e.message}",
-                    "AnnictRepositoryImpl.handleAuthCallback"
+                Timber.e(
+                    e,
+                    "認証失敗"
                 )
                 false
             })
         } catch (e: Exception) {
-            logger.error(
-                TAG,
-                "認証処理中に例外が発生 - ${e.message}",
-                "AnnictRepositoryImpl.handleAuthCallback"
+            Timber.e(
+                e,
+                "認証処理中に例外が発生"
             )
             false
         }
@@ -107,18 +95,12 @@ class AnnictRepositoryImpl @Inject constructor(
     override suspend fun getRawProgramsData(): Flow<List<ViewerProgramsQuery.Node?>> {
         return flow {
             try {
-                logger.info(
-                    TAG,
-                    "プログラム一覧の取得を開始",
-                    "AnnictRepositoryImpl.getRawProgramsData"
-                )
+                Timber.i("プログラム一覧の取得を開始")
 
                 // キャンセルされた場合は例外をスローせずに空のリストを返す
                 if (!currentCoroutineContext().isActive) {
-                    logger.info(
-                        TAG,
-                        "処理がキャンセルされたため、実行をスキップします",
-                        "AnnictRepositoryImpl.getRawProgramsData"
+                    Timber.i(
+                        "処理がキャンセルされたため、実行をスキップします"
                     )
                     emit(emptyList())
                     return@flow
@@ -127,10 +109,8 @@ class AnnictRepositoryImpl @Inject constructor(
                 // アクセストークンの確認
                 val token = tokenManager.getAccessToken()
                 if (token.isNullOrEmpty()) {
-                    logger.error(
-                        TAG,
-                        "アクセストークンがありません",
-                        "AnnictRepositoryImpl.getRawProgramsData"
+                    Timber.e(
+                        "アクセストークンがありません"
                     )
                     emit(emptyList())
                     return@flow
@@ -142,27 +122,21 @@ class AnnictRepositoryImpl @Inject constructor(
                     context = "AnnictRepositoryImpl.getRawProgramsData"
                 )
 
-                logger.info(
-                    TAG,
-                    "GraphQLのレスポンス: ${response.data != null}",
-                    "AnnictRepositoryImpl.getRawProgramsData"
+                Timber.i(
+                    "GraphQLのレスポンス: ${response.data != null}"
                 )
 
                 if (response.hasErrors()) {
-                    logger.error(
-                        TAG,
-                        "GraphQLエラー: ${response.errors}",
-                        "AnnictRepositoryImpl.getRawProgramsData"
+                    Timber.e(
+                        "GraphQLエラー: ${response.errors}"
                     )
                     emit(emptyList())
                     return@flow
                 }
 
                 val programs = response.data?.viewer?.programs?.nodes
-                logger.info(
-                    TAG,
-                    "取得したプログラム数: ${programs?.size ?: 0}",
-                    "AnnictRepositoryImpl.getRawProgramsData"
+                Timber.i(
+                    "取得したプログラム数: ${programs?.size ?: 0}"
                 )
 
                 emit(programs ?: emptyList())
@@ -170,7 +144,7 @@ class AnnictRepositoryImpl @Inject constructor(
                 // キャンセル例外の場合は再スローして上位で処理
                 if (e is kotlinx.coroutines.CancellationException) throw e
 
-                logger.error(TAG, e, "プログラム一覧の取得に失敗")
+                Timber.e(e, "プログラム一覧の取得に失敗")
                 emit(emptyList())
             }
         }
@@ -180,12 +154,9 @@ class AnnictRepositoryImpl @Inject constructor(
         operation = "getRecords",
         defaultValue = PaginatedRecords(emptyList())
     ) {
-        logger.info(TAG, "記録履歴を取得中...", "AnnictRepositoryImpl.getRecords")
+        Timber.i("記録履歴を取得中...")
 
-        val query = ViewerRecordsQuery(
-            after =
-            after?.let { Optional.present(it) } ?: Optional.absent()
-        )
+        val query = ViewerRecordsQuery(after = after?.let { Optional.present(it) } ?: Optional.absent())
         val response = annictApolloClient.executeQuery(
             operation = query,
             context = "AnnictRepositoryImpl.getRecords"
@@ -223,10 +194,8 @@ class AnnictRepositoryImpl @Inject constructor(
                 }
             }
 
-            logger.info(
-                TAG,
-                "${records.size}件の記録を取得しました",
-                "AnnictRepositoryImpl.getRecords"
+            Timber.i(
+                "${records.size}件の記録を取得しました"
             )
             PaginatedRecords(
                 records = records,
@@ -234,10 +203,8 @@ class AnnictRepositoryImpl @Inject constructor(
                 endCursor = pageInfo?.endCursor
             )
         } else {
-            logger.error(
-                TAG,
-                "GraphQLエラー: ${response.errors}",
-                "AnnictRepositoryImpl.getRecords"
+            Timber.e(
+                "GraphQLエラー: ${response.errors}"
             )
             PaginatedRecords(emptyList())
         }
@@ -247,10 +214,8 @@ class AnnictRepositoryImpl @Inject constructor(
         operation = "deleteRecord",
         defaultValue = false
     ) {
-        logger.info(
-            TAG,
-            "記録を削除中: $recordId",
-            "AnnictRepositoryImpl.deleteRecord"
+        Timber.i(
+            "記録を削除中: $recordId"
         )
 
         val mutation = DeleteRecordMutation(recordId)
@@ -260,77 +225,58 @@ class AnnictRepositoryImpl @Inject constructor(
         )
 
         if (!response.hasErrors()) {
-            logger.info(
-                TAG,
-                "記録を削除しました: $recordId",
-                "AnnictRepositoryImpl.deleteRecord"
+            Timber.i(
+                "記録を削除しました: $recordId"
             )
             true
         } else {
-            logger.error(
-                TAG,
-                "GraphQLエラー: ${response.errors}",
-                "AnnictRepositoryImpl.deleteRecord"
+            Timber.e(
+                "GraphQLエラー: ${response.errors}"
             )
             false
         }
     }
 
-    override suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean =
-        executeApiRequest(
-            operation = "updateWorkStatus",
-            defaultValue = false
-        ) {
-            logger.info(
-                TAG,
-                "作品ステータスを更新中: workId=$workId, state=$state",
-                "AnnictRepositoryImpl.updateWorkStatus"
-            )
+    override suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean = executeApiRequest(
+        operation = "updateWorkStatus",
+        defaultValue = false
+    ) {
+        Timber.i(
+            "作品ステータスを更新中: workId=$workId, state=$state"
+        )
 
-            val mutation = UpdateStatusMutation(workId = workId, state = state)
-            val response = annictApolloClient.executeMutation(
-                operation = mutation,
-                context = "AnnictRepositoryImpl.updateWorkStatus"
-            )
+        val mutation = UpdateStatusMutation(workId = workId, state = state)
+        val response = annictApolloClient.executeMutation(
+            operation = mutation,
+            context = "AnnictRepositoryImpl.updateWorkStatus"
+        )
 
-            if (!response.hasErrors()) {
-                logger.info(
-                    TAG,
-                    "作品ステータスを更新しました: workId=$workId, state=$state",
-                    "AnnictRepositoryImpl.updateWorkStatus"
-                )
-                true
-            } else {
-                logger.error(
-                    TAG,
-                    "GraphQLエラー: ${response.errors}",
-                    "AnnictRepositoryImpl.updateWorkStatus"
-                )
-                false
-            }
+        if (!response.hasErrors()) {
+            Timber.i(
+                "作品ステータスを更新しました: workId=$workId, state=$state"
+            )
+            true
+        } else {
+            Timber.e(
+                "GraphQLエラー: ${response.errors}"
+            )
+            false
         }
+    }
 
     // 共通のAPIリクエスト処理を行うヘルパーメソッド
-    private suspend fun <T> executeApiRequest(
-        operation: String,
-        defaultValue: T,
-        request: suspend () -> T
-    ): T {
+    private suspend fun <T> executeApiRequest(operation: String, defaultValue: T, request: suspend () -> T): T {
         if (!currentCoroutineContext().isActive) {
-            logger.info(
-                TAG,
-                "処理がキャンセルされたため、実行をスキップします",
-                "AnnictRepositoryImpl.$operation"
+            Timber.i(
+                "処理がキャンセルされたため、実行をスキップします$operation"
             )
             return defaultValue
         }
 
         val token = tokenManager.getAccessToken()
         if (token.isNullOrEmpty()) {
-            logger.error(
-                TAG,
-                "アクセストークンがありません",
-                "AnnictRepositoryImpl.$operation"
+            Timber.e(
+                "アクセストークンがありません"
             )
             return defaultValue
         }
@@ -339,7 +285,7 @@ class AnnictRepositoryImpl @Inject constructor(
             request()
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            logger.error(TAG, e, "AnnictRepositoryImpl.$operation")
+            Timber.e(e, "AnnictRepositoryImpl.$operation")
             defaultValue
         }
     }

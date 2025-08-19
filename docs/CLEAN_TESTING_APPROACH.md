@@ -30,11 +30,11 @@ class MainViewModel : MainViewModelContract, TestableViewModel<MainUiState> {
 class MainViewModel @Inject constructor(
     private val annictAuthUseCase: AnnictAuthUseCase,
     private val customTabsIntentFactory: CustomTabsIntentFactory,
-    logger: Logger,
     @ApplicationContext private val context: Context
-) : BaseViewModel(logger), MainViewModelContract {
+) : BaseViewModel(), MainViewModelContract {
     // ✅ テスト専用コードは一切含まれない
     // ✅ ビジネスロジックにのみ集中
+    // ✅ Timberを直接使用してログ出力（Logger interfaceは不要）
 }
 ```
 

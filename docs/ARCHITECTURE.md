@@ -21,6 +21,12 @@
 
 - **Hilt** を使用して、アプリ全体の依存関係を解決しています。`@HiltViewModel`, `@AndroidEntryPoint`, `@Module`, `@Provides` などのアノテーションを活用しています。
 
+### ログ出力 (Logging)
+
+- **Timber** を直接使用してアプリ全体のログ出力を行っています。以前使用していたLogger interfaceは削除され、より簡潔なアプローチを採用しています。
+- Timberは `AniiiiictApplication` で初期化され、デバッグビルド時のみログが出力されます。
+- ログフォーマット例: `Timber.i("[ClassName][methodName] メッセージ")` や `Timber.e(exception, "[ClassName] エラーメッセージ")`
+
 ## 3. 主要な機能と実装箇所
 
 - **認証 (Authentication)**
@@ -70,8 +76,9 @@
 class MainViewModel @Inject constructor(
     private val annictAuthUseCase: AnnictAuthUseCase,
     // その他の依存関係...
-) : BaseViewModel(logger), MainViewModelContract {
+) : BaseViewModel(), MainViewModelContract {
     // ✅ ビジネスロジックのみ、テスト専用コードは一切含まれない
+    // ✅ Timberを直接使用してログ出力（Logger interfaceは不要）
 }
 ```
 
@@ -130,8 +137,8 @@ class MainViewModelTest {
 - **拡張性**: 他のViewModelでも同じパターンを適用可能
 
 詳細な実装例とガイドは以下のドキュメントを参照してください：
-- [CLEAN_TESTING_APPROACH.md](./CLEAN_TESTING_APPROACH.md)
-- [VIEWMODEL_TESTING_GUIDE.md](./VIEWMODEL_TESTING_GUIDE.md)
+- [CLEAN_TESTING_APPROACH.md](CLEAN_TESTING_APPROACH.md)
+- [VIEWMODEL_TESTING_GUIDE.md](VIEWMODEL_TESTING_GUIDE.md)
 
 ## 7. 開発ルール
 

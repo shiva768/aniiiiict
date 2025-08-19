@@ -10,7 +10,6 @@ import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiiict.util.TestLogger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -38,7 +37,7 @@ class DetailModalViewModelE2ETest : BehaviorSpec({
     val annictRepository = mockk<AnnictRepository>()
 
     // 実際のUseCaseを使用
-    val updateViewStateUseCase = UpdateViewStateUseCase(annictRepository, TestLogger())
+    val updateViewStateUseCase = UpdateViewStateUseCase(annictRepository)
     val watchEpisodeUseCase = WatchEpisodeUseCase(annictRepository, updateViewStateUseCase)
     val bulkRecordEpisodesUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase)
 

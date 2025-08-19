@@ -15,35 +15,35 @@ interface TrackViewModelContract : ViewModelContract<TrackUiState> {
      * @param episodeNumber エピソード番号
      */
     fun watchEpisode(program: ProgramWithWork, episodeNumber: Int)
-    
+
     /**
      * フィルターの表示/非表示を切り替える
      */
     fun toggleFilterVisibility()
-    
+
     /**
      * 詳細モーダルを表示する
      * @param program 対象の番組
      */
     fun showDetailModal(program: ProgramWithWork)
-    
+
     /**
      * 詳細モーダルを閉じる
      */
     fun hideDetailModal()
-    
+
     /**
      * 最終話確認ダイアログを表示する
      * @param workId 作品ID
      * @param episodeNumber エピソード番号
      */
     fun showFinaleConfirmation(workId: String, episodeNumber: Int)
-    
+
     /**
      * 最終話確認ダイアログを閉じる
      */
     fun hideFinaleConfirmation()
-    
+
     /**
      * 最終話として記録する
      * @param workId 作品ID
@@ -61,7 +61,7 @@ interface TestableTrackViewModel {
      * @param scope テスト用のCoroutineScope
      */
     var externalScope: CoroutineScope?
-    
+
     /**
      * テスト用: UI状態を直接設定する
      * @param state 設定するUI状態

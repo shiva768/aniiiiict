@@ -4,18 +4,14 @@ import co.anilist.GetMediaQuery
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
-import com.zelretch.aniiiiiict.util.Logger
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AniListRepositoryImpl @Inject constructor(
-    private val apolloClient: AniListApolloClient,
-    private val logger: Logger
+    private val apolloClient: AniListApolloClient
 ) : AniListRepository {
-
-    private val TAG = "AniListRepositoryImpl"
-
     override suspend fun getMedia(mediaId: Int): Result<AniListMedia> {
         return try {
             val query = GetMediaQuery(
@@ -27,11 +23,7 @@ class AniListRepositoryImpl @Inject constructor(
             )
 
             if (response.hasErrors()) {
-                logger.info(
-                    TAG,
-                    "AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}",
-                    "AniListRepositoryImpl.getMedia"
-                )
+                Timber.i("AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}")
                 return Result.failure(
                     RuntimeException(
                         response.errors?.firstOrNull()?.message ?: "Unknown AniList GraphQL error"
@@ -41,7 +33,7 @@ class AniListRepositoryImpl @Inject constructor(
 
             val media = response.data?.Media
             if (media == null) {
-                logger.info(TAG, "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMedia")
+                Timber.i("AniList Mediaデータがnullです")
                 return Result.failure(RuntimeException("AniList Media data is null"))
             }
 
@@ -62,7 +54,7 @@ class AniListRepositoryImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            logger.error(TAG, e, "AniList Mediaの取得に失敗しました")
+            Timber.e(e, "AniList Mediaの取得に失敗しました")
             Result.failure(e)
         }
     }

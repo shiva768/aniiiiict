@@ -6,7 +6,6 @@ import com.zelretch.aniiiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.RecordsResult
 import com.zelretch.aniiiiiict.domain.usecase.SearchRecordsUseCase
-import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -25,7 +24,6 @@ open class HistoryViewModelTest : BehaviorSpec({
     val loadRecordsUseCase = mockk<LoadRecordsUseCase>()
     val searchRecordsUseCase = mockk<SearchRecordsUseCase>()
     val deleteRecordUseCase = mockk<DeleteRecordUseCase>()
-    val logger = mockk<Logger>(relaxed = true)
     val dispatcher = UnconfinedTestDispatcher()
 
     beforeSpec {
@@ -46,8 +44,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
+                        deleteRecordUseCase
                     )
                     val state = viewModel.uiState.first { !it.isLoading }
                     state.records shouldBe emptyList()
@@ -75,8 +72,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.updateSearchQuery("foo")
@@ -104,8 +100,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.deleteRecord("id1")
@@ -114,6 +109,46 @@ open class HistoryViewModelTest : BehaviorSpec({
                     }
                     state.allRecords shouldBe emptyList()
                     state.records shouldBe emptyList()
+                }
+            }
+        }
+        When("レコードIDを渡し、検索クエリが有効") {
+            Then("recordsとallRecordsから削除され、フィルタリングが適用される") {
+                runTest(dispatcher) {
+                    val record1 = mockk<Record> {
+                        every { id } returns "id1"
+                        every { work.title } returns "Anime A"
+                    }
+                    val record2 = mockk<Record> {
+                        every { id } returns "id2"
+                        every { work.title } returns "Anime B"
+                    }
+                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(
+                        listOf(record1, record2),
+                        false,
+                        null
+                    )
+                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns
+                        listOf(record1, record2)
+                    every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns
+                        listOf(record1, record2)
+                    every { searchRecordsUseCase(listOf(record2), "Anime") } returns listOf(record2)
+                    coEvery { deleteRecordUseCase("id1") } returns true
+
+                    val viewModel = HistoryViewModel(
+                        loadRecordsUseCase,
+                        searchRecordsUseCase,
+                        deleteRecordUseCase
+                    )
+                    viewModel.uiState.first { !it.isLoading }
+                    viewModel.updateSearchQuery("Anime")
+                    viewModel.deleteRecord("id1")
+
+                    val state = viewModel.uiState.first {
+                        !it.isLoading && it.allRecords.size == 1
+                    }
+                    state.allRecords shouldBe listOf(record2)
+                    state.records shouldBe listOf(record2)
                 }
             }
         }
@@ -142,8 +177,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
+                        deleteRecordUseCase
                     )
                     viewModel.uiState.first { !it.isLoading }
                     viewModel.loadNextPage()
@@ -171,8 +205,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
                         searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
+                        deleteRecordUseCase
                     )
                     val initialState = viewModel.uiState.first { !it.isLoading }
 
@@ -180,50 +213,6 @@ open class HistoryViewModelTest : BehaviorSpec({
 
                     val finalState = viewModel.uiState.value
                     finalState.allRecords shouldBe initialState.allRecords
-                }
-            }
-        }
-    }
-
-    Given("deleteRecord呼び出し") {
-        When("レコードIDを渡し、検索クエリが有効") {
-            Then("recordsとallRecordsから削除され、フィルタリングが適用される") {
-                runTest(dispatcher) {
-                    val record1 = mockk<Record> {
-                        every { id } returns "id1"
-                        every { work.title } returns "Anime A"
-                    }
-                    val record2 = mockk<Record> {
-                        every { id } returns "id2"
-                        every { work.title } returns "Anime B"
-                    }
-                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(
-                        listOf(record1, record2),
-                        false,
-                        null
-                    )
-                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns
-                        listOf(record1, record2)
-                    every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns
-                        listOf(record1, record2)
-                    every { searchRecordsUseCase(listOf(record2), "Anime") } returns listOf(record2)
-                    coEvery { deleteRecordUseCase("id1") } returns true
-
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase,
-                        logger
-                    )
-                    viewModel.uiState.first { !it.isLoading }
-                    viewModel.updateSearchQuery("Anime")
-                    viewModel.deleteRecord("id1")
-
-                    val state = viewModel.uiState.first {
-                        !it.isLoading && it.allRecords.size == 1
-                    }
-                    state.allRecords shouldBe listOf(record2)
-                    state.records shouldBe listOf(record2)
                 }
             }
         }

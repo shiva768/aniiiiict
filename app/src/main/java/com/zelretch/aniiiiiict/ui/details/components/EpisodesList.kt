@@ -12,11 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.zelretch.aniiiiiict.data.model.Program
 
 @Composable
-fun EpisodesList(
-    programs: List<Program>,
-    onRecordEpisode: (String) -> Unit,
-    onMarkUpToAsWatched: (Int) -> Unit
-) {
+fun EpisodesList(programs: List<Program>, onRecordEpisode: (String) -> Unit, onMarkUpToAsWatched: (Int) -> Unit) {
     AnimatedVisibility(
         visible = true,
         enter = fadeIn(),

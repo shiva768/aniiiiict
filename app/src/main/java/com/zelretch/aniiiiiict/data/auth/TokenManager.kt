@@ -2,14 +2,13 @@ package com.zelretch.aniiiiiict.data.auth
 
 import android.content.Context
 import androidx.core.content.edit
-import com.zelretch.aniiiiiict.util.Logger
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TokenManager @Inject constructor(context: Context, private val logger: Logger) {
+class TokenManager @Inject constructor(context: Context) {
     companion object {
-        private const val TAG = "TokenManager"
         private const val PREFS_NAME = "annict_prefs"
         private const val TOKEN_KEY = "access_token"
     }
@@ -18,41 +17,25 @@ class TokenManager @Inject constructor(context: Context, private val logger: Log
 
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
-            logger.error(
-                TAG,
-                "空のトークンを保存しようとしました",
-                "saveAccessToken"
-            )
+            Timber.e("[TokenManager][saveAccessToken] 空のトークンを保存しようとしました")
             return
         }
 
-        logger.info(
-            TAG,
-            "アクセストークンを保存: ${token.take(10)}...",
-            "saveAccessToken"
-        )
+        Timber.i("[TokenManager][saveAccessToken] アクセストークンを保存: ${token.take(10)}...")
 
         try {
             prefs.edit { putString(TOKEN_KEY, token) }
         } catch (e: Exception) {
-            logger.error(TAG, e, "アクセストークンの保存に失敗")
+            Timber.e(e, "[TokenManager][saveAccessToken] アクセストークンの保存に失敗")
         }
     }
 
     fun getAccessToken(): String? {
         val token = prefs.getString(TOKEN_KEY, null)
         if (token == null) {
-            logger.debug(
-                TAG,
-                "保存されたアクセストークンがありません",
-                "getAccessToken"
-            )
+            Timber.d("[TokenManager][getAccessToken] 保存されたアクセストークンがありません")
         } else {
-            logger.info(
-                TAG,
-                "アクセストークンを取得: ${token.take(10)}...",
-                "getAccessToken"
-            )
+            Timber.i("[TokenManager][getAccessToken] アクセストークンを取得: ${token.take(10)}...")
         }
         return token
     }
@@ -60,16 +43,16 @@ class TokenManager @Inject constructor(context: Context, private val logger: Log
     fun clearAccessToken() {
         try {
             prefs.edit { remove(TOKEN_KEY) }
-            logger.info(TAG, "アクセストークンを削除", "clearAccessToken")
+            Timber.i("[TokenManager][clearAccessToken] アクセストークンを削除")
         } catch (e: Exception) {
-            logger.error(TAG, e, "アクセストークンの削除に失敗")
+            Timber.e(e, "[TokenManager][clearAccessToken] アクセストークンの削除に失敗")
         }
     }
 
     fun hasValidToken(): Boolean {
         val token = getAccessToken()
         val hasToken = !token.isNullOrEmpty()
-        logger.debug(TAG, "有効なトークンがあるか: $hasToken", "hasValidToken")
+        Timber.d("[TokenManager][hasValidToken] 有効なトークンがあるか: $hasToken")
         return hasToken
     }
 }

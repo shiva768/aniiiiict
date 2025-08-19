@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.browser.customtabs.CustomTabsIntent
 import com.zelretch.aniiiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiiict.util.Logger
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -14,7 +13,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -35,18 +33,12 @@ class MainViewModelTest : BehaviorSpec({
 
     given("MainViewModel") {
         val authUseCase = mockk<AnnictAuthUseCase>(relaxUnitFun = true)
-        val logger = mockk<Logger> {
-            every { info(any<String>(), any<String>(), any<String>()) } returns Unit
-            every { warning(any<String>(), any<String>(), any<String>()) } returns Unit
-            every { error(any<String>(), any<String>(), any<String>()) } returns Unit
-            every { error(any<String>(), any<Throwable>(), any<String>()) } returns Unit
-        }
         val context = mockk<Context>()
         val customTabsIntent = mockk<CustomTabsIntent>(relaxUnitFun = true)
         val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()
         every { customTabsIntentFactory.create() } returns customTabsIntent
         every { customTabsIntent.launchUrl(any(), any()) } just Runs
-        val viewModel = MainViewModel(authUseCase, customTabsIntentFactory, logger, context)
+        val viewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
 
         beforeTest {
             coEvery { authUseCase.isAuthenticated() } returns false
@@ -69,7 +61,6 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.uiState.value.error shouldBe null
                 viewModel.uiState.value.isAuthenticating shouldBe true
                 coVerify { authUseCase.getAuthUrl() }
-                verify { logger.info(any<String>(), any<String>(), any<String>()) }
             }
         }
 
@@ -92,7 +83,6 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.uiState.value.isAuthenticating shouldBe false
                 viewModel.uiState.value.error shouldNotBe null
                 coVerify { authUseCase.handleAuthCallback("invalid_code") }
-                verify { logger.warning(any<String>(), any<String>(), any<String>()) }
             }
 
             then("nullのコードでエラーが発生する") {
@@ -101,7 +91,6 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.uiState.value.isAuthenticated shouldBe false
                 viewModel.uiState.value.isAuthenticating shouldBe false
                 viewModel.uiState.value.error shouldNotBe null
-                verify { logger.warning(any<String>(), any<String>(), any<String>()) }
             }
         }
 
@@ -120,7 +109,6 @@ class MainViewModelTest : BehaviorSpec({
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe false
                 coVerify { authUseCase.isAuthenticated() }
-                verify { logger.info(any<String>(), any<String>(), any<String>()) }
             }
         }
 

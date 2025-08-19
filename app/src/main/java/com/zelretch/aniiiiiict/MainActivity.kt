@@ -19,17 +19,12 @@ import com.zelretch.aniiiiiict.ui.mypage.MyPageScreen
 import com.zelretch.aniiiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
-import com.zelretch.aniiiiiict.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val TAG = "MainActivity"
-
-    @Inject
-    lateinit var logger: Logger
 
     private val mainViewModel: MainViewModel by viewModels()
 
@@ -139,26 +134,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        logger.debug(
-            TAG,
-            "Intent received: ${intent.action}, data: ${intent.data}",
-            "handleIntent"
+        Timber.d(
+            "Intent received: ${intent.action}, data: ${intent.data}"
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                logger.debug(TAG, "Received OAuth callback: $uri", "handleIntent")
+                Timber.d("Received OAuth callback: $uri")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
-                    logger.debug(
-                        TAG,
-                        "Processing authentication code: ${code.take(5)}...",
-                        "handleIntent"
+                    Timber.d(
+                        "Processing authentication code: ${code.take(5)}..."
                     )
-                    logger.info(
-                        TAG,
-                        "Processing authentication code: ${code.take(5)}...",
-                        "handleIntent"
+                    Timber.i(
+                        "Processing authentication code: ${code.take(5)}..."
                     )
 
                     // 認証処理は新しいコルーチンで実行して独立性を保つ
@@ -168,10 +157,8 @@ class MainActivity : ComponentActivity() {
                         mainViewModel.checkAuthentication()
                     }
                 } else {
-                    logger.error(
-                        TAG,
-                        "認証コードがURIに含まれていません: $uri",
-                        "handleIntent"
+                    Timber.e(
+                        "認証コードがURIに含まれていません: $uri"
                     )
                 }
             }

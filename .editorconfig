@@ -12,3 +12,6 @@ ij_xml_wrap_attributes = wrap_if_long
 ij_xml_align_attributes = false
 ij_xml_keep_first_attribute_in_one_line = true
 ij_xml_new_line_after_last_attribute = false
+
+[*Test.kt]
+ktlint_standard_function-naming = disabled
