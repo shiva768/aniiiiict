@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.apollo)
-    alias(libs.plugins.secrets.gradle.plugin)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
 }
