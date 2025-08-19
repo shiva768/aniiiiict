@@ -8,6 +8,7 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
+import com.zelretch.aniiiiiict.domain.usecase.GetAnilistWorkUseCase
 import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
@@ -51,7 +52,8 @@ class TrackViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
-    private val judgeFinaleUseCase: JudgeFinaleUseCase
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
+    private val getAnilistWorkUseCase: GetAnilistWorkUseCase
 ) : BaseViewModel(), TrackViewModelContract, TestableTrackViewModel {
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
@@ -158,28 +160,36 @@ class TrackViewModel @Inject constructor(
                         Timber.d(
                             "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}"
                         )
-                        val judgeResult = judgeFinaleUseCase(
-                            currentEpisode.episode.number,
-                            program.work.id.toInt()
-                        )
-                        Timber.d(
-                            "[DEBUG_LOG] judgeResult: $judgeResult"
-                        )
-                        if (judgeResult.isFinale) {
-                            Timber.d(
-                                "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId"
-                            )
-                            _uiState.update {
-                                it.copy(
-                                    showFinaleConfirmationForWorkId = workId,
-                                    showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                        getAnilistWorkUseCase(program.work.malAnimeId).fold(
+                            onSuccess = { anilistMedia ->
+                                val judgeResult = judgeFinaleUseCase(
+                                    currentEpisode.episode.number,
+                                    anilistMedia.id
                                 )
+                                Timber.d(
+                                    "[DEBUG_LOG] judgeResult: $judgeResult"
+                                )
+                                if (judgeResult.isFinale) {
+                                    Timber.d(
+                                        "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId"
+                                    )
+                                    _uiState.update {
+                                        it.copy(
+                                            showFinaleConfirmationForWorkId = workId,
+                                            showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                                        )
+                                    }
+                                } else {
+                                    Timber.d(
+                                        "[DEBUG_LOG] judgeResult.isFinale is false"
+                                    )
+                                }
+                            },
+                            onFailure = { e ->
+                                Timber.e(e, "Failed to get Anilist media by malAnimeId: ${program.work.malAnimeId}")
+                                // ここではエラーを握りつぶし、最終話判定ができなかっただけとする
                             }
-                        } else {
-                            Timber.d(
-                                "[DEBUG_LOG] judgeResult.isFinale is false"
-                            )
-                        }
+                        )
                     } else {
                         Timber.d(
                             "[DEBUG_LOG] program or currentEpisode is null, or episode number is null"

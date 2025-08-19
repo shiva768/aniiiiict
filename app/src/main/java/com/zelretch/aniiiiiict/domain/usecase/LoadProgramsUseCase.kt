@@ -59,6 +59,8 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
 
             val work = Work(
                 id = node.work.id,
+                annictId = node.work.annictId,
+                malAnimeId = node.work.malAnimeId,
                 title = node.work.title,
                 seasonName = node.work.seasonName,
                 seasonYear = node.work.seasonYear,

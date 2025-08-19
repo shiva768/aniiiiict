@@ -25,6 +25,8 @@ query ViewerPrograms {
         }
         work {
           id
+          annictId
+          malAnimeId
           title
           seasonName
           seasonYear

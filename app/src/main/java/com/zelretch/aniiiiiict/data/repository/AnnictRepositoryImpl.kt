@@ -184,6 +184,8 @@ class AnnictRepositoryImpl @Inject constructor(
                         ),
                         work = Work(
                             id = work.id,
+                            annictId = work.annictId,
+                            malAnimeId = work.malAnimeId,
                             title = work.title,
                             media = null,
                             mediaText = "",

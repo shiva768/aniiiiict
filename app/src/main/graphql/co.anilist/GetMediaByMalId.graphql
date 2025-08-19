@@ -1,0 +1,12 @@
+query GetMediaByMalId($idMal: Int) {
+  Media(idMal: $idMal, type: ANIME) {
+    id
+    format
+    episodes
+    status
+    nextAiringEpisode {
+      episode
+      airingAt
+    }
+  }
+}

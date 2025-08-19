@@ -5,6 +5,8 @@ import com.annict.type.StatusState
 
 data class Work(
     val id: String,
+    val annictId: Int,
+    val malAnimeId: String?,
     val title: String,
     val seasonName: SeasonName? = null,
     val seasonYear: Int? = null,
