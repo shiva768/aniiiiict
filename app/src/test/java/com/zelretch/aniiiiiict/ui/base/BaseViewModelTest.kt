@@ -9,6 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -28,7 +29,7 @@ class BaseViewModelTest : BehaviorSpec({
     lateinit var testDispatcher: TestDispatcher
 
     beforeTest {
-        testDispatcher = UnconfinedTestDispatcher()
+        testDispatcher = StandardTestDispatcher()
         Dispatchers.setMain(testDispatcher)
     }
 
@@ -59,6 +60,7 @@ class BaseViewModelTest : BehaviorSpec({
                         delay(500) // 短い処理をシミュレート
                         processingCompleted = true
                     }
+                    testDispatcher.scheduler.runCurrent()
 
                     // 処理開始時にローディングが開始される
                     viewModel.loadingState shouldBe true
@@ -85,6 +87,7 @@ class BaseViewModelTest : BehaviorSpec({
                     viewModel.executeTestWithLoading {
                         throw exception
                     }
+                    testDispatcher.scheduler.runCurrent()
 
                     // エラー処理の確認
                     viewModel.loadingState shouldBe false
@@ -101,6 +104,7 @@ class BaseViewModelTest : BehaviorSpec({
                     viewModel.executeTestWithLoading {
                         throw exception
                     }
+                    testDispatcher.scheduler.runCurrent()
 
                     viewModel.errorState shouldBe "処理中にエラーが発生しました"
                 }
@@ -117,6 +121,7 @@ class BaseViewModelTest : BehaviorSpec({
                         delay(300) // 300ミリ秒の短い処理
                         processingCompleted = true
                     }
+                    testDispatcher.scheduler.runCurrent()
 
                     // 処理は早く完了するが、ローディングは継続
                     testDispatcher.scheduler.advanceTimeBy(300)
@@ -142,6 +147,7 @@ class BaseViewModelTest : BehaviorSpec({
                     viewModel.executeTestWithLoading {
                         delay(1500) // 1.5秒の長い処理
                     }
+                    testDispatcher.scheduler.runCurrent()
 
                     testDispatcher.scheduler.advanceTimeBy(1500)
 
@@ -168,6 +174,7 @@ class BaseViewModelTest : BehaviorSpec({
                         delay(800)
                         process2Completed = true
                     }
+                    testDispatcher.scheduler.runCurrent()
 
                     // 両方の処理でローディングが開始される
                     viewModel.loadingState shouldBe true

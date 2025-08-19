@@ -86,14 +86,14 @@ open class ViewModelTestWrapper<T : BaseUiState>(
     }
 
     private fun setErrorDirectly(error: String?) {
-        val currentState = _uiState.value
+        val currentState = getMutableUiState().value
         val errorField = BaseUiState::class.java.getDeclaredField("error")
         errorField.isAccessible = true
         errorField.set(currentState, error)
     }
 
     private fun setLoadingDirectly(isLoading: Boolean) {
-        val currentState = _uiState.value
+        val currentState = getMutableUiState().value
         val loadingField = BaseUiState::class.java.getDeclaredField("isLoading")
         loadingField.isAccessible = true
         loadingField.set(currentState, isLoading)

@@ -2,14 +2,19 @@ package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * 共通のローディング処理を提供する基底ViewModelクラス
  */
 abstract class BaseViewModel : ViewModel() {
+
+    private val loadingCounter = AtomicInteger(0)
+
     /**
      * ローディング状態を更新する関数
      */
@@ -24,12 +29,14 @@ abstract class BaseViewModel : ViewModel() {
      * ローディング処理を実行する
      *
      * @param block 実際に実行する処理
+     * @return The job that was launched.
      */
-    protected fun executeWithLoading(block: suspend () -> Unit) {
-        viewModelScope.launch {
-            try {
-                // ローディング状態を開始
+    protected fun executeWithLoading(block: suspend () -> Unit): Job {
+        return viewModelScope.launch {
+            if (loadingCounter.getAndIncrement() == 0) {
                 updateLoadingState(true)
+            }
+            try {
                 updateErrorState(null)
 
                 // 最小ローディング時間のジョブを開始
@@ -48,7 +55,9 @@ abstract class BaseViewModel : ViewModel() {
                 updateErrorState(e.message ?: "処理中にエラーが発生しました")
             } finally {
                 // ローディング状態を終了
-                updateLoadingState(false)
+                if (loadingCounter.decrementAndGet() == 0) {
+                    updateLoadingState(false)
+                }
             }
         }
     }
