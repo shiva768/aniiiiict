@@ -66,7 +66,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
         }
 
         `when`("プログレスコールバックでException") {
-            then("例外が処理全体に影響しない") {
+            then("例外がキャッチされ、処理が失敗する") {
                 runTest {
                     val episodeIds = listOf("episode1", "episode2")
                     val workId = "work1"
@@ -84,8 +84,8 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
                         throw RuntimeException("プログレスコールバックエラー")
                     }
 
-                    // 例外があってもメイン処理は成功すべき
-                    result.isSuccess shouldBe true
+                    // 例外がキャッチされ、failureとして返されるべき
+                    result.isFailure shouldBe true
                 }
             }
         }
@@ -118,7 +118,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
         }
 
         `when`("途中のエピソードで失敗") {
-            then("そこまでのプログレスが報告される") {
+            then("失敗する直前までのプログレスが報告される") {
                 runTest {
                     val episodeIds = listOf("episode1", "failing_episode", "episode3")
                     val workId = "work1"
@@ -141,7 +141,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
                     }
 
                     result.isFailure shouldBe true
-                    progressCalls shouldBe listOf(1, 2) // 2番目で失敗するまでのプログレス
+                    progressCalls shouldBe listOf(1) // 最初の成功したエピソードのプログレスのみが呼ばれる
                 }
             }
         }

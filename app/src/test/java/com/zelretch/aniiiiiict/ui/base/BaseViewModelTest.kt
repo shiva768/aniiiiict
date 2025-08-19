@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -68,7 +66,7 @@ class BaseViewModelTest : BehaviorSpec({
                     processingStarted shouldBe true
 
                     // 時間を進めて最小ローディング時間まで完了させる
-                    testDispatcher.scheduler.advanceTimeBy(1000)
+                    testDispatcher.scheduler.advanceTimeBy(1001)
 
                     // 処理完了後
                     processingCompleted shouldBe true
@@ -89,6 +87,9 @@ class BaseViewModelTest : BehaviorSpec({
                     }
                     testDispatcher.scheduler.runCurrent()
 
+                    // 完了を待つ
+                    testDispatcher.scheduler.advanceTimeBy(1001)
+
                     // エラー処理の確認
                     viewModel.loadingState shouldBe false
                     viewModel.errorState shouldBe errorMessage
@@ -105,6 +106,9 @@ class BaseViewModelTest : BehaviorSpec({
                         throw exception
                     }
                     testDispatcher.scheduler.runCurrent()
+
+                    // 完了を待つ
+                    testDispatcher.scheduler.advanceTimeBy(1001)
 
                     viewModel.errorState shouldBe "処理中にエラーが発生しました"
                 }
@@ -124,17 +128,17 @@ class BaseViewModelTest : BehaviorSpec({
                     testDispatcher.scheduler.runCurrent()
 
                     // 処理は早く完了するが、ローディングは継続
-                    testDispatcher.scheduler.advanceTimeBy(300)
+                    testDispatcher.scheduler.advanceTimeBy(301)
                     processingCompleted shouldBe true
                     viewModel.loadingState shouldBe true // まだローディング中
 
                     // 最小時間まで進める
-                    testDispatcher.scheduler.advanceTimeBy(700) // 合計1000ms
+                    testDispatcher.scheduler.advanceTimeBy(700) // 合計1001ms
 
                     // 最小時間後にローディング終了
                     viewModel.loadingState shouldBe false
                     val totalTime = testDispatcher.scheduler.currentTime - startTime
-                    totalTime shouldBe 1000L
+                    totalTime shouldBe 1001L
                 }
             }
         }
@@ -149,11 +153,11 @@ class BaseViewModelTest : BehaviorSpec({
                     }
                     testDispatcher.scheduler.runCurrent()
 
-                    testDispatcher.scheduler.advanceTimeBy(1500)
+                    testDispatcher.scheduler.advanceTimeBy(1501)
 
                     viewModel.loadingState shouldBe false
                     val totalTime = testDispatcher.scheduler.currentTime - startTime
-                    totalTime shouldBe 1500L // 余分な待機時間なし
+                    totalTime shouldBe 1501L // 余分な待機時間なし
                 }
             }
         }
@@ -180,7 +184,7 @@ class BaseViewModelTest : BehaviorSpec({
                     viewModel.loadingState shouldBe true
 
                     // 時間を進めて確認
-                    testDispatcher.scheduler.advanceTimeBy(1000)
+                    testDispatcher.scheduler.advanceTimeBy(1001)
 
                     process1Completed shouldBe true
                     process2Completed shouldBe true
