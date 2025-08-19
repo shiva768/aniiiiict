@@ -2,8 +2,8 @@ package com.zelretch.aniiiiiict.domain.usecase
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
-import javax.inject.Inject
 import timber.log.Timber
+import javax.inject.Inject
 
 class UpdateViewStateUseCase @Inject constructor(
     private val repository: AnnictRepository
@@ -12,9 +12,7 @@ class UpdateViewStateUseCase @Inject constructor(
         val updateSuccess = repository.updateWorkViewStatus(workId, status)
         if (!updateSuccess) {
             Timber.w(
-                "UpdateViewStateUseCase",
-                "ステータスの更新に失敗しました: workId=$workId",
-                "UpdateViewStateUseCase"
+                "ステータスの更新に失敗しました: workId=$workId"
             )
         }
         Result.success(Unit)

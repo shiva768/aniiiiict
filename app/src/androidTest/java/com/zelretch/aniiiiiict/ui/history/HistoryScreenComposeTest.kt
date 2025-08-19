@@ -7,15 +7,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
-import com.annict.type.SeasonName
-import com.annict.type.StatusState
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -242,7 +240,7 @@ class HistoryScreenComposeTest {
     fun historyScreen_削除ボタンクリック_削除コールバックが呼ばれる() {
         // Arrange
         val mockOnDeleteRecord = mockk<(String) -> Unit>(relaxed = true)
-        
+
         val sampleWork = Work(
             id = "work1",
             title = "テストアニメ",

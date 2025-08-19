@@ -18,14 +18,11 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepository) {
-    suspend operator fun invoke(): Flow<List<ProgramWithWork>> =
-        repository.getRawProgramsData().map { rawPrograms ->
-            processProgramsResponse(rawPrograms)
-        }
+    suspend operator fun invoke(): Flow<List<ProgramWithWork>> = repository.getRawProgramsData().map { rawPrograms ->
+        processProgramsResponse(rawPrograms)
+    }
 
-    private fun processProgramsResponse(
-        responsePrograms: List<ViewerProgramsQuery.Node?>
-    ): List<ProgramWithWork> {
+    private fun processProgramsResponse(responsePrograms: List<ViewerProgramsQuery.Node?>): List<ProgramWithWork> {
         val programs = responsePrograms.mapNotNull { node ->
             if (node == null) return@mapNotNull null
             val startedAt = try {

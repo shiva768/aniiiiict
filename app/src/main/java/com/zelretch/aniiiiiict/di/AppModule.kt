@@ -29,8 +29,7 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideTokenManager(@ApplicationContext context: Context): TokenManager =
-        TokenManager(context)
+    fun provideTokenManager(@ApplicationContext context: Context): TokenManager = TokenManager(context)
 
     @Provides
     @Singleton
@@ -57,10 +56,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAnnictApolloClient(
-        tokenManager: TokenManager,
-        okHttpClient: OkHttpClient
-    ): AnnictApolloClient = AnnictApolloClient(tokenManager, okHttpClient)
+    fun provideAnnictApolloClient(tokenManager: TokenManager, okHttpClient: OkHttpClient): AnnictApolloClient =
+        AnnictApolloClient(tokenManager, okHttpClient)
 
     @Provides
     @Singleton
@@ -76,15 +73,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAniListApolloClient(
-        okHttpClient: OkHttpClient
-    ): AniListApolloClient = AniListApolloClient(okHttpClient)
+    fun provideAniListApolloClient(okHttpClient: OkHttpClient): AniListApolloClient = AniListApolloClient(okHttpClient)
 
     @Provides
     @Singleton
-    fun provideAniListRepository(
-        apolloClient: AniListApolloClient
-    ): AniListRepository = AniListRepositoryImpl(
+    fun provideAniListRepository(apolloClient: AniListApolloClient): AniListRepository = AniListRepositoryImpl(
         apolloClient = apolloClient
     )
 

@@ -6,12 +6,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 
 @Composable
-fun ConfirmDialog(
-    episodeNumber: Int,
-    episodeCount: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun ConfirmDialog(episodeNumber: Int, episodeCount: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("ここまでまとめて視聴済みにする") },

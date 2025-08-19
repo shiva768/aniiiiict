@@ -8,10 +8,12 @@ class SearchRecordsUseCase @Inject constructor() {
         if (query.isBlank()) return records
 
         return records.filter { record ->
-            record.work.title.contains(query, ignoreCase = true) || record.episode.title?.contains(
-                query,
-                ignoreCase = true
-            ) == true || record.comment?.contains(query, ignoreCase = true) == true
+            record.work.title.contains(query, ignoreCase = true) ||
+                record.episode.title?.contains(
+                    query,
+                    ignoreCase = true
+                ) == true ||
+                record.comment?.contains(query, ignoreCase = true) == true
         }
     }
 }

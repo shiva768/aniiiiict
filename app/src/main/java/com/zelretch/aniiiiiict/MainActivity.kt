@@ -130,25 +130,19 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent) {
         Timber.d(
-            "MainActivity",
-            "Intent received: ${intent.action}, data: ${intent.data}",
-            "handleIntent"
+            "Intent received: ${intent.action}, data: ${intent.data}"
         )
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                Timber.d("MainActivity", "Received OAuth callback: $uri", "handleIntent")
+                Timber.d("Received OAuth callback: $uri")
                 // Extract the auth code from the URI
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
                     Timber.d(
-                        "MainActivity",
-                        "Processing authentication code: ${code.take(5)}...",
-                        "handleIntent"
+                        "Processing authentication code: ${code.take(5)}..."
                     )
                     Timber.i(
-                        "MainActivity",
-                        "Processing authentication code: ${code.take(5)}...",
-                        "handleIntent"
+                        "Processing authentication code: ${code.take(5)}..."
                     )
 
                     // 認証処理は新しいコルーチンで実行して独立性を保つ
@@ -159,9 +153,7 @@ class MainActivity : ComponentActivity() {
                     }
                 } else {
                     Timber.e(
-                        "MainActivity",
-                        "認証コードがURIに含まれていません: $uri",
-                        "handleIntent"
+                        "認証コードがURIに含まれていません: $uri"
                     )
                 }
             }

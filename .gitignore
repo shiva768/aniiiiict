@@ -7,9 +7,8 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties 
-/app/build/
 local.properties
+/app/build/
 
 # Debug keystore (generated for testing, don't commit)
 app/debug.keystore

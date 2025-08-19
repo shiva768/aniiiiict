@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import timber.log.Timber
+import javax.inject.Inject
 
 data class MainUiState(
     override val isLoading: Boolean = false,
@@ -34,8 +34,8 @@ class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : BaseViewModel(), MainViewModelContract {
     // UI状態のカプセル化
-    private val _uiState = MutableStateFlow(MainUiState())
-    override val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+    internal val internalUiState = MutableStateFlow(MainUiState())
+    override val uiState: StateFlow<MainUiState> = internalUiState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -44,11 +44,11 @@ class MainViewModel @Inject constructor(
     }
 
     override fun updateLoadingState(isLoading: Boolean) {
-        _uiState.update { it.copy(isLoading = isLoading) }
+        internalUiState.update { it.copy(isLoading = isLoading) }
     }
 
     override fun updateErrorState(error: String?) {
-        _uiState.update { it.copy(error = error) }
+        internalUiState.update { it.copy(error = error) }
     }
 
     // 認証状態の確認（内部メソッド）
@@ -58,20 +58,16 @@ class MainViewModel @Inject constructor(
                 val isAuthenticated = annictAuthUseCase.isAuthenticated()
 
                 // UI状態を更新
-                _uiState.update { it.copy(isAuthenticated = isAuthenticated) }
+                internalUiState.update { it.copy(isAuthenticated = isAuthenticated) }
 
                 // 認証されていない場合は認証を開始
                 if (!isAuthenticated) {
-                    Timber.i(
-                        "MainViewModel",
-                        "認証されていないため、認証を開始します",
-                        "checkAuthState"
-                    )
+                    Timber.i("認証されていないため、認証を開始します")
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: Exception) {
-                Timber.e("MainViewModel", e, "認証状態の確認中にエラーが発生")
-                _uiState.update {
+                Timber.e(e, "認証状態の確認中にエラーが発生")
+                internalUiState.update {
                     it.copy(
                         error = e.message ?: "認証状態の確認に失敗しました",
                         isLoading = false
@@ -83,12 +79,12 @@ class MainViewModel @Inject constructor(
 
     // 認証開始（公開メソッド）
     override fun startAuth() {
-        _uiState.update { it.copy(isAuthenticating = true) }
+        internalUiState.update { it.copy(isAuthenticating = true) }
 
         viewModelScope.launch {
             try {
                 val authUrl = annictAuthUseCase.getAuthUrl()
-                Timber.i("MainViewModel", "認証URLを取得: $authUrl", "startAuth")
+                Timber.i("認証URLを取得: $authUrl", "startAuth")
 
                 delay(200)
 
@@ -98,8 +94,8 @@ class MainViewModel @Inject constructor(
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: Exception) {
-                Timber.e("MainViewModel", e, "認証URLの取得に失敗")
-                _uiState.update {
+                Timber.e(e, "認証URLの取得に失敗")
+                internalUiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
                         isLoading = false,
@@ -115,27 +111,23 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (code != null) {
-                    println("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
+                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
                     delay(200)
 
                     if (!isActive) return@launch
 
                     val success = annictAuthUseCase.handleAuthCallback(code)
                     if (success) {
-                        println("MainViewModel: 認証成功")
+                        Timber.d("MainViewModel: 認証成功")
                         delay(300)
-                        _uiState.update {
+                        internalUiState.update {
                             it.copy(isAuthenticating = false, isAuthenticated = true)
                         }
                     } else {
-                        Timber.w(
-                            "MainViewModel",
-                            "認証が失敗しました",
-                            "handleAuthCallback"
-                        )
-                        println("MainViewModel: 認証失敗")
+                        Timber.w("認証が失敗しました")
+                        Timber.d("MainViewModel: 認証失敗")
                         delay(200)
-                        _uiState.update {
+                        internalUiState.update {
                             it.copy(
                                 error = "認証に失敗しました。再度お試しください。",
                                 isLoading = false,
@@ -145,14 +137,9 @@ class MainViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    Timber.w(
-                        "MainViewModel",
-                        "認証コードがnullです",
-                        "handleAuthCallback"
-                    )
-                    println("MainViewModel: 認証コードなし")
+                    Timber.w("認証コードがnullです")
                     delay(200)
-                    _uiState.update {
+                    internalUiState.update {
                         it.copy(
                             error = "認証に失敗しました。再度お試しください。",
                             isLoading = false,
@@ -161,10 +148,9 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Timber.e("MainViewModel", e, "認証処理に失敗")
-                e.printStackTrace()
+                Timber.e(e, "認証処理に失敗")
                 delay(200)
-                _uiState.update {
+                internalUiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
                         isLoading = false,
@@ -175,15 +161,9 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // エラー処理（内部メソッド）
-    private fun handleError(error: Throwable) {
-        Timber.e("MainViewModel", error, "MainViewModel")
-        _uiState.update { it.copy(error = error.message) }
-    }
-
     // エラーをクリアする
     override fun clearError() {
-        _uiState.update { it.copy(error = null) }
+        internalUiState.update { it.copy(error = null) }
     }
 
     // 認証状態を手動で確認する（公開メソッド）

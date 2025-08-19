@@ -36,7 +36,9 @@ class AnnictAuthManager @Inject constructor(
         try {
             Timber.i("[AnnictAuthManager][handleAuthorizationCode] 認証コードの処理を開始: ${code.take(5)}...")
             val tokenResponse = getAccessTokenWithRetry(code)
-            Timber.i("[AnnictAuthManager][handleAuthorizationCode] アクセストークンを取得: ${tokenResponse.accessToken.take(10)}...")
+            Timber.i(
+                "[AnnictAuthManager][handleAuthorizationCode] アクセストークンを取得: ${tokenResponse.accessToken.take(10)}..."
+            )
             tokenManager.saveAccessToken(tokenResponse.accessToken)
             Result.success(Unit)
         } catch (e: Exception) {

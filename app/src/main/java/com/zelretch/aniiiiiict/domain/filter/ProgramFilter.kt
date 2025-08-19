@@ -5,18 +5,16 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import java.time.LocalDateTime
 
 class ProgramFilter {
-    fun applyFilters(
-        programs: List<ProgramWithWork>,
-        filterState: FilterState
-    ): List<ProgramWithWork> = programs.asSequence().filter { program ->
-        applyMediaFilter(program, filterState)
-    }.filter { program -> applySeasonFilter(program, filterState) }
-        .filter { program -> applyYearFilter(program, filterState) }
-        .filter { program -> applyChannelFilter(program, filterState) }
-        .filter { program -> applyStatusFilter(program, filterState) }
-        .filter { program -> applySearchFilter(program, filterState) }
-        .filter { program -> applyAiredFilter(program, filterState) }.toList()
-        .let { filteredPrograms -> applySortOrder(filteredPrograms, filterState.sortOrder) }
+    fun applyFilters(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> =
+        programs.asSequence().filter { program ->
+            applyMediaFilter(program, filterState)
+        }.filter { program -> applySeasonFilter(program, filterState) }
+            .filter { program -> applyYearFilter(program, filterState) }
+            .filter { program -> applyChannelFilter(program, filterState) }
+            .filter { program -> applyStatusFilter(program, filterState) }
+            .filter { program -> applySearchFilter(program, filterState) }
+            .filter { program -> applyAiredFilter(program, filterState) }.toList()
+            .let { filteredPrograms -> applySortOrder(filteredPrograms, filterState.sortOrder) }
 
     private fun applyMediaFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedMedia.isEmpty() || program.work.media in filterState.selectedMedia
@@ -46,13 +44,11 @@ class ProgramFilter {
     private fun applyAiredFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         !filterState.showOnlyAired || !program.firstProgram.startedAt.isAfter(LocalDateTime.now())
 
-    private fun applySortOrder(
-        programs: List<ProgramWithWork>,
-        sortOrder: SortOrder
-    ): List<ProgramWithWork> = when (sortOrder) {
-        SortOrder.START_TIME_ASC -> programs.sortedBy { it.firstProgram.startedAt }
-        SortOrder.START_TIME_DESC -> programs.sortedByDescending { it.firstProgram.startedAt }
-    }
+    private fun applySortOrder(programs: List<ProgramWithWork>, sortOrder: SortOrder): List<ProgramWithWork> =
+        when (sortOrder) {
+            SortOrder.START_TIME_ASC -> programs.sortedBy { it.firstProgram.startedAt }
+            SortOrder.START_TIME_DESC -> programs.sortedByDescending { it.firstProgram.startedAt }
+        }
 
     fun extractAvailableFilters(programs: List<ProgramWithWork>): AvailableFilters {
         val media = programs.mapNotNull { it.work.media }.distinct().sorted()

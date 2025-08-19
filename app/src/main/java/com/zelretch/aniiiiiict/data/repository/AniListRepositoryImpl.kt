@@ -4,9 +4,9 @@ import co.anilist.GetMediaQuery
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
-import timber.log.Timber
 
 @Singleton
 class AniListRepositoryImpl @Inject constructor(
@@ -23,11 +23,7 @@ class AniListRepositoryImpl @Inject constructor(
             )
 
             if (response.hasErrors()) {
-                Timber.i(
-                    "AniListRepositoryImpl",
-                    "AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}",
-                    "AniListRepositoryImpl.getMedia"
-                )
+                Timber.i("AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}")
                 return Result.failure(
                     RuntimeException(
                         response.errors?.firstOrNull()?.message ?: "Unknown AniList GraphQL error"
@@ -37,7 +33,7 @@ class AniListRepositoryImpl @Inject constructor(
 
             val media = response.data?.Media
             if (media == null) {
-                Timber.i("AniListRepositoryImpl", "AniList Mediaデータがnullです", "AniListRepositoryImpl.getMedia")
+                Timber.i("AniList Mediaデータがnullです")
                 return Result.failure(RuntimeException("AniList Media data is null"))
             }
 
@@ -56,7 +52,7 @@ class AniListRepositoryImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
-            Timber.e("AniListRepositoryImpl", e, "AniList Mediaの取得に失敗しました")
+            Timber.e(e, "AniList Mediaの取得に失敗しました")
             Result.failure(e)
         }
     }
