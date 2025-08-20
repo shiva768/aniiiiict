@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 
 data class MainUiState(
@@ -65,7 +66,7 @@ class MainViewModel @Inject constructor(
                     Timber.i("認証されていないため、認証を開始します")
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Timber.e(e, "認証状態の確認中にエラーが発生")
                 internalUiState.update {
                     it.copy(
@@ -93,7 +94,7 @@ class MainViewModel @Inject constructor(
                 // Custom Tabsを使用して認証ページを開く
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Timber.e(e, "認証URLの取得に失敗")
                 internalUiState.update {
                     it.copy(
@@ -147,7 +148,7 @@ class MainViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Timber.e(e, "認証処理に失敗")
                 delay(200)
                 internalUiState.update {

@@ -7,6 +7,7 @@ import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import timber.log.Timber
+import java.io.IOException
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -83,7 +85,13 @@ class AnnictRepositoryImpl @Inject constructor(
                 )
                 false
             })
-        } catch (e: Exception) {
+        } catch (e: ApolloException) {
+            Timber.e(
+                e,
+                "認証処理中に例外が発生"
+            )
+            false
+        } catch (e: IOException) {
             Timber.e(
                 e,
                 "認証処理中に例外が発生"
@@ -140,10 +148,10 @@ class AnnictRepositoryImpl @Inject constructor(
                 )
 
                 emit(programs ?: emptyList())
-            } catch (e: Exception) {
-                // キャンセル例外の場合は再スローして上位で処理
-                if (e is kotlinx.coroutines.CancellationException) throw e
-
+            } catch (e: ApolloException) {
+                Timber.e(e, "プログラム一覧の取得に失敗")
+                emit(emptyList())
+            } catch (e: IOException) {
                 Timber.e(e, "プログラム一覧の取得に失敗")
                 emit(emptyList())
             }
@@ -283,8 +291,10 @@ class AnnictRepositoryImpl @Inject constructor(
 
         return try {
             request()
-        } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+        } catch (e: ApolloException) {
+            Timber.e(e, "AnnictRepositoryImpl.$operation")
+            defaultValue
+        } catch (e: IOException) {
             Timber.e(e, "AnnictRepositoryImpl.$operation")
             defaultValue
         }

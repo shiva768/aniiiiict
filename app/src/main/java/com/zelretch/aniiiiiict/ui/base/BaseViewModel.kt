@@ -2,10 +2,12 @@ package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.apollographql.apollo.exception.ApolloException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -48,7 +50,11 @@ abstract class BaseViewModel : ViewModel() {
 
             // 最小ローディング時間の完了を待つ
             loadingJob.join()
-        } catch (e: Exception) {
+        } catch (e: ApolloException) {
+            // エラーを設定
+            Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
+            updateErrorState(e.message ?: "処理中にエラーが発生しました")
+        } catch (e: IOException) {
             // エラーを設定
             Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
             updateErrorState(e.message ?: "処理中にエラーが発生しました")

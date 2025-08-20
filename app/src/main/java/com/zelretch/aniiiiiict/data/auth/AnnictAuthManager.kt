@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiiict.data.auth
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.AnnictConfig
 import com.zelretch.aniiiiiict.data.model.TokenResponse
@@ -22,6 +23,9 @@ class AnnictAuthManager @Inject constructor(
     companion object {
         private const val REDIRECT_URI = "aniiiiiict://oauth/callback"
         private const val MAX_RETRIES = 3
+        private const val RETRY_INITIAL_DELAY_MS = 1000L
+        private const val RETRY_MAX_DELAY_MS = 5000L
+        private const val RETRY_FACTOR = 2.0
     }
 
     fun getAuthorizationUrl(): String = buildString {
@@ -41,7 +45,7 @@ class AnnictAuthManager @Inject constructor(
             )
             tokenManager.saveAccessToken(tokenResponse.accessToken)
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Timber.e(e, "[AnnictAuthManager][handleAuthorizationCode] %s", e.message ?: "Unknown error")
             Result.failure(e)
         }
@@ -49,9 +53,9 @@ class AnnictAuthManager @Inject constructor(
 
     private suspend fun getAccessTokenWithRetry(code: String): TokenResponse = retryManager.retry(
         maxAttempts = MAX_RETRIES,
-        initialDelay = 1000L,
-        maxDelay = 5000L,
-        factor = 2.0
+        initialDelay = RETRY_INITIAL_DELAY_MS,
+        maxDelay = RETRY_MAX_DELAY_MS,
+        factor = RETRY_FACTOR
     ) {
         getAccessToken(code)
     }
@@ -88,7 +92,7 @@ class AnnictAuthManager @Inject constructor(
 
             try {
                 Gson().fromJson(responseBody, TokenResponse::class.java)
-            } catch (e: Exception) {
+            } catch (e: JsonSyntaxException) {
                 Timber.e(e, "[AnnictAuthManager][getAccessToken] %s", e.message ?: "Failed to parse token response")
                 throw IOException("Failed to parse token response: ${e.message}")
             }

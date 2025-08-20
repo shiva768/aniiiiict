@@ -5,6 +5,14 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import java.time.LocalDateTime
 
 class ProgramFilter {
+
+    companion object {
+        private const val SEASON_ORDER_WINTER = 0
+        private const val SEASON_ORDER_SPRING = 1
+        private const val SEASON_ORDER_SUMMER = 2
+        private const val SEASON_ORDER_AUTUMN = 3
+    }
+
     fun applyFilters(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> =
         programs.asSequence().filter { program ->
             applyMediaFilter(program, filterState)
@@ -55,10 +63,10 @@ class ProgramFilter {
 
         // シーズンの並び順を定義
         val seasonOrder = mapOf(
-            SeasonName.WINTER to 0,
-            SeasonName.SPRING to 1,
-            SeasonName.SUMMER to 2,
-            SeasonName.AUTUMN to 3
+            SeasonName.WINTER to SEASON_ORDER_WINTER,
+            SeasonName.SPRING to SEASON_ORDER_SPRING,
+            SeasonName.SUMMER to SEASON_ORDER_SUMMER,
+            SeasonName.AUTUMN to SEASON_ORDER_AUTUMN
         )
 
         // シーズンをカスタム順序でソート

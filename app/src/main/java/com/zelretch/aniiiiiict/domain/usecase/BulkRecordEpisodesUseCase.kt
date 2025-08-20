@@ -1,6 +1,8 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.annict.type.StatusState
+import com.apollographql.apollo.exception.ApolloException
+import java.io.IOException
 import javax.inject.Inject
 
 class BulkRecordEpisodesUseCase @Inject constructor(
@@ -29,7 +31,9 @@ class BulkRecordEpisodesUseCase @Inject constructor(
             }
 
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: ApolloException) {
+            Result.failure(e)
+        } catch (e: IOException) {
             Result.failure(e)
         }
     }

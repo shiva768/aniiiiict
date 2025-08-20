@@ -1,10 +1,12 @@
 package com.zelretch.aniiiiiict.data.repository
 
 import co.anilist.GetMediaQuery
+import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -51,7 +53,10 @@ class AniListRepositoryImpl @Inject constructor(
                     }
                 )
             )
-        } catch (e: Exception) {
+        } catch (e: ApolloException) {
+            Timber.e(e, "AniList Mediaの取得に失敗しました")
+            Result.failure(e)
+        } catch (e: IOException) {
             Timber.e(e, "AniList Mediaの取得に失敗しました")
             Result.failure(e)
         }

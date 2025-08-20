@@ -3,6 +3,7 @@ package com.zelretch.aniiiiiict.ui.track
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
+import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 
 data class TrackUiState(
@@ -193,7 +195,10 @@ class TrackViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: ApolloException) {
+                handleError(e)
+                _uiState.update { it.copy(isRecording = false) }
+            } catch (e: IOException) {
                 handleError(e)
                 _uiState.update { it.copy(isRecording = false) }
             }
@@ -243,7 +248,9 @@ class TrackViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: ApolloException) {
+                handleError(e)
+            } catch (e: IOException) {
                 handleError(e)
             }
         }

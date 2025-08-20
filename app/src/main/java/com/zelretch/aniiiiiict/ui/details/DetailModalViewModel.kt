@@ -3,6 +3,7 @@ package com.zelretch.aniiiiiict.ui.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.annict.type.StatusState
+import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.model.Program
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 data class DetailModalState(
@@ -77,7 +79,14 @@ class DetailModalViewModel @Inject constructor(
                 updateViewStateUseCase(workId, status)
                 _state.update { it.copy(selectedStatus = status) }
                 _events.emit(DetailModalEvent.StatusChanged)
-            } catch (e: Exception) {
+            } catch (e: ApolloException) {
+                _state.update {
+                    it.copy(
+                        statusChangeError = "ステータスの更新に失敗しました: ${e.message}",
+                        selectedStatus = _state.value.selectedStatus
+                    )
+                }
+            } catch (e: IOException) {
                 _state.update {
                     it.copy(
                         statusChangeError = "ステータスの更新に失敗しました: ${e.message}",
@@ -100,7 +109,9 @@ class DetailModalViewModel @Inject constructor(
                     it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
                 }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
-            } catch (_: Exception) {
+            } catch (_: ApolloException) {
+                // エラーハンドリング
+            } catch (_: IOException) {
                 // エラーハンドリング
             }
         }
@@ -142,7 +153,16 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
-            } catch (_: Exception) {
+            } catch (_: ApolloException) {
+                _state.update {
+                    it.copy(
+                        isBulkRecording = false,
+                        bulkRecordingProgress = 0,
+                        bulkRecordingTotal = 0
+                    )
+                }
+                // エラーハンドリング
+            } catch (_: IOException) {
                 _state.update {
                     it.copy(
                         isBulkRecording = false,
