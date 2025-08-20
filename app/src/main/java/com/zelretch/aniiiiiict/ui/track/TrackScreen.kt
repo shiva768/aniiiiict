@@ -92,7 +92,11 @@ private fun TrackTopAppBar(
                 Icon(
                     imageVector = Icons.Default.FilterList,
                     contentDescription = "フィルター",
-                    tint = if (isFilterVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                    tint = if (isFilterVisible) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
             }
             IconButton(onClick = onHistoryClick) {

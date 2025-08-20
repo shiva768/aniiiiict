@@ -47,32 +47,33 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun disableWindowAnimations() {
-        (window.decorView.context as android.content.Context).theme?.obtainStyledAttributes(
-            intArrayOf(android.R.attr.windowAnimationStyle)
-        )?.let {
-            try {
-                val windowAnimationStyleResId = it.getResourceId(0, DEFAULT_RESOURCE_ID)
-                if (windowAnimationStyleResId != DEFAULT_RESOURCE_ID) {
-                    val windowAnimationStyle = resources.newTheme()
-                    windowAnimationStyle.applyStyle(windowAnimationStyleResId, false)
-                    windowAnimationStyle.obtainStyledAttributes(
-                        intArrayOf(
-                            android.R.attr.activityOpenEnterAnimation,
-                            android.R.attr.activityOpenExitAnimation,
-                            android.R.attr.activityCloseEnterAnimation,
-                            android.R.attr.activityCloseExitAnimation
-                        )
-                    ).let { animAttrs ->
-                        try {
-                            window.setWindowAnimations(DEFAULT_RESOURCE_ID)
-                        } finally {
-                            animAttrs.recycle()
-                        }
-                    }
-                }
-            } finally {
-                it.recycle()
-            }
+        val theme = (window.decorView.context as android.content.Context).theme ?: return
+        val styledAttributes = theme.obtainStyledAttributes(intArrayOf(android.R.attr.windowAnimationStyle))
+        try {
+            applyWindowAnimations(styledAttributes)
+        } finally {
+            styledAttributes.recycle()
+        }
+    }
+
+    private fun applyWindowAnimations(styledAttributes: android.content.res.TypedArray) {
+        val windowAnimationStyleResId = styledAttributes.getResourceId(0, DEFAULT_RESOURCE_ID)
+        if (windowAnimationStyleResId == DEFAULT_RESOURCE_ID) return
+
+        val windowAnimationStyle = resources.newTheme()
+        windowAnimationStyle.applyStyle(windowAnimationStyleResId, false)
+        val animAttrs = windowAnimationStyle.obtainStyledAttributes(
+            intArrayOf(
+                android.R.attr.activityOpenEnterAnimation,
+                android.R.attr.activityOpenExitAnimation,
+                android.R.attr.activityCloseEnterAnimation,
+                android.R.attr.activityCloseExitAnimation
+            )
+        )
+        try {
+            window.setWindowAnimations(DEFAULT_RESOURCE_ID)
+        } finally {
+            animAttrs.recycle()
         }
     }
 

@@ -135,13 +135,19 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
         placeholder = { Text("作品名で検索") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = "クリア", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(
+                        Icons.Default.Clear,
+                        contentDescription = "クリア",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         },

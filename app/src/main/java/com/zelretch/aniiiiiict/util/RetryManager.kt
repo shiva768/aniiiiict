@@ -14,13 +14,12 @@ data class RetryConfig(
     val factor: Double = 2.0
 )
 
+import java.io.IOException
+
 /**
  * リトライロジックを提供するユーティリティクラス
  */
 class RetryManager @Inject constructor() {
-    companion object {
-    }
-
     /**
      * 指定された回数だけ処理をリトライします
      *
@@ -33,12 +32,12 @@ class RetryManager @Inject constructor() {
         block: suspend () -> T
     ): T {
         var currentDelay = config.initialDelay
-        var lastException: Exception? = null
+        var lastException: IOException? = null
 
         repeat(config.maxAttempts) { attempt ->
             try {
                 return block()
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 lastException = e
                 Timber.e(e, "[RetryManager][retry] リトライ失敗 (${attempt + 1}/${config.maxAttempts}): %s", e.message)
 
@@ -52,7 +51,7 @@ class RetryManager @Inject constructor() {
         }
 
         // すべてのリトライが失敗した場合
-        throw lastException ?: IllegalStateException("リトライが失敗しました")
+        throw lastException ?: error("リトライが失敗しました")
     }
 
     /**

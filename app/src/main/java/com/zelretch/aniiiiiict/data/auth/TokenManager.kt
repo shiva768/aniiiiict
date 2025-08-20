@@ -16,6 +16,7 @@ class TokenManager @Inject constructor(context: Context) {
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    @Suppress("TooGenericExceptionCaught")
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
             Timber.e("[TokenManager][saveAccessToken] 空のトークンを保存しようとしました")
@@ -41,6 +42,7 @@ class TokenManager @Inject constructor(context: Context) {
         return token
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun clearAccessToken() {
         try {
             prefs.edit { remove(TOKEN_KEY) }

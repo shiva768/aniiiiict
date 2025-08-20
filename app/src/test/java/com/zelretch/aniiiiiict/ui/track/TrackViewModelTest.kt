@@ -105,7 +105,7 @@ class TrackViewModelTest : BehaviorSpec({
             then("UIStateにエラーがセットされる") {
                 runTest(dispatcher) {
                     coEvery { loadProgramsUseCase.invoke() } returns flow {
-                        throw RuntimeException("error")
+                        throw LoadProgramsException("error")
                     }
                     runTest(dispatcher) {
                         viewModel.uiState.test {
@@ -125,3 +125,5 @@ class TrackViewModelTest : BehaviorSpec({
         }
     }
 })
+
+private class LoadProgramsException(message: String) : RuntimeException(message)

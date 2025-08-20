@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.zelretch.aniiiiiict.MainUiState
 import com.zelretch.aniiiiiict.R
 
+private const val LOGIN_BUTTON_WIDTH_RATIO = 0.7f
 private val PADDING_MEDIUM = 16.dp
 private val LOGO_SIZE = 120.dp
 private val SPACER_HEIGHT_LARGE = 24.dp
 private val SPACER_HEIGHT_XLARGE = 32.dp
-private val LOGIN_BUTTON_WIDTH_RATIO = 0.7f
 private val LOGIN_BUTTON_HEIGHT = 48.dp
 
 @Composable

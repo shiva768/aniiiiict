@@ -26,7 +26,6 @@ class AuthScreenTest : BehaviorSpec({
             then("MainViewModelContractを通じて基本状態にアクセスできる") {
                 // インターフェースベースのモック作成
                 val viewModelContract = mockk<MainViewModelContract>(relaxed = true)
-                val testableViewModel = mockk<TestableViewModel<MainUiState>>(relaxed = true)
 
                 // 初期状態を設定
                 val initialState = MainUiState()
@@ -44,7 +43,6 @@ class AuthScreenTest : BehaviorSpec({
         `when`("TestableViewModelで認証中状態を操作する") {
             then("認証中状態を直接設定できる") {
                 val viewModelContract = mockk<MainViewModelContract>(relaxed = true)
-                val testableViewModel = mockk<TestableViewModel<MainUiState>>(relaxed = true)
 
                 // 認証中の状態を直接設定
                 val authenticatingState = MainUiState(isAuthenticating = true)
@@ -80,7 +78,6 @@ class AuthScreenTest : BehaviorSpec({
         `when`("エラー状態を直接操作する") {
             then("認証エラーを簡単に設定してテストできる") {
                 val viewModelContract = mockk<MainViewModelContract>(relaxed = true)
-                val testableViewModel = mockk<TestableViewModel<MainUiState>>(relaxed = true)
 
                 // エラー状態を直接設定
                 val errorState = MainUiState(error = "認証に失敗しました。もう一度お試しください。")

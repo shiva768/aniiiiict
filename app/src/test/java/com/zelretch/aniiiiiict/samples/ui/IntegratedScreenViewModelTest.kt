@@ -134,7 +134,6 @@ class IntegratedScreenViewModelTest : BehaviorSpec({
             then("複数の契約が連携して動作することをテストできる") {
                 // 複数の契約を使用
                 val mainContract = mockk<MainViewModelContract>(relaxed = true)
-                val mainTestable = mockk<TestableViewModel<MainUiState>>(relaxed = true)
 
                 // 状態の設定
                 val mainState = MainUiState(isAuthenticated = true)
