@@ -34,16 +34,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiiict.domain.filter.SortOrder
 
-data class FilterOptions(
-    val media: List<String>,
-    val seasons: List<SeasonName>,
-    val years: List<Int>,
-    val channels: List<String>
+private data class FilterChipActions(
+    val onMediaClick: () -> Unit,
+    val onSeasonClick: () -> Unit,
+    val onYearClick: () -> Unit,
+    val onChannelClick: () -> Unit,
+    val onStatusClick: () -> Unit,
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -60,12 +60,16 @@ fun FilterBar(
     var showStatusDialog by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(8.dp),
         tonalElevation = 2.dp
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             SearchTextField(
@@ -75,11 +79,13 @@ fun FilterBar(
 
             FilterChips(
                 filterState = filterState,
-                onMediaClick = { showMediaDialog = true },
-                onSeasonClick = { showSeasonDialog = true },
-                onYearClick = { showYearDialog = true },
-                onChannelClick = { showChannelDialog = true },
-                onStatusClick = { showStatusDialog = true }
+                actions = FilterChipActions(
+                    onMediaClick = { showMediaDialog = true },
+                    onSeasonClick = { showSeasonDialog = true },
+                    onYearClick = { showYearDialog = true },
+                    onChannelClick = { showChannelDialog = true },
+                    onStatusClick = { showStatusDialog = true }
+                )
             )
 
             DisplayAndSortOptions(
@@ -133,11 +139,7 @@ private fun SearchTextField(searchQuery: String, onQueryChange: (String) -> Unit
 @Composable
 private fun FilterChips(
     filterState: FilterState,
-    onMediaClick: () -> Unit,
-    onSeasonClick: () -> Unit,
-    onYearClick: () -> Unit,
-    onChannelClick: () -> Unit,
-    onStatusClick: () -> Unit
+    actions: FilterChipActions
 ) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -146,31 +148,31 @@ private fun FilterChips(
     ) {
         FilterChip(
             selected = filterState.selectedMedia.isNotEmpty(),
-            onClick = onMediaClick,
+            onClick = actions.onMediaClick,
             label = { Text("メディア") },
             leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
         )
         FilterChip(
             selected = filterState.selectedSeason.isNotEmpty(),
-            onClick = onSeasonClick,
+            onClick = actions.onSeasonClick,
             label = { Text("シーズン") },
             leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
         )
         FilterChip(
             selected = filterState.selectedYear.isNotEmpty(),
-            onClick = onYearClick,
+            onClick = actions.onYearClick,
             label = { Text("年") },
             leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
         )
         FilterChip(
             selected = filterState.selectedChannel.isNotEmpty(),
-            onClick = onChannelClick,
+            onClick = actions.onChannelClick,
             label = { Text("チャンネル") },
             leadingIcon = { Icon(Icons.Default.LiveTv, contentDescription = null) }
         )
         FilterChip(
             selected = filterState.selectedStatus.isNotEmpty(),
-            onClick = onStatusClick,
+            onClick = actions.onStatusClick,
             label = { Text("ステータス") },
             leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) }
         )
@@ -240,7 +242,7 @@ private fun SeasonFilterDialog(
         items = filterOptions.seasons.map { it.name },
         selectedItems = filterState.selectedSeason.map { it.name }.toSet(),
         onItemSelected = { seasonStr ->
-            val season = SeasonName.valueOf(seasonStr)
+            val season = com.annict.type.SeasonName.valueOf(seasonStr)
             val newSelection = filterState.selectedSeason.toMutableSet()
             if (season in newSelection) newSelection.remove(season) else newSelection.add(season)
             onFilterChange(filterState.copy(selectedSeason = newSelection))
@@ -301,7 +303,7 @@ private fun StatusFilterDialog(
         items = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH).map { it.name },
         selectedItems = filterState.selectedStatus.map { it.name }.toSet(),
         onItemSelected = { statusStr ->
-            val status = StatusState.valueOf(statusStr)
+            val status = com.annict.type.StatusState.valueOf(statusStr)
             val newSelection = filterState.selectedStatus.toMutableSet()
             if (status in newSelection) newSelection.remove(status) else newSelection.add(status)
             onFilterChange(filterState.copy(selectedStatus = newSelection))

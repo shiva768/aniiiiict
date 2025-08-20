@@ -279,18 +279,9 @@ class AnnictRepositoryImpl @Inject constructor(
 
     // 共通のAPIリクエスト処理を行うヘルパーメソッド
     private suspend fun <T> executeApiRequest(operation: String, defaultValue: T, request: suspend () -> T): T {
-        if (!currentCoroutineContext().isActive) {
-            Timber.i(
-                "処理がキャンセルされたため、実行をスキップします$operation"
-            )
-            return defaultValue
-        }
-
         val token = tokenManager.getAccessToken()
-        if (token.isNullOrEmpty()) {
-            Timber.e(
-                "アクセストークンがありません"
-            )
+        if (!currentCoroutineContext().isActive || token.isNullOrEmpty()) {
+            Timber.w("リクエスト実行の前提条件未達、または処理キャンセル: operation=$operation, tokenIsEmpty=${token.isNullOrEmpty()}")
             return defaultValue
         }
 

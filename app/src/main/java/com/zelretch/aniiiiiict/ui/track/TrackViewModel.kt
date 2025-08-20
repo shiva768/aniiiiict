@@ -47,6 +47,7 @@ data class TrackUiState(
     val showFinaleConfirmationForEpisodeNumber: Int? = null
 ) : BaseUiState(isLoading, error)
 
+@Suppress("TooManyFunctions")
 @HiltViewModel
 class TrackViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
@@ -83,6 +84,7 @@ class TrackViewModel @Inject constructor(
         }
     }
 
+    // region BaseViewModel
     override fun updateLoadingState(isLoading: Boolean) {
         _uiState.update { it.copy(isLoading = isLoading) }
     }
@@ -94,6 +96,7 @@ class TrackViewModel @Inject constructor(
     override fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
+    // endregion
 
     private fun loadingPrograms() {
         executeWithLoading {
@@ -248,32 +251,18 @@ class TrackViewModel @Inject constructor(
         _uiState.update { it.copy(error = e.message) }
     }
 
-    fun showUnwatchedEpisodes(program: ProgramWithWork) {
-        _uiState.update {
-            it.copy(
-                selectedProgram = program,
-                isDetailModalVisible = true,
-                isLoadingDetail = false
-            )
-        }
-    }
-
-    fun hideDetail() {
-        _uiState.update {
-            it.copy(
-                isDetailModalVisible = false,
-                selectedProgram = null,
-                isLoadingDetail = false
-            )
-        }
-    }
-
     override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {
         val episode = program.programs.find { it.episode.number == episodeNumber }
         episode?.let {
             recordEpisode(it.episode.id, program.work.id, program.work.viewerStatusState)
         }
     }
+
+    // region TestableTrackViewModel
+    override fun setUiStateForTest(state: TrackUiState) {
+        _uiState.value = state
+    }
+    // endregion
 
     override fun showDetailModal(program: ProgramWithWork) {
         showUnwatchedEpisodes(program)
@@ -298,9 +287,5 @@ class TrackViewModel @Inject constructor(
 
     override fun recordFinale(workId: String, episodeNumber: Int) {
         confirmWatchedStatus()
-    }
-
-    override fun setUiStateForTest(state: TrackUiState) {
-        _uiState.value = state
     }
 }

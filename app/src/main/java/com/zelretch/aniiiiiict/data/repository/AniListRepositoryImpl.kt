@@ -15,50 +15,34 @@ class AniListRepositoryImpl @Inject constructor(
     private val apolloClient: AniListApolloClient
 ) : AniListRepository {
     override suspend fun getMedia(mediaId: Int): Result<AniListMedia> {
-        return try {
-            val query = GetMediaQuery(
-                id = mediaId
-            )
+        return runCatching {
+            val query = GetMediaQuery(id = mediaId)
             val response = apolloClient.executeQuery(
                 operation = query,
                 context = "AniListRepositoryImpl.getMedia"
             )
 
-            if (response.hasErrors()) {
-                Timber.i("AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}")
-                return Result.failure(
-                    RuntimeException(
-                        response.errors?.firstOrNull()?.message ?: "Unknown AniList GraphQL error"
+            val media = response.data?.Media
+                ?: return Result.failure(
+                    IOException(
+                        response.errors?.firstOrNull()?.message ?: "Media data is null"
                     )
                 )
-            }
 
-            val media = response.data?.Media
-            if (media == null) {
-                Timber.i("AniList Mediaデータがnullです")
-                return Result.failure(RuntimeException("AniList Media data is null"))
-            }
-
-            Result.success(
-                AniListMedia(
-                    id = media.id,
-                    format = media.format?.rawValue,
-                    episodes = media.episodes,
-                    status = media.status?.rawValue,
-                    nextAiringEpisode = media.nextAiringEpisode?.let {
-                        NextAiringEpisode(
-                            episode = it.episode,
-                            airingAt = it.airingAt
-                        )
-                    }
-                )
+            AniListMedia(
+                id = media.id,
+                format = media.format?.rawValue,
+                episodes = media.episodes,
+                status = media.status?.rawValue,
+                nextAiringEpisode = media.nextAiringEpisode?.let {
+                    NextAiringEpisode(
+                        episode = it.episode,
+                        airingAt = it.airingAt
+                    )
+                }
             )
-        } catch (e: ApolloException) {
+        }.onFailure { e ->
             Timber.e(e, "AniList Mediaの取得に失敗しました")
-            Result.failure(e)
-        } catch (e: IOException) {
-            Timber.e(e, "AniList Mediaの取得に失敗しました")
-            Result.failure(e)
         }
     }
 }
