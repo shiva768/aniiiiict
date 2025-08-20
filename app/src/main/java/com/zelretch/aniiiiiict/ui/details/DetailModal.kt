@@ -37,7 +37,6 @@ import com.zelretch.aniiiiiict.ui.details.components.ConfirmDialog
 import com.zelretch.aniiiiiict.ui.details.components.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailModal(
     programWithWork: ProgramWithWork,
@@ -47,133 +46,162 @@ fun DetailModal(
     onRefresh: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
-    var expanded by remember { mutableStateOf(false) }
 
-    // ViewModelの初期化
+    DetailModalLaunchedEffects(viewModel, programWithWork, onRefresh)
+
+    DetailModalDialogs(viewModel, state, programWithWork)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { DetailModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus) },
+        text = {
+            UnwatchedEpisodesContent(
+                programs = state.programs,
+                isLoading = isLoading,
+                onRecordEpisode = { episodeId ->
+                    viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
+                },
+                onMarkUpToAsWatched = { index ->
+                    viewModel.showConfirmDialog(index)
+                }
+            )
+        },
+        confirmButton = { }
+    )
+}
+
+@Composable
+private fun DetailModalLaunchedEffects(
+    viewModel: DetailModalViewModel,
+    programWithWork: ProgramWithWork,
+    onRefresh: () -> Unit
+) {
     LaunchedEffect(programWithWork) {
         viewModel.initialize(programWithWork)
     }
 
-    // イベントの監視
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is DetailModalEvent.StatusChanged -> onRefresh()
-                is DetailModalEvent.EpisodesRecorded -> onRefresh()
+                is DetailModalEvent.StatusChanged,
+                is DetailModalEvent.EpisodesRecorded,
                 is DetailModalEvent.BulkEpisodesRecorded -> onRefresh()
             }
         }
     }
+}
 
+@Composable
+private fun DetailModalDialogs(
+    viewModel: DetailModalViewModel,
+    state: DetailModalState,
+    programWithWork: ProgramWithWork
+) {
     if (state.showConfirmDialog && state.selectedEpisodeIndex != null) {
-        val episodeIndex = state.selectedEpisodeIndex!!
+        val episodeIndex = state.selectedEpisodeIndex
         ConfirmDialog(
             episodeNumber = state.programs[episodeIndex].episode.number ?: 0,
             episodeCount = episodeIndex + 1,
             onConfirm = {
-                val targetEpisodes = state.programs.filterIndexed { index, _ ->
-                    index <= episodeIndex
-                }
+                val targetEpisodes = state.programs.slice(0..episodeIndex)
                 val episodeIds = targetEpisodes.map { it.episode.id }
                 viewModel.bulkRecordEpisodes(episodeIds, programWithWork.work.viewerStatusState)
             },
-            onDismiss = {
-                viewModel.hideConfirmDialog()
-            }
+            onDismiss = viewModel::hideConfirmDialog
         )
     }
 
     if (state.isBulkRecording) {
-        AlertDialog(onDismissRequest = { }, title = { Text("エピソードを記録中...") }, text = {
-            Column {
-                Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
-                LinearProgressIndicator(
-                    progress = {
-                        if (state.bulkRecordingTotal > 0) {
-                            state.bulkRecordingProgress.toFloat() /
-                                state.bulkRecordingTotal.toFloat()
-                        } else {
-                            0f
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                )
-            }
-        }, confirmButton = { })
-    }
-
-    AlertDialog(onDismissRequest = onDismiss, title = {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "未視聴エピソード (${state.programs.size}件)",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "閉じる"
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("エピソードを記録中...") },
+            text = {
+                Column {
+                    Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
+                    LinearProgressIndicator(
+                        progress = {
+                            if (state.bulkRecordingTotal > 0) state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat() else 0f
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                     )
                 }
-            }
+            },
+            confirmButton = { }
+        )
+    }
+}
 
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DetailModalTitle(
+    state: DetailModalState,
+    onDismiss: () -> Unit,
+    onStatusChange: (StatusState) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "未視聴エピソード (${state.programs.size}件)",
+                style = MaterialTheme.typography.titleMedium
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = "閉じる")
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = expanded && !state.isStatusChanging,
+                onExpandedChange = { expanded = !expanded }
             ) {
-                ExposedDropdownMenuBox(expanded = expanded && !state.isStatusChanging, onExpandedChange = {
-                    expanded = !expanded
-                }) {
-                    TextField(
-                        value = state.selectedStatus?.toString() ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        enabled = !state.isStatusChanging,
-                        trailingIcon = {
-                            if (state.isStatusChanging) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.padding(8.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                            }
-                        },
-                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                    )
-                    ExposedDropdownMenu(expanded = expanded && !state.isStatusChanging, onDismissRequest = {
-                        expanded = false
-                    }) {
-                        StatusState.entries.forEach { status ->
-                            DropdownMenuItem(text = { Text(status.toString()) }, onClick = {
-                                expanded = false
-                                viewModel.changeStatus(status)
-                            })
+                TextField(
+                    value = state.selectedStatus?.toString() ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = !state.isStatusChanging,
+                    trailingIcon = {
+                        if (state.isStatusChanging) {
+                            CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
+                        } else {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         }
+                    },
+                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded && !state.isStatusChanging,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    StatusState.entries.forEach { status ->
+                        DropdownMenuItem(
+                            text = { Text(status.toString()) },
+                            onClick = {
+                                expanded = false
+                                onStatusChange(status)
+                            }
+                        )
                     }
                 }
             }
-
-            state.statusChangeError?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
         }
-    }, text = {
-        UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
-            viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
-        }, onMarkUpToAsWatched = { index ->
-            viewModel.showConfirmDialog(index)
-        })
-    }, confirmButton = { })
+
+        state.statusChangeError?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
 }

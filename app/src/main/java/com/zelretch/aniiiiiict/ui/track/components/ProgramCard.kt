@@ -60,209 +60,222 @@ fun ProgramCard(
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
-            // 上部：作品情報と画像
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
-            ) {
-                // 画像（左側）
-                val imageUrl = programWithWork.work.image?.imageUrl
-
-                Box(
-                    modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp))
-                ) {
-                    if (imageUrl != null) {
-                        AsyncImage(
-                            model = imageUrl,
-                            contentDescription = programWithWork.work.title,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier.fillMaxSize().background(
-                                MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // 右側の情報
-                Column(modifier = Modifier.weight(1f)) {
-                    // タイトル
-                    val workTitle = programWithWork.work.title
-                    Text(
-                        text = workTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag("work_title_${programWithWork.work.id}")
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    // タグ情報（縦に並べる）
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        // メディアタイプ
-                        programWithWork.work.media?.let {
-                            InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
-                        }
-
-                        // シーズンと年（横に並べる）
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(vertical = 1.dp)
-                        ) {
-                            // シーズン名
-                            programWithWork.work.seasonName?.let {
-                                InfoTag(
-                                    text = it.name,
-                                    color = MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            }
-
-                            // 年
-                            programWithWork.work.seasonYear?.let {
-                                InfoTag(
-                                    text = it.toString() + "年",
-                                    color = MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            }
-                        }
-
-                        // 視聴ステータスとチャンネルを横に並べる
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(vertical = 1.dp)
-                        ) {
-                            // 視聴ステータス
-                            programWithWork.work.viewerStatusState.let {
-                                InfoTag(
-                                    text = it.toString(),
-                                    color = MaterialTheme.colorScheme.tertiaryContainer
-                                )
-                            }
-
-                            // チャンネル名
-                            InfoTag(
-                                text = programWithWork.firstProgram.channel.name,
-                                color = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
+            WorkInfoRow(programWithWork = programWithWork)
             Spacer(modifier = Modifier.height(8.dp))
+            EpisodeInfoRow(
+                programWithWork = programWithWork,
+                uiState = uiState,
+                onRecordEpisode = onRecordEpisode,
+                onShowUnwatchedEpisodes = onShowUnwatchedEpisodes
+            )
+        }
+    }
+}
 
-            // エピソード情報
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+@Composable
+private fun WorkInfoRow(programWithWork: ProgramWithWork) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        WorkImage(
+            imageUrl = programWithWork.work.image?.imageUrl,
+            workTitle = programWithWork.work.title
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = programWithWork.work.title,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("work_title_${programWithWork.work.id}")
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            WorkTags(programWithWork = programWithWork)
+        }
+    }
+}
+
+@Composable
+private fun WorkImage(imageUrl: String?, workTitle: String) {
+    Box(
+        modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp))
+    ) {
+        if (imageUrl != null) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = workTitle,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize().background(
+                    MaterialTheme.colorScheme.surfaceVariant
+                ),
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    // エピソード番号とタイトル
-                    val episodeText = buildString {
-                        append("Episode ")
-                        append(programWithWork.firstProgram.episode.numberText ?: "?")
-                        programWithWork.firstProgram.episode.title?.let {
-                            append(" ")
-                            append(it)
-                        }
-                    }
+                Icon(
+                    imageVector = Icons.Default.Image,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
 
-                    Text(
-                        text = episodeText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+@Composable
+private fun WorkTags(programWithWork: ProgramWithWork) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        programWithWork.work.media?.let {
+            InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(vertical = 1.dp)
+        ) {
+            programWithWork.work.seasonName?.let {
+                InfoTag(text = it.name, color = MaterialTheme.colorScheme.secondaryContainer)
+            }
+            programWithWork.work.seasonYear?.let {
+                InfoTag(
+                    text = it.toString() + "年",
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                )
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(vertical = 1.dp)
+        ) {
+            programWithWork.work.viewerStatusState.let {
+                InfoTag(
+                    text = it.toString(),
+                    color = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            }
+            InfoTag(
+                text = programWithWork.firstProgram.channel.name,
+                color = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
+    }
+}
 
-                    // 放送日時
-                    Text(
-                        text = programWithWork.firstProgram.startedAt.format(
-                            DateTimeFormatter.ofPattern(
-                                "yyyy/MM/dd HH:mm"
-                            )
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // アクションボタン
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // 記録ボタン
-                    FilledTonalIconButton(
-                        onClick = {
-                            onRecordEpisode(
-                                programWithWork.firstProgram.episode.id,
-                                programWithWork.work.id,
-                                programWithWork.work.viewerStatusState
-                            )
-                        },
-                        modifier = Modifier.size(40.dp),
-                        enabled =
-                        !uiState.isLoading &&
-                            !uiState.isRecording &&
-                            uiState.recordingSuccess != programWithWork.firstProgram.episode.id,
-                        colors = if (uiState.recordingSuccess ==
-                            programWithWork.firstProgram.episode.id
-                        ) {
-                            IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        } else {
-                            IconButtonDefaults.filledTonalIconButtonColors()
-                        }
-                    ) {
-                        if (uiState.recordingSuccess == programWithWork.firstProgram.episode.id) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "記録済み",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "記録する",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // 未視聴エピソードボタン
-                    FilledTonalIconButton(
-                        onClick = {
-                            onShowUnwatchedEpisodes(programWithWork)
-                        },
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "未視聴エピソード",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+@Composable
+private fun EpisodeInfoRow(
+    programWithWork: ProgramWithWork,
+    uiState: TrackUiState,
+    onRecordEpisode: (String, String, StatusState) -> Unit,
+    onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            val episodeText = buildString {
+                append("Episode ")
+                append(programWithWork.firstProgram.episode.numberText ?: "?")
+                programWithWork.firstProgram.episode.title?.let {
+                    append(" ")
+                    append(it)
                 }
             }
+            Text(
+                text = episodeText,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = programWithWork.firstProgram.startedAt.format(
+                    DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        ActionButtons(
+            programWithWork = programWithWork,
+            uiState = uiState,
+            onRecordEpisode = onRecordEpisode,
+            onShowUnwatchedEpisodes = onShowUnwatchedEpisodes
+        )
+    }
+}
+
+@Composable
+private fun ActionButtons(
+    programWithWork: ProgramWithWork,
+    uiState: TrackUiState,
+    onRecordEpisode: (String, String, StatusState) -> Unit,
+    onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RecordButton(
+            episodeId = programWithWork.firstProgram.episode.id,
+            workId = programWithWork.work.id,
+            status = programWithWork.work.viewerStatusState,
+            uiState = uiState,
+            onRecordEpisode = onRecordEpisode
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        FilledTonalIconButton(
+            onClick = { onShowUnwatchedEpisodes(programWithWork) },
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "未視聴エピソード",
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecordButton(
+    episodeId: String,
+    workId: String,
+    status: StatusState,
+    uiState: TrackUiState,
+    onRecordEpisode: (String, String, StatusState) -> Unit
+) {
+    val isRecording = uiState.isRecording
+    val recordingSuccess = uiState.recordingSuccess == episodeId
+    FilledTonalIconButton(
+        onClick = { onRecordEpisode(episodeId, workId, status) },
+        modifier = Modifier.size(40.dp),
+        enabled = !isRecording && !recordingSuccess,
+        colors = if (recordingSuccess) {
+            IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else {
+            IconButtonDefaults.filledTonalIconButtonColors()
+        }
+    ) {
+        if (recordingSuccess) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "記録済み",
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = "記録する",
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

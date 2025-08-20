@@ -63,29 +63,19 @@ class TrackViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
-    /**
-     * テスト用: コルーチンスコープ差し替え用
-     */
     override var externalScope: CoroutineScope? = null
 
     init {
-        println("[TrackViewModel] init: start collecting filterPreferences.filterState")
         (externalScope ?: viewModelScope).launch {
             filterPreferences.filterState.collect { savedFilterState ->
-                println("[TrackViewModel] collect: $savedFilterState")
                 if (_uiState.value.allPrograms.isEmpty()) {
-                    _uiState.update { currentState ->
-                        currentState.copy(filterState = savedFilterState)
-                    }
+                    _uiState.update { it.copy(filterState = savedFilterState) }
                     loadingPrograms()
                 } else {
-                    _uiState.update { currentState ->
-                        currentState.copy(
+                    _uiState.update {
+                        it.copy(
                             filterState = savedFilterState,
-                            programs = filterProgramsUseCase(
-                                currentState.allPrograms,
-                                savedFilterState
-                            )
+                            programs = filterProgramsUseCase(it.allPrograms, savedFilterState)
                         )
                     }
                 }
@@ -107,7 +97,7 @@ class TrackViewModel @Inject constructor(
 
     private fun loadingPrograms() {
         executeWithLoading {
-            loadProgramsUseCase.invoke().collect { programs ->
+            loadProgramsUseCase().collect { programs ->
                 _uiState.update { currentState ->
                     val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
                     val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
@@ -127,85 +117,66 @@ class TrackViewModel @Inject constructor(
 
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         (externalScope ?: viewModelScope).launch {
+            _uiState.update { it.copy(isRecording = true) }
             try {
-                _uiState.update { it.copy(isRecording = true) }
                 runCatching {
                     watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
                 }.onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            isRecording = false,
-                            recordingSuccess = episodeId,
-                            error = null
-                        )
-                    }
-
-                    delay(RECORDING_SUCCESS_MESSAGE_DURATION_MS)
-                    if (_uiState.value.recordingSuccess == episodeId) {
-                        _uiState.update { it.copy(recordingSuccess = null) }
-                    }
-
-                    loadingPrograms()
-
-                    // AniListから作品情報を取得し、最終話判定を行う
-                    val program = _uiState.value.allPrograms.find { it.work.id == workId }
-                    Timber.d(
-                        "[DEBUG_LOG] allPrograms size: ${_uiState.value.allPrograms.size}"
-                    )
-                    Timber.d(
-                        "[DEBUG_LOG] program: $program"
-                    )
-
-                    val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
-                    Timber.d(
-                        "[DEBUG_LOG] currentEpisode: $currentEpisode"
-                    )
-
-                    if (program != null && currentEpisode != null && currentEpisode.episode.number != null) {
-                        Timber.d(
-                            "[DEBUG_LOG] episode number: ${currentEpisode.episode.number}"
-                        )
-                        val judgeResult = judgeFinaleUseCase(
-                            currentEpisode.episode.number,
-                            program.work.id.toInt()
-                        )
-                        Timber.d(
-                            "[DEBUG_LOG] judgeResult: $judgeResult"
-                        )
-                        if (judgeResult.isFinale) {
-                            Timber.d(
-                                "[DEBUG_LOG] Setting showFinaleConfirmationForWorkId to $workId"
-                            )
-                            _uiState.update {
-                                it.copy(
-                                    showFinaleConfirmationForWorkId = workId,
-                                    showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
-                                )
-                            }
-                        } else {
-                            Timber.d(
-                                "[DEBUG_LOG] judgeResult.isFinale is false"
-                            )
-                        }
-                    } else {
-                        Timber.d(
-                            "[DEBUG_LOG] program or currentEpisode is null, or episode number is null"
-                        )
-                    }
-                }.onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            isRecording = false,
-                            error = e.message ?: "エピソードの記録に失敗しました"
-                        )
-                    }
-                }
+                    onRecordSuccess(episodeId, workId)
+                }.onFailure(::onRecordFailure)
             } catch (e: ApolloException) {
                 handleError(e)
                 _uiState.update { it.copy(isRecording = false) }
             } catch (e: IOException) {
                 handleError(e)
                 _uiState.update { it.copy(isRecording = false) }
+            }
+        }
+    }
+
+    private fun onRecordSuccess(episodeId: String, workId: String) {
+        _uiState.update {
+            it.copy(
+                isRecording = false,
+                recordingSuccess = episodeId,
+                error = null
+            )
+        }
+        (externalScope ?: viewModelScope).launch {
+            delay(RECORDING_SUCCESS_MESSAGE_DURATION_MS)
+            if (_uiState.value.recordingSuccess == episodeId) {
+                _uiState.update { it.copy(recordingSuccess = null) }
+            }
+        }
+        loadingPrograms()
+        handleFinaleJudgement(episodeId, workId)
+    }
+
+    private fun onRecordFailure(e: Throwable) {
+        _uiState.update {
+            it.copy(
+                isRecording = false,
+                error = e.message ?: "エピソードの記録に失敗しました"
+            )
+        }
+    }
+
+    private fun handleFinaleJudgement(episodeId: String, workId: String) {
+        val program = _uiState.value.allPrograms.find { it.work.id == workId }
+        val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
+
+        if (program != null && currentEpisode?.episode?.number != null) {
+            val judgeResult = judgeFinaleUseCase(
+                currentEpisode.episode.number,
+                program.work.id.toInt()
+            )
+            if (judgeResult.isFinale) {
+                _uiState.update {
+                    it.copy(
+                        showFinaleConfirmationForWorkId = workId,
+                        showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
+                    )
+                }
             }
         }
     }
@@ -236,22 +207,12 @@ class TrackViewModel @Inject constructor(
     fun updateViewState(workId: String, status: StatusState) {
         (externalScope ?: viewModelScope).launch {
             try {
-                // Use a dummy episodeId since we're only updating the status
-                // Set shouldUpdateStatus to true to force status update
                 runCatching {
                     watchEpisodeUseCase("", workId, status, true).getOrThrow()
                 }.onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            error = null
-                        )
-                    }
+                    _uiState.update { it.copy(error = null) }
                 }.onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            error = e.message ?: "ステータスの更新に失敗しました"
-                        )
-                    }
+                    _uiState.update { it.copy(error = e.message ?: "ステータスの更新に失敗しました") }
                 }
             } catch (e: ApolloException) {
                 handleError(e)
@@ -266,43 +227,20 @@ class TrackViewModel @Inject constructor(
         loadingPrograms()
     }
 
-    fun updateFilter(
-        selectedMedia: Set<String> = _uiState.value.filterState.selectedMedia,
-        selectedSeason: Set<SeasonName> = _uiState.value.filterState.selectedSeason,
-        selectedYear: Set<Int> = _uiState.value.filterState.selectedYear,
-        selectedChannel: Set<String> = _uiState.value.filterState.selectedChannel,
-        selectedStatus: Set<StatusState> = _uiState.value.filterState.selectedStatus,
-        searchQuery: String = _uiState.value.filterState.searchQuery,
-        showOnlyAired: Boolean = _uiState.value.filterState.showOnlyAired,
-        sortOrder: SortOrder = _uiState.value.filterState.sortOrder
-    ) {
+    fun updateFilter(newFilterState: FilterState) {
         _uiState.update { currentState ->
-            val newFilterState = currentState.filterState.copy(
-                selectedMedia = selectedMedia,
-                selectedSeason = selectedSeason,
-                selectedYear = selectedYear,
-                selectedChannel = selectedChannel,
-                selectedStatus = selectedStatus,
-                searchQuery = searchQuery,
-                showOnlyAired = showOnlyAired,
-                sortOrder = sortOrder
-            )
             currentState.copy(
                 filterState = newFilterState,
                 programs = filterProgramsUseCase(currentState.allPrograms, newFilterState)
             )
         }
         (externalScope ?: viewModelScope).launch {
-            filterPreferences.updateFilterState(_uiState.value.filterState)
+            filterPreferences.updateFilterState(newFilterState)
         }
     }
 
     override fun toggleFilterVisibility() {
-        _uiState.update {
-            it.copy(
-                isFilterVisible = !it.isFilterVisible
-            )
-        }
+        _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
     }
 
     private fun handleError(e: Throwable) {
@@ -329,8 +267,6 @@ class TrackViewModel @Inject constructor(
             )
         }
     }
-
-    // === TrackViewModelContract interface implementation ===
 
     override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {
         val episode = program.programs.find { it.episode.number == episodeNumber }
@@ -363,8 +299,6 @@ class TrackViewModel @Inject constructor(
     override fun recordFinale(workId: String, episodeNumber: Int) {
         confirmWatchedStatus()
     }
-
-    // === TestableTrackViewModel interface implementation ===
 
     override fun setUiStateForTest(state: TrackUiState) {
         _uiState.value = state

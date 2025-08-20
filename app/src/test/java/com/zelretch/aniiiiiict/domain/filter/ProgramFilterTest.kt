@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import java.time.LocalDateTime
 
 // テストヘルパー関数はトップレベルに移動
+@Suppress("LongParameterList")
 fun createProgramWithWork(
     seasonName: SeasonName? = null,
     seasonYear: Int? = null,

@@ -159,6 +159,7 @@ class LoadProgramsUseCaseTest : BehaviorSpec({
             return listOf(episode2, episode1, episode3)
         }
 
+        @Suppress("LongParameterList")
         fun createMockNode(
             id: String = "prog-id",
             startedAt: String = "2025-01-01T12:00:00Z",

@@ -51,13 +51,16 @@ class AnnictAuthManager @Inject constructor(
         }
     }
 
-    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse = retryManager.retry(
-        maxAttempts = MAX_RETRIES,
-        initialDelay = RETRY_INITIAL_DELAY_MS,
-        maxDelay = RETRY_MAX_DELAY_MS,
-        factor = RETRY_FACTOR
-    ) {
-        getAccessToken(code)
+    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse {
+        val retryConfig = com.zelretch.aniiiiiict.util.RetryConfig(
+            maxAttempts = MAX_RETRIES,
+            initialDelay = RETRY_INITIAL_DELAY_MS,
+            maxDelay = RETRY_MAX_DELAY_MS,
+            factor = RETRY_FACTOR
+        )
+        return retryManager.retry(config = retryConfig) {
+            getAccessToken(code)
+        }
     }
 
     private fun getAccessToken(code: String): TokenResponse {
