@@ -31,6 +31,11 @@ class AnnictRepositoryImpl @Inject constructor(
     private val authManager: AnnictAuthManager,
     private val annictApolloClient: AnnictApolloClient
 ) : AnnictRepository {
+
+    companion object {
+        private const val AUTH_CODE_LOG_LENGTH = 5
+    }
+
     override suspend fun isAuthenticated(): Boolean {
         val result = tokenManager.hasValidToken()
         Timber.i("認証状態 = $result")
@@ -72,7 +77,7 @@ class AnnictRepositoryImpl @Inject constructor(
 
     override suspend fun handleAuthCallback(code: String): Boolean {
         Timber.i(
-            "認証コールバック処理開始 - コード: ${code.take(5)}..."
+            "認証コールバック処理開始 - コード: ${code.take(AUTH_CODE_LOG_LENGTH)}..."
         )
         return try {
             authManager.handleAuthorizationCode(code).fold(onSuccess = {

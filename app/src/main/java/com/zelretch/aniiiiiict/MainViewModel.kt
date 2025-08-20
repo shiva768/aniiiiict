@@ -34,6 +34,14 @@ class MainViewModel @Inject constructor(
     private val customTabsIntentFactory: CustomTabsIntentFactory,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(), MainViewModelContract {
+
+    companion object {
+        private const val AUTH_URL_FETCH_DELAY_MS = 200L
+        private const val AUTH_CODE_LOG_LENGTH = 5
+        private const val AUTH_CALLBACK_DELAY_MS = 200L
+        private const val AUTH_SUCCESS_DELAY_MS = 300L
+    }
+
     // UI状態のカプセル化
     internal val internalUiState = MutableStateFlow(MainUiState())
     override val uiState: StateFlow<MainUiState> = internalUiState.asStateFlow()
@@ -87,7 +95,7 @@ class MainViewModel @Inject constructor(
                 val authUrl = annictAuthUseCase.getAuthUrl()
                 Timber.i("認証URLを取得: $authUrl", "startAuth")
 
-                delay(200)
+                delay(AUTH_URL_FETCH_DELAY_MS)
 
                 if (!isActive) return@launch
 
@@ -112,22 +120,22 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (code != null) {
-                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
-                    delay(200)
+                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(AUTH_CODE_LOG_LENGTH)}...")
+                    delay(AUTH_CALLBACK_DELAY_MS)
 
                     if (!isActive) return@launch
 
                     val success = annictAuthUseCase.handleAuthCallback(code)
                     if (success) {
                         Timber.d("MainViewModel: 認証成功")
-                        delay(300)
+                        delay(AUTH_SUCCESS_DELAY_MS)
                         internalUiState.update {
                             it.copy(isAuthenticating = false, isAuthenticated = true)
                         }
                     } else {
                         Timber.w("認証が失敗しました")
                         Timber.d("MainViewModel: 認証失敗")
-                        delay(200)
+                        delay(AUTH_CALLBACK_DELAY_MS)
                         internalUiState.update {
                             it.copy(
                                 error = "認証に失敗しました。再度お試しください。",
@@ -139,7 +147,7 @@ class MainViewModel @Inject constructor(
                     }
                 } else {
                     Timber.w("認証コードがnullです")
-                    delay(200)
+                    delay(AUTH_CALLBACK_DELAY_MS)
                     internalUiState.update {
                         it.copy(
                             error = "認証に失敗しました。再度お試しください。",
@@ -150,7 +158,7 @@ class MainViewModel @Inject constructor(
                 }
             } catch (e: IOException) {
                 Timber.e(e, "認証処理に失敗")
-                delay(200)
+                delay(AUTH_CALLBACK_DELAY_MS)
                 internalUiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",

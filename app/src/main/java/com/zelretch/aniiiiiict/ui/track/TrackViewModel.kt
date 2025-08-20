@@ -55,6 +55,11 @@ class TrackViewModel @Inject constructor(
     private val filterPreferences: FilterPreferences,
     private val judgeFinaleUseCase: JudgeFinaleUseCase
 ) : BaseViewModel(), TrackViewModelContract, TestableTrackViewModel {
+
+    companion object {
+        private const val RECORDING_SUCCESS_MESSAGE_DURATION_MS = 2000L
+    }
+
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
@@ -135,7 +140,7 @@ class TrackViewModel @Inject constructor(
                         )
                     }
 
-                    delay(2000)
+                    delay(RECORDING_SUCCESS_MESSAGE_DURATION_MS)
                     if (_uiState.value.recordingSuccess == episodeId) {
                         _uiState.update { it.copy(recordingSuccess = null) }
                     }

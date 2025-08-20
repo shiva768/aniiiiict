@@ -15,6 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 abstract class BaseViewModel : ViewModel() {
 
+    companion object {
+        private const val MINIMUM_LOADING_TIME_MS = 1000L
+    }
+
     private val loadingCounter = AtomicInteger(0)
 
     /**
@@ -42,7 +46,7 @@ abstract class BaseViewModel : ViewModel() {
 
             // 最小ローディング時間のジョブを開始
             val loadingJob = launch {
-                delay(1000) // Minimum loading time
+                delay(MINIMUM_LOADING_TIME_MS) // Minimum loading time
             }
 
             // 処理を実行

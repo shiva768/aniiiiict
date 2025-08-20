@@ -25,6 +25,11 @@ import timber.log.Timber
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        private const val DEFAULT_RESOURCE_ID = 0
+        private const val AUTH_CODE_LOG_LENGTH = 5
+    }
+
     private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,8 +44,8 @@ class MainActivity : ComponentActivity() {
             intArrayOf(android.R.attr.windowAnimationStyle)
         )?.let {
             try {
-                val windowAnimationStyleResId = it.getResourceId(0, 0)
-                if (windowAnimationStyleResId != 0) {
+                val windowAnimationStyleResId = it.getResourceId(0, DEFAULT_RESOURCE_ID)
+                if (windowAnimationStyleResId != DEFAULT_RESOURCE_ID) {
                     val windowAnimationStyle = resources.newTheme()
                     windowAnimationStyle.applyStyle(windowAnimationStyleResId, false)
                     windowAnimationStyle.obtainStyledAttributes(
@@ -53,7 +58,7 @@ class MainActivity : ComponentActivity() {
                     ).let { animAttrs ->
                         try {
                             // アニメーションの期間を0に設定して実質的に無効化
-                            window.setWindowAnimations(0)
+                            window.setWindowAnimations(DEFAULT_RESOURCE_ID)
                         } finally {
                             animAttrs.recycle()
                         }
@@ -139,10 +144,10 @@ class MainActivity : ComponentActivity() {
                 val code = uri.getQueryParameter("code")
                 if (code != null) {
                     Timber.d(
-                        "Processing authentication code: ${code.take(5)}..."
+                        "Processing authentication code: ${code.take(AUTH_CODE_LOG_LENGTH)}..."
                     )
                     Timber.i(
-                        "Processing authentication code: ${code.take(5)}..."
+                        "Processing authentication code: ${code.take(AUTH_CODE_LOG_LENGTH)}..."
                     )
 
                     // 認証処理は新しいコルーチンで実行して独立性を保つ
