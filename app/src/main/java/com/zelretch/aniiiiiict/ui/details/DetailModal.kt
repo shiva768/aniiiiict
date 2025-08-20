@@ -55,16 +55,11 @@ fun DetailModal(
         onDismissRequest = onDismiss,
         title = { DetailModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus) },
         text = {
-            UnwatchedEpisodesContent(
-                programs = state.programs,
-                isLoading = isLoading,
-                onRecordEpisode = { episodeId ->
-                    viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
-                },
-                onMarkUpToAsWatched = { index ->
-                    viewModel.showConfirmDialog(index)
-                }
-            )
+            UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
+                viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
+            }, onMarkUpToAsWatched = { index ->
+                viewModel.showConfirmDialog(index)
+            })
         },
         confirmButton = { }
     )
@@ -85,7 +80,8 @@ private fun DetailModalLaunchedEffects(
             when (event) {
                 is DetailModalEvent.StatusChanged,
                 is DetailModalEvent.EpisodesRecorded,
-                is DetailModalEvent.BulkEpisodesRecorded -> onRefresh()
+                is DetailModalEvent.BulkEpisodesRecorded
+                -> onRefresh()
             }
         }
     }
@@ -112,32 +108,27 @@ private fun DetailModalDialogs(
     }
 
     if (state.isBulkRecording) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text("エピソードを記録中...") },
-            text = {
-                Column {
-                    Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
-                    LinearProgressIndicator(
-                        progress = {
-                            if (state.bulkRecordingTotal > 0) state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat() else 0f
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    )
-                }
-            },
-            confirmButton = { }
-        )
+        AlertDialog(onDismissRequest = { }, title = { Text("エピソードを記録中...") }, text = {
+            Column {
+                Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
+                LinearProgressIndicator(
+                    progress = {
+                        if (state.bulkRecordingTotal > 0) {
+                            state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat()
+                        } else {
+                            0f
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                )
+            }
+        }, confirmButton = { })
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DetailModalTitle(
-    state: DetailModalState,
-    onDismiss: () -> Unit,
-    onStatusChange: (StatusState) -> Unit
-) {
+private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onStatusChange: (StatusState) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Column {
@@ -155,45 +146,7 @@ private fun DetailModalTitle(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ExposedDropdownMenuBox(
-                expanded = expanded && !state.isStatusChanging,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                TextField(
-                    value = state.selectedStatus?.toString() ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    enabled = !state.isStatusChanging,
-                    trailingIcon = {
-                        if (state.isStatusChanging) {
-                            CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
-                        } else {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        }
-                    },
-                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded && !state.isStatusChanging,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    StatusState.entries.forEach { status ->
-                        DropdownMenuItem(
-                            text = { Text(status.toString()) },
-                            onClick = {
-                                expanded = false
-                                onStatusChange(status)
-                            }
-                        )
-                    }
-                }
-            }
-        }
+        StatusDropdownMenu(expanded, state, onStatusChange)
 
         state.statusChangeError?.let { error ->
             Text(
@@ -202,6 +155,46 @@ private fun DetailModalTitle(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp)
             )
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun StatusDropdownMenu(expanded: Boolean, state: DetailModalState, onStatusChange: (StatusState) -> Unit) {
+    var expanded1 = expanded
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ExposedDropdownMenuBox(expanded = expanded1 && !state.isStatusChanging, onExpandedChange = {
+            expanded1 = !expanded1
+        }) {
+            TextField(
+                value = state.selectedStatus?.toString() ?: "",
+                onValueChange = {},
+                readOnly = true,
+                enabled = !state.isStatusChanging,
+                trailingIcon = {
+                    if (state.isStatusChanging) {
+                        CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
+                    } else {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded1)
+                    }
+                },
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+            )
+            ExposedDropdownMenu(expanded = expanded1 && !state.isStatusChanging, onDismissRequest = {
+                expanded1 = false
+            }) {
+                StatusState.entries.forEach { status ->
+                    DropdownMenuItem(text = { Text(status.toString()) }, onClick = {
+                        expanded1 = false
+                        onStatusChange(status)
+                    })
+                }
+            }
         }
     }
 }
