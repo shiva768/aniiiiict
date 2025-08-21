@@ -37,8 +37,7 @@ open class HistoryViewModelTest : BehaviorSpec({
         When("loadRecordsが呼ばれる") {
             Then("UIステートが初期値で更新される") {
                 runTest(dispatcher) {
-                    coEvery { loadRecordsUseCase.invoke(null) } returns
-                        RecordsResult(emptyList(), false, null)
+                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(emptyList(), false, null)
                     every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
 
                     val viewModel = HistoryViewModel(
@@ -64,8 +63,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                             every { work } returns mockk<Work> { every { title } returns "dummy" }
                         }
                     )
-                    coEvery { loadRecordsUseCase.invoke(null) } returns
-                        RecordsResult(dummyRecords, false, null)
+                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(dummyRecords, false, null)
                     every { searchRecordsUseCase(dummyRecords, "foo") } returns dummyRecords
                     every { searchRecordsUseCase(dummyRecords, "") } returns dummyRecords
 
@@ -92,8 +90,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                         every { id } returns "id1"
                         every { work } returns mockk<Work> { every { title } returns "dummy" }
                     }
-                    coEvery { loadRecordsUseCase.invoke(null) } returns
-                        RecordsResult(listOf(record), false, null)
+                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(listOf(record), false, null)
                     every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
                     every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
                     coEvery { deleteRecordUseCase("id1") } returns true
@@ -128,10 +125,8 @@ open class HistoryViewModelTest : BehaviorSpec({
                         false,
                         null
                     )
-                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns
-                        listOf(record1, record2)
-                    every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns
-                        listOf(record1, record2)
+                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
+                    every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns listOf(record1, record2)
                     every { searchRecordsUseCase(listOf(record2), "Anime") } returns listOf(record2)
                     coEvery { deleteRecordUseCase("id1") } returns true
 
@@ -166,13 +161,10 @@ open class HistoryViewModelTest : BehaviorSpec({
                         every { id } returns "id2"
                         every { work } returns mockk<Work> { every { title } returns "dummy2" }
                     }
-                    coEvery { loadRecordsUseCase.invoke(null) } returns
-                        RecordsResult(listOf(record1), true, "cursor")
-                    coEvery { loadRecordsUseCase.invoke("cursor") } returns
-                        RecordsResult(listOf(record2), false, null)
+                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(listOf(record1), true, "cursor")
+                    coEvery { loadRecordsUseCase.invoke("cursor") } returns RecordsResult(listOf(record2), false, null)
                     every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
-                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns
-                        listOf(record1, record2)
+                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
 
                     val viewModel = HistoryViewModel(
                         loadRecordsUseCase,
@@ -198,8 +190,7 @@ open class HistoryViewModelTest : BehaviorSpec({
                         every { id } returns "id1"
                         every { work } returns mockk<Work> { every { title } returns "dummy1" }
                     }
-                    coEvery { loadRecordsUseCase.invoke(null) } returns
-                        RecordsResult(listOf(record1), false, "cursor")
+                    coEvery { loadRecordsUseCase.invoke(null) } returns RecordsResult(listOf(record1), false, "cursor")
                     every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
 
                     val viewModel = HistoryViewModel(

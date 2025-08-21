@@ -38,23 +38,17 @@ class FilterPreferences @Inject constructor(@ApplicationContext private val cont
 
     val filterState: Flow<FilterState> = dataStore.data.map { preferences ->
         FilterState(
-            selectedMedia =
-            preferences[PreferencesKeys.SELECTED_MEDIA]?.split(",")?.filter { it.isNotEmpty() }
+            selectedMedia = preferences[PreferencesKeys.SELECTED_MEDIA]?.split(",")?.filter { it.isNotEmpty() }
                 ?.toSet() ?: emptySet(),
-            selectedSeason =
-            preferences[PreferencesKeys.SELECTED_SEASON]?.split(",")?.filter { it.isNotEmpty() }
-                ?.mapNotNull { runCatching { SeasonName.valueOf(it) }.getOrNull() }?.toSet()
-                ?: emptySet(),
-            selectedYear =
-            preferences[PreferencesKeys.SELECTED_YEAR]?.split(",")?.filter { it.isNotEmpty() }
+            selectedSeason = preferences[PreferencesKeys.SELECTED_SEASON]?.split(",")?.filter { it.isNotEmpty() }
+                ?.mapNotNull { runCatching { SeasonName.valueOf(it) }.getOrNull() }?.toSet() ?: emptySet(),
+            selectedYear = preferences[PreferencesKeys.SELECTED_YEAR]?.split(",")?.filter { it.isNotEmpty() }
                 ?.mapNotNull { it.toIntOrNull() }?.filter { it > 0 }?.toSet() ?: emptySet(),
             selectedChannel = preferences[PreferencesKeys.SELECTED_CHANNEL]?.split(",")?.filter {
                 it.isNotEmpty()
             }?.toSet() ?: emptySet(),
-            selectedStatus =
-            preferences[PreferencesKeys.SELECTED_STATUS]?.split(",")?.filter { it.isNotEmpty() }
-                ?.mapNotNull { runCatching { StatusState.valueOf(it) }.getOrNull() }?.toSet()
-                ?: emptySet(),
+            selectedStatus = preferences[PreferencesKeys.SELECTED_STATUS]?.split(",")?.filter { it.isNotEmpty() }
+                ?.mapNotNull { runCatching { StatusState.valueOf(it) }.getOrNull() }?.toSet() ?: emptySet(),
             searchQuery = preferences[PreferencesKeys.SEARCH_QUERY] ?: "",
             showOnlyAired = preferences[PreferencesKeys.SHOW_ONLY_AIRED] != false,
             sortOrder = preferences[PreferencesKeys.SORT_ORDER]?.let {
@@ -65,16 +59,11 @@ class FilterPreferences @Inject constructor(@ApplicationContext private val cont
 
     suspend fun updateFilterState(filterState: FilterState) {
         dataStore.edit { preferences ->
-            preferences[PreferencesKeys.SELECTED_MEDIA] =
-                filterState.selectedMedia.joinToString(",")
-            preferences[PreferencesKeys.SELECTED_SEASON] =
-                filterState.selectedSeason.joinToString(",") { it.name }
-            preferences[PreferencesKeys.SELECTED_YEAR] =
-                filterState.selectedYear.filter { it > 0 }.joinToString(",")
-            preferences[PreferencesKeys.SELECTED_CHANNEL] =
-                filterState.selectedChannel.joinToString(",")
-            preferences[PreferencesKeys.SELECTED_STATUS] =
-                filterState.selectedStatus.joinToString(",") { it.name }
+            preferences[PreferencesKeys.SELECTED_MEDIA] = filterState.selectedMedia.joinToString(",")
+            preferences[PreferencesKeys.SELECTED_SEASON] = filterState.selectedSeason.joinToString(",") { it.name }
+            preferences[PreferencesKeys.SELECTED_YEAR] = filterState.selectedYear.filter { it > 0 }.joinToString(",")
+            preferences[PreferencesKeys.SELECTED_CHANNEL] = filterState.selectedChannel.joinToString(",")
+            preferences[PreferencesKeys.SELECTED_STATUS] = filterState.selectedStatus.joinToString(",") { it.name }
             preferences[PreferencesKeys.SEARCH_QUERY] = filterState.searchQuery
             preferences[PreferencesKeys.SHOW_ONLY_AIRED] = filterState.showOnlyAired
             preferences[PreferencesKeys.SORT_ORDER] = filterState.sortOrder.name

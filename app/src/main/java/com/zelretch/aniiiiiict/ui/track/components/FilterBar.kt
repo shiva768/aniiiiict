@@ -43,16 +43,12 @@ private data class FilterChipActions(
     val onSeasonClick: () -> Unit,
     val onYearClick: () -> Unit,
     val onChannelClick: () -> Unit,
-    val onStatusClick: () -> Unit,
+    val onStatusClick: () -> Unit
 )
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FilterBar(
-    filterState: FilterState,
-    filterOptions: FilterOptions,
-    onFilterChange: (FilterState) -> Unit
-) {
+fun FilterBar(filterState: FilterState, filterOptions: FilterOptions, onFilterChange: (FilterState) -> Unit) {
     var showMediaDialog by remember { mutableStateOf(false) }
     var showSeasonDialog by remember { mutableStateOf(false) }
     var showYearDialog by remember { mutableStateOf(false) }
@@ -60,16 +56,12 @@ fun FilterBar(
     var showStatusDialog by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(8.dp),
         tonalElevation = 2.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             SearchTextField(
@@ -137,10 +129,7 @@ private fun SearchTextField(searchQuery: String, onQueryChange: (String) -> Unit
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FilterChips(
-    filterState: FilterState,
-    actions: FilterChipActions
-) {
+private fun FilterChips(filterState: FilterState, actions: FilterChipActions) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -180,10 +169,7 @@ private fun FilterChips(
 }
 
 @Composable
-private fun DisplayAndSortOptions(
-    filterState: FilterState,
-    onFilterChange: (FilterState) -> Unit
-) {
+private fun DisplayAndSortOptions(filterState: FilterState, onFilterChange: (FilterState) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -293,17 +279,13 @@ private fun ChannelFilterDialog(
 }
 
 @Composable
-private fun StatusFilterDialog(
-    filterState: FilterState,
-    onFilterChange: (FilterState) -> Unit,
-    onDismiss: () -> Unit
-) {
+private fun StatusFilterDialog(filterState: FilterState, onFilterChange: (FilterState) -> Unit, onDismiss: () -> Unit) {
     FilterSelectionDialog(
         title = "ステータスを選択",
         items = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH).map { it.name },
         selectedItems = filterState.selectedStatus.map { it.name }.toSet(),
         onItemSelected = { statusStr ->
-            val status = com.annict.type.StatusState.valueOf(statusStr)
+            val status = StatusState.valueOf(statusStr)
             val newSelection = filterState.selectedStatus.toMutableSet()
             if (status in newSelection) newSelection.remove(status) else newSelection.add(status)
             onFilterChange(filterState.copy(selectedStatus = newSelection))

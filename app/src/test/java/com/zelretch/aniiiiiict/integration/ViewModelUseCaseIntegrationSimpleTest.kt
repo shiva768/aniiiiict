@@ -181,9 +181,7 @@ class ViewModelUseCaseIntegrationSimpleTest : BehaviorSpec({
                     }
 
                     // 全ステップ完了確認
-                    val allStepsComplete = vmState.step1Complete &&
-                        vmState.step2Complete &&
-                        vmState.step3Complete
+                    val allStepsComplete = vmState.step1Complete && vmState.step2Complete && vmState.step3Complete
                     allStepsComplete shouldBe true
                 }
             }

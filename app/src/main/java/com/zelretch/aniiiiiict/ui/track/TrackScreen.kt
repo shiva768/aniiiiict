@@ -51,23 +51,20 @@ fun TrackScreen(
     onNavigateToHistory: () -> Unit = {},
     onRefresh: () -> Unit = {}
 ) {
-    Scaffold(
-        topBar = {
-            TrackTopAppBar(
-                isFilterVisible = uiState.isFilterVisible,
-                onFilterClick = { viewModel.toggleFilterVisibility() },
-                onHistoryClick = onNavigateToHistory
-            )
-        },
-        snackbarHost = {
-            TrackSnackbarHost(
-                uiState = uiState,
-                onConfirmFinale = { viewModel.confirmWatchedStatus() },
-                onDismissFinale = { viewModel.dismissFinaleConfirmation() },
-                onRefresh = { viewModel.refresh() }
-            )
-        }
-    ) { paddingValues ->
+    Scaffold(topBar = {
+        TrackTopAppBar(
+            isFilterVisible = uiState.isFilterVisible,
+            onFilterClick = { viewModel.toggleFilterVisibility() },
+            onHistoryClick = onNavigateToHistory
+        )
+    }, snackbarHost = {
+        TrackSnackbarHost(
+            uiState = uiState,
+            onConfirmFinale = { viewModel.confirmWatchedStatus() },
+            onDismissFinale = { viewModel.dismissFinaleConfirmation() },
+            onRefresh = { viewModel.refresh() }
+        )
+    }) { paddingValues ->
         TrackScreenContent(
             modifier = Modifier.padding(paddingValues),
             uiState = uiState,
@@ -80,30 +77,23 @@ fun TrackScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TrackTopAppBar(
-    isFilterVisible: Boolean,
-    onFilterClick: () -> Unit,
-    onHistoryClick: () -> Unit
-) {
-    TopAppBar(
-        title = { Text("番組一覧") },
-        actions = {
-            IconButton(onClick = onFilterClick) {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "フィルター",
-                    tint = if (isFilterVisible) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-            }
-            IconButton(onClick = onHistoryClick) {
-                Icon(imageVector = Icons.Default.History, contentDescription = "履歴")
-            }
+private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onHistoryClick: () -> Unit) {
+    TopAppBar(title = { Text("番組一覧") }, actions = {
+        IconButton(onClick = onFilterClick) {
+            Icon(
+                imageVector = Icons.Default.FilterList,
+                contentDescription = "フィルター",
+                tint = if (isFilterVisible) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
         }
-    )
+        IconButton(onClick = onHistoryClick) {
+            Icon(imageVector = Icons.Default.History, contentDescription = "履歴")
+        }
+    })
 }
 
 @Composable
@@ -115,13 +105,10 @@ private fun TrackSnackbarHost(
 ) {
     SnackbarHost(hostState = remember { SnackbarHostState() }) {
         if (uiState.showFinaleConfirmationForWorkId != null) {
-            Snackbar(
-                modifier = Modifier.testTag("finale_confirmation_snackbar"),
-                action = {
-                    TextButton(onClick = onConfirmFinale) { Text("はい") }
-                    TextButton(onClick = onDismissFinale) { Text("いいえ") }
-                }
-            ) {
+            Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
+                TextButton(onClick = onConfirmFinale) { Text("はい") }
+                TextButton(onClick = onDismissFinale) { Text("いいえ") }
+            }) {
                 Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？")
             }
         } else if (uiState.error != null) {

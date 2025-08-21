@@ -5,11 +5,10 @@ import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Query
 import com.apollographql.apollo.cache.normalized.FetchPolicy
-import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.cache.normalized.fetchPolicy
+import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.network.okHttpClient
 import com.zelretch.aniiiiiict.data.auth.TokenManager
-import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.IOException

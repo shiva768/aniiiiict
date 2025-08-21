@@ -7,7 +7,6 @@ import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
-import com.zelretch.aniiiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
@@ -137,7 +136,7 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    private fun onRecordSuccess(episodeId: String, workId: String) {
+    private suspend fun onRecordSuccess(episodeId: String, workId: String) {
         _uiState.update {
             it.copy(
                 isRecording = false,
@@ -164,7 +163,7 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    private fun handleFinaleJudgement(episodeId: String, workId: String) {
+    private suspend fun handleFinaleJudgement(episodeId: String, workId: String) {
         val program = _uiState.value.allPrograms.find { it.work.id == workId }
         val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
 
@@ -270,6 +269,26 @@ class TrackViewModel @Inject constructor(
 
     override fun hideDetailModal() {
         hideDetail()
+    }
+
+    fun showUnwatchedEpisodes(program: ProgramWithWork) {
+        _uiState.update {
+            it.copy(
+                selectedProgram = program,
+                isDetailModalVisible = true,
+                isLoadingDetail = false
+            )
+        }
+    }
+
+    fun hideDetail() {
+        _uiState.update {
+            it.copy(
+                isDetailModalVisible = false,
+                selectedProgram = null,
+                isLoadingDetail = false
+            )
+        }
     }
 
     override fun showFinaleConfirmation(workId: String, episodeNumber: Int) {

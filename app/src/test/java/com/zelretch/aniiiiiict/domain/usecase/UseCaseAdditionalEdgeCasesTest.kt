@@ -276,16 +276,13 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
                         processedItems += batchItems
 
                         // 各バッチが適切なサイズであることを確認
-                        batchItems shouldBe
-                            (
-                                if (batchIndex <
-                                    batches - 1
-                                ) {
-                                    batchSize
-                                } else {
-                                    (totalItems % batchSize).takeIf { it != 0 } ?: batchSize
-                                }
-                                )
+                        batchItems shouldBe (
+                            if (batchIndex < batches - 1) {
+                                batchSize
+                            } else {
+                                (totalItems % batchSize).takeIf { it != 0 } ?: batchSize
+                            }
+                            )
                     }
 
                     processedItems shouldBe totalItems

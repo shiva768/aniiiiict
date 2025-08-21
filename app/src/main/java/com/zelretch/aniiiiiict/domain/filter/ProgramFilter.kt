@@ -28,19 +28,16 @@ class ProgramFilter {
         filterState.selectedMedia.isEmpty() || program.work.media in filterState.selectedMedia
 
     private fun applySeasonFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedSeason.isEmpty() ||
-            program.work.seasonName in filterState.selectedSeason
+        filterState.selectedSeason.isEmpty() || program.work.seasonName in filterState.selectedSeason
 
     private fun applyYearFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedYear.isEmpty() || program.work.seasonYear in filterState.selectedYear
 
     private fun applyChannelFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedChannel.isEmpty() ||
-            program.firstProgram.channel.name in filterState.selectedChannel
+        filterState.selectedChannel.isEmpty() || program.firstProgram.channel.name in filterState.selectedChannel
 
     private fun applyStatusFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedStatus.isEmpty() ||
-            program.work.viewerStatusState in filterState.selectedStatus
+        filterState.selectedStatus.isEmpty() || program.work.viewerStatusState in filterState.selectedStatus
 
     private fun applySearchFilter(program: ProgramWithWork, filterState: FilterState): Boolean {
         if (filterState.searchQuery.isEmpty()) return true

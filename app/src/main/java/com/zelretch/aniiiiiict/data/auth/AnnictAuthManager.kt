@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiiict.data.auth
 
 import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.AnnictConfig
 import com.zelretch.aniiiiiict.data.model.TokenResponse
@@ -77,13 +76,9 @@ class AnnictAuthManager @Inject constructor(
     }
 
     private fun getAccessToken(code: String): TokenResponse {
-        val formBody = FormBody.Builder()
-            .add("client_id", BuildConfig.ANNICT_CLIENT_ID)
-            .add("client_secret", BuildConfig.ANNICT_CLIENT_SECRET)
-            .add("grant_type", "authorization_code")
-            .add("redirect_uri", REDIRECT_URI)
-            .add("code", code)
-            .build()
+        val formBody = FormBody.Builder().add("client_id", BuildConfig.ANNICT_CLIENT_ID)
+            .add("client_secret", BuildConfig.ANNICT_CLIENT_SECRET).add("grant_type", "authorization_code")
+            .add("redirect_uri", REDIRECT_URI).add("code", code).build()
 
         Timber.i("[AnnictAuthManager][getAccessToken] トークンリクエストを送信")
 

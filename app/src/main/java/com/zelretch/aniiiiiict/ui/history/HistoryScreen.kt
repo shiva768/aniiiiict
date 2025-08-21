@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zelretch.aniiiiiict.data.model.Record
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private const val LOAD_MORE_THRESHOLD = 3
 private val PADDING_HORIZONTAL = 16.dp
@@ -103,11 +105,7 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HistoryContent(
-    uiState: HistoryUiState,
-    listState: LazyListState,
-    actions: HistoryScreenActions
-) {
+private fun HistoryContent(uiState: HistoryUiState, listState: LazyListState, actions: HistoryScreenActions) {
     PullToRefreshBox(
         modifier = Modifier.fillMaxSize(),
         isRefreshing = uiState.isLoading,
@@ -135,9 +133,7 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
         placeholder = { Text("作品名で検索") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
@@ -156,11 +152,7 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
 }
 
 @Composable
-private fun HistoryList(
-    uiState: HistoryUiState,
-    listState: LazyListState,
-    actions: HistoryScreenActions
-) {
+private fun HistoryList(uiState: HistoryUiState, listState: LazyListState, actions: HistoryScreenActions) {
     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         items(items = uiState.records, key = { it.id }) { record ->
             RecordItem(record = record, onDelete = { actions.onDeleteRecord(record.id) })

@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiiict.data.repository
 
 import co.anilist.GetMediaQuery
-import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
@@ -22,12 +21,11 @@ class AniListRepositoryImpl @Inject constructor(
                 context = "AniListRepositoryImpl.getMedia"
             )
 
-            val media = response.data?.Media
-                ?: return Result.failure(
-                    IOException(
-                        response.errors?.firstOrNull()?.message ?: "Media data is null"
-                    )
+            val media = response.data?.Media ?: return Result.failure(
+                IOException(
+                    response.errors?.firstOrNull()?.message ?: "Media data is null"
                 )
+            )
 
             AniListMedia(
                 id = media.id,

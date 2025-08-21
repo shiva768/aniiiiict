@@ -3,6 +3,7 @@ package com.zelretch.aniiiiiict.util
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import timber.log.Timber
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.math.min
@@ -13,8 +14,6 @@ data class RetryConfig(
     val maxDelay: Long = 5000L,
     val factor: Double = 2.0
 )
-
-import java.io.IOException
 
 /**
  * リトライロジックを提供するユーティリティクラス
@@ -27,10 +26,7 @@ class RetryManager @Inject constructor() {
      * @param block リトライする処理
      * @return 処理の結果
      */
-    suspend fun <T> retry(
-        config: RetryConfig = RetryConfig(),
-        block: suspend () -> T
-    ): T {
+    suspend fun <T> retry(config: RetryConfig = RetryConfig(), block: suspend () -> T): T {
         var currentDelay = config.initialDelay
         var lastException: IOException? = null
 
