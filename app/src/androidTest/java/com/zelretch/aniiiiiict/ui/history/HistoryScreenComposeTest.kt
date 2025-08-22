@@ -45,12 +45,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = initialState,
-                onNavigateBack = mockOnNavigateBack,
-                onRetry = mockOnRetry,
-                onDeleteRecord = mockOnDeleteRecord,
-                onRefresh = mockOnRefresh,
-                onLoadNextPage = mockOnLoadNextPage,
-                onSearchQueryChange = mockOnSearchQueryChange
+                actions = HistoryScreenActions(
+                    onNavigateBack = mockOnNavigateBack,
+                    onRetry = mockOnRetry,
+                    onDeleteRecord = mockOnDeleteRecord,
+                    onRefresh = mockOnRefresh,
+                    onLoadNextPage = mockOnLoadNextPage,
+                    onSearchQueryChange = mockOnSearchQueryChange
+                )
             )
         }
 
@@ -72,12 +74,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = emptyState,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -124,12 +128,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = stateWithRecords,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -149,12 +155,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = initialState,
-                onNavigateBack = mockOnNavigateBack,
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = mockOnNavigateBack,
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -174,12 +182,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = initialState,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = mockOnSearchQueryChange
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = mockOnSearchQueryChange
+                )
             )
         }
 
@@ -198,12 +208,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = stateWithSearchQuery,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -221,12 +233,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = stateWithSearchQuery,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = mockOnSearchQueryChange
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = mockOnSearchQueryChange
+                )
             )
         }
 
@@ -273,12 +287,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = stateWithRecords,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = mockOnDeleteRecord,
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = mockOnDeleteRecord,
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -303,12 +319,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = errorState,
-                onNavigateBack = {},
-                onRetry = mockOnRetry,
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = mockOnRetry,
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -331,12 +349,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = errorState,
-                onNavigateBack = {},
-                onRetry = mockOnRetry,
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = mockOnRetry,
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -359,12 +379,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = stateWithNextPage,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = {},
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
             )
         }
 
@@ -386,12 +408,14 @@ class HistoryScreenComposeTest {
         composeTestRule.setContent {
             HistoryScreen(
                 uiState = stateWithNextPage,
-                onNavigateBack = {},
-                onRetry = {},
-                onDeleteRecord = {},
-                onRefresh = {},
-                onLoadNextPage = mockOnLoadNextPage,
-                onSearchQueryChange = {}
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = mockOnLoadNextPage,
+                    onSearchQueryChange = {}
+                )
             )
         }
 
