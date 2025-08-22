@@ -25,78 +25,96 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zelretch.aniiiiiict.data.model.Program
 
+private val CARD_CORNER_RADIUS = 16.dp
+private val CARD_ELEVATION = 2.dp
+private val VERTICAL_SPACING = 3.dp
+private val HORIZONTAL_SPACING = 4.dp
+private val BUTTON_CORNER_RADIUS = 10.dp
+private val BUTTON_ICON_SIZE = 16.dp
+private const val SECOND_BUTTON_WEIGHT = 1.2f
+
 @Composable
 fun EpisodeCard(program: Program, onRecordEpisode: (String) -> Unit, onMarkUpToAsWatched: () -> Unit) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().animateContentSize(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(CARD_CORNER_RADIUS),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = CARD_ELEVATION)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            modifier = Modifier.fillMaxWidth().padding(CARD_CORNER_RADIUS),
+            verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Text(
-                    text = "第${program.episode.number}話",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                program.episode.title?.let { title ->
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
+            EpisodeInfo(program)
+            EpisodeActionButtons(
+                onRecordEpisode = { onRecordEpisode(program.episode.id) },
+                onMarkUpToAsWatched = onMarkUpToAsWatched
+            )
+        }
+    }
+}
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FilledTonalButton(
-                    onClick = {
-                        onRecordEpisode(program.episode.id)
-                    },
-                    contentPadding = PaddingValues(),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "記録する",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
+@Composable
+private fun EpisodeInfo(program: Program) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING)
+    ) {
+        Text(
+            text = "第${program.episode.number}話",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        program.episode.title?.let { title ->
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
 
-                FilledTonalButton(
-                    onClick = onMarkUpToAsWatched,
-                    contentPadding = PaddingValues(),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.weight(1.2f)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.PlaylistAddCheck,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "ここまで記録",
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            }
+@Composable
+private fun EpisodeActionButtons(onRecordEpisode: () -> Unit, onMarkUpToAsWatched: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(HORIZONTAL_SPACING),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        FilledTonalButton(
+            onClick = onRecordEpisode,
+            contentPadding = PaddingValues(),
+            shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                modifier = Modifier.size(BUTTON_ICON_SIZE)
+            )
+            Text(
+                text = "記録する",
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+
+        FilledTonalButton(
+            onClick = onMarkUpToAsWatched,
+            contentPadding = PaddingValues(),
+            shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+            modifier = Modifier.weight(SECOND_BUTTON_WEIGHT)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.PlaylistAddCheck,
+                contentDescription = null,
+                modifier = Modifier.size(BUTTON_ICON_SIZE)
+            )
+            Text(
+                text = "ここまで記録",
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }

@@ -18,15 +18,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object CoilModule {
 
+    private const val MEMORY_CACHE_SIZE_PERCENT = 0.25
+    private const val DISK_CACHE_SIZE_PERCENT = 0.05
+
     @Provides
     @Singleton
     fun provideImageLoader(@ApplicationContext context: Context, okHttpClient: OkHttpClient): ImageLoader =
         ImageLoader.Builder(context).memoryCache {
-            MemoryCache.Builder(context).maxSizePercent(0.25) // メモリの25%までキャッシュを使用
+            MemoryCache.Builder(context).maxSizePercent(MEMORY_CACHE_SIZE_PERCENT) // メモリの25%までキャッシュを使用
                 .build()
         }.diskCache {
             DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
-                .maxSizePercent(0.05) // ストレージの5%までキャッシュを使用
+                .maxSizePercent(DISK_CACHE_SIZE_PERCENT) // ストレージの5%までキャッシュを使用
                 .build()
         }.okHttpClient(okHttpClient).crossfade(true) // 画像切り替え時にクロスフェード効果を追加
             // ネットワークからの読み込みを優先し、キャッシュをフォールバックとして使用

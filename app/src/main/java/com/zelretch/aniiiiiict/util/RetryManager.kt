@@ -3,55 +3,51 @@ package com.zelretch.aniiiiiict.util
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import timber.log.Timber
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.math.min
+
+data class RetryConfig(
+    val maxAttempts: Int = 3,
+    val initialDelay: Long = 1000L,
+    val maxDelay: Long = 5000L,
+    val factor: Double = 2.0
+)
 
 /**
  * リトライロジックを提供するユーティリティクラス
  */
 class RetryManager @Inject constructor() {
-    companion object {
-    }
-
     /**
      * 指定された回数だけ処理をリトライします
      *
-     * @param maxAttempts 最大リトライ回数
-     * @param initialDelay 初回リトライまでの遅延時間（ミリ秒）
-     * @param maxDelay 最大遅延時間（ミリ秒）
-     * @param factor 遅延時間の増加係数
+     * @param config リトライ設定
      * @param block リトライする処理
      * @return 処理の結果
      */
-    suspend fun <T> retry(
-        maxAttempts: Int = 3,
-        initialDelay: Long = 1000L,
-        maxDelay: Long = 5000L,
-        factor: Double = 2.0,
-        block: suspend () -> T
-    ): T {
-        var currentDelay = initialDelay
-        var lastException: Exception? = null
+    suspend fun <T> retry(config: RetryConfig = RetryConfig(), block: suspend () -> T): T {
+        var currentDelay = config.initialDelay
+        var lastException: IOException? = null
 
-        repeat(maxAttempts) { attempt ->
+        repeat(config.maxAttempts) { attempt ->
             try {
                 return block()
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 lastException = e
-                Timber.e(e, "[RetryManager][retry] リトライ失敗 (${attempt + 1}/$maxAttempts): %s", e.message)
+                Timber.e(e, "[RetryManager][retry] リトライ失敗 (${attempt + 1}/${config.maxAttempts}): %s", e.message)
 
                 // 最後の試行でない場合のみ待機
-                if (attempt < maxAttempts - 1) {
+                if (attempt < config.maxAttempts - 1) {
                     delay(currentDelay)
                     // 次回の遅延時間を計算（指数バックオフ）
-                    currentDelay = min((currentDelay * factor).toLong(), maxDelay)
+                    currentDelay = min((currentDelay * config.factor).toLong(), config.maxDelay)
                 }
             }
         }
 
         // すべてのリトライが失敗した場合
-        throw lastException ?: IllegalStateException("リトライが失敗しました")
+        throw lastException ?: error("リトライが失敗しました")
     }
 
     /**
@@ -59,22 +55,17 @@ class RetryManager @Inject constructor() {
      *
      * @param timeout タイムアウト時間
      * @param timeUnit タイムアウトの単位
-     * @param maxAttempts 最大リトライ回数
-     * @param initialDelay 初回リトライまでの遅延時間（ミリ秒）
-     * @param maxDelay 最大遅延時間（ミリ秒）
-     * @param factor 遅延時間の増加係数
+     * @param config リトライ設定
      * @param block リトライする処理
      * @return 処理の結果
      */
+    @Suppress("unused")
     suspend fun <T> retryWithTimeout(
         timeout: Long,
         timeUnit: TimeUnit = TimeUnit.SECONDS,
-        maxAttempts: Int = 3,
-        initialDelay: Long = 1000L,
-        maxDelay: Long = 5000L,
-        factor: Double = 2.0,
+        config: RetryConfig = RetryConfig(),
         block: suspend () -> T
     ): T = withTimeout(timeUnit.toMillis(timeout)) {
-        retry(maxAttempts, initialDelay, maxDelay, factor, block)
+        retry(config, block)
     }
 }

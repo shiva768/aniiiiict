@@ -28,6 +28,13 @@ import androidx.compose.ui.unit.dp
 import com.zelretch.aniiiiiict.MainUiState
 import com.zelretch.aniiiiiict.R
 
+private const val LOGIN_BUTTON_WIDTH_RATIO = 0.7f
+private val PADDING_MEDIUM = 16.dp
+private val LOGO_SIZE = 120.dp
+private val SPACER_HEIGHT_LARGE = 24.dp
+private val SPACER_HEIGHT_XLARGE = 32.dp
+private val LOGIN_BUTTON_HEIGHT = 48.dp
+
 @Composable
 fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -45,7 +52,7 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(PADDING_MEDIUM),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -53,10 +60,10 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
                 Image(
                     painter = painterResource(id = R.mipmap.ic_launcher_foreground),
                     contentDescription = "App Logo",
-                    modifier = Modifier.size(120.dp)
+                    modifier = Modifier.size(LOGO_SIZE)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(SPACER_HEIGHT_LARGE))
 
                 // App name
                 Text(
@@ -65,7 +72,7 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(PADDING_MEDIUM))
 
                 // Description
                 Text(
@@ -74,12 +81,12 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(SPACER_HEIGHT_XLARGE))
 
                 // Login button
                 Button(
                     onClick = onLoginClick,
-                    modifier = Modifier.fillMaxWidth(0.7f).height(48.dp),
+                    modifier = Modifier.fillMaxWidth(LOGIN_BUTTON_WIDTH_RATIO).height(LOGIN_BUTTON_HEIGHT),
                     enabled = !uiState.isAuthenticating && !uiState.isLoading
                 ) {
                     Text("Annictでログイン")
@@ -87,7 +94,7 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
 
                 // Show loading indicator if authenticating
                 if (uiState.isAuthenticating || uiState.isLoading) {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(SPACER_HEIGHT_LARGE))
                     CircularProgressIndicator()
                 }
             }

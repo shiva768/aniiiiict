@@ -7,6 +7,7 @@ import com.zelretch.aniiiiiict.ui.track.TrackUiState
 import com.zelretch.aniiiiiict.ui.track.TrackViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import timber.log.Timber
 import java.lang.reflect.Field
 
 /**
@@ -64,6 +65,7 @@ open class ViewModelTestWrapper<T : BaseUiState>(
             @Suppress("UNCHECKED_CAST")
             getMutableUiState().value = copyMethod.invoke(currentState, error) as T
         } catch (e: Exception) {
+            Timber.e(e, "リフレクションによるsetErrorForTestの実行に失敗。直接フィールドを更新します。")
             // Fallback: 直接フィールドを更新
             setErrorDirectly(error)
         }
@@ -76,6 +78,7 @@ open class ViewModelTestWrapper<T : BaseUiState>(
             @Suppress("UNCHECKED_CAST")
             getMutableUiState().value = copyMethod.invoke(currentState, isLoading) as T
         } catch (e: Exception) {
+            Timber.e(e, "リフレクションによるsetLoadingForTestの実行に失敗。直接フィールドを更新します。")
             // Fallback: 直接フィールドを更新
             setLoadingDirectly(isLoading)
         }

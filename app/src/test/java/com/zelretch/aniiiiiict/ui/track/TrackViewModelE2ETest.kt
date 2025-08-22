@@ -131,12 +131,10 @@ class TrackViewModelE2ETest : BehaviorSpec({
             then("UIStateにエラーがセットされる") {
                 runTest {
                     // モックリポジトリにエラーを発生させる
-                    coEvery { annictRepository.getRawProgramsData() } throws
-                        RuntimeException("テストエラー")
+                    coEvery { annictRepository.getRawProgramsData() } throws RuntimeException("テストエラー")
 
                     // フィルター変更をトリガーにしてロード処理を実行
-                    filterStateFlow.value =
-                        filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
                     testScope.testScheduler.advanceUntilIdle()
 
                     // テストスケジューラを進めて、すべての非同期処理が完了するのを待つ
@@ -160,8 +158,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
                 runTest {
                     // モックリポジトリの動作を設定
                     coEvery { annictRepository.createRecord(any(), any()) } returns true
-                    coEvery { annictRepository.getRawProgramsData() } returns
-                        flowOf(createMockPrograms())
+                    coEvery { annictRepository.getRawProgramsData() } returns flowOf(createMockPrograms())
 
                     // エピソード視聴を記録
                     viewModel.recordEpisode("ep-id", "work-id", StatusState.WATCHING)
@@ -184,8 +181,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
             then("UIStateにエラーがセットされる") {
                 runTest {
                     // モックリポジトリにエラーを発生させる
-                    coEvery { annictRepository.createRecord(any(), any()) } throws
-                        RuntimeException("記録エラー")
+                    coEvery { annictRepository.createRecord(any(), any()) } throws RuntimeException("記録エラー")
 
                     // エピソード視聴を記録
                     viewModel.recordEpisode("ep-id", "work-id", StatusState.WATCHING)

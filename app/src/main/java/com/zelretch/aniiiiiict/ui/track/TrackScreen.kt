@@ -39,6 +39,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiiict.ui.details.DetailModal
 import com.zelretch.aniiiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiiict.ui.track.components.FilterBar
+import com.zelretch.aniiiiiict.ui.track.components.FilterOptions
 import com.zelretch.aniiiiiict.ui.track.components.ProgramCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,126 +51,140 @@ fun TrackScreen(
     onNavigateToHistory: () -> Unit = {},
     onRefresh: () -> Unit = {}
 ) {
-    val pullToRefreshState = rememberPullToRefreshState()
-
     Scaffold(topBar = {
-        TopAppBar(title = { Text("番組一覧") }, actions = {
-            // フィルターボタン
-            IconButton(onClick = { viewModel.toggleFilterVisibility() }) {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "フィルター",
-                    tint = if (uiState.isFilterVisible) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-            }
-
-            // 履歴画面へのナビゲーションボタン
-            IconButton(
-                onClick = onNavigateToHistory
-            ) {
-                Icon(
-                    imageVector = Icons.Default.History,
-                    contentDescription = "履歴"
-                )
-            }
-        })
+        TrackTopAppBar(
+            isFilterVisible = uiState.isFilterVisible,
+            onFilterClick = { viewModel.toggleFilterVisibility() },
+            onHistoryClick = onNavigateToHistory
+        )
     }, snackbarHost = {
-        SnackbarHost(hostState = remember { SnackbarHostState() }) {
-            if (uiState.showFinaleConfirmationForWorkId != null) {
-                Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
-                    TextButton(onClick = { viewModel.confirmWatchedStatus() }) {
-                        Text("はい")
-                    }
-                    TextButton(onClick = { viewModel.dismissFinaleConfirmation() }) {
-                        Text("いいえ")
-                    }
-                }) {
-                    Text(
-                        "このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？"
-                    )
-                }
-            } else if (uiState.error != null) {
-                Snackbar(
-                    modifier = Modifier.testTag("snackbar")
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Text(uiState.error ?: "")
-                        Spacer(modifier = Modifier.weight(1f))
-                        TextButton(onClick = { viewModel.refresh() }) {
-                            Text("再読み込み")
-                        }
-                    }
-                }
-            }
-        }
+        TrackSnackbarHost(
+            uiState = uiState,
+            onConfirmFinale = { viewModel.confirmWatchedStatus() },
+            onDismissFinale = { viewModel.dismissFinaleConfirmation() },
+            onRefresh = { viewModel.refresh() }
+        )
     }) { paddingValues ->
-        PullToRefreshBox(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            isRefreshing = uiState.isLoading,
+        TrackScreenContent(
+            modifier = Modifier.padding(paddingValues),
+            uiState = uiState,
+            viewModel = viewModel,
             onRefresh = onRefresh,
-            state = pullToRefreshState
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // フィルターバー
-                if (uiState.isFilterVisible) {
-                    FilterBar(
-                        availableMedia = uiState.availableMedia,
-                        availableSeasons = uiState.availableSeasons,
-                        availableYears = uiState.availableYears,
-                        availableChannels = uiState.availableChannels,
-                        filterState = uiState.filterState,
-                        onFilterChange = viewModel::updateFilter
-                    )
-                }
+            onRecordEpisode = onRecordEpisode
+        )
+    }
+}
 
-                // プログラム一覧
-                val listState = rememberLazyListState()
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = listState
-                ) {
-                    items(items = uiState.programs, key = { it.work.id }) { program ->
-                        ProgramCard(
-                            programWithWork = program,
-                            onRecordEpisode = onRecordEpisode,
-                            onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
-                            uiState = uiState
-                        )
-                    }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onHistoryClick: () -> Unit) {
+    TopAppBar(title = { Text("番組一覧") }, actions = {
+        IconButton(onClick = onFilterClick) {
+            Icon(
+                imageVector = Icons.Default.FilterList,
+                contentDescription = "フィルター",
+                tint = if (isFilterVisible) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
                 }
+            )
+        }
+        IconButton(onClick = onHistoryClick) {
+            Icon(imageVector = Icons.Default.History, contentDescription = "履歴")
+        }
+    })
+}
+
+@Composable
+private fun TrackSnackbarHost(
+    uiState: TrackUiState,
+    onConfirmFinale: () -> Unit,
+    onDismissFinale: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    SnackbarHost(hostState = remember { SnackbarHostState() }) {
+        if (uiState.showFinaleConfirmationForWorkId != null) {
+            Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
+                TextButton(onClick = onConfirmFinale) { Text("はい") }
+                TextButton(onClick = onDismissFinale) { Text("いいえ") }
+            }) {
+                Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？")
             }
-
-            // ローディングインジケーター
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp)
-                    )
+        } else if (uiState.error != null) {
+            Snackbar(modifier = Modifier.testTag("snackbar")) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(uiState.error)
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(onClick = onRefresh) { Text("再読み込み") }
                 }
             }
         }
+    }
+}
 
-        // 詳細モーダル
-        if (uiState.isDetailModalVisible) {
-            val detailModalViewModel = hiltViewModel<DetailModalViewModel>()
-            uiState.selectedProgram?.let { program ->
-                DetailModal(
-                    programWithWork = program,
-                    isLoading = uiState.isLoadingDetail,
-                    onDismiss = { viewModel.hideDetail() },
-                    detailModalViewModel,
-                    onRefresh = onRefresh
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TrackScreenContent(
+    modifier: Modifier = Modifier,
+    uiState: TrackUiState,
+    viewModel: TrackViewModel,
+    onRefresh: () -> Unit,
+    onRecordEpisode: (String, String, StatusState) -> Unit
+) {
+    PullToRefreshBox(
+        modifier = modifier.fillMaxSize(),
+        isRefreshing = uiState.isLoading,
+        onRefresh = onRefresh,
+        state = rememberPullToRefreshState()
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            if (uiState.isFilterVisible) {
+                val filterOptions = FilterOptions(
+                    media = uiState.availableMedia,
+                    seasons = uiState.availableSeasons,
+                    years = uiState.availableYears,
+                    channels = uiState.availableChannels
+                )
+                FilterBar(
+                    filterOptions = filterOptions,
+                    filterState = uiState.filterState,
+                    onFilterChange = viewModel::updateFilter
                 )
             }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = rememberLazyListState()
+            ) {
+                items(items = uiState.programs, key = { it.work.id }) { program ->
+                    ProgramCard(
+                        programWithWork = program,
+                        onRecordEpisode = onRecordEpisode,
+                        onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
+                        uiState = uiState
+                    )
+                }
+            }
+        }
+
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(48.dp))
+            }
+        }
+    }
+
+    if (uiState.isDetailModalVisible) {
+        val detailModalViewModel = hiltViewModel<DetailModalViewModel>()
+        uiState.selectedProgram?.let { program ->
+            DetailModal(
+                programWithWork = program,
+                isLoading = uiState.isLoadingDetail,
+                onDismiss = { viewModel.hideDetail() },
+                detailModalViewModel,
+                onRefresh = onRefresh
+            )
         }
     }
 }

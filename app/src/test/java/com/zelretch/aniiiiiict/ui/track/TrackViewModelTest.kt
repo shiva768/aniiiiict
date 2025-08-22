@@ -77,18 +77,16 @@ class TrackViewModelTest : BehaviorSpec({
                     val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
                     coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
                     every { filterProgramsUseCase.invoke(any(), any()) } returns fakePrograms
-                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns
-                        AvailableFilters(
-                            emptyList(),
-                            emptyList(),
-                            emptyList(),
-                            emptyList()
-                        )
+                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
+                        emptyList(),
+                        emptyList(),
+                        emptyList(),
+                        emptyList()
+                    )
                     runTest(dispatcher) {
                         viewModel.uiState.test {
                             awaitItem() // 初期値を必ず受け取る
-                            filterStateFlow.value =
-                                filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
+                            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
                             testScope.testScheduler.advanceUntilIdle() // emitを確実に進める
                             awaitItem() // 状態遷移1: ローディングやfilter反映（isLoading=true）
                             awaitItem() // 状態遷移2: データ反映・ローディング完了（isLoading=false）
@@ -105,13 +103,12 @@ class TrackViewModelTest : BehaviorSpec({
             then("UIStateにエラーがセットされる") {
                 runTest(dispatcher) {
                     coEvery { loadProgramsUseCase.invoke() } returns flow {
-                        throw RuntimeException("error")
+                        throw LoadProgramsException("error")
                     }
                     runTest(dispatcher) {
                         viewModel.uiState.test {
                             awaitItem() // 初期値を必ず受け取る
-                            filterStateFlow.value =
-                                filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+                            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
                             testScope.testScheduler.advanceUntilIdle() // emitを確実に進める
                             awaitItem() // 状態遷移1: ローディングやfilter反映
                             val errorState = awaitItem() // 状態遷移2: error反映
@@ -125,3 +122,5 @@ class TrackViewModelTest : BehaviorSpec({
         }
     }
 })
+
+private class LoadProgramsException(message: String) : RuntimeException(message)

@@ -11,21 +11,23 @@ class TokenManager @Inject constructor(context: Context) {
     companion object {
         private const val PREFS_NAME = "annict_prefs"
         private const val TOKEN_KEY = "access_token"
+        private const val TOKEN_LOG_LENGTH = 10
     }
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    @Suppress("TooGenericExceptionCaught")
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
             Timber.e("[TokenManager][saveAccessToken] 空のトークンを保存しようとしました")
             return
         }
 
-        Timber.i("[TokenManager][saveAccessToken] アクセストークンを保存: ${token.take(10)}...")
+        Timber.i("[TokenManager][saveAccessToken] アクセストークンを保存: ${token.take(TOKEN_LOG_LENGTH)}...")
 
         try {
             prefs.edit { putString(TOKEN_KEY, token) }
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Timber.e(e, "[TokenManager][saveAccessToken] アクセストークンの保存に失敗")
         }
     }
@@ -35,16 +37,17 @@ class TokenManager @Inject constructor(context: Context) {
         if (token == null) {
             Timber.d("[TokenManager][getAccessToken] 保存されたアクセストークンがありません")
         } else {
-            Timber.i("[TokenManager][getAccessToken] アクセストークンを取得: ${token.take(10)}...")
+            Timber.i("[TokenManager][getAccessToken] アクセストークンを取得: ${token.take(TOKEN_LOG_LENGTH)}...")
         }
         return token
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun clearAccessToken() {
         try {
             prefs.edit { remove(TOKEN_KEY) }
             Timber.i("[TokenManager][clearAccessToken] アクセストークンを削除")
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Timber.e(e, "[TokenManager][clearAccessToken] アクセストークンの削除に失敗")
         }
     }

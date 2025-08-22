@@ -5,19 +5,23 @@
 ## 構成
 
 ### `viewmodel/` - ViewModelテストの例
+
 - `ViewModelTestabilityDemoTest.kt` - ViewModelテスト容易性向上のデモンストレーション
 - `ViewModelImplementationTestingExampleTest.kt` - ViewModel実装テストの包括的な例
 
 ### `architecture/` - アーキテクチャレベルのテスト例
+
 - `CleanTestingApproachDemoTest.kt` - プロダクションコードを汚染しないテストアプローチ
 - `HiltTestingExamples.kt` - Hilt依存注入フレームワークのテスト例
 
 ### `ui/` - UIコンポーネントテストの例
+
 - `AuthScreenTest.kt` - 認証画面のテスト例
 - `IntegratedScreenViewModelTest.kt` - 統合画面テストの例
 - `TrackScreenTest.kt` - トラック画面の複雑なUI状態テスト例
 
 ### `comparisons/` - テストアプローチの比較
+
 - `BeforeAfterComparisonTest.kt` - 従来のテストアプローチと改善後の比較
 
 ## ドキュメント

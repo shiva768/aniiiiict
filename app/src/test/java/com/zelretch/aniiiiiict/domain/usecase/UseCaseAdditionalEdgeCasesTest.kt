@@ -81,7 +81,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
                         workId = workId,
                         currentStatus = StatusState.WATCHING
                     ) { _ ->
-                        throw RuntimeException("プログレスコールバックエラー")
+                        throw TestProgressCallbackException("プログレスコールバックエラー")
                     }
 
                     // 例外がキャッチされ、failureとして返されるべき
@@ -99,7 +99,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
 
                     coEvery {
                         watchEpisodeUseCase("failing_episode", workId, StatusState.WATCHING, true)
-                    } returns Result.failure(RuntimeException(errorMessage))
+                    } returns Result.failure(TestFailingEpisodeException(errorMessage))
 
                     var progressCallCount = 0
                     val result = bulkUseCase(
@@ -129,7 +129,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
 
                     coEvery {
                         watchEpisodeUseCase("failing_episode", workId, StatusState.WATCHING, false)
-                    } returns Result.failure(RuntimeException("途中で失敗"))
+                    } returns Result.failure(TestFailingEpisodeException("途中で失敗"))
 
                     val progressCalls = mutableListOf<Int>()
                     val result = bulkUseCase(
@@ -276,16 +276,13 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
                         processedItems += batchItems
 
                         // 各バッチが適切なサイズであることを確認
-                        batchItems shouldBe
-                            (
-                                if (batchIndex <
-                                    batches - 1
-                                ) {
-                                    batchSize
-                                } else {
-                                    (totalItems % batchSize).takeIf { it != 0 } ?: batchSize
-                                }
-                                )
+                        batchItems shouldBe (
+                            if (batchIndex < batches - 1) {
+                                batchSize
+                            } else {
+                                (totalItems % batchSize).takeIf { it != 0 } ?: batchSize
+                            }
+                            )
                     }
 
                     processedItems shouldBe totalItems
@@ -299,7 +296,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
         `when`("ネットワークタイムアウト") {
             then("適切にタイムアウトエラーが処理される") {
                 runTest {
-                    val timeoutError = RuntimeException("タイムアウトが発生しました")
+                    val timeoutError = TestTimeoutException("タイムアウトが発生しました")
 
                     // タイムアウトエラーの分類
                     val isTimeoutError = timeoutError.message?.contains("タイムアウト") == true
@@ -315,7 +312,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
         `when`("認証エラー") {
             then("認証エラーが適切に分類される") {
                 runTest {
-                    val authError = RuntimeException("認証に失敗しました")
+                    val authError = TestAuthException("認証に失敗しました")
 
                     // 認証エラーの分類
                     val isAuthError = authError.message?.contains("認証") == true
@@ -331,7 +328,7 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
         `when`("データ形式エラー") {
             then("データエラーが適切に処理される") {
                 runTest {
-                    val dataFormatError = RuntimeException("データ形式が不正です")
+                    val dataFormatError = TestDataFormatException("データ形式が不正です")
 
                     // データエラーの分類
                     val isDataError = dataFormatError.message?.contains("データ") == true
@@ -345,3 +342,9 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
         }
     }
 })
+
+private class TestProgressCallbackException(message: String) : RuntimeException(message)
+private class TestFailingEpisodeException(message: String) : RuntimeException(message)
+private class TestTimeoutException(message: String) : RuntimeException(message)
+private class TestAuthException(message: String) : RuntimeException(message)
+private class TestDataFormatException(message: String) : RuntimeException(message)

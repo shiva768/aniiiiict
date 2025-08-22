@@ -17,8 +17,7 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val episodeIds = listOf("ep1", "ep2")
                 val workId = "w1"
                 val status = StatusState.WANNA_WATCH
-                coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns
-                    Result.success(Unit)
+                coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
                 val result = runBlocking { useCase(episodeIds, workId, status) }
                 result.isSuccess shouldBe true
             }
@@ -28,10 +27,8 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val episodeIds = listOf("ep1", "ep2")
                 val workId = "w1"
                 val status = StatusState.WANNA_WATCH
-                coEvery { watchEpisodeUseCase("ep1", workId, status, true) } returns
-                    Result.success(Unit)
-                coEvery { watchEpisodeUseCase("ep2", workId, status, false) } returns
-                    Result.failure(Exception("fail"))
+                coEvery { watchEpisodeUseCase("ep1", workId, status, true) } returns Result.success(Unit)
+                coEvery { watchEpisodeUseCase("ep2", workId, status, false) } returns Result.failure(Exception("fail"))
                 val result = runBlocking { useCase(episodeIds, workId, status) }
                 result.isFailure shouldBe true
             }

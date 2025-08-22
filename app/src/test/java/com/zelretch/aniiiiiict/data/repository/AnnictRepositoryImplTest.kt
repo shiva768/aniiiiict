@@ -16,6 +16,7 @@ import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
+import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -138,7 +139,9 @@ class AnnictRepositoryImplTest : BehaviorSpec({
                     )
                 } throws RuntimeException("Network Error")
 
-                repository.createRecord(episodeId, workId) shouldBe false
+                shouldThrowExactly<RuntimeException> {
+                    repository.createRecord(episodeId, workId)
+                }
             }
         }
     }
@@ -163,8 +166,7 @@ class AnnictRepositoryImplTest : BehaviorSpec({
 
         `when`("認証中に例外が発生した場合") {
             then("falseを返す") {
-                coEvery { authManager.handleAuthorizationCode(code) } throws
-                    RuntimeException("Network error")
+                coEvery { authManager.handleAuthorizationCode(code) } throws RuntimeException("Network error")
                 repository.handleAuthCallback(code) shouldBe false
             }
         }
@@ -258,8 +260,6 @@ class AnnictRepositoryImplTest : BehaviorSpec({
     }
 
     given("AnnictRepositoryImpl の getRecords メソッド") {
-        "cursor123"
-
         `when`("アクセストークンがない場合") {
             then("空のPaginatedRecordsを返す") {
                 coEvery { tokenManager.getAccessToken() } returns null

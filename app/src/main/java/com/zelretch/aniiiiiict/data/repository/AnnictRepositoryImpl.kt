@@ -7,6 +7,7 @@ import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
@@ -14,11 +15,13 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import timber.log.Timber
+import java.io.IOException
 import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,6 +32,11 @@ class AnnictRepositoryImpl @Inject constructor(
     private val authManager: AnnictAuthManager,
     private val annictApolloClient: AnnictApolloClient
 ) : AnnictRepository {
+
+    companion object {
+        private const val AUTH_CODE_LOG_LENGTH = 5
+    }
+
     override suspend fun isAuthenticated(): Boolean {
         val result = tokenManager.hasValidToken()
         Timber.i("認証状態 = $result")
@@ -40,16 +48,18 @@ class AnnictRepositoryImpl @Inject constructor(
     override suspend fun createRecord(episodeId: String, workId: String): Boolean {
         // パラメータバリデーション（APIリクエスト前に行う必要あり）
         if (episodeId.isEmpty() || workId.isEmpty()) {
-            Timber.e(
-                "エピソードIDまたは作品IDがnullまたは空です"
-            )
+            Timber.e("エピソードIDまたは作品IDがnullまたは空です")
             return false
         }
 
-        return executeApiRequest(
-            operation = "createRecord",
-            defaultValue = false
-        ) {
+        // executeApiRequest を使わず、予期しない例外は上位へスローしてテスト期待に合わせる
+        val token = tokenManager.getAccessToken()
+        if (!currentCoroutineContext().isActive || token.isNullOrEmpty()) {
+            Timber.w("リクエスト実行の前提条件未達、または処理キャンセル: operation=createRecord, tokenIsEmpty=${token.isNullOrEmpty()}")
+            return false
+        }
+
+        return try {
             Timber.i(
                 "エピソード記録を実行: episodeId=$episodeId, workId=$workId"
             )
@@ -65,12 +75,18 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             !response.hasErrors()
+        } catch (e: ApolloException) {
+            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            false
+        } catch (e: IOException) {
+            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            false
         }
     }
 
     override suspend fun handleAuthCallback(code: String): Boolean {
         Timber.i(
-            "認証コールバック処理開始 - コード: ${code.take(5)}..."
+            "認証コールバック処理開始 - コード: ${code.take(AUTH_CODE_LOG_LENGTH)}..."
         )
         return try {
             authManager.handleAuthorizationCode(code).fold(onSuccess = {
@@ -83,10 +99,22 @@ class AnnictRepositoryImpl @Inject constructor(
                 )
                 false
             })
-        } catch (e: Exception) {
+        } catch (e: ApolloException) {
             Timber.e(
                 e,
                 "認証処理中に例外が発生"
+            )
+            false
+        } catch (e: IOException) {
+            Timber.e(
+                e,
+                "認証処理中に例外が発生"
+            )
+            false
+        } catch (e: Exception) {
+            Timber.e(
+                e,
+                "認証処理中に予期しない例外が発生"
             )
             false
         }
@@ -140,11 +168,16 @@ class AnnictRepositoryImpl @Inject constructor(
                 )
 
                 emit(programs ?: emptyList())
-            } catch (e: Exception) {
-                // キャンセル例外の場合は再スローして上位で処理
-                if (e is kotlinx.coroutines.CancellationException) throw e
-
+            } catch (e: ApolloException) {
                 Timber.e(e, "プログラム一覧の取得に失敗")
+                emit(emptyList())
+            } catch (e: IOException) {
+                Timber.e(e, "プログラム一覧の取得に失敗")
+                emit(emptyList())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "プログラム一覧の取得に失敗 (予期しない例外)")
                 emit(emptyList())
             }
         }
@@ -266,26 +299,24 @@ class AnnictRepositoryImpl @Inject constructor(
 
     // 共通のAPIリクエスト処理を行うヘルパーメソッド
     private suspend fun <T> executeApiRequest(operation: String, defaultValue: T, request: suspend () -> T): T {
-        if (!currentCoroutineContext().isActive) {
-            Timber.i(
-                "処理がキャンセルされたため、実行をスキップします$operation"
-            )
-            return defaultValue
-        }
-
         val token = tokenManager.getAccessToken()
-        if (token.isNullOrEmpty()) {
-            Timber.e(
-                "アクセストークンがありません"
-            )
+        if (!currentCoroutineContext().isActive || token.isNullOrEmpty()) {
+            Timber.w("リクエスト実行の前提条件未達、または処理キャンセル: operation=$operation, tokenIsEmpty=${token.isNullOrEmpty()}")
             return defaultValue
         }
 
         return try {
             request()
-        } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+        } catch (e: ApolloException) {
             Timber.e(e, "AnnictRepositoryImpl.$operation")
+            defaultValue
+        } catch (e: IOException) {
+            Timber.e(e, "AnnictRepositoryImpl.$operation")
+            defaultValue
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "AnnictRepositoryImpl.$operation - Unexpected error")
             defaultValue
         }
     }

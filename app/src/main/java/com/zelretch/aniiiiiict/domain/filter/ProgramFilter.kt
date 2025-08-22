@@ -5,6 +5,14 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import java.time.LocalDateTime
 
 class ProgramFilter {
+
+    companion object {
+        private const val SEASON_ORDER_WINTER = 0
+        private const val SEASON_ORDER_SPRING = 1
+        private const val SEASON_ORDER_SUMMER = 2
+        private const val SEASON_ORDER_AUTUMN = 3
+    }
+
     fun applyFilters(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> =
         programs.asSequence().filter { program ->
             applyMediaFilter(program, filterState)
@@ -20,19 +28,16 @@ class ProgramFilter {
         filterState.selectedMedia.isEmpty() || program.work.media in filterState.selectedMedia
 
     private fun applySeasonFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedSeason.isEmpty() ||
-            program.work.seasonName in filterState.selectedSeason
+        filterState.selectedSeason.isEmpty() || program.work.seasonName in filterState.selectedSeason
 
     private fun applyYearFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedYear.isEmpty() || program.work.seasonYear in filterState.selectedYear
 
     private fun applyChannelFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedChannel.isEmpty() ||
-            program.firstProgram.channel.name in filterState.selectedChannel
+        filterState.selectedChannel.isEmpty() || program.firstProgram.channel.name in filterState.selectedChannel
 
     private fun applyStatusFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
-        filterState.selectedStatus.isEmpty() ||
-            program.work.viewerStatusState in filterState.selectedStatus
+        filterState.selectedStatus.isEmpty() || program.work.viewerStatusState in filterState.selectedStatus
 
     private fun applySearchFilter(program: ProgramWithWork, filterState: FilterState): Boolean {
         if (filterState.searchQuery.isEmpty()) return true
@@ -55,10 +60,10 @@ class ProgramFilter {
 
         // シーズンの並び順を定義
         val seasonOrder = mapOf(
-            SeasonName.WINTER to 0,
-            SeasonName.SPRING to 1,
-            SeasonName.SUMMER to 2,
-            SeasonName.AUTUMN to 3
+            SeasonName.WINTER to SEASON_ORDER_WINTER,
+            SeasonName.SPRING to SEASON_ORDER_SPRING,
+            SeasonName.SUMMER to SEASON_ORDER_SUMMER,
+            SeasonName.AUTUMN to SEASON_ORDER_AUTUMN
         )
 
         // シーズンをカスタム順序でソート

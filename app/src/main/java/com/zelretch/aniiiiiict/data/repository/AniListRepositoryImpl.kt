@@ -5,6 +5,7 @@ import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,47 +14,33 @@ class AniListRepositoryImpl @Inject constructor(
     private val apolloClient: AniListApolloClient
 ) : AniListRepository {
     override suspend fun getMedia(mediaId: Int): Result<AniListMedia> {
-        return try {
-            val query = GetMediaQuery(
-                id = mediaId
-            )
+        return runCatching {
+            val query = GetMediaQuery(id = mediaId)
             val response = apolloClient.executeQuery(
                 operation = query,
                 context = "AniListRepositoryImpl.getMedia"
             )
 
-            if (response.hasErrors()) {
-                Timber.i("AniList GraphQLエラー: ${response.errors?.firstOrNull()?.message}")
-                return Result.failure(
-                    RuntimeException(
-                        response.errors?.firstOrNull()?.message ?: "Unknown AniList GraphQL error"
-                    )
-                )
-            }
-
-            val media = response.data?.Media
-            if (media == null) {
-                Timber.i("AniList Mediaデータがnullです")
-                return Result.failure(RuntimeException("AniList Media data is null"))
-            }
-
-            Result.success(
-                AniListMedia(
-                    id = media.id,
-                    format = media.format?.rawValue,
-                    episodes = media.episodes,
-                    status = media.status?.rawValue,
-                    nextAiringEpisode = media.nextAiringEpisode?.let {
-                        NextAiringEpisode(
-                            episode = it.episode,
-                            airingAt = it.airingAt
-                        )
-                    }
+            val media = response.data?.Media ?: return Result.failure(
+                IOException(
+                    response.errors?.firstOrNull()?.message ?: "Media data is null"
                 )
             )
-        } catch (e: Exception) {
+
+            AniListMedia(
+                id = media.id,
+                format = media.format?.rawValue,
+                episodes = media.episodes,
+                status = media.status?.rawValue,
+                nextAiringEpisode = media.nextAiringEpisode?.let {
+                    NextAiringEpisode(
+                        episode = it.episode,
+                        airingAt = it.airingAt
+                    )
+                }
+            )
+        }.onFailure { e ->
             Timber.e(e, "AniList Mediaの取得に失敗しました")
-            Result.failure(e)
         }
     }
 }

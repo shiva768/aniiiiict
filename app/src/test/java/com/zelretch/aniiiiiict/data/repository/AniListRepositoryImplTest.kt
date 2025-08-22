@@ -40,8 +40,7 @@ class AniListRepositoryImplTest : BehaviorSpec({
                     requestUuid = Uuid(1, 1)
                 ).data(expectedMedia).build()
 
-                coEvery { mockApolloClient.executeQuery(operation, any<String>()) } returns
-                    mockResponse
+                coEvery { mockApolloClient.executeQuery(operation, any<String>()) } returns mockResponse
 
                 val result = repository.getMedia(mediaId)
 

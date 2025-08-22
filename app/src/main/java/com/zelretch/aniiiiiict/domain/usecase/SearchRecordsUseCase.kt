@@ -8,12 +8,15 @@ class SearchRecordsUseCase @Inject constructor() {
         if (query.isBlank()) return records
 
         return records.filter { record ->
-            record.work.title.contains(query, ignoreCase = true) ||
-                record.episode.title?.contains(
-                    query,
-                    ignoreCase = true
-                ) == true ||
-                record.comment?.contains(query, ignoreCase = true) == true
+            val searchableFields = listOf(
+                record.work.title,
+                record.episode.title,
+                record.comment
+            )
+
+            searchableFields.any { field ->
+                field?.contains(query, ignoreCase = true) == true
+            }
         }
     }
 }

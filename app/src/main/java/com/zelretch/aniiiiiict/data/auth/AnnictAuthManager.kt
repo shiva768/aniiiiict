@@ -22,6 +22,12 @@ class AnnictAuthManager @Inject constructor(
     companion object {
         private const val REDIRECT_URI = "aniiiiiict://oauth/callback"
         private const val MAX_RETRIES = 3
+        private const val RETRY_INITIAL_DELAY_MS = 1000L
+        private const val RETRY_MAX_DELAY_MS = 5000L
+        private const val RETRY_FACTOR = 2.0
+        private const val LOG_CODE_PREFIX_LENGTH = 5
+        private const val LOG_TOKEN_PREFIX_LENGTH = 10
+        private const val LOG_RESPONSE_PREFIX_LENGTH = 50
     }
 
     fun getAuthorizationUrl(): String = buildString {
@@ -34,63 +40,73 @@ class AnnictAuthManager @Inject constructor(
 
     suspend fun handleAuthorizationCode(code: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            Timber.i("[AnnictAuthManager][handleAuthorizationCode] 認証コードの処理を開始: ${code.take(5)}...")
+            Timber.i(
+                "[AnnictAuthManager][handleAuthorizationCode] 認証コードの処理を開始: ${code.take(LOG_CODE_PREFIX_LENGTH)}..."
+            )
             val tokenResponse = getAccessTokenWithRetry(code)
             Timber.i(
-                "[AnnictAuthManager][handleAuthorizationCode] アクセストークンを取得: ${tokenResponse.accessToken.take(10)}..."
+                "[AnnictAuthManager][handleAuthorizationCode] アクセストークンを取得: ${
+                    tokenResponse.accessToken.take(
+                        LOG_TOKEN_PREFIX_LENGTH
+                    )
+                }..."
             )
             tokenManager.saveAccessToken(tokenResponse.accessToken)
             Result.success(Unit)
-        } catch (e: Exception) {
-            Timber.e(e, "[AnnictAuthManager][handleAuthorizationCode] %s", e.message ?: "Unknown error")
+        } catch (e: IOException) {
+            Timber.e(
+                e,
+                "[AnnictAuthManager][handleAuthorizationCode] %s",
+                e.message ?: "Unknown error"
+            )
             Result.failure(e)
         }
     }
 
-    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse = retryManager.retry(
-        maxAttempts = MAX_RETRIES,
-        initialDelay = 1000L,
-        maxDelay = 5000L,
-        factor = 2.0
-    ) {
-        getAccessToken(code)
+    private suspend fun getAccessTokenWithRetry(code: String): TokenResponse {
+        val retryConfig = com.zelretch.aniiiiiict.util.RetryConfig(
+            maxAttempts = MAX_RETRIES,
+            initialDelay = RETRY_INITIAL_DELAY_MS,
+            maxDelay = RETRY_MAX_DELAY_MS,
+            factor = RETRY_FACTOR
+        )
+        return retryManager.retry(config = retryConfig) {
+            getAccessToken(code)
+        }
     }
 
     private fun getAccessToken(code: String): TokenResponse {
-        val formBody = FormBody.Builder().add("client_id", BuildConfig.ANNICT_CLIENT_ID).add(
-            "client_secret",
-            BuildConfig.ANNICT_CLIENT_SECRET
-        ).add(
-            "grant_type",
-            "authorization_code"
-        ).add("redirect_uri", REDIRECT_URI).add("code", code).build()
+        val formBody = FormBody.Builder().add("client_id", BuildConfig.ANNICT_CLIENT_ID)
+            .add("client_secret", BuildConfig.ANNICT_CLIENT_SECRET).add("grant_type", "authorization_code")
+            .add("redirect_uri", REDIRECT_URI).add("code", code).build()
 
         Timber.i("[AnnictAuthManager][getAccessToken] トークンリクエストを送信")
 
         val request = Request.Builder().url(AnnictConfig.TOKEN_URL).post(formBody).build()
 
         return okHttpClient.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                val errorBody = response.body?.string() ?: "レスポンスボディなし"
+            val responseBody = response.body?.string()
+            if (!response.isSuccessful || responseBody.isNullOrEmpty()) {
+                val errorBody = responseBody ?: "レスポンスボディなし"
                 val error = IOException("トークンリクエスト失敗: ${response.code}, $errorBody")
                 Timber.e(error, "[AnnictAuthManager][getAccessToken] %s", error.message)
                 throw error
             }
 
-            val responseBody = response.body?.string()
-            if (responseBody.isNullOrEmpty()) {
-                val error = IOException("空のレスポンスボディ")
-                Timber.e(error, "[AnnictAuthManager][getAccessToken] %s", error.message)
-                throw error
-            }
+            Timber.i(
+                "[AnnictAuthManager][getAccessToken] トークンレスポンス受信: ${
+                    responseBody.take(
+                        LOG_RESPONSE_PREFIX_LENGTH
+                    )
+                }..."
+            )
 
-            Timber.i("[AnnictAuthManager][getAccessToken] トークンレスポンス受信: ${responseBody.take(50)}...")
-
-            try {
+            runCatching {
                 Gson().fromJson(responseBody, TokenResponse::class.java)
-            } catch (e: Exception) {
-                Timber.e(e, "[AnnictAuthManager][getAccessToken] %s", e.message ?: "Failed to parse token response")
-                throw IOException("Failed to parse token response: ${e.message}")
+            }.getOrElse { e ->
+                val error = IOException("トークンレスポンスのパースに失敗", e)
+                Timber.e(error, "[AnnictAuthManager][getAccessToken] %s", e.message)
+                throw error
             }
         }
     }

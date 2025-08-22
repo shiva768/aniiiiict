@@ -27,6 +27,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    private const val TIMEOUT_SECONDS = 30L
+
     @Provides
     @Singleton
     fun provideTokenManager(@ApplicationContext context: Context): TokenManager = TokenManager(context)
@@ -50,9 +53,9 @@ object AppModule {
             }
         }
     ).connectTimeout(
-        30,
+        TIMEOUT_SECONDS,
         TimeUnit.SECONDS
-    ).readTimeout(30, TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).build()
+    ).readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).build()
 
     @Provides
     @Singleton

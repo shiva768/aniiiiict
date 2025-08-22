@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 
 data class MainUiState(
@@ -33,6 +34,14 @@ class MainViewModel @Inject constructor(
     private val customTabsIntentFactory: CustomTabsIntentFactory,
     @ApplicationContext private val context: Context
 ) : BaseViewModel(), MainViewModelContract {
+
+    companion object {
+        private const val AUTH_URL_FETCH_DELAY_MS = 200L
+        private const val AUTH_CODE_LOG_LENGTH = 5
+        private const val AUTH_CALLBACK_DELAY_MS = 200L
+        private const val AUTH_SUCCESS_DELAY_MS = 300L
+    }
+
     // UI状態のカプセル化
     internal val internalUiState = MutableStateFlow(MainUiState())
     override val uiState: StateFlow<MainUiState> = internalUiState.asStateFlow()
@@ -65,7 +74,7 @@ class MainViewModel @Inject constructor(
                     Timber.i("認証されていないため、認証を開始します")
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Timber.e(e, "認証状態の確認中にエラーが発生")
                 internalUiState.update {
                     it.copy(
@@ -86,14 +95,14 @@ class MainViewModel @Inject constructor(
                 val authUrl = annictAuthUseCase.getAuthUrl()
                 Timber.i("認証URLを取得: $authUrl", "startAuth")
 
-                delay(200)
+                delay(AUTH_URL_FETCH_DELAY_MS)
 
                 if (!isActive) return@launch
 
                 // Custom Tabsを使用して認証ページを開く
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Timber.e(e, "認証URLの取得に失敗")
                 internalUiState.update {
                     it.copy(
@@ -111,22 +120,22 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 if (code != null) {
-                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(5)}...")
-                    delay(200)
+                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(AUTH_CODE_LOG_LENGTH)}...")
+                    delay(AUTH_CALLBACK_DELAY_MS)
 
                     if (!isActive) return@launch
 
                     val success = annictAuthUseCase.handleAuthCallback(code)
                     if (success) {
                         Timber.d("MainViewModel: 認証成功")
-                        delay(300)
+                        delay(AUTH_SUCCESS_DELAY_MS)
                         internalUiState.update {
                             it.copy(isAuthenticating = false, isAuthenticated = true)
                         }
                     } else {
                         Timber.w("認証が失敗しました")
                         Timber.d("MainViewModel: 認証失敗")
-                        delay(200)
+                        delay(AUTH_CALLBACK_DELAY_MS)
                         internalUiState.update {
                             it.copy(
                                 error = "認証に失敗しました。再度お試しください。",
@@ -138,7 +147,7 @@ class MainViewModel @Inject constructor(
                     }
                 } else {
                     Timber.w("認証コードがnullです")
-                    delay(200)
+                    delay(AUTH_CALLBACK_DELAY_MS)
                     internalUiState.update {
                         it.copy(
                             error = "認証に失敗しました。再度お試しください。",
@@ -147,9 +156,9 @@ class MainViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 Timber.e(e, "認証処理に失敗")
-                delay(200)
+                delay(AUTH_CALLBACK_DELAY_MS)
                 internalUiState.update {
                     it.copy(
                         error = e.message ?: "認証に失敗しました",
