@@ -102,6 +102,12 @@ class AnnictRepositoryImpl @Inject constructor(
                 "認証処理中に例外が発生"
             )
             false
+        } catch (e: Exception) {
+            Timber.e(
+                e,
+                "認証処理中に予期しない例外が発生"
+            )
+            false
         }
     }
 
@@ -158,6 +164,10 @@ class AnnictRepositoryImpl @Inject constructor(
                 emit(emptyList())
             } catch (e: IOException) {
                 Timber.e(e, "プログラム一覧の取得に失敗")
+                emit(emptyList())
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Timber.e(e, "プログラム一覧の取得に失敗 (予期しない例外)")
                 emit(emptyList())
             }
         }
@@ -292,6 +302,10 @@ class AnnictRepositoryImpl @Inject constructor(
             defaultValue
         } catch (e: IOException) {
             Timber.e(e, "AnnictRepositoryImpl.$operation")
+            defaultValue
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            Timber.e(e, "AnnictRepositoryImpl.$operation - Unexpected error")
             defaultValue
         }
     }

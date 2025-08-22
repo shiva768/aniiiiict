@@ -114,7 +114,7 @@ private fun TrackSnackbarHost(
         } else if (uiState.error != null) {
             Snackbar(modifier = Modifier.testTag("snackbar")) {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(uiState.error ?: "")
+                    Text(uiState.error)
                     Spacer(modifier = Modifier.weight(1f))
                     TextButton(onClick = onRefresh) { Text("再読み込み") }
                 }

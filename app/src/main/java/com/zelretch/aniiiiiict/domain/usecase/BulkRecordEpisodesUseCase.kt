@@ -35,6 +35,9 @@ class BulkRecordEpisodesUseCase @Inject constructor(
             Result.failure(e)
         } catch (e: IOException) {
             Result.failure(e)
+        } catch (e: Exception) {
+            // 予期しない例外も Result.failure で返す
+            Result.failure(e)
         }
     }
 }

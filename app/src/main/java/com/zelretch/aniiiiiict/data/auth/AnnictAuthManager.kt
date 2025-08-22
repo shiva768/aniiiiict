@@ -101,7 +101,7 @@ class AnnictAuthManager @Inject constructor(
                 }..."
             )
 
-            return runCatching {
+            runCatching {
                 Gson().fromJson(responseBody, TokenResponse::class.java)
             }.getOrElse { e ->
                 val error = IOException("トークンレスポンスのパースに失敗", e)

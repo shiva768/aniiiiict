@@ -62,6 +62,10 @@ abstract class BaseViewModel : ViewModel() {
             // エラーを設定
             Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
             updateErrorState(e.message ?: "処理中にエラーが発生しました")
+        } catch (e: Exception) {
+            // 予期しない例外もハンドリング
+            Timber.e(e, "[%s][ローディング処理中に予期しないエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
+            updateErrorState(e.message ?: "処理中にエラーが発生しました")
         } finally {
             // ローディング状態を終了
             if (loadingCounter.decrementAndGet() == 0) {

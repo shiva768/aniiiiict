@@ -260,8 +260,6 @@ class AnnictRepositoryImplTest : BehaviorSpec({
     }
 
     given("AnnictRepositoryImpl の getRecords メソッド") {
-        "cursor123"
-
         `when`("アクセストークンがない場合") {
             then("空のPaginatedRecordsを返す") {
                 coEvery { tokenManager.getAccessToken() } returns null
