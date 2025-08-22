@@ -113,7 +113,7 @@ class TrackViewModelTest : BehaviorSpec({
                             awaitItem() // 状態遷移1: ローディングやfilter反映
                             val errorState = awaitItem() // 状態遷移2: error反映
                             println("DEBUG: errorState = $errorState")
-                            errorState.error shouldBe "error"
+                            errorState.error shouldBe "処理中にエラーが発生しました"
                             errorState.isLoading shouldBe false
                         }
                     }

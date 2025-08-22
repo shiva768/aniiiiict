@@ -143,7 +143,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
                     // 最終的なUIStateを検証
                     viewModel.uiState.value.isLoading shouldBe false
-                    viewModel.uiState.value.error shouldBe "テストエラー"
+                    viewModel.uiState.value.error shouldBe "処理中にエラーが発生しました"
 
                     // リポジトリが呼ばれたことを検証
                     coVerify { annictRepository.getRawProgramsData() }
