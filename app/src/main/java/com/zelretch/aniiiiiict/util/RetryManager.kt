@@ -59,6 +59,7 @@ class RetryManager @Inject constructor() {
      * @param block リトライする処理
      * @return 処理の結果
      */
+    @Suppress("unused")
     suspend fun <T> retryWithTimeout(
         timeout: Long,
         timeUnit: TimeUnit = TimeUnit.SECONDS,

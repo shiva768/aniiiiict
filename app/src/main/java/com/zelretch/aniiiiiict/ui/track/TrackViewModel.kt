@@ -97,22 +97,20 @@ class TrackViewModel @Inject constructor(
     }
     // endregion
 
-    private fun loadingPrograms() {
-        executeWithLoading {
-            loadProgramsUseCase().collect { programs ->
-                _uiState.update { currentState ->
-                    val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
-                    val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
-                    currentState.copy(
-                        programs = filteredPrograms,
-                        availableMedia = availableFilters.media,
-                        availableSeasons = availableFilters.seasons,
-                        availableYears = availableFilters.years,
-                        availableChannels = availableFilters.channels,
-                        allPrograms = programs,
-                        error = null
-                    )
-                }
+    private fun loadingPrograms() = executeWithLoading {
+        loadProgramsUseCase().collect { programs ->
+            _uiState.update { currentState ->
+                val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
+                val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
+                currentState.copy(
+                    programs = filteredPrograms,
+                    availableMedia = availableFilters.media,
+                    availableSeasons = availableFilters.seasons,
+                    availableYears = availableFilters.years,
+                    availableChannels = availableFilters.channels,
+                    allPrograms = programs,
+                    error = null
+                )
             }
         }
     }
@@ -150,7 +148,9 @@ class TrackViewModel @Inject constructor(
                 _uiState.update { it.copy(recordingSuccess = null) }
             }
         }
-        loadingPrograms()
+        // プログラムの再読み込みが完了してから最終話判定を行う
+        val reloadJob = loadingPrograms()
+        reloadJob.join()
         handleFinaleJudgement(episodeId, workId)
     }
 

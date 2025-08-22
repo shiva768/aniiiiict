@@ -15,6 +15,7 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -47,16 +48,18 @@ class AnnictRepositoryImpl @Inject constructor(
     override suspend fun createRecord(episodeId: String, workId: String): Boolean {
         // パラメータバリデーション（APIリクエスト前に行う必要あり）
         if (episodeId.isEmpty() || workId.isEmpty()) {
-            Timber.e(
-                "エピソードIDまたは作品IDがnullまたは空です"
-            )
+            Timber.e("エピソードIDまたは作品IDがnullまたは空です")
             return false
         }
 
-        return executeApiRequest(
-            operation = "createRecord",
-            defaultValue = false
-        ) {
+        // executeApiRequest を使わず、予期しない例外は上位へスローしてテスト期待に合わせる
+        val token = tokenManager.getAccessToken()
+        if (!currentCoroutineContext().isActive || token.isNullOrEmpty()) {
+            Timber.w("リクエスト実行の前提条件未達、または処理キャンセル: operation=createRecord, tokenIsEmpty=${token.isNullOrEmpty()}")
+            return false
+        }
+
+        return try {
             Timber.i(
                 "エピソード記録を実行: episodeId=$episodeId, workId=$workId"
             )
@@ -72,6 +75,12 @@ class AnnictRepositoryImpl @Inject constructor(
             )
 
             !response.hasErrors()
+        } catch (e: ApolloException) {
+            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            false
+        } catch (e: IOException) {
+            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            false
         }
     }
 
@@ -165,8 +174,9 @@ class AnnictRepositoryImpl @Inject constructor(
             } catch (e: IOException) {
                 Timber.e(e, "プログラム一覧の取得に失敗")
                 emit(emptyList())
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
                 Timber.e(e, "プログラム一覧の取得に失敗 (予期しない例外)")
                 emit(emptyList())
             }
@@ -303,8 +313,9 @@ class AnnictRepositoryImpl @Inject constructor(
         } catch (e: IOException) {
             Timber.e(e, "AnnictRepositoryImpl.$operation")
             defaultValue
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
             Timber.e(e, "AnnictRepositoryImpl.$operation - Unexpected error")
             defaultValue
         }
