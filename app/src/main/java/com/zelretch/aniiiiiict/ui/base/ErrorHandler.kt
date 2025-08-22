@@ -78,11 +78,7 @@ object ErrorHandler {
     /**
      * エラーを処理し、ユーザー向けメッセージを返す
      */
-    fun handleError(
-        exception: Throwable,
-        className: String,
-        methodName: String? = null
-    ): String {
+    fun handleError(exception: Throwable, className: String, methodName: String? = null): String {
         val errorInfo = analyzeError(exception)
         logError(className, methodName, errorInfo)
         return getUserMessage(errorInfo)
