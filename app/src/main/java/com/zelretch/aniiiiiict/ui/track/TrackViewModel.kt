@@ -13,6 +13,7 @@ import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -125,11 +126,11 @@ class TrackViewModel @Inject constructor(
                     onRecordSuccess(episodeId, workId)
                 }.onFailure(::onRecordFailure)
             } catch (e: ApolloException) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
+                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "recordEpisode")
+                _uiState.update { it.copy(error = errorMessage, isRecording = false) }
             } catch (e: IOException) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
+                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "recordEpisode")
+                _uiState.update { it.copy(error = errorMessage, isRecording = false) }
             }
         }
     }
@@ -217,9 +218,11 @@ class TrackViewModel @Inject constructor(
                     _uiState.update { it.copy(error = e.message ?: "ステータスの更新に失敗しました") }
                 }
             } catch (e: ApolloException) {
-                handleError(e)
+                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "updateViewState")
+                _uiState.update { it.copy(error = errorMessage) }
             } catch (e: IOException) {
-                handleError(e)
+                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "updateViewState")
+                _uiState.update { it.copy(error = errorMessage) }
             }
         }
     }
@@ -243,11 +246,6 @@ class TrackViewModel @Inject constructor(
 
     override fun toggleFilterVisibility() {
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
-    }
-
-    private fun handleError(e: Throwable) {
-        Timber.e(e)
-        _uiState.update { it.copy(error = e.message) }
     }
 
     override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {

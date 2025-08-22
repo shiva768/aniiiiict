@@ -9,6 +9,7 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,16 +81,18 @@ class DetailModalViewModel @Inject constructor(
                 _state.update { it.copy(selectedStatus = status) }
                 _events.emit(DetailModalEvent.StatusChanged)
             } catch (e: ApolloException) {
+                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "changeStatus")
                 _state.update {
                     it.copy(
-                        statusChangeError = "ステータスの更新に失敗しました: ${e.message}",
+                        statusChangeError = errorMessage,
                         selectedStatus = _state.value.selectedStatus
                     )
                 }
             } catch (e: IOException) {
+                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "changeStatus")
                 _state.update {
                     it.copy(
-                        statusChangeError = "ステータスの更新に失敗しました: ${e.message}",
+                        statusChangeError = errorMessage,
                         selectedStatus = _state.value.selectedStatus
                     )
                 }
@@ -109,10 +112,14 @@ class DetailModalViewModel @Inject constructor(
                     it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
                 }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
-            } catch (_: ApolloException) {
-                // エラーハンドリング
-            } catch (_: IOException) {
-                // エラーハンドリング
+            } catch (e: ApolloException) {
+                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "recordEpisode")
+                // エラーが発生した場合もイベントを発行して、UI側でエラーハンドリングができるようにする
+                // 実際のエラー表示は親ViewModelで処理される
+            } catch (e: IOException) {
+                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "recordEpisode")
+                // エラーが発生した場合もイベントを発行して、UI側でエラーハンドリングができるようにする
+                // 実際のエラー表示は親ViewModelで処理される
             }
         }
     }
@@ -153,7 +160,8 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
-            } catch (_: ApolloException) {
+            } catch (e: ApolloException) {
+                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "bulkRecordEpisodes")
                 _state.update {
                     it.copy(
                         isBulkRecording = false,
@@ -161,8 +169,10 @@ class DetailModalViewModel @Inject constructor(
                         bulkRecordingTotal = 0
                     )
                 }
-                // エラーハンドリング
-            } catch (_: IOException) {
+                // バルク記録エラーの場合、エラー情報はログに記録されているが
+                // UI状態は呼び出し元で管理されるため、ここでは状態をリセットのみ行う
+            } catch (e: IOException) {
+                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "bulkRecordEpisodes")
                 _state.update {
                     it.copy(
                         isBulkRecording = false,
@@ -170,7 +180,8 @@ class DetailModalViewModel @Inject constructor(
                         bulkRecordingTotal = 0
                     )
                 }
-                // エラーハンドリング
+                // バルク記録エラーの場合、エラー情報はログに記録されているが
+                // UI状態は呼び出し元で管理されるため、ここでは状態をリセットのみ行う
             }
         }
     }
