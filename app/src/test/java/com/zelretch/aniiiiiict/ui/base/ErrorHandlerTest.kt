@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiiict.ui.base
 
+import com.apollographql.apollo.exception.ApolloException
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.io.IOException
@@ -19,6 +20,77 @@ class ErrorHandlerTest : BehaviorSpec({
             }
         }
 
+        `when`("タイムアウトエラーを解析する場合") {
+            then("適切なユーザーメッセージが設定される") {
+                val exception = IOException("Connection timeout")
+                val errorInfo = ErrorHandler.analyzeError(exception)
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.NETWORK
+                errorInfo.userMessage shouldBe "接続がタイムアウトしました。ネットワーク接続を確認してください"
+            }
+        }
+
+        `when`("ApolloExceptionを解析する場合") {
+            then("APIエラーとして分類される") {
+                val exception = ApolloException("Server error")
+                val errorInfo = ErrorHandler.analyzeError(exception)
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.API
+                errorInfo.message shouldBe "Server error"
+                errorInfo.originalException shouldBe exception
+            }
+        }
+
+        `when`("401エラーを解析する場合") {
+            then("認証エラーメッセージが設定される") {
+                val exception = ApolloException("401 Unauthorized")
+                val errorInfo = ErrorHandler.analyzeError(exception)
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.API
+                errorInfo.userMessage shouldBe "認証が必要です。再度ログインしてください"
+            }
+        }
+
+        `when`("429エラーを解析する場合") {
+            then("レート制限エラーメッセージが設定される") {
+                val exception = ApolloException("429 Too Many Requests")
+                val errorInfo = ErrorHandler.analyzeError(exception)
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.API
+                errorInfo.userMessage shouldBe "リクエストが多すぎます。しばらく時間をおいてからお試しください"
+            }
+        }
+
+        `when`("認証関連エラーを解析する場合") {
+            then("認証エラーとして分類される") {
+                val exception = RuntimeException("Token expired")
+                val errorInfo = ErrorHandler.analyzeError(exception)
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.AUTH
+                errorInfo.userMessage shouldBe "認証に失敗しました。再度ログインしてください"
+            }
+        }
+
+        `when`("記録作成失敗エラーを解析する場合") {
+            then("ビジネスロジックエラーとして分類される") {
+                val exception = Exception("Record creation failed")
+                val errorInfo = ErrorHandler.analyzeError(exception)
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.BUSINESS
+                errorInfo.userMessage shouldBe "エピソードの記録に失敗しました。しばらく時間をおいてからお試しください"
+            }
+        }
+
+        `when`("TokenManagerのコンテキストでエラーを解析する場合") {
+            then("認証エラーとして分類される") {
+                val exception = RuntimeException("Save failed")
+                val errorInfo = ErrorHandler.analyzeError(exception, "TokenManager.saveAccessToken")
+
+                errorInfo.type shouldBe ErrorHandler.ErrorType.AUTH
+                errorInfo.userMessage shouldBe "認証情報の保存に失敗しました。アプリを再起動してください"
+            }
+        }
+
         `when`("不明な例外を解析する場合") {
             then("不明エラーとして分類される") {
                 val exception = RuntimeException("Unknown error")
@@ -30,41 +102,52 @@ class ErrorHandlerTest : BehaviorSpec({
             }
         }
 
-        `when`("メッセージがnullの例外を解析する場合") {
-            then("デフォルトメッセージが使用される") {
-                val exception = IOException(null as String?)
-                val errorInfo = ErrorHandler.analyzeError(exception)
-
-                errorInfo.type shouldBe ErrorHandler.ErrorType.NETWORK
-                errorInfo.message shouldBe "ネットワークエラーが発生しました"
-            }
-        }
-
         `when`("ユーザー向けメッセージを取得する場合") {
-            then("エラータイプに応じた適切なメッセージが返される") {
-                val networkError = ErrorHandler.ErrorInfo(
+            then("カスタムメッセージまたはデフォルトメッセージが返される") {
+                val networkErrorWithCustom = ErrorHandler.ErrorInfo(
+                    ErrorHandler.ErrorType.NETWORK,
+                    "Connection failed",
+                    IOException(),
+                    "カスタムネットワークエラー"
+                )
+                val networkErrorWithoutCustom = ErrorHandler.ErrorInfo(
                     ErrorHandler.ErrorType.NETWORK,
                     "Connection failed",
                     IOException()
                 )
-                val unknownError = ErrorHandler.ErrorInfo(
-                    ErrorHandler.ErrorType.UNKNOWN,
-                    "Unknown",
+                val authError = ErrorHandler.ErrorInfo(
+                    ErrorHandler.ErrorType.AUTH,
+                    "Auth failed",
                     RuntimeException()
                 )
 
-                ErrorHandler.getUserMessage(networkError) shouldBe "ネットワーク接続を確認してください"
-                ErrorHandler.getUserMessage(unknownError) shouldBe "処理中にエラーが発生しました"
+                ErrorHandler.getUserMessage(networkErrorWithCustom) shouldBe "カスタムネットワークエラー"
+                ErrorHandler.getUserMessage(networkErrorWithoutCustom) shouldBe "ネットワーク接続を確認してください"
+                ErrorHandler.getUserMessage(authError) shouldBe "認証に失敗しました。再度ログインしてください"
             }
         }
 
         `when`("handleErrorメソッドを使用する場合") {
             then("適切なエラーメッセージが返される") {
                 val ioException = IOException("Network error")
-                val runtimeException = RuntimeException("Unknown error")
+                val authException = RuntimeException("Token error")
+                val businessException = Exception("Record creation failed")
 
-                ErrorHandler.handleError(ioException, "TestClass", "testMethod") shouldBe "ネットワーク接続を確認してください"
-                ErrorHandler.handleError(runtimeException, "TestClass", "testMethod") shouldBe "処理中にエラーが発生しました"
+                ErrorHandler.handleError(
+                    ioException,
+                    "TestClass",
+                    "testMethod"
+                ) shouldBe "ネットワーク接続を確認してください"
+                ErrorHandler.handleError(
+                    authException,
+                    "TestClass",
+                    "testMethod"
+                ) shouldBe "認証に失敗しました。再度ログインしてください"
+                ErrorHandler.handleError(
+                    businessException,
+                    "TestClass",
+                    "testMethod"
+                ) shouldBe "エピソードの記録に失敗しました。しばらく時間をおいてからお試しください"
             }
         }
     }
