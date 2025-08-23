@@ -3,7 +3,6 @@ package com.zelretch.aniiiiiict.util
 import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
-import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject

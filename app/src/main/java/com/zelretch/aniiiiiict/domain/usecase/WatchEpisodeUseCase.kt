@@ -21,7 +21,9 @@ class WatchEpisodeUseCase @Inject constructor(
             // エピソードの視聴を記録
             val recordSuccess = repository.createRecord(episodeId, workId)
             if (!recordSuccess) {
-                return Result.failure(Exception(ErrorHandler.getUserMessage(ErrorHandler.analyzeError(Exception()))))
+                val recordException = Exception("Record creation failed")
+                val errorMessage = ErrorHandler.handleError(recordException, "WatchEpisodeUseCase", "invoke")
+                return Result.failure(Exception(errorMessage))
             }
 
             // ステータス更新が必要な場合のみ更新
