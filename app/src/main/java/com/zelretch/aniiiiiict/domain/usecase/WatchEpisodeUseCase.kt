@@ -3,6 +3,7 @@ package com.zelretch.aniiiiiict.domain.usecase
 import com.annict.type.StatusState
 import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import java.io.IOException
 import javax.inject.Inject
 
@@ -20,7 +21,7 @@ class WatchEpisodeUseCase @Inject constructor(
             // エピソードの視聴を記録
             val recordSuccess = repository.createRecord(episodeId, workId)
             if (!recordSuccess) {
-                return Result.failure(Exception("エピソードの記録に失敗しました"))
+                return Result.failure(Exception(ErrorHandler.getUserMessage(ErrorHandler.analyzeError(Exception()))))
             }
 
             // ステータス更新が必要な場合のみ更新
@@ -30,9 +31,9 @@ class WatchEpisodeUseCase @Inject constructor(
 
             Result.success(Unit)
         } catch (e: ApolloException) {
-            Result.failure(e)
+            Result.failure(Exception(ErrorHandler.handleError(e, "WatchEpisodeUseCase", "invoke")))
         } catch (e: IOException) {
-            Result.failure(e)
+            Result.failure(Exception(ErrorHandler.handleError(e, "WatchEpisodeUseCase", "invoke")))
         }
     }
 }

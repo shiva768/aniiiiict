@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiiict.util
 
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import timber.log.Timber
@@ -35,7 +36,7 @@ class RetryManager @Inject constructor() {
                 return block()
             } catch (e: IOException) {
                 lastException = e
-                Timber.e(e, "[RetryManager][retry] リトライ失敗 (${attempt + 1}/${config.maxAttempts}): %s", e.message)
+                ErrorHandler.handleError(e, "RetryManager", "retry")
 
                 // 最後の試行でない場合のみ待機
                 if (attempt < config.maxAttempts - 1) {
@@ -47,7 +48,7 @@ class RetryManager @Inject constructor() {
         }
 
         // すべてのリトライが失敗した場合
-        throw lastException ?: error("リトライが失敗しました")
+        throw lastException ?: error(ErrorHandler.getUserMessage(ErrorHandler.analyzeError(Exception("リトライ操作"))))
     }
 
     /**
