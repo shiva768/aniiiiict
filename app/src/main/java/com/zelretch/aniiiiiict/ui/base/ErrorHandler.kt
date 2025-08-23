@@ -38,52 +38,55 @@ object ErrorHandler {
         val message = exception.message ?: ""
 
         return when {
-            exception is IOException -> createErrorInfo(
-                type = ErrorType.NETWORK,
-                exception = exception,
-                message = message,
-                userMessage = when {
-                    message.contains("timeout", ignoreCase = true) ->
-                        "接続がタイムアウトしました。ネットワーク接続を確認してください"
-                    message.contains("connection", ignoreCase = true) ->
-                        "ネットワーク接続を確認してください"
-                    else -> "ネットワーク接続を確認してください"
-                }
-            )
-            exception is ApolloException -> createErrorInfo(
-                type = ErrorType.API,
-                exception = exception,
-                message = message,
-                userMessage = getApiErrorMessage(message)
-            )
-            isAuthError(message, context) -> createErrorInfo(
-                type = ErrorType.AUTH,
-                exception = exception,
-                message = message,
-                userMessage = when {
-                    message.contains("saveAccessToken") ||
-                        message.contains("TokenManager") ->
-                        "認証情報の保存に失敗しました。アプリを再起動してください"
-                    else -> "認証に失敗しました。再度ログインしてください"
-                }
-            )
-            isBusinessError(message) -> createErrorInfo(
-                type = ErrorType.BUSINESS,
-                exception = exception,
-                message = message,
-                userMessage = when {
-                    message.contains("Record creation failed") ->
-                        "エピソードの記録に失敗しました。しばらく時間をおいてからお試しください"
-                    else -> "処理に失敗しました。しばらく時間をおいてからお試しください"
-                }
-            )
-            else -> createErrorInfo(
-                type = ErrorType.UNKNOWN,
-                exception = exception,
-                message = message,
-                userMessage = "処理中にエラーが発生しました"
-            )
+            exception is IOException -> createNetworkErrorInfo(exception, message)
+            exception is ApolloException -> createApiErrorInfo(exception, message)
+            // 認証エラーの判定を直接組み込み
+            message.contains("token", ignoreCase = true) ||
+                message.contains("auth", ignoreCase = true) ||
+                context?.contains("saveAccessToken") == true ||
+                context?.contains("TokenManager") == true ->
+                createAuthErrorInfo(exception, message, context)
+            // ビジネスエラーの判定を直接組み込み
+            message.contains("Record creation failed") ||
+                message.contains("retry", ignoreCase = true) ->
+                createBusinessErrorInfo(exception, message)
+            else -> createErrorInfo(ErrorType.UNKNOWN, exception, message, "処理中にエラーが発生しました")
         }
+    }
+
+    private fun createNetworkErrorInfo(exception: IOException, message: String): ErrorInfo {
+        val userMessage = when {
+            message.contains("timeout", ignoreCase = true) ->
+                "接続がタイムアウトしました。ネットワーク接続を確認してください"
+            message.contains("connection", ignoreCase = true) ->
+                "ネットワーク接続を確認してください"
+            else -> "ネットワーク接続を確認してください"
+        }
+        return createErrorInfo(ErrorType.NETWORK, exception, message, userMessage)
+    }
+
+    private fun createApiErrorInfo(exception: ApolloException, message: String): ErrorInfo =
+        createErrorInfo(ErrorType.API, exception, message, getApiErrorMessage(message))
+
+    private fun createAuthErrorInfo(exception: Throwable, message: String, context: String?): ErrorInfo {
+        val userMessage = when {
+            message.contains("saveAccessToken") ||
+                message.contains("TokenManager") ||
+                context?.contains("saveAccessToken") == true ||
+                context?.contains("TokenManager") == true ->
+                "認証情報の保存に失敗しました。アプリを再起動してください"
+            else -> "認証に失敗しました。再度ログインしてください"
+        }
+        return createErrorInfo(ErrorType.AUTH, exception, message, userMessage)
+    }
+
+    private fun createBusinessErrorInfo(exception: Throwable, message: String): ErrorInfo {
+        val userMessage = when {
+            message.contains("Record creation failed") ->
+                "エピソードの記録に失敗しました。しばらく時間をおいてからお試しください"
+            else -> "処理に失敗しました。しばらく時間をおいてからお試しください"
+        }
+        return createErrorInfo(ErrorType.BUSINESS, exception, message, userMessage)
     }
 
     private fun createErrorInfo(
@@ -119,15 +122,6 @@ object ErrorHandler {
             "サービスが一時的に利用できません。しばらく時間をおいてからお試しください"
         else -> "サーバーとの通信に失敗しました"
     }
-
-    private fun isAuthError(message: String, context: String?): Boolean =
-        message.contains("token", ignoreCase = true) ||
-            message.contains("auth", ignoreCase = true) ||
-            context?.contains("saveAccessToken") == true ||
-            context?.contains("TokenManager") == true
-
-    private fun isBusinessError(message: String): Boolean = message.contains("Record creation failed") ||
-        message.contains("retry", ignoreCase = true)
 
     /**
      * エラーをログに出力する

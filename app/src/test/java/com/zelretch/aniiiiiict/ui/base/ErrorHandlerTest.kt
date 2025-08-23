@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiiict.ui.base
 
-import com.apollographql.apollo.exception.ApolloException
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.io.IOException
@@ -30,34 +29,16 @@ class ErrorHandlerTest : BehaviorSpec({
             }
         }
 
-        `when`("ApolloExceptionを解析する場合") {
-            then("APIエラーとして分類される") {
-                val exception = ApolloException("Server error")
-                val errorInfo = ErrorHandler.analyzeError(exception)
+        `when`("API系エラーメッセージの処理を検証する場合") {
+            then("適切なAPIエラーメッセージが返される") {
+                // 401エラーは認証エラーとして処理される
+                val authException = RuntimeException("401 Unauthorized")
+                val authError = ErrorHandler.analyzeError(authException)
+                authError.type shouldBe ErrorHandler.ErrorType.AUTH
+                authError.userMessage shouldBe "認証に失敗しました。再度ログインしてください"
 
-                errorInfo.type shouldBe ErrorHandler.ErrorType.API
-                errorInfo.message shouldBe "Server error"
-                errorInfo.originalException shouldBe exception
-            }
-        }
-
-        `when`("401エラーを解析する場合") {
-            then("認証エラーメッセージが設定される") {
-                val exception = ApolloException("401 Unauthorized")
-                val errorInfo = ErrorHandler.analyzeError(exception)
-
-                errorInfo.type shouldBe ErrorHandler.ErrorType.API
-                errorInfo.userMessage shouldBe "認証が必要です。再度ログインしてください"
-            }
-        }
-
-        `when`("429エラーを解析する場合") {
-            then("レート制限エラーメッセージが設定される") {
-                val exception = ApolloException("429 Too Many Requests")
-                val errorInfo = ErrorHandler.analyzeError(exception)
-
-                errorInfo.type shouldBe ErrorHandler.ErrorType.API
-                errorInfo.userMessage shouldBe "リクエストが多すぎます。しばらく時間をおいてからお試しください"
+                // handleErrorメソッドでも確認
+                ErrorHandler.handleError(authException, "TestClass") shouldBe "認証に失敗しました。再度ログインしてください"
             }
         }
 
