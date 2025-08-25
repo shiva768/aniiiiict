@@ -9,8 +9,7 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
-val annictClientSecret =
-    providers.environmentVariable("ANNICT_CLIENT_SECRET").orNull
+val annictClientSecret = providers.environmentVariable("ANNICT_CLIENT_SECRET")
 val isCi = providers.environmentVariable("CI").isPresent
 val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ignoreCase = true) } &&
     gradle.startParameter.taskNames.none {
@@ -18,15 +17,23 @@ val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ign
             it.contains("bundle", ignoreCase = true)
     }
 
-// assemble/bundle の時だけ必須にする（Release は常に必須、Debug は CI のときだけ必須）
-tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") }.configureEach {
+// Configuration Cache対応のためにタスクを個別に設定
+tasks.withType<Task>().matching {
+    it.name.startsWith("assemble") || it.name.startsWith("bundle")
+}.configureEach {
+    val taskAnnictSecret = annictClientSecret
+    val taskIsCi = isCi
+    val taskIsCheckOnly = isCheckOnly
+
     doFirst {
         val isRelease = name.contains("Release", ignoreCase = true)
         val isDebug = name.contains("Debug", ignoreCase = true)
-        val requireSecret = !isCheckOnly && (isRelease || (isDebug && isCi))
-        if (requireSecret && annictClientSecret.isNullOrEmpty()) {
+        val requireSecret = !taskIsCheckOnly && (isRelease || (isDebug && taskIsCi))
+        val secretValue = taskAnnictSecret.orNull
+
+        if (requireSecret && secretValue.isNullOrEmpty()) {
             throw GradleException(
-                "ANNICT_CLIENT_SECRET (or -PannictClientSecret) is required for " +
+                "ANNICT_CLIENT_SECRET environment variable is required for " +
                     (if (isRelease) "Release" else "CI Debug") + " builds"
             )
         }
@@ -66,7 +73,7 @@ android {
         buildConfigField(
             "String",
             "ANNICT_CLIENT_SECRET",
-            "\"${annictClientSecret ?: ""}\""
+            "\"${annictClientSecret.orElse("").get()}\""
         )
 
         // DEBUGフラグを手動で設定
