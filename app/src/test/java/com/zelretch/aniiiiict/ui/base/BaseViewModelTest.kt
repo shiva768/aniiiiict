@@ -7,8 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -233,18 +231,18 @@ private class TestableBaseViewModel : BaseViewModel() {
         override val error: String? = null
     ) : BaseUiState(isLoading, error)
 
-    private val _uiState = MutableStateFlow(TestUiState())
+    private val uiState = MutableStateFlow(TestUiState())
 
     // テスト用のアクセサ
-    val loadingState: Boolean get() = _uiState.value.isLoading
-    val errorState: String? get() = _uiState.value.error
+    val loadingState: Boolean get() = uiState.value.isLoading
+    val errorState: String? get() = uiState.value.error
 
     override fun updateLoadingState(isLoading: Boolean) {
-        _uiState.value = _uiState.value.copy(isLoading = isLoading)
+        uiState.value = uiState.value.copy(isLoading = isLoading)
     }
 
     override fun updateErrorState(error: String?) {
-        _uiState.value = _uiState.value.copy(error = error)
+        uiState.value = uiState.value.copy(error = error)
     }
 
     // テスト用のpublicメソッド
