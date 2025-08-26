@@ -1,10 +1,8 @@
 package com.zelretch.aniiiiiict.domain.usecase
 
 import com.annict.type.StatusState
-import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiiict.ui.base.ErrorHandler
-import java.io.IOException
 import javax.inject.Inject
 
 class WatchEpisodeUseCase @Inject constructor(
@@ -16,26 +14,20 @@ class WatchEpisodeUseCase @Inject constructor(
         workId: String,
         currentStatus: StatusState,
         shouldUpdateStatus: Boolean = true
-    ): Result<Unit> {
-        return try {
-            // エピソードの視聴を記録
-            val recordSuccess = repository.createRecord(episodeId, workId)
-            if (!recordSuccess) {
-                val recordException = Exception("Record creation failed")
-                val errorMessage = ErrorHandler.handleError(recordException, "WatchEpisodeUseCase", "invoke")
-                return Result.failure(Exception(errorMessage))
-            }
+    ): Result<Unit> = runCatching {
+        // episodeId が空のときは記録をスキップし、ステータス更新のみ行う（ViewModel の既存呼び出しに対応）
+        val recordSuccess = if (episodeId.isBlank()) true else repository.createRecord(episodeId, workId)
+        if (!recordSuccess) error("Record creation failed")
 
-            // ステータス更新が必要な場合のみ更新
-            if (shouldUpdateStatus && currentStatus == StatusState.WANNA_WATCH) {
-                updateViewStateUseCase(workId, StatusState.WATCHING)
-            }
-
-            Result.success(Unit)
-        } catch (e: ApolloException) {
-            Result.failure(Exception(ErrorHandler.handleError(e, "WatchEpisodeUseCase", "invoke")))
-        } catch (e: IOException) {
-            Result.failure(Exception(ErrorHandler.handleError(e, "WatchEpisodeUseCase", "invoke")))
+        // ステータス更新が必要な場合のみ更新
+        if (shouldUpdateStatus && currentStatus == StatusState.WANNA_WATCH) {
+            updateViewStateUseCase(workId, StatusState.WATCHING).getOrThrow()
         }
-    }
+    }.fold(
+        onSuccess = { Result.success(Unit) },
+        onFailure = { e ->
+            val msg = ErrorHandler.handleError(e, "WatchEpisodeUseCase", "invoke")
+            Result.failure(Exception(msg))
+        }
+    )
 }

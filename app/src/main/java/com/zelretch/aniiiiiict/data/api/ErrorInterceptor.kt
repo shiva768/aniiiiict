@@ -28,7 +28,7 @@ class ErrorInterceptor : Interceptor {
                     // peekBody は OkHttp 4.9+ で利用可能。大きすぎる場合は先頭だけ。
                     response.peekBody(1024 * 8).string()
                 } catch (e: Exception) {
-                    null
+                    throw e
                 }
                 val message = "HTTP $code for $url"
                 response.close()

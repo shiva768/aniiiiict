@@ -3,7 +3,6 @@ package com.zelretch.aniiiiiict.ui.track
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.IOException
 import javax.inject.Inject
 
 data class TrackUiState(
@@ -119,18 +117,13 @@ class TrackViewModel @Inject constructor(
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         (externalScope ?: viewModelScope).launch {
             _uiState.update { it.copy(isRecording = true) }
-            try {
-                runCatching {
-                    watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
-                }.onSuccess {
-                    onRecordSuccess(episodeId, workId)
-                }.onFailure(::onRecordFailure)
-            } catch (e: ApolloException) {
-                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "recordEpisode")
-                _uiState.update { it.copy(error = errorMessage, isRecording = false) }
-            } catch (e: IOException) {
-                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "recordEpisode")
-                _uiState.update { it.copy(error = errorMessage, isRecording = false) }
+            runCatching {
+                watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
+            }.onSuccess {
+                onRecordSuccess(episodeId, workId)
+            }.onFailure { e ->
+                val msg = ErrorHandler.handleError(e, "TrackViewModel", "recordEpisode")
+                _uiState.update { it.copy(error = msg, isRecording = false) }
             }
         }
     }
@@ -187,12 +180,18 @@ class TrackViewModel @Inject constructor(
     fun confirmWatchedStatus() {
         _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
             (externalScope ?: viewModelScope).launch {
-                updateViewState(workId, StatusState.WATCHED)
-                _uiState.update {
-                    it.copy(
-                        showFinaleConfirmationForWorkId = null,
-                        showFinaleConfirmationForEpisodeNumber = null
-                    )
+                runCatching {
+                    watchEpisodeUseCase("", workId, StatusState.WATCHED, true).getOrThrow()
+                }.onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            showFinaleConfirmationForWorkId = null,
+                            showFinaleConfirmationForEpisodeNumber = null
+                        )
+                    }
+                }.onFailure { e ->
+                    val msg = ErrorHandler.handleError(e, "TrackViewModel", "confirmWatchedStatus")
+                    _uiState.update { it.copy(error = msg) }
                 }
             }
         }
@@ -209,20 +208,13 @@ class TrackViewModel @Inject constructor(
 
     fun updateViewState(workId: String, status: StatusState) {
         (externalScope ?: viewModelScope).launch {
-            try {
-                runCatching {
-                    watchEpisodeUseCase("", workId, status, true).getOrThrow()
-                }.onSuccess {
-                    _uiState.update { it.copy(error = null) }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "ステータスの更新に失敗しました") }
-                }
-            } catch (e: ApolloException) {
-                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "updateViewState")
-                _uiState.update { it.copy(error = errorMessage) }
-            } catch (e: IOException) {
-                val errorMessage = ErrorHandler.handleError(e, "TrackViewModel", "updateViewState")
-                _uiState.update { it.copy(error = errorMessage) }
+            runCatching {
+                watchEpisodeUseCase("", workId, status, true).getOrThrow()
+            }.onSuccess {
+                _uiState.update { it.copy(error = null) }
+            }.onFailure { e ->
+                val msg = ErrorHandler.handleError(e, "TrackViewModel", "updateViewState")
+                _uiState.update { it.copy(error = msg) }
             }
         }
     }
