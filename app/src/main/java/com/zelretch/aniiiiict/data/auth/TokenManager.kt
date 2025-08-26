@@ -2,7 +2,6 @@ package com.zelretch.aniiiiict.data.auth
 
 import android.content.Context
 import androidx.core.content.edit
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,20 +16,13 @@ class TokenManager @Inject constructor(context: Context) {
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    @Suppress("TooGenericExceptionCaught")
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
             Timber.e("[TokenManager][saveAccessToken] 空のトークンを保存しようとしました")
             return
         }
-
         Timber.i("[TokenManager][saveAccessToken] アクセストークンを保存: ${token.take(TOKEN_LOG_LENGTH)}...")
-
-        try {
-            prefs.edit { putString(TOKEN_KEY, token) }
-        } catch (e: RuntimeException) {
-            ErrorHandler.handleError(e, "TokenManager", "saveAccessToken")
-        }
+        prefs.edit { putString(TOKEN_KEY, token) }
     }
 
     fun getAccessToken(): String? {
