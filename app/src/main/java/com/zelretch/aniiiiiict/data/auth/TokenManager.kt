@@ -2,6 +2,7 @@ package com.zelretch.aniiiiiict.data.auth
 
 import android.content.Context
 import androidx.core.content.edit
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +29,7 @@ class TokenManager @Inject constructor(context: Context) {
         try {
             prefs.edit { putString(TOKEN_KEY, token) }
         } catch (e: RuntimeException) {
-            Timber.e(e, "[TokenManager][saveAccessToken] アクセストークンの保存に失敗")
+            ErrorHandler.handleError(e, "TokenManager", "saveAccessToken")
         }
     }
 
@@ -48,7 +49,7 @@ class TokenManager @Inject constructor(context: Context) {
             prefs.edit { remove(TOKEN_KEY) }
             Timber.i("[TokenManager][clearAccessToken] アクセストークンを削除")
         } catch (e: RuntimeException) {
-            Timber.e(e, "[TokenManager][clearAccessToken] アクセストークンの削除に失敗")
+            ErrorHandler.handleError(e, "TokenManager", "clearAccessToken")
         }
     }
 

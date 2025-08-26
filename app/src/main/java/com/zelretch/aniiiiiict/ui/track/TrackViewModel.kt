@@ -3,7 +3,6 @@ package com.zelretch.aniiiiiict.ui.track
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.domain.filter.FilterState
@@ -13,6 +12,7 @@ import com.zelretch.aniiiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.IOException
 import javax.inject.Inject
 
 data class TrackUiState(
@@ -118,18 +117,15 @@ class TrackViewModel @Inject constructor(
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         (externalScope ?: viewModelScope).launch {
             _uiState.update { it.copy(isRecording = true) }
-            try {
-                runCatching {
-                    watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
-                }.onSuccess {
-                    onRecordSuccess(episodeId, workId)
-                }.onFailure(::onRecordFailure)
-            } catch (e: ApolloException) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
-            } catch (e: IOException) {
-                handleError(e)
-                _uiState.update { it.copy(isRecording = false) }
+            runCatching {
+                watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
+            }.onSuccess {
+                onRecordSuccess(episodeId, workId)
+            }.onFailure { e ->
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "TrackViewModel.recordEpisode")
+                )
+                _uiState.update { it.copy(error = msg, isRecording = false) }
             }
         }
     }
@@ -186,12 +182,20 @@ class TrackViewModel @Inject constructor(
     fun confirmWatchedStatus() {
         _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
             (externalScope ?: viewModelScope).launch {
-                updateViewState(workId, StatusState.WATCHED)
-                _uiState.update {
-                    it.copy(
-                        showFinaleConfirmationForWorkId = null,
-                        showFinaleConfirmationForEpisodeNumber = null
+                runCatching {
+                    watchEpisodeUseCase("", workId, StatusState.WATCHED, true).getOrThrow()
+                }.onSuccess {
+                    _uiState.update {
+                        it.copy(
+                            showFinaleConfirmationForWorkId = null,
+                            showFinaleConfirmationForEpisodeNumber = null
+                        )
+                    }
+                }.onFailure { e ->
+                    val msg = e.message ?: ErrorHandler.getUserMessage(
+                        ErrorHandler.analyzeError(e, "TrackViewModel.confirmWatchedStatus")
                     )
+                    _uiState.update { it.copy(error = msg) }
                 }
             }
         }
@@ -208,18 +212,15 @@ class TrackViewModel @Inject constructor(
 
     fun updateViewState(workId: String, status: StatusState) {
         (externalScope ?: viewModelScope).launch {
-            try {
-                runCatching {
-                    watchEpisodeUseCase("", workId, status, true).getOrThrow()
-                }.onSuccess {
-                    _uiState.update { it.copy(error = null) }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "ステータスの更新に失敗しました") }
-                }
-            } catch (e: ApolloException) {
-                handleError(e)
-            } catch (e: IOException) {
-                handleError(e)
+            runCatching {
+                watchEpisodeUseCase("", workId, status, true).getOrThrow()
+            }.onSuccess {
+                _uiState.update { it.copy(error = null) }
+            }.onFailure { e ->
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "TrackViewModel.updateViewState")
+                )
+                _uiState.update { it.copy(error = msg) }
             }
         }
     }
@@ -243,11 +244,6 @@ class TrackViewModel @Inject constructor(
 
     override fun toggleFilterVisibility() {
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
-    }
-
-    private fun handleError(e: Throwable) {
-        Timber.e(e)
-        _uiState.update { it.copy(error = e.message) }
     }
 
     override fun watchEpisode(program: ProgramWithWork, episodeNumber: Int) {

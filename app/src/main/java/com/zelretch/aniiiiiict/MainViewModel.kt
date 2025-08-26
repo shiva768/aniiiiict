@@ -8,6 +8,7 @@ import com.zelretch.aniiiiiict.ui.MainViewModelContract
 import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -75,10 +76,12 @@ class MainViewModel @Inject constructor(
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: IOException) {
-                Timber.e(e, "認証状態の確認中にエラーが発生")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "MainViewModel.checkAuthState")
+                )
                 internalUiState.update {
                     it.copy(
-                        error = e.message ?: "認証状態の確認に失敗しました",
+                        error = msg,
                         isLoading = false
                     )
                 }
@@ -103,10 +106,12 @@ class MainViewModel @Inject constructor(
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: IOException) {
-                Timber.e(e, "認証URLの取得に失敗")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "MainViewModel.startAuth")
+                )
                 internalUiState.update {
                     it.copy(
-                        error = e.message ?: "認証に失敗しました",
+                        error = msg,
                         isLoading = false,
                         isAuthenticating = false
                     )
@@ -157,11 +162,13 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: IOException) {
-                Timber.e(e, "認証処理に失敗")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "MainViewModel.handleAuthCallback")
+                )
                 delay(AUTH_CALLBACK_DELAY_MS)
                 internalUiState.update {
                     it.copy(
-                        error = e.message ?: "認証に失敗しました",
+                        error = msg,
                         isLoading = false,
                         isAuthenticating = false
                     )

@@ -90,9 +90,9 @@ class BaseViewModelTest : BehaviorSpec({
                     // 完了を待つ
                     testDispatcher.scheduler.advanceTimeBy(1001)
 
-                    // エラー処理の確認
+                    // エラー処理の確認 - ErrorHandlerがユーザー向けメッセージを返す
                     viewModel.loadingState shouldBe false
-                    viewModel.errorState shouldBe errorMessage
+                    viewModel.errorState shouldBe "処理中にエラーが発生しました"
                 }
             }
         }

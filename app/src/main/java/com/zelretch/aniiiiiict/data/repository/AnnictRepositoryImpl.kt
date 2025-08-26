@@ -76,10 +76,10 @@ class AnnictRepositoryImpl @Inject constructor(
 
             !response.hasErrors()
         } catch (e: ApolloException) {
-            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            Timber.e(e, "[AnnictRepositoryImpl][createRecord] API error while creating record")
             false
         } catch (e: IOException) {
-            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            Timber.e(e, "[AnnictRepositoryImpl][createRecord] Network IO error while creating record")
             false
         }
     }
@@ -100,22 +100,13 @@ class AnnictRepositoryImpl @Inject constructor(
                 false
             })
         } catch (e: ApolloException) {
-            Timber.e(
-                e,
-                "認証処理中に例外が発生"
-            )
+            Timber.e(e, "[AnnictRepositoryImpl][exchangeCodeForToken] API error while handling auth callback")
             false
         } catch (e: IOException) {
-            Timber.e(
-                e,
-                "認証処理中に例外が発生"
-            )
+            Timber.e(e, "[AnnictRepositoryImpl][exchangeCodeForToken] Network IO error while handling auth callback")
             false
         } catch (e: Exception) {
-            Timber.e(
-                e,
-                "認証処理中に予期しない例外が発生"
-            )
+            Timber.e(e, "[AnnictRepositoryImpl][exchangeCodeForToken] Unexpected error while handling auth callback")
             false
         }
     }
@@ -169,15 +160,15 @@ class AnnictRepositoryImpl @Inject constructor(
 
                 emit(programs ?: emptyList())
             } catch (e: ApolloException) {
-                Timber.e(e, "プログラム一覧の取得に失敗")
+                Timber.e(e, "[AnnictRepositoryImpl][getRawProgramsData] API error during fetching programs")
                 emit(emptyList())
             } catch (e: IOException) {
-                Timber.e(e, "プログラム一覧の取得に失敗")
+                Timber.e(e, "[AnnictRepositoryImpl][getRawProgramsData] Network IO error during fetching programs")
                 emit(emptyList())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "プログラム一覧の取得に失敗 (予期しない例外)")
+                Timber.e(e, "[AnnictRepositoryImpl][getRawProgramsData] Unexpected error during fetching programs")
                 emit(emptyList())
             }
         }
@@ -308,15 +299,15 @@ class AnnictRepositoryImpl @Inject constructor(
         return try {
             request()
         } catch (e: ApolloException) {
-            Timber.e(e, "AnnictRepositoryImpl.$operation")
+            Timber.e(e, "[AnnictRepositoryImpl][$operation] API error during request")
             defaultValue
         } catch (e: IOException) {
-            Timber.e(e, "AnnictRepositoryImpl.$operation")
+            Timber.e(e, "[AnnictRepositoryImpl][$operation] Network IO error during request")
             defaultValue
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "AnnictRepositoryImpl.$operation - Unexpected error")
+            Timber.e(e, "[AnnictRepositoryImpl][$operation] Unexpected error during request")
             defaultValue
         }
     }

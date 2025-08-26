@@ -9,6 +9,7 @@ import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.data.model.Work
 import com.zelretch.aniiiiiict.data.model.WorkImage as WorkImageModel
 import com.zelretch.aniiiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDateTime
@@ -35,7 +36,8 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
                 val jstDateTime = utcDateTime.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
                 // Convert to LocalDateTime
                 jstDateTime.toLocalDateTime()
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                ErrorHandler.handleError(e, "LoadProgramsUseCase", "processProgramsResponse")
                 LocalDateTime.now() // パースに失敗した場合は現在時刻を使用
             }
 

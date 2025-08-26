@@ -2,12 +2,10 @@ package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apollographql.apollo.exception.ApolloException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import timber.log.Timber
-import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -54,18 +52,13 @@ abstract class BaseViewModel : ViewModel() {
 
             // 最小ローディング時間の完了を待つ
             loadingJob.join()
-        } catch (e: ApolloException) {
-            // エラーを設定
-            Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
-            updateErrorState(e.message ?: "処理中にエラーが発生しました")
-        } catch (e: IOException) {
-            // エラーを設定
-            Timber.e(e, "[%s][ローディング処理中にエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
-            updateErrorState(e.message ?: "処理中にエラーが発生しました")
+        } catch (e: CancellationException) {
+            // キャンセルは上位に伝播させる（ローディング状態は finally で解消）
+            throw e
         } catch (e: Exception) {
-            // 予期しない例外もハンドリング
-            Timber.e(e, "[%s][ローディング処理中に予期しないエラーが発生] %s", "BaseViewModel", e.message ?: "Unknown error")
-            updateErrorState(e.message ?: "処理中にエラーが発生しました")
+            // 統一されたエラーハンドリング（ユーザー向けメッセージを設定）
+            val errorMessage = ErrorHandler.handleError(e, "BaseViewModel", "executeWithLoading")
+            updateErrorState(errorMessage)
         } finally {
             // ローディング状態を終了
             if (loadingCounter.decrementAndGet() == 0) {
