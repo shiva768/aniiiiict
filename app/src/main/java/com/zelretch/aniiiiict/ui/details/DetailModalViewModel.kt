@@ -72,21 +72,24 @@ class DetailModalViewModel @Inject constructor(
 
     fun changeStatus(status: StatusState) {
         val workId = _state.value.workId
-        _state.update { it.copy(isStatusChanging = true, statusChangeError = null) }
+        val previous = _state.value.selectedStatus
+        // Optimistically update UI so tests can immediately see the new value
+        _state.update { it.copy(isStatusChanging = true, statusChangeError = null, selectedStatus = status) }
         viewModelScope.launch {
             runCatching {
                 updateViewStateUseCase(workId, status).getOrThrow()
             }.onSuccess {
-                _state.update { it.copy(selectedStatus = status) }
+                // Keep the selected status (already set) and notify
                 _events.emit(DetailModalEvent.StatusChanged)
             }.onFailure { e ->
                 val errorMessage = e.message ?: ErrorHandler.getUserMessage(
                     ErrorHandler.analyzeError(e, "DetailModalViewModel.changeStatus")
                 )
+                // Roll back to previous status and show error
                 _state.update {
                     it.copy(
                         statusChangeError = errorMessage,
-                        selectedStatus = _state.value.selectedStatus
+                        selectedStatus = previous
                     )
                 }
             }

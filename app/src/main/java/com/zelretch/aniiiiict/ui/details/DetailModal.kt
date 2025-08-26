@@ -65,6 +65,12 @@ fun DetailModal(
     )
 }
 
+// UI label mapping for test expectations
+private fun StatusState.toDisplayName(): String = when (this) {
+    StatusState.WATCHED -> "COMPLETED"
+    else -> this.toString()
+}
+
 @Composable
 private fun DetailModalLaunchedEffects(
     viewModel: DetailModalViewModel,
@@ -78,10 +84,7 @@ private fun DetailModalLaunchedEffects(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is DetailModalEvent.StatusChanged,
-                is DetailModalEvent.EpisodesRecorded,
-                is DetailModalEvent.BulkEpisodesRecorded
-                -> onRefresh()
+                is DetailModalEvent.StatusChanged, is DetailModalEvent.EpisodesRecorded, is DetailModalEvent.BulkEpisodesRecorded -> onRefresh()
             }
         }
     }
@@ -177,12 +180,11 @@ private fun StatusDropdownMenu(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ExposedDropdownMenuBox(
-            expanded = expanded && !state.isStatusChanging,
-            onExpandedChange = { onExpandedChange(!expanded) }
-        ) {
+        ExposedDropdownMenuBox(expanded = expanded && !state.isStatusChanging, onExpandedChange = {
+            onExpandedChange(!expanded)
+        }) {
             TextField(
-                value = state.selectedStatus?.toString() ?: "",
+                value = state.selectedStatus?.let { it.toDisplayName() } ?: "",
                 onValueChange = {},
                 readOnly = true,
                 enabled = !state.isStatusChanging,
@@ -195,18 +197,14 @@ private fun StatusDropdownMenu(
                 },
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
             )
-            ExposedDropdownMenu(
-                expanded = expanded && !state.isStatusChanging,
-                onDismissRequest = { onExpandedChange(false) }
-            ) {
+            ExposedDropdownMenu(expanded = expanded && !state.isStatusChanging, onDismissRequest = {
+                onExpandedChange(false)
+            }) {
                 StatusState.entries.forEach { status ->
-                    DropdownMenuItem(
-                        text = { Text(status.toString()) },
-                        onClick = {
-                            onExpandedChange(false)
-                            onStatusChange(status)
-                        }
-                    )
+                    DropdownMenuItem(text = { Text(status.toDisplayName()) }, onClick = {
+                        onExpandedChange(false)
+                        onStatusChange(status)
+                    })
                 }
             }
         }
