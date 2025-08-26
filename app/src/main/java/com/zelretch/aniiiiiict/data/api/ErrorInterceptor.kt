@@ -15,6 +15,17 @@ import javax.net.ssl.SSLException
  * - HTTP ステータスコードに応じて NetworkException.HttpException の派生に変換
  */
 class ErrorInterceptor : Interceptor {
+
+    private companion object {
+        private const val PEEK_BODY_BYTES: Int = 8 * 1024
+        private const val HTTP_UNAUTHORIZED = 401
+        private const val HTTP_FORBIDDEN = 403
+        private const val HTTP_NOT_FOUND = 404
+        private const val HTTP_RATE_LIMIT = 429
+        private const val HTTP_SERVER_ERROR_MIN = 500
+        private const val HTTP_SERVER_ERROR_MAX = 599
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val url = request.url.toString()
@@ -24,51 +35,24 @@ class ErrorInterceptor : Interceptor {
             // HTTP ステータスの判定
             if (!response.isSuccessful) {
                 val code = response.code
-                val bodyString = try {
-                    // peekBody は OkHttp 4.9+ で利用可能。大きすぎる場合は先頭だけ。
-                    response.peekBody(1024 * 8).string()
-                } catch (e: Exception) {
-                    throw e
-                }
+                // peekBody は OkHttp 4.9+ で利用可能。大きすぎる場合は先頭だけ。
+                val bodyString = response.peekBody(PEEK_BODY_BYTES.toLong()).string()
+
                 val message = "HTTP $code for $url"
                 response.close()
                 throw when (code) {
-                    401 -> NetworkException.UnauthorizedException(
-                        code = code,
-                        url = url,
-                        message = message,
+                    HTTP_UNAUTHORIZED -> NetworkException.UnauthorizedException(code, url, message, body = bodyString)
+                    HTTP_FORBIDDEN -> NetworkException.ForbiddenException(code, url, message, body = bodyString)
+                    HTTP_NOT_FOUND -> NetworkException.NotFoundException(code, url, message, body = bodyString)
+                    HTTP_RATE_LIMIT -> NetworkException.RateLimitException(code, url, message, body = bodyString)
+                    in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX -> NetworkException.ServerErrorException(
+                        code,
+                        url,
+                        message,
                         body = bodyString
                     )
-                    403 -> NetworkException.ForbiddenException(
-                        code = code,
-                        url = url,
-                        message = message,
-                        body = bodyString
-                    )
-                    404 -> NetworkException.NotFoundException(
-                        code = code,
-                        url = url,
-                        message = message,
-                        body = bodyString
-                    )
-                    429 -> NetworkException.RateLimitException(
-                        code = code,
-                        url = url,
-                        message = message,
-                        body = bodyString
-                    )
-                    in 500..599 -> NetworkException.ServerErrorException(
-                        code = code,
-                        url = url,
-                        message = message,
-                        body = bodyString
-                    )
-                    else -> NetworkException.UnknownHttpException(
-                        code = code,
-                        url = url,
-                        message = message,
-                        body = bodyString
-                    )
+
+                    else -> NetworkException.UnknownHttpException(code, url, message, body = bodyString)
                 }
             }
             return response

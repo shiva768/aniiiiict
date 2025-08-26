@@ -35,6 +35,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import timber.log.Timber
 
 /**
  * E2Eスタイルのテスト
@@ -224,7 +225,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
                     testScope.testScheduler.runCurrent()
 
                     // デバッグ用にuiStateの現在値をログ出力
-                    println("[DEBUG_LOG] Current uiState: ${viewModel.uiState.value}")
+                    Timber.d("[DEBUG_LOG] Current uiState: ${viewModel.uiState.value}")
 
                     // 最終話確認ダイアログの状態を検証
                     viewModel.uiState.value.showFinaleConfirmationForWorkId shouldBe "123"
