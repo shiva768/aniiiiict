@@ -30,7 +30,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -63,11 +62,9 @@ class TrackViewModelE2ETest : BehaviorSpec({
     val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
 
     lateinit var viewModel: TrackViewModel
-    lateinit var testScope: TestScope
 
     beforeTest {
         Dispatchers.setMain(dispatcher)
-        testScope = TestScope(dispatcher)
 
         // デフォルトのモック動作を設定
         coEvery { annictRepository.getRawProgramsData() } returns flowOf(emptyList())
@@ -85,7 +82,6 @@ class TrackViewModelE2ETest : BehaviorSpec({
                 )
             )
         )
-
         viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
@@ -93,8 +89,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
             filterPreferences,
             judgeFinaleUseCase
         )
-        viewModel.externalScope = testScope // テスト用スコープをセット
-        testScope.testScheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める
+        dispatcher.scheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める
     }
 
     afterTest {
@@ -111,11 +106,11 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
                     // フィルター変更をトリガーにしてロード処理を実行
                     filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("TV"))
-                    testScope.testScheduler.advanceUntilIdle()
+                    dispatcher.scheduler.advanceUntilIdle()
 
                     // テストスケジューラを進めて、すべての非同期処理が完了するのを待つ
-                    testScope.testScheduler.advanceTimeBy(2000) // ローディング処理が完了するのを待つ
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(2000) // ローディング処理が完了するのを待つ
+                    dispatcher.scheduler.runCurrent()
 
                     // 最終的なUIStateを検証
                     viewModel.uiState.value.isLoading shouldBe false
@@ -136,11 +131,11 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
                     // フィルター変更をトリガーにしてロード処理を実行
                     filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
-                    testScope.testScheduler.advanceUntilIdle()
+                    dispatcher.scheduler.advanceUntilIdle()
 
                     // テストスケジューラを進めて、すべての非同期処理が完了するのを待つ
-                    testScope.testScheduler.advanceTimeBy(2000) // エラー処理が完了するのを待つ
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(2000) // エラー処理が完了するのを待つ
+                    dispatcher.scheduler.runCurrent()
 
                     // 最終的なUIStateを検証
                     viewModel.uiState.value.isLoading shouldBe false
@@ -165,8 +160,8 @@ class TrackViewModelE2ETest : BehaviorSpec({
                     viewModel.recordEpisode("ep-id", "work-id", StatusState.WATCHING)
 
                     // 非同期処理が完了するのを待つ（ただし2000msのdelayの前に検証する）
-                    testScope.testScheduler.advanceTimeBy(100)
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(100)
+                    dispatcher.scheduler.runCurrent()
 
                     // UIStateを検証
                     viewModel.uiState.value.recordingSuccess shouldBe "ep-id"
@@ -186,7 +181,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
                     // エピソード視聴を記録
                     viewModel.recordEpisode("ep-id", "work-id", StatusState.WATCHING)
-                    testScope.testScheduler.advanceUntilIdle()
+                    dispatcher.scheduler.advanceUntilIdle()
 
                     // UIStateを検証
                     viewModel.uiState.test {
@@ -221,8 +216,8 @@ class TrackViewModelE2ETest : BehaviorSpec({
                     viewModel.recordEpisode("ep-id", "123", StatusState.WATCHING)
 
                     // 非同期処理が完了するのを待つ
-                    testScope.testScheduler.advanceTimeBy(3000) // loadingProgramsの処理時間(2000ms)より長く待つ
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(3000) // loadingProgramsの処理時間(2000ms)より長く待つ
+                    dispatcher.scheduler.runCurrent()
 
                     // デバッグ用にuiStateの現在値をログ出力
                     Timber.d("[DEBUG_LOG] Current uiState: ${viewModel.uiState.value}")
@@ -255,8 +250,8 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
                     // エピソード視聴を記録して確認ダイアログを表示
                     viewModel.recordEpisode("ep-id", "123", StatusState.WATCHING)
-                    testScope.testScheduler.advanceTimeBy(3000)
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(3000)
+                    dispatcher.scheduler.runCurrent()
 
                     // 確認ダイアログを閉じる
                     viewModel.dismissFinaleConfirmation()
@@ -285,13 +280,13 @@ class TrackViewModelE2ETest : BehaviorSpec({
 
                     // エピソード視聴を記録して確認ダイアログを表示
                     viewModel.recordEpisode("ep-id", "123", StatusState.WATCHING)
-                    testScope.testScheduler.advanceTimeBy(3000)
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(3000)
+                    dispatcher.scheduler.runCurrent()
 
                     // 視聴済みステータスに更新
                     viewModel.confirmWatchedStatus()
-                    testScope.testScheduler.advanceTimeBy(1000)
-                    testScope.testScheduler.runCurrent()
+                    dispatcher.scheduler.advanceTimeBy(1000)
+                    dispatcher.scheduler.runCurrent()
 
                     // ダイアログが閉じられたことを検証
                     viewModel.uiState.value.showFinaleConfirmationForWorkId shouldBe null

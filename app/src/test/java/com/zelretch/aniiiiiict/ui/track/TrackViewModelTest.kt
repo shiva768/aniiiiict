@@ -21,7 +21,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -41,11 +40,9 @@ class TrackViewModelTest : BehaviorSpec({
     val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
     mockk<Context>(relaxed = true)
     lateinit var viewModel: TrackViewModel
-    lateinit var testScope: TestScope
 
     beforeTest {
         Dispatchers.setMain(dispatcher)
-        testScope = TestScope(dispatcher)
         // デフォルトで空リストを返すflow
         coEvery { loadProgramsUseCase.invoke() } returns flowOf(emptyList())
         every { filterProgramsUseCase.invoke(any(), any()) } answers { firstArg() }
@@ -62,8 +59,7 @@ class TrackViewModelTest : BehaviorSpec({
             filterPreferences,
             judgeFinalUseCase
         )
-        viewModel.externalScope = testScope // テスト用スコープをセット
-        testScope.testScheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める
+        dispatcher.scheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める
     }
 
     afterTest {
@@ -87,7 +83,7 @@ class TrackViewModelTest : BehaviorSpec({
                         viewModel.uiState.test {
                             awaitItem() // 初期値を必ず受け取る
                             filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
-                            testScope.testScheduler.advanceUntilIdle() // emitを確実に進める
+                            dispatcher.scheduler.advanceUntilIdle() // emitを確実に進める
                             awaitItem() // 状態遷移1: ローディングやfilter反映（isLoading=true）
                             awaitItem() // 状態遷移2: データ反映・ローディング完了（isLoading=false）
                             val updated = awaitItem() // 状態遷移3（必要なら）
@@ -109,7 +105,7 @@ class TrackViewModelTest : BehaviorSpec({
                         viewModel.uiState.test {
                             awaitItem() // 初期値を必ず受け取る
                             filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
-                            testScope.testScheduler.advanceUntilIdle() // emitを確実に進める
+                            dispatcher.scheduler.advanceUntilIdle() // emitを確実に進める
                             awaitItem() // 状態遷移1: ローディングやfilter反映
                             val errorState = awaitItem() // 状態遷移2: error反映
                             errorState.error shouldBe "処理中にエラーが発生しました"
