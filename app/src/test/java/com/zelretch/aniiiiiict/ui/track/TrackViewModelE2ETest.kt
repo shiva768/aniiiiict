@@ -297,7 +297,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
                     viewModel.uiState.value.showFinaleConfirmationForEpisodeNumber shouldBe null
 
                     // watchEpisodeUseCaseが正しいパラメータで呼ばれたことを検証
-                    coVerify { watchEpisodeUseCase("", "123", StatusState.WATCHED, true) }
+                    coVerify { watchEpisodeUseCase("ep-id", "123", StatusState.WATCHED, true) }
                 }
             }
         }
