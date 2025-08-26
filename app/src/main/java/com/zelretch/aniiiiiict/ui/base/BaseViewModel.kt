@@ -2,6 +2,7 @@ package com.zelretch.aniiiiiict.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -51,8 +52,11 @@ abstract class BaseViewModel : ViewModel() {
 
             // 最小ローディング時間の完了を待つ
             loadingJob.join()
+        } catch (e: CancellationException) {
+            // キャンセルは上位に伝播させる（ローディング状態は finally で解消）
+            throw e
         } catch (e: Exception) {
-            // 統一されたエラーハンドリング
+            // 統一されたエラーハンドリング（ユーザー向けメッセージを設定）
             val errorMessage = ErrorHandler.handleError(e, "BaseViewModel", "executeWithLoading")
             updateErrorState(errorMessage)
         } finally {

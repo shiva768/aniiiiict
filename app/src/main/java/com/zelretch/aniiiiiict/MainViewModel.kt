@@ -76,10 +76,12 @@ class MainViewModel @Inject constructor(
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: IOException) {
-                val errorMessage = ErrorHandler.handleError(e, "MainViewModel", "checkAuthState")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "MainViewModel.checkAuthState")
+                )
                 internalUiState.update {
                     it.copy(
-                        error = errorMessage,
+                        error = msg,
                         isLoading = false
                     )
                 }
@@ -104,10 +106,12 @@ class MainViewModel @Inject constructor(
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: IOException) {
-                val errorMessage = ErrorHandler.handleError(e, "MainViewModel", "startAuth")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "MainViewModel.startAuth")
+                )
                 internalUiState.update {
                     it.copy(
-                        error = errorMessage,
+                        error = msg,
                         isLoading = false,
                         isAuthenticating = false
                     )
@@ -158,11 +162,13 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: IOException) {
-                val errorMessage = ErrorHandler.handleError(e, "MainViewModel", "handleAuthCallback")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "MainViewModel.handleAuthCallback")
+                )
                 delay(AUTH_CALLBACK_DELAY_MS)
                 internalUiState.update {
                     it.copy(
-                        error = errorMessage,
+                        error = msg,
                         isLoading = false,
                         isAuthenticating = false
                     )

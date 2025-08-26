@@ -80,7 +80,9 @@ class DetailModalViewModel @Inject constructor(
                 _state.update { it.copy(selectedStatus = status) }
                 _events.emit(DetailModalEvent.StatusChanged)
             }.onFailure { e ->
-                val errorMessage = ErrorHandler.handleError(e, "DetailModalViewModel", "changeStatus")
+                val errorMessage = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "DetailModalViewModel.changeStatus")
+                )
                 _state.update {
                     it.copy(
                         statusChangeError = errorMessage,
@@ -104,8 +106,9 @@ class DetailModalViewModel @Inject constructor(
                 }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
             }.onFailure { e ->
-                ErrorHandler.handleError(e, "DetailModalViewModel", "recordEpisode")
-                // 表示は親で処理する設計のため、ここではログのみ
+                // 表示は親で処理する設計のため、ここではユーザ向け文言を整形してログ化のみ
+                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.recordEpisode")
+                ErrorHandler.logError("DetailModalViewModel", "recordEpisode", info)
             }
         }
     }
@@ -147,7 +150,8 @@ class DetailModalViewModel @Inject constructor(
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
             }.onFailure { e ->
-                ErrorHandler.handleError(e, "DetailModalViewModel", "bulkRecordEpisodes")
+                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.bulkRecordEpisodes")
+                ErrorHandler.logError("DetailModalViewModel", "bulkRecordEpisodes", info)
                 _state.update {
                     it.copy(
                         isBulkRecording = false,

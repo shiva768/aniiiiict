@@ -122,7 +122,9 @@ class TrackViewModel @Inject constructor(
             }.onSuccess {
                 onRecordSuccess(episodeId, workId)
             }.onFailure { e ->
-                val msg = ErrorHandler.handleError(e, "TrackViewModel", "recordEpisode")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "TrackViewModel.recordEpisode")
+                )
                 _uiState.update { it.copy(error = msg, isRecording = false) }
             }
         }
@@ -190,7 +192,9 @@ class TrackViewModel @Inject constructor(
                         )
                     }
                 }.onFailure { e ->
-                    val msg = ErrorHandler.handleError(e, "TrackViewModel", "confirmWatchedStatus")
+                    val msg = e.message ?: ErrorHandler.getUserMessage(
+                        ErrorHandler.analyzeError(e, "TrackViewModel.confirmWatchedStatus")
+                    )
                     _uiState.update { it.copy(error = msg) }
                 }
             }
@@ -213,7 +217,9 @@ class TrackViewModel @Inject constructor(
             }.onSuccess {
                 _uiState.update { it.copy(error = null) }
             }.onFailure { e ->
-                val msg = ErrorHandler.handleError(e, "TrackViewModel", "updateViewState")
+                val msg = e.message ?: ErrorHandler.getUserMessage(
+                    ErrorHandler.analyzeError(e, "TrackViewModel.updateViewState")
+                )
                 _uiState.update { it.copy(error = msg) }
             }
         }

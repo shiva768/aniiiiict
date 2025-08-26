@@ -15,7 +15,6 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
-import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -77,10 +76,10 @@ class AnnictRepositoryImpl @Inject constructor(
 
             !response.hasErrors()
         } catch (e: ApolloException) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "createRecord")
+            Timber.e(e, "[AnnictRepositoryImpl][createRecord] API error while creating record")
             false
         } catch (e: IOException) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "createRecord")
+            Timber.e(e, "[AnnictRepositoryImpl][createRecord] Network IO error while creating record")
             false
         }
     }
@@ -101,13 +100,13 @@ class AnnictRepositoryImpl @Inject constructor(
                 false
             })
         } catch (e: ApolloException) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "exchangeCodeForToken")
+            Timber.e(e, "[AnnictRepositoryImpl][exchangeCodeForToken] API error while handling auth callback")
             false
         } catch (e: IOException) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "exchangeCodeForToken")
+            Timber.e(e, "[AnnictRepositoryImpl][exchangeCodeForToken] Network IO error while handling auth callback")
             false
         } catch (e: Exception) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "exchangeCodeForToken")
+            Timber.e(e, "[AnnictRepositoryImpl][exchangeCodeForToken] Unexpected error while handling auth callback")
             false
         }
     }
@@ -161,15 +160,15 @@ class AnnictRepositoryImpl @Inject constructor(
 
                 emit(programs ?: emptyList())
             } catch (e: ApolloException) {
-                ErrorHandler.handleError(e, "AnnictRepositoryImpl", "getRawProgramsData")
+                Timber.e(e, "[AnnictRepositoryImpl][getRawProgramsData] API error during fetching programs")
                 emit(emptyList())
             } catch (e: IOException) {
-                ErrorHandler.handleError(e, "AnnictRepositoryImpl", "getRawProgramsData")
+                Timber.e(e, "[AnnictRepositoryImpl][getRawProgramsData] Network IO error during fetching programs")
                 emit(emptyList())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                ErrorHandler.handleError(e, "AnnictRepositoryImpl", "getRawProgramsData")
+                Timber.e(e, "[AnnictRepositoryImpl][getRawProgramsData] Unexpected error during fetching programs")
                 emit(emptyList())
             }
         }
@@ -300,15 +299,15 @@ class AnnictRepositoryImpl @Inject constructor(
         return try {
             request()
         } catch (e: ApolloException) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", operation)
+            Timber.e(e, "[AnnictRepositoryImpl][$operation] API error during request")
             defaultValue
         } catch (e: IOException) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", operation)
+            Timber.e(e, "[AnnictRepositoryImpl][$operation] Network IO error during request")
             defaultValue
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            ErrorHandler.handleError(e, "AnnictRepositoryImpl", operation)
+            Timber.e(e, "[AnnictRepositoryImpl][$operation] Unexpected error during request")
             defaultValue
         }
     }
