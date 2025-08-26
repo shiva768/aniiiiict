@@ -2,7 +2,7 @@ mutation UpdateStatus($workId: ID!, $state: StatusState!) {
   updateStatus(input: {
     workId: $workId,
     state: $state,
-    clientMutationId: "aniiiiiict-update-status"
+    clientMutationId: "aniiiiict-update-status"
   }) {
     clientMutationId
     work {

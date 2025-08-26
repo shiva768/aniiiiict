@@ -1,7 +1,7 @@
 mutation DeleteRecordMutation($recordId: ID!) {
   deleteRecord(input: {
     recordId: $recordId
-    clientMutationId: "aniiiiiict-delete-record"
+    clientMutationId: "aniiiiict-delete-record"
   }) {
     clientMutationId
     episode {

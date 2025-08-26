@@ -105,7 +105,7 @@ graph TD
 -   **実装:**
     1.  `AuthScreen`でユーザーがログインボタンをクリックすると、`MainViewModel`が`AnnictAuthUseCase`を介して認証URLを取得します。
     2.  `CustomTabsIntent`を使用して、Annictの認証ページをアプリ内で開きます。
-    3.  ユーザーが認証を許可すると、`aniiiiiict://oauth/callback`のコールバックURLにリダイレクトされ、`MainActivity`の`onNewIntent`が受け取ります。
+    3.  ユーザーが認証を許可すると、`aniiiiict://oauth/callback`のコールバックURLにリダイレクトされ、`MainActivity`の`onNewIntent`が受け取ります。
     4.  `MainActivity`は認証コードを`MainViewModel`に渡し、`ViewModel`は`AnnictRepository`の`handleAuthCallback`を呼び出してアクセストークンを取得・保存します。
     5.  トークンは`TokenManager`によって`DataStore`に安全に永続化されます。
 

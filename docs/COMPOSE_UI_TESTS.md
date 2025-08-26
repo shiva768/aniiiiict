@@ -5,7 +5,7 @@
 ## テストファイルの場所
 
 ```
-app/src/androidTest/java/com/zelretch/aniiiiiict/ui/
+app/src/androidTest/java/com/zelretch/aniiiiict/ui/
 ├── track/TrackScreenComposeTest.kt
 └── history/HistoryScreenComposeTest.kt
 ```
@@ -53,10 +53,10 @@ app/src/androidTest/java/com/zelretch/aniiiiiict/ui/
 ./gradlew connectedDebugAndroidTest
 
 # 特定のテストクラスのみ実行
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiiict.ui.track.TrackScreenComposeTest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=aniiiiictui.track.TrackScreenComposeTest
 
 # 特定のテストメソッドのみ実行
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiiict.ui.track.TrackScreenComposeTest#trackScreen_初期状態_基本要素が表示される
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=aniiiiictui.track.TrackScreenComposeTest#trackScreen_初期状態_基本要素が表示される
 ```
 
 ### 前提条件

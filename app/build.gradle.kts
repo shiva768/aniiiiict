@@ -41,11 +41,11 @@ tasks.withType<Task>().matching {
 }
 
 android {
-    namespace = "com.zelretch.aniiiiiict"
+    namespace = "com.zelretch.aniiiiict"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.zelretch.aniiiiiict"
+        applicationId = "com.zelretch.aniiiiict"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

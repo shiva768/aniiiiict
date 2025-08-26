@@ -1,7 +1,7 @@
 mutation CreateRecord($episodeId: ID!) {
   createRecord(input: {
     episodeId: $episodeId,
-    clientMutationId: "aniiiiiict-create-record"
+    clientMutationId: "aniiiiict-create-record"
   }) {
     clientMutationId
     record {

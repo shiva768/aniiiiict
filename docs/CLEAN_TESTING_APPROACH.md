@@ -41,7 +41,7 @@ class MainViewModel @Inject constructor(
 ### 2. テスト専用拡張（app/src/test配下）
 
 ```kotlin
-// app/src/test/java/com/zelretch/aniiiiiict/testing/ViewModelTestExtensions.kt
+// app/src/test/java/com/zelretch/aniiiiict/testing/ViewModelTestExtensions.kt
 
 /**
  * テスト専用のViewModel拡張機能

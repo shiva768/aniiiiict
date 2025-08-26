@@ -30,12 +30,12 @@ case "${1:-all}" in
     "track")
         echo "🧪 TrackScreen のテストを実行します..."
         ./gradlew connectedDebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiiict.ui.track.TrackScreenComposeTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenComposeTest
         ;;
     "history")
         echo "🧪 HistoryScreen のテストを実行します..."
         ./gradlew connectedDebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiiict.ui.history.HistoryScreenComposeTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.history.HistoryScreenComposeTest
         ;;
     "clean")
         echo "🧹 テストキャッシュをクリアして全テストを実行します..."
