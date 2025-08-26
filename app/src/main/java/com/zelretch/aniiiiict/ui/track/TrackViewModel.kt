@@ -147,15 +147,6 @@ class TrackViewModel @Inject constructor(
         handleFinaleJudgement(episodeId, workId)
     }
 
-    private fun onRecordFailure(e: Throwable) {
-        _uiState.update {
-            it.copy(
-                isRecording = false,
-                error = e.message ?: "エピソードの記録に失敗しました"
-            )
-        }
-    }
-
     private suspend fun handleFinaleJudgement(episodeId: String, workId: String) {
         val program = _uiState.value.allPrograms.find { it.work.id == workId }
         val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
@@ -207,21 +198,6 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    fun updateViewState(workId: String, status: StatusState) {
-        viewModelScope.launch {
-            runCatching {
-                watchEpisodeUseCase("", workId, status, true).getOrThrow()
-            }.onSuccess {
-                _uiState.update { it.copy(error = null) }
-            }.onFailure { e ->
-                val msg = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "TrackViewModel.updateViewState")
-                )
-                _uiState.update { it.copy(error = msg) }
-            }
-        }
-    }
-
     fun refresh() {
         Timber.i("プログラム一覧を再読み込み")
         loadingPrograms()
@@ -249,12 +225,6 @@ class TrackViewModel @Inject constructor(
             recordEpisode(it.episode.id, program.work.id, program.work.viewerStatusState)
         }
     }
-
-    // region TestableTrackViewModel
-    fun setUiStateForTest(state: TrackUiState) {
-        _uiState.value = state
-    }
-    // endregion
 
     override fun showDetailModal(program: ProgramWithWork) {
         showUnwatchedEpisodes(program)

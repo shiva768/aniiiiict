@@ -234,7 +234,6 @@ private class TestableBaseViewModel : BaseViewModel() {
     ) : BaseUiState(isLoading, error)
 
     private val _uiState = MutableStateFlow(TestUiState())
-    val uiState: StateFlow<TestUiState> = _uiState.asStateFlow()
 
     // テスト用のアクセサ
     val loadingState: Boolean get() = _uiState.value.isLoading

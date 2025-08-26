@@ -43,16 +43,6 @@ class TokenManager @Inject constructor(context: Context) {
         return token
     }
 
-    @Suppress("TooGenericExceptionCaught")
-    fun clearAccessToken() {
-        try {
-            prefs.edit { remove(TOKEN_KEY) }
-            Timber.i("[TokenManager][clearAccessToken] アクセストークンを削除")
-        } catch (e: RuntimeException) {
-            ErrorHandler.handleError(e, "TokenManager", "clearAccessToken")
-        }
-    }
-
     fun hasValidToken(): Boolean {
         val token = getAccessToken()
         val hasToken = !token.isNullOrEmpty()
