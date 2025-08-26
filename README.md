@@ -27,8 +27,8 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/your-username/aniiiiiict.git
-cd aniiiiiict
+git clone https://github.com/your-username/aniiiiict.git
+cd aniiiiict
 ```
 
 2. Annictの開発者アカウントを作成
@@ -39,7 +39,7 @@ cd aniiiiiict
 - 「新しいアプリケーション」をクリック
 - 以下の情報を入力：
     - アプリケーション名：Aniiiiict
-    - コールバックURL：`aniiiiiict://oauth/callback`
+    - コールバックURL：`aniiiiict://oauth/callback`
     - スコープ：`read write`
 
 3. 認証情報の設定
