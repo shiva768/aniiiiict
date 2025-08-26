@@ -4,6 +4,7 @@ import android.content.Context
 import com.zelretch.aniiiiiict.BuildConfig
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.api.AnnictApolloClient
+import com.zelretch.aniiiiiict.data.api.ErrorInterceptor
 import com.zelretch.aniiiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiiict.data.repository.AniListRepository
@@ -44,18 +45,23 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder().addInterceptor(
-        HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+        // まずエラーを正しく分類する関所
+        .addInterceptor(ErrorInterceptor())
+        // 次にログ（デバッグ時のみ詳細）
+        .addInterceptor(
+            HttpLoggingInterceptor().apply {
+                level = if (BuildConfig.DEBUG) {
+                    HttpLoggingInterceptor.Level.BODY
+                } else {
+                    HttpLoggingInterceptor.Level.NONE
+                }
             }
-        }
-    ).connectTimeout(
-        TIMEOUT_SECONDS,
-        TimeUnit.SECONDS
-    ).readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS).build()
+        )
+        .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .build()
 
     @Provides
     @Singleton

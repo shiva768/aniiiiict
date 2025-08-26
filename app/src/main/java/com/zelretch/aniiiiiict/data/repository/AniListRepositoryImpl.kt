@@ -4,7 +4,7 @@ import co.anilist.GetMediaQuery
 import com.zelretch.aniiiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiiict.data.model.AniListMedia
 import com.zelretch.aniiiiiict.data.model.NextAiringEpisode
-import timber.log.Timber
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,7 +40,7 @@ class AniListRepositoryImpl @Inject constructor(
                 }
             )
         }.onFailure { e ->
-            Timber.e(e, "AniList Mediaの取得に失敗しました")
+            ErrorHandler.handleError(e, "AniListRepositoryImpl", "getMedia")
         }
     }
 }

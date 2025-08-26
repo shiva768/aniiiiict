@@ -15,6 +15,7 @@ import com.zelretch.aniiiiiict.data.model.Episode
 import com.zelretch.aniiiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiiict.data.model.Record
 import com.zelretch.aniiiiiict.data.model.Work
+import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -76,10 +77,10 @@ class AnnictRepositoryImpl @Inject constructor(
 
             !response.hasErrors()
         } catch (e: ApolloException) {
-            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "createRecord")
             false
         } catch (e: IOException) {
-            Timber.e(e, "AnnictRepositoryImpl.createRecord")
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "createRecord")
             false
         }
     }
@@ -100,22 +101,13 @@ class AnnictRepositoryImpl @Inject constructor(
                 false
             })
         } catch (e: ApolloException) {
-            Timber.e(
-                e,
-                "認証処理中に例外が発生"
-            )
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "exchangeCodeForToken")
             false
         } catch (e: IOException) {
-            Timber.e(
-                e,
-                "認証処理中に例外が発生"
-            )
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "exchangeCodeForToken")
             false
         } catch (e: Exception) {
-            Timber.e(
-                e,
-                "認証処理中に予期しない例外が発生"
-            )
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", "exchangeCodeForToken")
             false
         }
     }
@@ -169,15 +161,15 @@ class AnnictRepositoryImpl @Inject constructor(
 
                 emit(programs ?: emptyList())
             } catch (e: ApolloException) {
-                Timber.e(e, "プログラム一覧の取得に失敗")
+                ErrorHandler.handleError(e, "AnnictRepositoryImpl", "getRawProgramsData")
                 emit(emptyList())
             } catch (e: IOException) {
-                Timber.e(e, "プログラム一覧の取得に失敗")
+                ErrorHandler.handleError(e, "AnnictRepositoryImpl", "getRawProgramsData")
                 emit(emptyList())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "プログラム一覧の取得に失敗 (予期しない例外)")
+                ErrorHandler.handleError(e, "AnnictRepositoryImpl", "getRawProgramsData")
                 emit(emptyList())
             }
         }
@@ -308,15 +300,15 @@ class AnnictRepositoryImpl @Inject constructor(
         return try {
             request()
         } catch (e: ApolloException) {
-            Timber.e(e, "AnnictRepositoryImpl.$operation")
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", operation)
             defaultValue
         } catch (e: IOException) {
-            Timber.e(e, "AnnictRepositoryImpl.$operation")
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", operation)
             defaultValue
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "AnnictRepositoryImpl.$operation - Unexpected error")
+            ErrorHandler.handleError(e, "AnnictRepositoryImpl", operation)
             defaultValue
         }
     }
