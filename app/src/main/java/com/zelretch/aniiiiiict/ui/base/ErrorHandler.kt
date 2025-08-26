@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiiict.ui.base
 
 import com.apollographql.apollo.exception.ApolloException
+import com.zelretch.aniiiiiict.data.exception.NetworkException
 import timber.log.Timber
 import java.io.IOException
 
@@ -34,23 +35,45 @@ object ErrorHandler {
     /**
      * 例外を解析してエラー情報を生成する
      */
+    @Suppress("CyclomaticComplexMethod")
     fun analyzeError(exception: Throwable, context: String? = null): ErrorInfo {
         val message = exception.message ?: ""
 
-        return when {
-            exception is IOException -> createNetworkErrorInfo(exception, message)
-            exception is ApolloException -> createApiErrorInfo(exception, message)
+        return when (exception) {
+            is NetworkException -> when (exception) {
+                is NetworkException.TimeoutException,
+                is NetworkException.NoNetworkException,
+                is NetworkException.SecurityException -> createNetworkErrorInfo(IOException(exception), message)
+                is NetworkException.HttpException -> {
+                    // HTTP 系は API エラーとして扱い、HTTP コードに応じたメッセージは既存ロジックに委譲
+                    createErrorInfo(
+                        type = ErrorType.API,
+                        exception = exception,
+                        message = exception.message ?: "",
+                        userMessage = getApiErrorMessage(exception.message ?: "")
+                    )
+                }
+            }
+            is IOException -> createNetworkErrorInfo(exception, message)
+            is ApolloException -> createApiErrorInfo(exception, message)
             // 認証エラーの判定を直接組み込み
-            message.contains("token", ignoreCase = true) ||
-                message.contains("auth", ignoreCase = true) ||
-                context?.contains("saveAccessToken") == true ||
-                context?.contains("TokenManager") == true ->
-                createAuthErrorInfo(exception, message, context)
-            // ビジネスエラーの判定を直接組み込み
-            message.contains("Record creation failed") ||
-                message.contains("retry", ignoreCase = true) ->
-                createBusinessErrorInfo(exception, message)
-            else -> createErrorInfo(ErrorType.UNKNOWN, exception, message, "処理中にエラーが発生しました")
+            else -> when {
+                message.contains("token", ignoreCase = true) ||
+                    message.contains("auth", ignoreCase = true) ||
+                    context?.contains("saveAccessToken") == true ||
+                    context?.contains("TokenManager") == true ->
+                    createAuthErrorInfo(exception, message, context)
+                // ビジネスエラーの判定を直接組み込み
+                message.contains("Record creation failed") ||
+                    message.contains("retry", ignoreCase = true) ->
+                    createBusinessErrorInfo(exception, message)
+                else -> createErrorInfo(
+                    type = ErrorType.UNKNOWN,
+                    exception = exception,
+                    message = message,
+                    userMessage = "処理中にエラーが発生しました"
+                )
+            }
         }
     }
 
