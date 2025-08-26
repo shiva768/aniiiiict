@@ -146,7 +146,12 @@ private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onS
             }
         }
 
-        StatusDropdownMenu(expanded, state, onStatusChange)
+        StatusDropdownMenu(
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            state = state,
+            onStatusChange = onStatusChange
+        )
 
         state.statusChangeError?.let { error ->
             Text(
@@ -161,16 +166,21 @@ private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onS
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun StatusDropdownMenu(expanded: Boolean, state: DetailModalState, onStatusChange: (StatusState) -> Unit) {
-    var expanded1 = expanded
+private fun StatusDropdownMenu(
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    state: DetailModalState,
+    onStatusChange: (StatusState) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ExposedDropdownMenuBox(expanded = expanded1 && !state.isStatusChanging, onExpandedChange = {
-            expanded1 = !expanded1
-        }) {
+        ExposedDropdownMenuBox(
+            expanded = expanded && !state.isStatusChanging,
+            onExpandedChange = { onExpandedChange(!expanded) }
+        ) {
             TextField(
                 value = state.selectedStatus?.toString() ?: "",
                 onValueChange = {},
@@ -180,19 +190,23 @@ private fun StatusDropdownMenu(expanded: Boolean, state: DetailModalState, onSta
                     if (state.isStatusChanging) {
                         CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
                     } else {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded1)
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     }
                 },
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
             )
-            ExposedDropdownMenu(expanded = expanded1 && !state.isStatusChanging, onDismissRequest = {
-                expanded1 = false
-            }) {
+            ExposedDropdownMenu(
+                expanded = expanded && !state.isStatusChanging,
+                onDismissRequest = { onExpandedChange(false) }
+            ) {
                 StatusState.entries.forEach { status ->
-                    DropdownMenuItem(text = { Text(status.toString()) }, onClick = {
-                        expanded1 = false
-                        onStatusChange(status)
-                    })
+                    DropdownMenuItem(
+                        text = { Text(status.toString()) },
+                        onClick = {
+                            onExpandedChange(false)
+                            onStatusChange(status)
+                        }
+                    )
                 }
             }
         }
