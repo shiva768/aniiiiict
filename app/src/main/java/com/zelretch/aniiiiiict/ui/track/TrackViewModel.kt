@@ -14,7 +14,6 @@ import com.zelretch.aniiiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiiict.ui.base.ErrorHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +52,7 @@ class TrackViewModel @Inject constructor(
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
     private val judgeFinaleUseCase: JudgeFinaleUseCase
-) : BaseViewModel(), TrackViewModelContract, TestableTrackViewModel {
+) : BaseViewModel(), TrackViewModelContract {
 
     companion object {
         private const val RECORDING_SUCCESS_MESSAGE_DURATION_MS = 2000L
@@ -62,10 +61,8 @@ class TrackViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
 
-    override var externalScope: CoroutineScope? = null
-
     init {
-        (externalScope ?: viewModelScope).launch {
+        viewModelScope.launch {
             filterPreferences.filterState.collect { savedFilterState ->
                 if (_uiState.value.allPrograms.isEmpty()) {
                     _uiState.update { it.copy(filterState = savedFilterState) }
@@ -115,7 +112,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
-        (externalScope ?: viewModelScope).launch {
+        viewModelScope.launch {
             _uiState.update { it.copy(isRecording = true) }
             runCatching {
                 watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
@@ -138,7 +135,7 @@ class TrackViewModel @Inject constructor(
                 error = null
             )
         }
-        (externalScope ?: viewModelScope).launch {
+        viewModelScope.launch {
             delay(RECORDING_SUCCESS_MESSAGE_DURATION_MS)
             if (_uiState.value.recordingSuccess == episodeId) {
                 _uiState.update { it.copy(recordingSuccess = null) }
@@ -181,7 +178,7 @@ class TrackViewModel @Inject constructor(
 
     fun confirmWatchedStatus() {
         _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
-            (externalScope ?: viewModelScope).launch {
+            viewModelScope.launch {
                 runCatching {
                     watchEpisodeUseCase("", workId, StatusState.WATCHED, true).getOrThrow()
                 }.onSuccess {
@@ -211,7 +208,7 @@ class TrackViewModel @Inject constructor(
     }
 
     fun updateViewState(workId: String, status: StatusState) {
-        (externalScope ?: viewModelScope).launch {
+        viewModelScope.launch {
             runCatching {
                 watchEpisodeUseCase("", workId, status, true).getOrThrow()
             }.onSuccess {
@@ -237,7 +234,7 @@ class TrackViewModel @Inject constructor(
                 programs = filterProgramsUseCase(currentState.allPrograms, newFilterState)
             )
         }
-        (externalScope ?: viewModelScope).launch {
+        viewModelScope.launch {
             filterPreferences.updateFilterState(newFilterState)
         }
     }
@@ -254,7 +251,7 @@ class TrackViewModel @Inject constructor(
     }
 
     // region TestableTrackViewModel
-    override fun setUiStateForTest(state: TrackUiState) {
+    fun setUiStateForTest(state: TrackUiState) {
         _uiState.value = state
     }
     // endregion

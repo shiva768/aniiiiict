@@ -2,7 +2,6 @@ package com.zelretch.aniiiiiict.ui.track
 
 import com.zelretch.aniiiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiiict.ui.base.ViewModelContract
-import kotlinx.coroutines.CoroutineScope
 
 /**
  * TrackViewModelの契約を定義するインターフェース
@@ -50,21 +49,4 @@ interface TrackViewModelContract : ViewModelContract<TrackUiState> {
      * @param episodeNumber エピソード番号
      */
     fun recordFinale(workId: String, episodeNumber: Int)
-}
-
-/**
- * TrackViewModel専用のテスト用インターフェース
- */
-interface TestableTrackViewModel {
-    /**
-     * テスト用: コルーチンスコープを設定する
-     * @param scope テスト用のCoroutineScope
-     */
-    var externalScope: CoroutineScope?
-
-    /**
-     * テスト用: UI状態を直接設定する
-     * @param state 設定するUI状態
-     */
-    fun setUiStateForTest(state: TrackUiState)
 }
