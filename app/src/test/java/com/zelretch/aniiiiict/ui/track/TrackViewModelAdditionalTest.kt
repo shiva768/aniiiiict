@@ -167,10 +167,9 @@ class TrackViewModelAdditionalTest : BehaviorSpec({
         `when`("エラー状態の管理") {
             then("エラーの設定とクリアが正常に動作") {
                 runTest {
-                    var errorState: String? = null
 
                     // エラー設定
-                    errorState = "テストエラー"
+                    var errorState: String? = "テストエラー"
                     errorState shouldBe "テストエラー"
 
                     // エラークリア
