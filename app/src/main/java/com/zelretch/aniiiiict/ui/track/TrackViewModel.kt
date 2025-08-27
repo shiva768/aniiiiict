@@ -141,9 +141,6 @@ class TrackViewModel @Inject constructor(
                 _uiState.update { it.copy(recordingSuccess = null) }
             }
         }
-        // プログラムの再読み込みが完了してから最終話判定を行う
-        val reloadJob = loadingPrograms()
-        reloadJob.join()
         handleFinaleJudgement(episodeId, workId)
     }
 

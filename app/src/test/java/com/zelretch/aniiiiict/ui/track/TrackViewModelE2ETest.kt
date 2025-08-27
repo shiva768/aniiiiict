@@ -203,7 +203,6 @@ class TrackViewModelE2ETest : BehaviorSpec({
                     val mockPrograms = createMockPrograms()
                     coEvery { annictRepository.getRawProgramsData() } returns flowOf(mockPrograms)
                     coEvery { annictRepository.createRecord(any(), any()) } returns true
-
                     // 最終話判定のためのJudgeFinaleUseCaseをモック
                     coEvery {
                         judgeFinaleUseCase.invoke(any(), any())
@@ -211,7 +210,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
                         state = FinaleState.FINALE_CONFIRMED,
                         isFinale = true
                     )
-
+                    viewModel.refresh()
                     // エピソード視聴を記録
                     viewModel.recordEpisode("ep-id", "123", StatusState.WATCHING)
 
@@ -229,7 +228,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
                     // リポジトリが呼ばれたことを検証
                     coVerify { annictRepository.createRecord("ep-id", "123") }
                     // JudgeFinaleUseCaseが呼ばれたことを検証
-                    coVerify { judgeFinaleUseCase.invoke(1, 123) }
+                    coVerify { judgeFinaleUseCase.invoke(1, 456) }
                 }
             }
 
@@ -320,6 +319,7 @@ private fun createMockPrograms(): List<ViewerProgramsQuery.Node?> = listOf(
             every { seasonName } returns SeasonName.WINTER
             every { seasonYear } returns 2025
             every { media } returns Media.TV
+            every { malAnimeId } returns "456"
             every { viewerStatusState } returns StatusState.WATCHING
             every { image } returns mockk {
                 every { recommendedImageUrl } returns "https://example.com/image.jpg"
