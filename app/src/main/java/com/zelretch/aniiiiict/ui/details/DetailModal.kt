@@ -65,12 +65,6 @@ fun DetailModal(
     )
 }
 
-// UI label mapping for test expectations
-private fun StatusState.toDisplayName(): String = when (this) {
-    StatusState.WATCHED -> "COMPLETED"
-    else -> this.toString()
-}
-
 @Composable
 private fun DetailModalLaunchedEffects(
     viewModel: DetailModalViewModel,
@@ -184,7 +178,7 @@ private fun StatusDropdownMenu(
             onExpandedChange(!expanded)
         }) {
             TextField(
-                value = state.selectedStatus?.let { it.toDisplayName() } ?: "",
+                value = state.selectedStatus?.name ?: "",
                 onValueChange = {},
                 readOnly = true,
                 enabled = !state.isStatusChanging,
@@ -201,7 +195,7 @@ private fun StatusDropdownMenu(
                 onExpandedChange(false)
             }) {
                 StatusState.entries.forEach { status ->
-                    DropdownMenuItem(text = { Text(status.toDisplayName()) }, onClick = {
+                    DropdownMenuItem(text = { Text(status.name) }, onClick = {
                         onExpandedChange(false)
                         onStatusChange(status)
                     })

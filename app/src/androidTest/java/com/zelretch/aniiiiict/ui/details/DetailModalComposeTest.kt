@@ -113,14 +113,14 @@ class DetailModalComposeTest {
         // クリックでメニュー展開
         composeTestRule.onNodeWithText("WATCHING").performClick()
 
-        // いずれかの選択肢が表示される（COMPLETED を例に）
-        composeTestRule.onNodeWithText("COMPLETED").assertIsDisplayed()
+        // いずれかの選択肢が表示される（WATCHED を例に）
+        composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
 
         // 選択できることを確認
-        composeTestRule.onNodeWithText("COMPLETED").performClick()
+        composeTestRule.onNodeWithText("WATCHED").performClick()
 
         // 変更後の値が表示されるまで待機し検証（更新イベントで更新される）
         // 簡易的に再度クリック可能なことだけ確認
-        composeTestRule.onNodeWithText("COMPLETED").assertIsDisplayed()
+        composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
     }
 }
