@@ -78,7 +78,10 @@ private fun DetailModalLaunchedEffects(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is DetailModalEvent.StatusChanged, is DetailModalEvent.EpisodesRecorded, is DetailModalEvent.BulkEpisodesRecorded -> onRefresh()
+                is DetailModalEvent.StatusChanged,
+                is DetailModalEvent.EpisodesRecorded,
+                is DetailModalEvent.BulkEpisodesRecorded
+                -> onRefresh()
             }
         }
     }

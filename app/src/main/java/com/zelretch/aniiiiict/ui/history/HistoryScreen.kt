@@ -113,7 +113,11 @@ private fun HistoryContent(uiState: HistoryUiState, listState: LazyListState, ac
         state = rememberPullToRefreshState()
     ) {
         when {
-            uiState.records.isEmpty() && !uiState.isLoading && uiState.error == null && !uiState.hasNextPage -> HistoryEmptyState()
+            uiState.records.isEmpty() &&
+                !uiState.isLoading &&
+                uiState.error == null &&
+                !uiState.hasNextPage
+            -> HistoryEmptyState()
             else -> HistoryList(uiState, listState, actions)
         }
 
