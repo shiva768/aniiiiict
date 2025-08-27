@@ -21,15 +21,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -103,21 +100,21 @@ private fun TrackSnackbarHost(
     onDismissFinale: () -> Unit,
     onRefresh: () -> Unit
 ) {
-    SnackbarHost(hostState = remember { SnackbarHostState() }) {
-        if (uiState.showFinaleConfirmationForWorkId != null) {
-            Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
-                TextButton(onClick = onConfirmFinale) { Text("はい") }
-                TextButton(onClick = onDismissFinale) { Text("いいえ") }
-            }) {
-                Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？")
-            }
-        } else if (uiState.error != null) {
-            Snackbar(modifier = Modifier.testTag("snackbar")) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(uiState.error)
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(onClick = onRefresh) { Text("再読み込み") }
-                }
+    // Render snackbars directly based on UI state so tests can observe them
+    if (uiState.showFinaleConfirmationForWorkId != null) {
+        Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
+            // Place "いいえ" first, then "はい" to avoid any layout quirks causing mis-clicks
+            TextButton(onClick = onDismissFinale) { Text("いいえ") }
+            TextButton(onClick = onConfirmFinale) { Text("はい") }
+        }) {
+            Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？")
+        }
+    } else if (uiState.error != null) {
+        Snackbar(modifier = Modifier.testTag("snackbar")) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(uiState.error)
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onRefresh) { Text("再読み込み") }
             }
         }
     }

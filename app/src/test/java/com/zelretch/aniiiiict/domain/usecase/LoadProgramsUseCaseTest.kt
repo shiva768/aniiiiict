@@ -193,6 +193,7 @@ class LoadProgramsUseCaseTest : BehaviorSpec({
             every { work.seasonName } returns SeasonName.WINTER
             every { work.seasonYear } returns 2025
             every { work.media } returns Media.TV
+            every { work.malAnimeId } returns "456"
             every { work.viewerStatusState } returns StatusState.WATCHING
             every { work.image } returns null
             every { node.work } returns work

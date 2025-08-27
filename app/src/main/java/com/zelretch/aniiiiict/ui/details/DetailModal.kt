@@ -177,12 +177,11 @@ private fun StatusDropdownMenu(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ExposedDropdownMenuBox(
-            expanded = expanded && !state.isStatusChanging,
-            onExpandedChange = { onExpandedChange(!expanded) }
-        ) {
+        ExposedDropdownMenuBox(expanded = expanded && !state.isStatusChanging, onExpandedChange = {
+            onExpandedChange(!expanded)
+        }) {
             TextField(
-                value = state.selectedStatus?.toString() ?: "",
+                value = state.selectedStatus?.name ?: "",
                 onValueChange = {},
                 readOnly = true,
                 enabled = !state.isStatusChanging,
@@ -195,18 +194,14 @@ private fun StatusDropdownMenu(
                 },
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
             )
-            ExposedDropdownMenu(
-                expanded = expanded && !state.isStatusChanging,
-                onDismissRequest = { onExpandedChange(false) }
-            ) {
+            ExposedDropdownMenu(expanded = expanded && !state.isStatusChanging, onDismissRequest = {
+                onExpandedChange(false)
+            }) {
                 StatusState.entries.forEach { status ->
-                    DropdownMenuItem(
-                        text = { Text(status.toString()) },
-                        onClick = {
-                            onExpandedChange(false)
-                            onStatusChange(status)
-                        }
-                    )
+                    DropdownMenuItem(text = { Text(status.name) }, onClick = {
+                        onExpandedChange(false)
+                        onStatusChange(status)
+                    })
                 }
             }
         }

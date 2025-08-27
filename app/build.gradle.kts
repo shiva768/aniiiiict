@@ -9,7 +9,9 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
-val annictClientSecret = providers.environmentVariable("ANNICT_CLIENT_SECRET")
+val annictClientSecret =
+    providers.gradleProperty("ANNICT_CLIENT_SECRET")
+        .orElse(providers.environmentVariable("ANNICT_CLIENT_SECRET"))
 val isCi = providers.environmentVariable("CI").isPresent
 val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ignoreCase = true) } &&
     gradle.startParameter.taskNames.none {
@@ -178,7 +180,7 @@ dependencies {
     testImplementation(libs.bundles.testing)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.android.testing)
-    androidTestImplementation(libs.mockk)
+    androidTestImplementation(libs.mockk.android)
     debugImplementation(libs.bundles.compose.debug)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

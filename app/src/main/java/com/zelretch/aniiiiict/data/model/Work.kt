@@ -10,6 +10,7 @@ data class Work(
     val seasonYear: Int? = null,
     val media: String? = null,
     val mediaText: String? = null,
+    val malAnimeId: String? = null,
     val viewerStatusState: StatusState,
     val seasonNameText: String? = null,
     val image: WorkImage? = null

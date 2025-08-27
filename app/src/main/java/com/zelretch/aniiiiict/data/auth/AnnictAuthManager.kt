@@ -43,6 +43,7 @@ class AnnictAuthManager @Inject constructor(
             Timber.i(
                 "[AnnictAuthManager][handleAuthorizationCode] 認証コードの処理を開始: ${code.take(LOG_CODE_PREFIX_LENGTH)}..."
             )
+            validateClientSecret()
             val tokenResponse = getAccessTokenWithRetry(code)
             Timber.i(
                 "[AnnictAuthManager][handleAuthorizationCode] アクセストークンを取得: ${
@@ -60,6 +61,11 @@ class AnnictAuthManager @Inject constructor(
                 e.message ?: "Unknown error"
             )
             Result.failure(e)
+        }
+    }
+    private fun validateClientSecret() {
+        if (BuildConfig.ANNICT_CLIENT_SECRET.isEmpty()) {
+            throw IllegalStateException("[AnnictAuthManager] クライアントシークレットが設定されていません")
         }
     }
 

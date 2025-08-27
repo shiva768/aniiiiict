@@ -65,6 +65,7 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
                 seasonName = node.work.seasonName,
                 seasonYear = node.work.seasonYear,
                 media = node.work.media.toString(),
+                malAnimeId = node.work.malAnimeId,
                 viewerStatusState = node.work.viewerStatusState ?: StatusState.UNKNOWN__,
                 image = workImage
             )

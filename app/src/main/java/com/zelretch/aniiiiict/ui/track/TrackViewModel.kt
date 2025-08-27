@@ -141,9 +141,6 @@ class TrackViewModel @Inject constructor(
                 _uiState.update { it.copy(recordingSuccess = null) }
             }
         }
-        // プログラムの再読み込みが完了してから最終話判定を行う
-        val reloadJob = loadingPrograms()
-        reloadJob.join()
         handleFinaleJudgement(episodeId, workId)
     }
 
@@ -151,18 +148,21 @@ class TrackViewModel @Inject constructor(
         val program = _uiState.value.allPrograms.find { it.work.id == workId }
         val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
 
-        if (program != null && currentEpisode?.episode?.number != null) {
-            val judgeResult = judgeFinaleUseCase(
-                currentEpisode.episode.number,
-                program.work.id.toInt()
-            )
-            if (judgeResult.isFinale) {
-                _uiState.update {
-                    it.copy(
-                        showFinaleConfirmationForWorkId = workId,
-                        showFinaleConfirmationForEpisodeNumber = currentEpisode.episode.number
-                    )
-                }
+        if (program == null || currentEpisode?.episode?.number == null) {
+            return
+        }
+
+        val episodeNumber = currentEpisode.episode.number
+        val malAnimeId = program.work.malAnimeId ?: return
+
+        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId.toInt())
+
+        if (judgeResult.isFinale) {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    showFinaleConfirmationForWorkId = workId,
+                    showFinaleConfirmationForEpisodeNumber = episodeNumber
+                )
             }
         }
     }
