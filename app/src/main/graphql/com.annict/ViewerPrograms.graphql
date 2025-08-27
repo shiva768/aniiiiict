@@ -29,6 +29,7 @@ query ViewerPrograms {
           seasonName
           seasonYear
           media
+          malAnimeId
           viewerStatusState
           image {
             recommendedImageUrl
