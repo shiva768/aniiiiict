@@ -1,8 +1,13 @@
 name: Build Debug APK
-run-name: Build Debug APK (#${{ github.run_number }})
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
@@ -32,12 +37,15 @@ jobs:
           mkdir -p app
           printf '%s' "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > app/debug.keystore
 
-      - name: Build APK
-        run: ./gradlew assembleDebug -PannictClientSecret="$ANNICT_CLIENT_SECRET" --stacktrace
-
       - name: Get timestamp
         id: timestamp
         run: echo "value=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        env:
+          BUILD_TIMESTAMP: ${{ steps.timestamp.outputs.value }}
+          BUILD_REF_NAME: ${{ github.head_ref || github.ref_name }}
+        run: ./gradlew assembleDebug -PannictClientSecret="$ANNICT_CLIENT_SECRET" --stacktrace
 
       - name: Rename APK
         run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk

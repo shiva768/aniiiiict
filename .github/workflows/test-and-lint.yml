@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GRADLE_OPTS: -Dorg.gradle.configuration-cache=false
-      ANNICT_CLIENT_SECRET: ${{ secrets.ANNICT_CLIENT_SECRET }}
+      ANNICT_CLIENT_SECRET: 'dummy'
 
     steps:
       - name: Checkout code
@@ -41,19 +41,3 @@ jobs:
 #        with:
 #          api-level: 33
 #          script: ./gradlew connectedDebugAndroidTest
-
-      - name: Build APK
-        run: ./gradlew assembleDebug -PannictClientSecret="$ANNICT_CLIENT_SECRET" --stacktrace
-
-      - name: Get timestamp
-        id: timestamp
-        run: echo "value=$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
-
-      - name: Rename debug APK
-        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug-${{ steps.timestamp.outputs.value }}
-          path: app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk

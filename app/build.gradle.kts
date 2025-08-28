@@ -51,7 +51,15 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        val baseVersionName = "1.0"
+        val buildTimestamp = System.getenv("BUILD_TIMESTAMP")
+        val buildRefName = System.getenv("BUILD_REF_NAME")?.replace("/", "-")
+
+        versionName = if (buildTimestamp != null && buildRefName != null) {
+            "$baseVersionName-$buildRefName-$buildTimestamp"
+        } else {
+            baseVersionName
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
