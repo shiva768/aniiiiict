@@ -1,5 +1,5 @@
 name: Build Debug APK
-run-name: Build Debug APK (#${{ github.run_number }})
+run-name: Build Debug APK (${{github.event.workflow_run.name}})
 
 on:
   workflow_dispatch:
