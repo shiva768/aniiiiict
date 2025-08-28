@@ -45,5 +45,5 @@ jobs:
       - name: Run UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 36
+          api-level: 35-ext15
           script: ./gradlew connectedDebugAndroidTest
