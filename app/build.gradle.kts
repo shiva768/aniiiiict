@@ -9,6 +9,9 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+val annictClientId =
+    providers.gradleProperty("ANNICT_CLIENT_ID")
+        .orElse(providers.environmentVariable("ANNICT_CLIENT_ID"))
 val annictClientSecret =
     providers.gradleProperty("ANNICT_CLIENT_SECRET")
         .orElse(providers.environmentVariable("ANNICT_CLIENT_SECRET"))
@@ -23,6 +26,7 @@ val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ign
 tasks.withType<Task>().matching {
     it.name.startsWith("assemble") || it.name.startsWith("bundle")
 }.configureEach {
+    val taskAnnictClientId = annictClientId
     val taskAnnictSecret = annictClientSecret
     val taskIsCi = isCi
     val taskIsCheckOnly = isCheckOnly
@@ -31,8 +35,15 @@ tasks.withType<Task>().matching {
         val isRelease = name.contains("Release", ignoreCase = true)
         val isDebug = name.contains("Debug", ignoreCase = true)
         val requireSecret = !taskIsCheckOnly && (isRelease || (isDebug && taskIsCi))
+        val idValue = taskAnnictClientId.orNull
         val secretValue = taskAnnictSecret.orNull
 
+        if (requireSecret && idValue.isNullOrEmpty()) {
+            throw GradleException(
+                "ANNICT_CLIENT_ID environment variable is required for " +
+                    (if (isRelease) "Release" else "CI Debug") + " builds"
+            )
+        }
         if (requireSecret && secretValue.isNullOrEmpty()) {
             throw GradleException(
                 "ANNICT_CLIENT_SECRET environment variable is required for " +
@@ -66,11 +77,10 @@ android {
             useSupportLibrary = true
         }
 
-        // CLIENT_IDは直接埋め込み
         buildConfigField(
             "String",
             "ANNICT_CLIENT_ID",
-            "\"9TBFInCwtgcRuVcK-F892iXt8vQmSci6rbAYg3eNHgk\""
+            "\"${annictClientId.orElse("").get()}\""
         )
 
         buildConfigField(
