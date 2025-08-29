@@ -1,0 +1,23 @@
+name: Housekeeping
+
+on:
+  schedule:
+    - cron: '0 18 * * 0'  # UTC 18:00 = JST 03:00 月曜朝
+  workflow_dispatch:
+
+permissions:
+  actions: write   # キャッシュ削除に必須
+  contents: read
+
+jobs:
+  cleanup-caches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete caches older than 7 days
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cutoff=$(date -u -d "7 days ago" +%s)
+          gh api "repos/${{ github.repository }}/actions/caches?per_page=100" --paginate \
+            --jq ".actions_caches[] | select((.last_accessed_at|fromdateiso8601) < $cutoff) | .id" \
+          | xargs -r -n1 -I{} gh api -X DELETE "repos/${{ github.repository }}/actions/caches/{}"
