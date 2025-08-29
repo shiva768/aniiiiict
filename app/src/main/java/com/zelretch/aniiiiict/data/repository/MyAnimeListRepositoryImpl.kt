@@ -12,25 +12,23 @@ import javax.inject.Singleton
 class MyAnimeListRepositoryImpl @Inject constructor(
     private val api: MyAnimeListApi
 ) : MyAnimeListRepository {
-    
+
     companion object {
         private val CLIENT_ID = BuildConfig.MAL_CLIENT_ID
     }
-    
-    override suspend fun getMedia(mediaId: Int): Result<MyAnimeListMedia> {
-        return runCatching {
-            val response = api.getAnime(
-                animeId = mediaId,
-                clientId = CLIENT_ID
-            )
-            
-            if (response.isSuccessful) {
-                response.body()?.data ?: throw IOException("Response body is null")
-            } else {
-                throw IOException("API request failed: ${response.code()} ${response.message()}")
-            }
-        }.onFailure { e ->
-            ErrorHandler.handleError(e, "MyAnimeListRepositoryImpl", "getMedia")
+
+    override suspend fun getMedia(mediaId: Int): Result<MyAnimeListMedia> = runCatching {
+        val response = api.getAnime(
+            animeId = mediaId,
+            clientId = CLIENT_ID
+        )
+
+        if (response.isSuccessful) {
+            response.body()?.data ?: throw IOException("Response body is null")
+        } else {
+            throw IOException("API request failed: ${response.code()} ${response.message()}")
         }
+    }.onFailure { e ->
+        ErrorHandler.handleError(e, "MyAnimeListRepositoryImpl", "getMedia")
     }
 }

@@ -32,7 +32,7 @@ class JudgeFinaleUseCase @Inject constructor(
                 }
                 // MyAnimeListには nextAiringEpisode 相当の情報がないため、
                 // status と num_episodes で判定する
-                
+
                 // 1. status == finished_airing → finale_confirmed
                 media.status == "finished_airing" -> {
                     Timber.i("ステータスが finished_airing のため FINALE_CONFIRMED")

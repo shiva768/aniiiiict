@@ -28,9 +28,9 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     broadcast = null
                 )
                 coEvery { repository.getMedia(1) } returns Result.success(media)
-                
+
                 val result = useCase(12, 1)
-                
+
                 result.state shouldBe FinaleState.FINALE_CONFIRMED
                 result.isFinale shouldBe true
             }
@@ -40,15 +40,15 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
             then("should confirm finale") {
                 val media = MyAnimeListMedia(
                     id = 2,
-                    mediaType = "tv", 
+                    mediaType = "tv",
                     numEpisodes = 24,
                     status = "currently_airing",
                     broadcast = null
                 )
                 coEvery { repository.getMedia(2) } returns Result.success(media)
-                
+
                 val result = useCase(24, 2)
-                
+
                 result.state shouldBe FinaleState.FINALE_CONFIRMED
                 result.isFinale shouldBe true
             }
@@ -59,14 +59,14 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                 val media = MyAnimeListMedia(
                     id = 3,
                     mediaType = "tv",
-                    numEpisodes = 12, 
+                    numEpisodes = 12,
                     status = "currently_airing",
                     broadcast = null
                 )
                 coEvery { repository.getMedia(3) } returns Result.success(media)
-                
+
                 val result = useCase(8, 3)
-                
+
                 result.state shouldBe FinaleState.NOT_FINALE
                 result.isFinale shouldBe false
             }
