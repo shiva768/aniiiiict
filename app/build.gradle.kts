@@ -15,6 +15,9 @@ val annictClientId =
 val annictClientSecret =
     providers.gradleProperty("ANNICT_CLIENT_SECRET")
         .orElse(providers.environmentVariable("ANNICT_CLIENT_SECRET"))
+val malClientId =
+    providers.gradleProperty("MAL_CLIENT_ID")
+        .orElse(providers.environmentVariable("MAL_CLIENT_ID"))
 val isCi = providers.environmentVariable("CI").isPresent
 val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ignoreCase = true) } &&
     gradle.startParameter.taskNames.none {
@@ -92,7 +95,7 @@ android {
         buildConfigField(
             "String",
             "MAL_CLIENT_ID",
-            "\"your_mal_client_id\""
+            "\"${malClientId.orElse("").get()}\""
         )
 
         // ←ここで BuildConfig に渡す
