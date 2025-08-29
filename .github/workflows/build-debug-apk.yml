@@ -55,3 +55,4 @@ jobs:
         with:
           name: app-debug-${{ steps.timestamp.outputs.value }}
           path: app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
+          retention-days: 7
