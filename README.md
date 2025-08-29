@@ -47,6 +47,7 @@ cd aniiiiict
 - 環境変数にAnnict API認証情報を設定：
 
 ```bash
+export ANNICT_CLIENT_ID=your_client_id_here
 export ANNICT_CLIENT_SECRET=your_client_secret_here
 ```
 
