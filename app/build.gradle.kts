@@ -89,6 +89,12 @@ android {
             "\"https://graphql.anilist.co\""
         )
 
+        buildConfigField(
+            "String",
+            "MAL_CLIENT_ID",
+            "\"your_mal_client_id\""
+        )
+
         // ←ここで BuildConfig に渡す
         buildConfigField(
             "String",
