@@ -186,7 +186,7 @@ class TrackScreenComposeTest {
 
         // Assert
         composeTestRule.onNodeWithTag("finale_confirmation_snackbar").assertIsDisplayed()
-        composeTestRule.onNodeWithText("このタイトルはエピソード12が最終話の可能性があります、視聴済みにしますか？")
+        composeTestRule.onNodeWithText("このタイトルはエピソード12が最終話の可能性があります。\n視聴済みにしますか？")
             .assertIsDisplayed()
         composeTestRule.onNodeWithText("はい").assertIsDisplayed()
         composeTestRule.onNodeWithText("いいえ").assertIsDisplayed()

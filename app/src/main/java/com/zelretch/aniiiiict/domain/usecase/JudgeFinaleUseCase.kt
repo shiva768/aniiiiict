@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiict.domain.usecase
 
-import com.zelretch.aniiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -14,41 +14,44 @@ enum class FinaleState {
 data class JudgeFinaleResult(val state: FinaleState, val isFinale: Boolean)
 
 class JudgeFinaleUseCase @Inject constructor(
-    private val aniListRepository: AniListRepository
+    private val myAnimeListRepository: MyAnimeListRepository
 ) {
     suspend operator fun invoke(currentEpisodeNumber: Int, mediaId: Int): JudgeFinaleResult {
         Timber.i(
             "最終話判定を開始: currentEpisode=$currentEpisodeNumber, mediaId=$mediaId"
         )
 
-        val result = aniListRepository.getMedia(mediaId)
+        val result = myAnimeListRepository.getMedia(mediaId)
 
         return result.fold(onSuccess = { media ->
             when {
-                // format != TV の場合、最終話判定ロジックをスキップ
-                media.format != null && media.format != "TV" -> {
-                    Timber.i("フォーマットがTVではないため判定をスキップ: format=${media.format}")
+                // media_type != tv の場合、最終話判定ロジックをスキップ
+                media.mediaType != null && media.mediaType != "tv" -> {
+                    Timber.i("フォーマットがTVではないため判定をスキップ: mediaType=${media.mediaType}")
                     JudgeFinaleResult(FinaleState.UNKNOWN, false)
                 }
-                // 1. 次回予定ありかつ nextAiringEpisode.episode > currentEp → not_finale
-                media.nextAiringEpisode?.episode?.let { it > currentEpisodeNumber } == true -> {
-                    Timber.i("次回エピソードが現在のエピソードより大きいためNOT_FINALE")
+                // MyAnimeListには nextAiringEpisode 相当の情報がないため、
+                // status と num_episodes で判定する
+
+                // 1. status == finished_airing → finale_confirmed
+                media.status == "finished_airing" -> {
+                    Timber.i("ステータスが finished_airing のため FINALE_CONFIRMED")
+                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
+                }
+                // 2. num_episodes が数値 かつ currentEp >= num_episodes → finale_confirmed
+                media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes -> {
+                    Timber.i("現在のエピソードが総エピソード数に達したためFINALE_CONFIRMED")
+                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
+                }
+                // 3. status == currently_airing かつ num_episodes が null → unknown
+                media.status == "currently_airing" && media.numEpisodes == null -> {
+                    Timber.i("現在放送中で総エピソード数が不明のためUNKNOWN")
+                    JudgeFinaleResult(FinaleState.UNKNOWN, false)
+                }
+                // 4. status == currently_airing → not_finale
+                media.status == "currently_airing" -> {
+                    Timber.i("現在放送中のためNOT_FINALE")
                     JudgeFinaleResult(FinaleState.NOT_FINALE, false)
-                }
-                // 2. episodes が数値 かつ currentEp >= episodes かつ nextAiringEpisode == null → finale_confirmed
-                media.episodes != null && currentEpisodeNumber >= media.episodes && media.nextAiringEpisode == null -> {
-                    Timber.i("総エピソード数と一致し、次回エピソードがないためFINALE_CONFIRMED")
-                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
-                }
-                // 3. status == FINISHED かつ nextAiringEpisode == null → finale_confirmed
-                media.status == "FINISHED" && media.nextAiringEpisode == null -> {
-                    Timber.i("ステータスがFINISHEDで、次回エピソードがないためFINALE_CONFIRMED")
-                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
-                }
-                // 4. nextAiringEpisode == null（ただし 2,3 未満足） → finale_expected
-                media.nextAiringEpisode == null -> {
-                    Timber.i("次回エピソードがないためFINALE_EXPECTED")
-                    JudgeFinaleResult(FinaleState.FINALE_EXPECTED, false)
                 }
                 // 5. それ以外 → unknown
                 else -> {
@@ -57,7 +60,7 @@ class JudgeFinaleUseCase @Inject constructor(
                 }
             }
         }, onFailure = { e ->
-            Timber.e(e, "AniListからの作品情報取得に失敗しました")
+            Timber.e(e, "MyAnimeListからの作品情報取得に失敗しました")
             JudgeFinaleResult(FinaleState.UNKNOWN, false) // エラー時は不明として扱う
         })
     }

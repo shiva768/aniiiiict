@@ -5,12 +5,15 @@ import com.zelretch.aniiiiict.BuildConfig
 import com.zelretch.aniiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiict.data.api.ErrorInterceptor
+import com.zelretch.aniiiiict.data.api.MyAnimeListApi
 import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AniListRepositoryImpl
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepositoryImpl
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepositoryImpl
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiict.ui.base.DefaultCustomTabsIntentFactory
@@ -22,6 +25,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -89,6 +94,22 @@ object AppModule {
     fun provideAniListRepository(apolloClient: AniListApolloClient): AniListRepository = AniListRepositoryImpl(
         apolloClient = apolloClient
     )
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit = Retrofit.Builder()
+        .baseUrl("https://api.myanimelist.net/")
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideMyAnimeListApi(retrofit: Retrofit): MyAnimeListApi = retrofit.create(MyAnimeListApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideMyAnimeListRepository(api: MyAnimeListApi): MyAnimeListRepository = MyAnimeListRepositoryImpl(api)
 
     @Provides
     @Singleton

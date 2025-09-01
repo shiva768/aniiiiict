@@ -9,6 +9,7 @@ import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.BaseUiState
 import com.zelretch.aniiiiict.ui.base.BaseViewModel
@@ -49,6 +50,7 @@ data class TrackUiState(
 class TrackViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
+    private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
     private val judgeFinaleUseCase: JudgeFinaleUseCase
@@ -171,7 +173,7 @@ class TrackViewModel @Inject constructor(
         _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
             viewModelScope.launch {
                 runCatching {
-                    watchEpisodeUseCase("", workId, StatusState.WATCHED, true).getOrThrow()
+                    updateViewStateUseCase(workId, StatusState.WATCHED)
                 }.onSuccess {
                     _uiState.update {
                         it.copy(
@@ -179,6 +181,8 @@ class TrackViewModel @Inject constructor(
                             showFinaleConfirmationForEpisodeNumber = null
                         )
                     }
+                    // Refresh the programs list to show the updated status
+                    refresh()
                 }.onFailure { e ->
                     val msg = e.message ?: ErrorHandler.getUserMessage(
                         ErrorHandler.analyzeError(e, "TrackViewModel.confirmWatchedStatus")

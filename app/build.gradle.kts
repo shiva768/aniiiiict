@@ -15,6 +15,9 @@ val annictClientId =
 val annictClientSecret =
     providers.gradleProperty("ANNICT_CLIENT_SECRET")
         .orElse(providers.environmentVariable("ANNICT_CLIENT_SECRET"))
+val malClientId =
+    providers.gradleProperty("MAL_CLIENT_ID")
+        .orElse(providers.environmentVariable("MAL_CLIENT_ID"))
 val isCi = providers.environmentVariable("CI").isPresent
 val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ignoreCase = true) } &&
     gradle.startParameter.taskNames.none {
@@ -28,6 +31,7 @@ tasks.withType<Task>().matching {
 }.configureEach {
     val taskAnnictClientId = annictClientId
     val taskAnnictSecret = annictClientSecret
+    val taskMalClientId = malClientId
     val taskIsCi = isCi
     val taskIsCheckOnly = isCheckOnly
 
@@ -37,17 +41,12 @@ tasks.withType<Task>().matching {
         val requireSecret = !taskIsCheckOnly && (isRelease || (isDebug && taskIsCi))
         val idValue = taskAnnictClientId.orNull
         val secretValue = taskAnnictSecret.orNull
+        val malIdValue = taskMalClientId.orNull
 
-        if (requireSecret && idValue.isNullOrEmpty()) {
+        if (requireSecret && idValue.isNullOrEmpty() && secretValue.isNullOrEmpty() && malIdValue.isNullOrEmpty()) {
             throw GradleException(
-                "ANNICT_CLIENT_ID environment variable is required for " +
-                    (if (isRelease) "Release" else "CI Debug") + " builds"
-            )
-        }
-        if (requireSecret && secretValue.isNullOrEmpty()) {
-            throw GradleException(
-                "ANNICT_CLIENT_SECRET environment variable is required for " +
-                    (if (isRelease) "Release" else "CI Debug") + " builds"
+                "ANNICT_CLIENT_ID and ANNICT_CLIENT_SECRET and MAL_CLIENT_ID " +
+                    "environment variable is required for " + (if (isRelease) "Release" else "CI Debug") + " builds"
             )
         }
     }
@@ -87,6 +86,12 @@ android {
             "String",
             "ANILIST_API_URL",
             "\"https://graphql.anilist.co\""
+        )
+
+        buildConfigField(
+            "String",
+            "MAL_CLIENT_ID",
+            "\"${malClientId.orElse("").get()}\""
         )
 
         // ←ここで BuildConfig に渡す

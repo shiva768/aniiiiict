@@ -10,6 +10,7 @@ import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -36,6 +37,7 @@ class TrackViewModelTest : BehaviorSpec({
     val loadProgramsUseCase = mockk<LoadProgramsUseCase>()
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     mockk<BulkRecordEpisodesUseCase>()
+    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
     val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
     mockk<Context>(relaxed = true)
@@ -55,6 +57,7 @@ class TrackViewModelTest : BehaviorSpec({
         viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
+            updateViewStateUseCase,
             filterProgramsUseCase,
             filterPreferences,
             judgeFinalUseCase
