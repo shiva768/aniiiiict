@@ -18,7 +18,16 @@ import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,23 +37,39 @@ import java.time.LocalDateTime
  * DetailModal のCompose UIテスト
  * ステータス変更ドロップダウン等、重要要素の破損検知を目的とする
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class DetailModalComposeTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private fun createViewModel(): DetailModalViewModel {
-        val repo = mockk<AnnictRepository>()
-        coEvery { repo.updateWorkViewStatus(any(), any()) } returns true
-        coEvery { repo.createRecord(any(), any()) } returns true
-        val update = UpdateViewStateUseCase(repo)
-        val watch = WatchEpisodeUseCase(repo, update)
+    private val dispatcher = UnconfinedTestDispatcher()
+
+    private lateinit var annictRepository: AnnictRepository
+    private lateinit var viewModel: DetailModalViewModel
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+        annictRepository = mockk<AnnictRepository>()
+        coEvery { annictRepository.updateWorkViewStatus(any(), any()) } returns true
+        coEvery { annictRepository.createRecord(any(), any()) } returns true
+        val update = UpdateViewStateUseCase(annictRepository)
+        val watch = WatchEpisodeUseCase(annictRepository, update)
         val bulk = BulkRecordEpisodesUseCase(watch)
-        return DetailModalViewModel(bulk, watch, update)
+        viewModel = DetailModalViewModel(bulk, watch, update)
     }
 
-    private fun sampleProgramWithWork(status: StatusState = StatusState.WATCHING): ProgramWithWork {
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun sampleProgramWithWork(
+        status: StatusState = StatusState.WATCHING,
+        episodeCount: Int = 1
+    ): ProgramWithWork {
         val work = Work(
             id = "work-1",
             title = "テストアニメ",
@@ -54,28 +79,31 @@ class DetailModalComposeTest {
             mediaText = "TV",
             viewerStatusState = status
         )
-        val episode = Episode(
-            id = "ep1",
-            title = "第1話",
-            numberText = "1",
-            number = 1
-        )
-        val program = Program(
-            id = "prog1",
-            startedAt = LocalDateTime.now(),
-            channel = Channel(name = "チャンネル"),
-            episode = episode
-        )
+        val episodes = (1..episodeCount).map {
+            Episode(
+                id = "ep$it",
+                title = "第${it}話",
+                numberText = "$it",
+                number = it
+            )
+        }
+        val programs = episodes.map {
+            Program(
+                id = "prog${it.number}",
+                startedAt = LocalDateTime.now(),
+                channel = Channel(name = "チャンネル"),
+                episode = it
+            )
+        }
         return ProgramWithWork(
-            programs = listOf(program),
-            firstProgram = program,
+            programs = programs,
+            firstProgram = programs.first(),
             work = work
         )
     }
 
     @Test
     fun detailModal_基本要素_タイトルと閉じるボタンが表示される() {
-        val viewModel = createViewModel()
         val programWithWork = sampleProgramWithWork()
 
         composeTestRule.setContent {
@@ -94,7 +122,6 @@ class DetailModalComposeTest {
 
     @Test
     fun detailModal_ステータスドロップダウン_展開して選択できる() {
-        val viewModel = createViewModel()
         val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
 
         composeTestRule.setContent {
@@ -107,20 +134,71 @@ class DetailModalComposeTest {
             )
         }
 
-        // 初期選択状態が表示されている
-        composeTestRule.onNodeWithText("WATCHING").assertIsDisplayed()
-
-        // クリックでメニュー展開
         composeTestRule.onNodeWithText("WATCHING").performClick()
-
-        // いずれかの選択肢が表示される（WATCHED を例に）
         composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
-
-        // 選択できることを確認
         composeTestRule.onNodeWithText("WATCHED").performClick()
 
-        // 変更後の値が表示されるまで待機し検証（更新イベントで更新される）
-        // 簡易的に再度クリック可能なことだけ確認
-        composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
+        coVerify { annictRepository.updateWorkViewStatus("work-1", StatusState.WATCHED) }
+    }
+
+    @Test
+    fun detailModal_バルク記録_正常に記録できる() {
+        val programWithWork = sampleProgramWithWork(episodeCount = 3)
+
+        composeTestRule.setContent {
+            DetailModal(
+                programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // 2番目のエピソードをクリックしてダイアログ表示
+        composeTestRule.onNodeWithText("第2話").performClick()
+        composeTestRule.onNodeWithText("「第2話」までを一括で視聴済みにしますか？").assertIsDisplayed()
+
+        // ダイアログのOKボタンをクリック
+        composeTestRule.onNodeWithText("視聴済みにする").performClick()
+        composeTestRule.mainClock.advanceTimeBy(1000) // アニメーションや遅延処理を待つ
+
+        // Repositoryの呼び出しを検証
+        coVerify { annictRepository.createRecord("ep1", "work-1") }
+        coVerify { annictRepository.createRecord("ep2", "work-1") }
+        coVerify(exactly = 0) { annictRepository.createRecord("ep3", "work-1") }
+    }
+
+    @Test
+    fun detailModal_バルク記録_記録に失敗した場合() {
+        // 2番目の記録で失敗させる
+        coEvery { annictRepository.createRecord("ep1", any()) } returns true
+        coEvery { annictRepository.createRecord("ep2", any()) } throws RuntimeException("API Error")
+
+        val programWithWork = sampleProgramWithWork(episodeCount = 3)
+
+        composeTestRule.setContent {
+            DetailModal(
+                programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // 2番目のエピソードをクリック
+        composeTestRule.onNodeWithText("第2話").performClick()
+
+        // 視聴済みにする
+        composeTestRule.onNodeWithText("視聴済みにする").performClick()
+        composeTestRule.mainClock.advanceTimeBy(1000)
+
+        // ダイアログが閉じられていることを確認
+        composeTestRule.onNodeWithText("「第2話」までを一括で視聴済みにしますか？").assertDoesNotExist()
+
+        // 失敗してもクラッシュしないこと、最初のエピソードは記録されていることを確認
+        coVerify { annictRepository.createRecord("ep1", "work-1") }
+        coVerify { annictRepository.createRecord("ep2", "work-1") }
     }
 }
