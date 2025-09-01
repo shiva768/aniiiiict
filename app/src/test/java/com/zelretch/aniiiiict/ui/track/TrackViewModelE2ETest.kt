@@ -85,6 +85,7 @@ class TrackViewModelE2ETest : BehaviorSpec({
         viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
+            updateViewStateUseCase,
             filterProgramsUseCase,
             filterPreferences,
             judgeFinaleUseCase
