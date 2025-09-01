@@ -13,6 +13,7 @@ jobs:
       GRADLE_OPTS: -Dorg.gradle.configuration-cache=false
       ANNICT_CLIENT_ID: 'dummy'
       ANNICT_CLIENT_SECRET: 'dummy'
+      MAL_CLIENT_ID: 'dummy'
 
     steps:
       - name: Checkout code

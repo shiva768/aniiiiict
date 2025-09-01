@@ -16,6 +16,7 @@ jobs:
       GRADLE_OPTS: -Dorg.gradle.configuration-cache=false
       ANNICT_CLIENT_ID: ${{ secrets.ANNICT_CLIENT_ID }}
       ANNICT_CLIENT_SECRET: ${{ secrets.ANNICT_CLIENT_SECRET }}
+      MAL_CLIENT_ID: ${{ secrets.MAL_CLIENT_ID }}
 
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +47,7 @@ jobs:
         env:
           BUILD_TIMESTAMP: ${{ steps.timestamp.outputs.value }}
           BUILD_REF_NAME: ${{ github.head_ref || github.ref_name }}
-        run: ./gradlew assembleDebug -PannictClientId="$ANNICT_CLIENT_ID" -PannictClientSecret="$ANNICT_CLIENT_SECRET" --stacktrace
+        run: ./gradlew assembleDebug -PannictClientId="$ANNICT_CLIENT_ID" -PannictClientSecret="$ANNICT_CLIENT_SECRET" -PannictClientSecret="$MAL_CLIENT_ID" --stacktrace
 
       - name: Rename APK
         run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
