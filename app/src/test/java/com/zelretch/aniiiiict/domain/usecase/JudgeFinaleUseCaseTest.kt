@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiict.domain.usecase
 
-import com.zelretch.aniiiiict.data.model.MyAnimeListMedia
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -15,7 +15,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
     given("最終話判定ロジック") {
         `when`("status == currently_airing の場合") {
             then("not_finale を返す") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 1,
                     mediaType = "tv",
                     numEpisodes = 12,
@@ -31,7 +31,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
 
         `when`("numEpisodes が数値 かつ currentEp >= numEpisodes の場合") {
             then("finale_confirmed を返す") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 2,
                     mediaType = "tv",
                     numEpisodes = 12,
@@ -47,7 +47,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
 
         `when`("status == finished_airing の場合") {
             then("finale_confirmed を返す") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 3,
                     mediaType = "tv",
                     numEpisodes = null,
@@ -63,7 +63,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
 
         `when`("currently_airing かつ numEpisodes == null の場合") {
             then("unknown を返す") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 4,
                     mediaType = "tv",
                     numEpisodes = null,
@@ -79,7 +79,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
 
         `when`("上記いずれの条件も満たさない場合") {
             then("unknown を返す") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 5,
                     mediaType = "tv",
                     numEpisodes = 12,
@@ -95,7 +95,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
 
         `when`("mediaType が tv ではない場合") {
             then("unknown を返す") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 6,
                     mediaType = "movie",
                     numEpisodes = 1,

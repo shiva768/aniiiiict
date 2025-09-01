@@ -31,6 +31,7 @@ tasks.withType<Task>().matching {
 }.configureEach {
     val taskAnnictClientId = annictClientId
     val taskAnnictSecret = annictClientSecret
+    val taskMalClientId = malClientId
     val taskIsCi = isCi
     val taskIsCheckOnly = isCheckOnly
 
@@ -40,17 +41,12 @@ tasks.withType<Task>().matching {
         val requireSecret = !taskIsCheckOnly && (isRelease || (isDebug && taskIsCi))
         val idValue = taskAnnictClientId.orNull
         val secretValue = taskAnnictSecret.orNull
+        val malIdValue = taskMalClientId.orNull
 
-        if (requireSecret && idValue.isNullOrEmpty()) {
+        if (requireSecret && idValue.isNullOrEmpty() && secretValue.isNullOrEmpty() && malIdValue.isNullOrEmpty()) {
             throw GradleException(
-                "ANNICT_CLIENT_ID environment variable is required for " +
-                    (if (isRelease) "Release" else "CI Debug") + " builds"
-            )
-        }
-        if (requireSecret && secretValue.isNullOrEmpty()) {
-            throw GradleException(
-                "ANNICT_CLIENT_SECRET environment variable is required for " +
-                    (if (isRelease) "Release" else "CI Debug") + " builds"
+                "ANNICT_CLIENT_ID and ANNICT_CLIENT_SECRET and MAL_CLIENT_ID " +
+                    "environment variable is required for " + (if (isRelease) "Release" else "CI Debug") + " builds"
             )
         }
     }

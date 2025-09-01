@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiict.integration
 
-import com.zelretch.aniiiiict.data.model.MyAnimeListMedia
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.domain.usecase.FinaleState
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
@@ -20,7 +20,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
 
         `when`("anime is finished airing") {
             then("should confirm finale") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 1,
                     mediaType = "tv",
                     numEpisodes = 12,
@@ -38,7 +38,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
 
         `when`("current episode equals total episodes") {
             then("should confirm finale") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 2,
                     mediaType = "tv",
                     numEpisodes = 24,
@@ -56,7 +56,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
 
         `when`("anime is currently airing but not at final episode") {
             then("should not be finale") {
-                val media = MyAnimeListMedia(
+                val media = MyAnimeListResponse(
                     id = 3,
                     mediaType = "tv",
                     numEpisodes = 12,

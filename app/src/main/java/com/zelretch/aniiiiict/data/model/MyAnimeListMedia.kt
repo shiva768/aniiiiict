@@ -2,7 +2,14 @@ package com.zelretch.aniiiiict.data.model
 
 import com.google.gson.annotations.SerializedName
 
-data class MyAnimeListMedia(
+data class MyAnimeListBroadcast(
+    @SerializedName("day_of_the_week")
+    val dayOfTheWeek: String?,
+
+    val time: String?
+)
+
+data class MyAnimeListResponse(
     val id: Int,
 
     @SerializedName("media_type")
@@ -14,15 +21,4 @@ data class MyAnimeListMedia(
     val status: String?, // "finished_airing", "currently_airing", "not_yet_aired"
 
     val broadcast: MyAnimeListBroadcast?
-)
-
-data class MyAnimeListBroadcast(
-    @SerializedName("day_of_the_week")
-    val dayOfTheWeek: String?,
-
-    val time: String?
-)
-
-data class MyAnimeListResponse(
-    val data: MyAnimeListMedia
 )

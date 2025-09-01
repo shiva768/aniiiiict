@@ -107,7 +107,7 @@ private fun TrackSnackbarHost(
             TextButton(onClick = onDismissFinale) { Text("いいえ") }
             TextButton(onClick = onConfirmFinale) { Text("はい") }
         }) {
-            Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります、視聴済みにしますか？")
+            Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります。\n視聴済みにしますか？")
         }
     } else if (uiState.error != null) {
         Snackbar(modifier = Modifier.testTag("snackbar")) {
