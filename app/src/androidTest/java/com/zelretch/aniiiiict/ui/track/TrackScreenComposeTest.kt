@@ -252,8 +252,9 @@ class TrackScreenComposeTest {
 
     @Test
     fun trackScreen_記録成功_スナックバーが表示される() {
-        val program = sampleProgramWithWork(title = "記録成功テスト")
-        viewModel.uiState.value = viewModel.uiState.value.copy(programs = listOf(program))
+        // Arrange
+        val program = sampleProgramWithWork(workId = "work-rec", title = "記録成功テスト")
+        coEvery { annictRepository.getRawProgramsData() } returns flowOf(createMockProgramData(program))
 
         composeTestRule.setContent {
             val uiState = viewModel.uiState.collectAsState().value
@@ -265,19 +266,24 @@ class TrackScreenComposeTest {
                 onRefresh = viewModel::refresh
             )
         }
+        viewModel.refresh()
+        composeTestRule.mainClock.advanceTimeBy(3000)
 
+        // Act
         composeTestRule.onNodeWithContentDescription("record-ep1").performClick()
         composeTestRule.mainClock.advanceTimeBy(1000)
 
+        // Assert
         composeTestRule.onNodeWithTag("snackbar").assertIsDisplayed()
         composeTestRule.onNodeWithText("「第1話」を記録しました").assertIsDisplayed()
-        coVerify { annictRepository.createRecord("ep1", "1") }
+        coVerify { annictRepository.createRecord("ep1", "work-rec") }
     }
 
     @Test
     fun trackScreen_フィナーレ確認_はいボタンで視聴済みにする() {
-        val program = sampleProgramWithWork(title = "フィナーレテスト", isFinale = true)
-        viewModel.uiState.value = viewModel.uiState.value.copy(programs = listOf(program))
+        // Arrange
+        val program = sampleProgramWithWork(workId = "work-fin", title = "フィナーレテスト", isFinale = true)
+        coEvery { annictRepository.getRawProgramsData() } returns flowOf(createMockProgramData(program))
         coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
             FinaleState.FINALE_CONFIRMED,
             true
@@ -293,15 +299,48 @@ class TrackScreenComposeTest {
                 onRefresh = viewModel::refresh
             )
         }
+        viewModel.refresh()
+        composeTestRule.mainClock.advanceTimeBy(3000)
 
+        // Act
         composeTestRule.onNodeWithContentDescription("record-ep1").performClick()
         composeTestRule.mainClock.advanceTimeBy(2000)
 
+        // Assert
         composeTestRule.onNodeWithTag("finale_confirmation_snackbar").assertIsDisplayed()
         composeTestRule.onNodeWithText("はい").performClick()
 
-        coVerify { annictRepository.updateWorkViewStatus("1", StatusState.WATCHED) }
+        coVerify { annictRepository.updateWorkViewStatus("work-fin", StatusState.WATCHED) }
     }
+
+    private fun createMockProgramData(program: ProgramWithWork): List<com.annict.ViewerProgramsQuery.Node?> = listOf(
+        mockk {
+            every { id } returns program.firstProgram.id
+            every { startedAt } returns program.firstProgram.startedAt.toString()
+            every { channel } returns mockk {
+                every { name } returns program.firstProgram.channel.name
+            }
+            every { episode } returns mockk {
+                every { id } returns program.firstProgram.episode.id
+                every { number } returns program.firstProgram.episode.number
+                every { numberText } returns program.firstProgram.episode.numberText
+                every { title } returns program.firstProgram.episode.title
+            }
+            every { work } returns mockk {
+                every { id } returns program.work.id
+                every { title } returns program.work.title
+                every { seasonName } returns program.work.seasonName
+                every { seasonYear } returns program.work.seasonYear
+                every { media } returns Media.safeValueOf(program.work.media)
+                every { malAnimeId } returns program.work.malAnimeId
+                every { viewerStatusState } returns program.work.viewerStatusState
+                every { image } returns mockk {
+                    every { recommendedImageUrl } returns "https://example.com/image.jpg"
+                    every { facebookOgImageUrl } returns "https://example.com/og_image.jpg"
+                }
+            }
+        }
+    )
 
     @Test
     fun trackScreen_フィルターボタンクリック_フィルターが表示される() {
