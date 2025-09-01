@@ -332,7 +332,7 @@ class TrackScreenComposeTest {
                 every { seasonName } returns program.work.seasonName
                 every { seasonYear } returns program.work.seasonYear
                 every { media } returns Media.safeValueOf(program.work.media)
-                every { malAnimeId } returns program.work.malAnimeId
+                every { malAnimeId } returns (program.work.malAnimeId ?: "")
                 every { viewerStatusState } returns program.work.viewerStatusState
                 every { image } returns mockk {
                     every { recommendedImageUrl } returns "https://example.com/image.jpg"
