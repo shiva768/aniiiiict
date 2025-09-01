@@ -103,9 +103,11 @@ private fun TrackSnackbarHost(
     // Render snackbars directly based on UI state so tests can observe them
     if (uiState.showFinaleConfirmationForWorkId != null) {
         Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
-            // Place "いいえ" first, then "はい" to avoid any layout quirks causing mis-clicks
-            TextButton(onClick = onDismissFinale) { Text("いいえ") }
-            TextButton(onClick = onConfirmFinale) { Text("はい") }
+            Row {
+                // Place "いいえ" first, then "はい" to avoid any layout quirks causing mis-clicks
+                TextButton(onClick = onDismissFinale) { Text("いいえ") }
+                TextButton(onClick = onConfirmFinale) { Text("はい") }
+            }
         }) {
             Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります。\n視聴済みにしますか？")
         }
