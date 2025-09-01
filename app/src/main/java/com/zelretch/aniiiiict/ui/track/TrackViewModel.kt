@@ -181,6 +181,8 @@ class TrackViewModel @Inject constructor(
                             showFinaleConfirmationForEpisodeNumber = null
                         )
                     }
+                    // Refresh the programs list to show the updated status
+                    refresh()
                 }.onFailure { e ->
                     val msg = e.message ?: ErrorHandler.getUserMessage(
                         ErrorHandler.analyzeError(e, "TrackViewModel.confirmWatchedStatus")
