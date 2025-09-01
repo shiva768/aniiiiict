@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiict.ui.details.components
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,7 +35,7 @@ private const val SECOND_BUTTON_WEIGHT = 1.2f
 @Composable
 fun EpisodeCard(program: Program, onRecordEpisode: (String) -> Unit, onMarkUpToAsWatched: () -> Unit) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(CARD_CORNER_RADIUS),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = CARD_ELEVATION)
     ) {
