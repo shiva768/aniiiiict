@@ -177,7 +177,7 @@ class TrackScreenComposeTest {
 
     @Test
     fun trackScreen_ロード成功_番組リストが表示される() {
-        val program = sampleProgramWithWork(title = "ロード成功テスト")
+        sampleProgramWithWork(title = "ロード成功テスト")
         coEvery { annictRepository.getRawProgramsData() } returns flowOf(
             listOf(
                 mockk {
@@ -331,8 +331,8 @@ class TrackScreenComposeTest {
                 every { title } returns program.work.title
                 every { seasonName } returns program.work.seasonName
                 every { seasonYear } returns program.work.seasonYear
-                every { media } returns Media.safeValueOf(program.work.media)
-                every { malAnimeId } returns (program.work.malAnimeId ?: "")
+                every { media } returns Media.safeValueOf(program.work.media.orEmpty())
+                every { malAnimeId } returns (program.work.malAnimeId.orEmpty())
                 every { viewerStatusState } returns program.work.viewerStatusState
                 every { image } returns mockk {
                     every { recommendedImageUrl } returns "https://example.com/image.jpg"
