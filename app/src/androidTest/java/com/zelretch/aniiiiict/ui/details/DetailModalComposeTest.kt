@@ -17,6 +17,7 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.util.DisableAnimationsRule
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -29,6 +30,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import java.time.LocalDateTime
 
@@ -40,8 +42,13 @@ import java.time.LocalDateTime
 @RunWith(AndroidJUnit4::class)
 class DetailModalComposeTest {
 
+    private val composeTestRule = createComposeRule()
+    private val disableAnimationsRule = DisableAnimationsRule()
+
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val rule: RuleChain = RuleChain
+        .outerRule(disableAnimationsRule)
+        .around(composeTestRule)
 
     private val dispatcher = UnconfinedTestDispatcher()
 
