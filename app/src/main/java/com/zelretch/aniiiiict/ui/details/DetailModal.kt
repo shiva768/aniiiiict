@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.ui.common.AnimationSaneProgressIndicator
 import com.zelretch.aniiiiict.ui.details.components.ConfirmDialog
 import com.zelretch.aniiiiict.ui.details.components.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest
@@ -187,7 +187,7 @@ private fun StatusDropdownMenu(
                 enabled = !state.isStatusChanging,
                 trailingIcon = {
                     if (state.isStatusChanging) {
-                        CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
+                        AnimationSaneProgressIndicator(modifier = Modifier.padding(8.dp))
                     } else {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     }

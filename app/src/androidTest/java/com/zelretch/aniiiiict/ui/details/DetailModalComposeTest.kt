@@ -3,6 +3,7 @@ package com.zelretch.aniiiiict.ui.details
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -17,6 +18,7 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.ui.common.LocalTestMode
 import com.zelretch.aniiiiict.util.DisableAnimationsRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -113,13 +115,15 @@ class DetailModalComposeTest {
         val programWithWork = sampleProgramWithWork()
 
         composeTestRule.setContent {
-            DetailModal(
-                programWithWork = programWithWork,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                DetailModal(
+                    programWithWork = programWithWork,
+                    isLoading = false,
+                    onDismiss = {},
+                    viewModel = viewModel,
+                    onRefresh = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("未視聴エピソード (1件)").assertIsDisplayed()
@@ -131,13 +135,15 @@ class DetailModalComposeTest {
         val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
 
         composeTestRule.setContent {
-            DetailModal(
-                programWithWork = programWithWork,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                DetailModal(
+                    programWithWork = programWithWork,
+                    isLoading = false,
+                    onDismiss = {},
+                    viewModel = viewModel,
+                    onRefresh = {}
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("WATCHING").performClick()
@@ -152,13 +158,15 @@ class DetailModalComposeTest {
         val programWithWork = sampleProgramWithWork(episodeCount = 3)
 
         composeTestRule.setContent {
-            DetailModal(
-                programWithWork = programWithWork,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                DetailModal(
+                    programWithWork = programWithWork,
+                    isLoading = false,
+                    onDismiss = {},
+                    viewModel = viewModel,
+                    onRefresh = {}
+                )
+            }
         }
 
         // 2番目のエピソードをクリックしてダイアログ表示
@@ -184,13 +192,15 @@ class DetailModalComposeTest {
         val programWithWork = sampleProgramWithWork(episodeCount = 3)
 
         composeTestRule.setContent {
-            DetailModal(
-                programWithWork = programWithWork,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                DetailModal(
+                    programWithWork = programWithWork,
+                    isLoading = false,
+                    onDismiss = {},
+                    viewModel = viewModel,
+                    onRefresh = {}
+                )
+            }
         }
 
         // 2番目のエピソードをクリック

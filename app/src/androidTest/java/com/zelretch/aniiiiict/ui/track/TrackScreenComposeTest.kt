@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiict.ui.track
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -30,6 +31,7 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.ui.common.LocalTestMode
 import com.zelretch.aniiiiict.util.DisableAnimationsRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -167,14 +169,16 @@ class TrackScreenComposeTest {
     @Test
     fun trackScreen_初期状態_基本要素が表示される() {
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = {},
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = {},
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
 
         composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
@@ -217,14 +221,16 @@ class TrackScreenComposeTest {
         )
 
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = {},
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = {},
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
 
         // Act
@@ -240,14 +246,16 @@ class TrackScreenComposeTest {
         coEvery { annictRepository.getRawProgramsData() } throws RuntimeException("Network Error")
 
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = {},
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = {},
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
 
         viewModel.refresh()
@@ -264,14 +272,16 @@ class TrackScreenComposeTest {
         coEvery { annictRepository.getRawProgramsData() } returns flowOf(createMockProgramData(program))
 
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = {},
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = {},
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
         viewModel.refresh()
         composeTestRule.mainClock.advanceTimeBy(3000)
@@ -297,14 +307,16 @@ class TrackScreenComposeTest {
         )
 
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = {},
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = {},
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
         viewModel.refresh()
         composeTestRule.mainClock.advanceTimeBy(3000)
@@ -352,14 +364,16 @@ class TrackScreenComposeTest {
     @Test
     fun trackScreen_フィルターボタンクリック_フィルターが表示される() {
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = {},
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = {},
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
 
         composeTestRule.onNodeWithContentDescription("フィルター").performClick()
@@ -371,14 +385,16 @@ class TrackScreenComposeTest {
     fun trackScreen_履歴ナビゲーション_コールバックが呼ばれる() {
         val mockOnNavigateToHistory = mockk<() -> Unit>(relaxed = true)
         composeTestRule.setContent {
-            val uiState = viewModel.uiState.collectAsState().value
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = uiState,
-                onRecordEpisode = viewModel::recordEpisode,
-                onNavigateToHistory = mockOnNavigateToHistory,
-                onRefresh = viewModel::refresh
-            )
+            CompositionLocalProvider(LocalTestMode provides true) {
+                val uiState = viewModel.uiState.collectAsState().value
+                TrackScreen(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    onRecordEpisode = viewModel::recordEpisode,
+                    onNavigateToHistory = mockOnNavigateToHistory,
+                    onRefresh = viewModel::refresh
+                )
+            }
         }
 
         composeTestRule.onNodeWithContentDescription("履歴").performClick()

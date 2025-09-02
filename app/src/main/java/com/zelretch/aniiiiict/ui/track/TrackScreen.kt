@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +33,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.ui.common.AnimationSaneProgressIndicator
 import com.zelretch.aniiiiict.ui.details.DetailModal
 import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiict.ui.track.components.FilterBar
@@ -172,7 +172,7 @@ private fun TrackScreenContent(
 
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                AnimationSaneProgressIndicator(modifier = Modifier.size(48.dp))
             }
         }
     }
