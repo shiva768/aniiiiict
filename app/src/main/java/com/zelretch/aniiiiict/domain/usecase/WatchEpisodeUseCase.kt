@@ -15,14 +15,14 @@ class WatchEpisodeUseCase @Inject constructor(
         currentStatus: StatusState,
         shouldUpdateStatus: Boolean = true
     ): Result<Unit> = runCatching {
-        // episodeId が空のときは記録をスキップし、ステータス更新のみ行う（ViewModel の既存呼び出しに対応）
-        val recordSuccess = if (episodeId.isBlank()) true else repository.createRecord(episodeId, workId)
-        if (!recordSuccess) error("Record creation failed")
-
-        // ステータス更新が必要な場合のみ更新
+        // ステータス更新が必要な場合は先に更新
         if (shouldUpdateStatus && currentStatus == StatusState.WANNA_WATCH) {
             updateViewStateUseCase(workId, StatusState.WATCHING).getOrThrow()
         }
+
+        // episodeId が空のときは記録をスキップ（ViewModel の既存呼び出しに対応）
+        val recordSuccess = if (episodeId.isBlank()) true else repository.createRecord(episodeId, workId)
+        if (!recordSuccess) error("Record creation failed")
     }.fold(
         onSuccess = { Result.success(Unit) },
         onFailure = { e ->

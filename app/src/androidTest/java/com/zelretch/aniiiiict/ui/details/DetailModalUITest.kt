@@ -34,9 +34,16 @@ class DetailModalUITest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun createMockViewModel(): DetailModalViewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
-        every { state } returns MutableStateFlow(DetailModalState())
-    }
+    private fun createMockViewModel(programWithWork: ProgramWithWork): DetailModalViewModel =
+        mockk<DetailModalViewModel>(relaxed = true).apply {
+            every { state } returns MutableStateFlow(
+                DetailModalState(
+                    programs = programWithWork.programs,
+                    selectedStatus = programWithWork.work.viewerStatusState,
+                    workId = programWithWork.work.id
+                )
+            )
+        }
 
     private fun sampleProgramWithWork(status: StatusState = StatusState.WATCHING): ProgramWithWork {
         val work = Work(
@@ -70,8 +77,8 @@ class DetailModalUITest {
     @Test
     fun detailModal_基本要素_タイトルと閉じるボタンが表示される() {
         // Arrange
-        val viewModel = createMockViewModel()
         val programWithWork = sampleProgramWithWork()
+        val viewModel = createMockViewModel(programWithWork)
         val mockOnDismiss = mockk<() -> Unit>(relaxed = true)
 
         // Act
@@ -93,8 +100,8 @@ class DetailModalUITest {
     @Test
     fun detailModal_閉じるボタンクリック_onDismissが呼ばれる() {
         // Arrange
-        val viewModel = createMockViewModel()
         val programWithWork = sampleProgramWithWork()
+        val viewModel = createMockViewModel(programWithWork)
         val mockOnDismiss = mockk<() -> Unit>(relaxed = true)
 
         // Act
@@ -117,8 +124,8 @@ class DetailModalUITest {
     @Test
     fun detailModal_ステータスドロップダウン_展開して選択できる() {
         // Arrange
-        val viewModel = createMockViewModel()
         val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
+        val viewModel = createMockViewModel(programWithWork)
 
         // Act
         composeTestRule.setContent {
@@ -151,8 +158,6 @@ class DetailModalUITest {
     @Test
     fun detailModal_一括視聴確認ダイアログ_表示内容が正しい() {
         // Arrange
-        val viewModel = createMockViewModel()
-
         // 2エピソードのProgramWithWorkを用意
         val work = Work(
             id = "work-2",
@@ -183,13 +188,17 @@ class DetailModalUITest {
             work = work
         )
 
-        // モックの確認ダイアログ状態を設定
-        every { viewModel.state } returns MutableStateFlow(
-            DetailModalState(
-                showConfirmDialog = true,
-                selectedEpisodeIndex = 1
+        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+            every { state } returns MutableStateFlow(
+                DetailModalState(
+                    programs = programWithWork.programs,
+                    selectedStatus = programWithWork.work.viewerStatusState,
+                    workId = programWithWork.work.id,
+                    showConfirmDialog = true,
+                    selectedEpisodeIndex = 1
+                )
             )
-        )
+        }
 
         // Act
         composeTestRule.setContent {
@@ -212,16 +221,18 @@ class DetailModalUITest {
     @Test
     fun detailModal_一括視聴確認ダイアログ_キャンセルボタンクリック() {
         // Arrange
-        val viewModel = createMockViewModel()
         val programWithWork = sampleProgramWithWork()
-
-        // モックの確認ダイアログ状態を設定
-        every { viewModel.state } returns MutableStateFlow(
-            DetailModalState(
-                showConfirmDialog = true,
-                selectedEpisodeIndex = 0
+        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+            every { state } returns MutableStateFlow(
+                DetailModalState(
+                    programs = programWithWork.programs,
+                    selectedStatus = programWithWork.work.viewerStatusState,
+                    workId = programWithWork.work.id,
+                    showConfirmDialog = true,
+                    selectedEpisodeIndex = 0
+                )
             )
-        )
+        }
 
         // Act
         composeTestRule.setContent {
@@ -243,17 +254,19 @@ class DetailModalUITest {
     @Test
     fun detailModal_一括視聴確認ダイアログ_確定ボタンクリック() {
         // Arrange
-        val viewModel = createMockViewModel()
         val programWithWork = sampleProgramWithWork()
         val mockOnRefresh = mockk<() -> Unit>(relaxed = true)
-
-        // モックの確認ダイアログ状態を設定
-        every { viewModel.state } returns MutableStateFlow(
-            DetailModalState(
-                showConfirmDialog = true,
-                selectedEpisodeIndex = 0
+        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+            every { state } returns MutableStateFlow(
+                DetailModalState(
+                    programs = programWithWork.programs,
+                    selectedStatus = programWithWork.work.viewerStatusState,
+                    workId = programWithWork.work.id,
+                    showConfirmDialog = true,
+                    selectedEpisodeIndex = 0
+                )
             )
-        )
+        }
 
         // Act
         composeTestRule.setContent {
@@ -275,8 +288,8 @@ class DetailModalUITest {
     @Test
     fun detailModal_ローディング状態_プログレスインジケータが表示される() {
         // Arrange
-        val viewModel = createMockViewModel()
         val programWithWork = sampleProgramWithWork()
+        val viewModel = createMockViewModel(programWithWork)
 
         // Act
         composeTestRule.setContent {
@@ -297,8 +310,6 @@ class DetailModalUITest {
     @Test
     fun detailModal_複数エピソード_正しい件数が表示される() {
         // Arrange
-        val viewModel = createMockViewModel()
-
         // 3エピソードのProgramWithWorkを用意
         val work = Work(
             id = "work-multi",
@@ -325,6 +336,7 @@ class DetailModalUITest {
             firstProgram = programs.first(),
             work = work
         )
+        val viewModel = createMockViewModel(programWithWork)
 
         // Act
         composeTestRule.setContent {
