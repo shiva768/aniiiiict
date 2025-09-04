@@ -35,7 +35,7 @@ class DetailModalUITest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private fun createMockViewModel(): DetailModalViewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
-        every { uiState } returns MutableStateFlow(DetailModalUiState())
+        every { state } returns MutableStateFlow(DetailModalState())
     }
 
     private fun sampleProgramWithWork(status: StatusState = StatusState.WATCHING): ProgramWithWork {
@@ -184,8 +184,8 @@ class DetailModalUITest {
         )
 
         // モックの確認ダイアログ状態を設定
-        every { viewModel.uiState } returns MutableStateFlow(
-            DetailModalUiState(
+        every { viewModel.state } returns MutableStateFlow(
+            DetailModalState(
                 showConfirmDialog = true,
                 selectedEpisodeIndex = 1
             )
@@ -216,8 +216,8 @@ class DetailModalUITest {
         val programWithWork = sampleProgramWithWork()
 
         // モックの確認ダイアログ状態を設定
-        every { viewModel.uiState } returns MutableStateFlow(
-            DetailModalUiState(
+        every { viewModel.state } returns MutableStateFlow(
+            DetailModalState(
                 showConfirmDialog = true,
                 selectedEpisodeIndex = 0
             )
@@ -248,8 +248,8 @@ class DetailModalUITest {
         val mockOnRefresh = mockk<() -> Unit>(relaxed = true)
 
         // モックの確認ダイアログ状態を設定
-        every { viewModel.uiState } returns MutableStateFlow(
-            DetailModalUiState(
+        every { viewModel.state } returns MutableStateFlow(
+            DetailModalState(
                 showConfirmDialog = true,
                 selectedEpisodeIndex = 0
             )
@@ -269,7 +269,7 @@ class DetailModalUITest {
         composeTestRule.onNodeWithText("視聴済みにする").performClick()
 
         // Assert - confirmBulkRecord が呼ばれることを検証
-        verify { viewModel.confirmBulkRecord(programWithWork, any()) }
+        verify { viewModel.bulkRecordEpisodes(any(), any()) }
     }
 
     @Test
