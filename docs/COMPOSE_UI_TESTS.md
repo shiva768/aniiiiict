@@ -1,18 +1,46 @@
 # Compose UI Tests
 
 このプロジェクトでは、主要な画面（TrackScreen、HistoryScreen）に対してCompose UIテストを導入しています。
+TrackScreenでは、UITestとIntegrationTestの2種類のテストに分割して実装されています。
+
+## テストアプローチ
+
+### UITest vs IntegrationTest
+
+TrackScreenでは2つの異なるアプローチでテストを実装しています：
+
+**UITest (TrackScreenUITest.kt)**
+- ViewModelを完全にモック化
+- 特定のUI状態が与えられた際のUIの描画とインタラクションのみを検証
+- UI層のみに焦点を当てた純粋なテスト
+- 高速で安定したテスト実行
+
+**IntegrationTest (TrackScreenIntegrationTest.kt)**
+- UI操作からViewModel、UseCaseを経由してRepository（モック）まで
+- コンポーネント間の連携を検証する統合テスト
+- より実際のユーザー操作に近いテストシナリオ
+- ビジネスロジックとUI の結合をテスト
 
 ## テストファイルの場所
 
 ```
 app/src/androidTest/java/com/zelretch/aniiiiict/ui/
-├── track/TrackScreenComposeTest.kt
+├── track/TrackScreenUITest.kt
+├── track/TrackScreenIntegrationTest.kt
 └── history/HistoryScreenComposeTest.kt
 ```
 
 ## 実装されたテスト
 
-### TrackScreenのテスト (TrackScreenComposeTest.kt)
+### TrackScreenのテスト
+
+#### UITest (TrackScreenUITest.kt)
+ViewModelをモック化し、特定のUI状態が与えられた際のUIの描画とインタラクションを検証する。
+
+#### IntegrationTest (TrackScreenIntegrationTest.kt)  
+UI操作からViewModel、UseCaseを経由し、Repository（モック）が正しく呼び出されるかという、コンポーネント間の連携を検証する。
+
+#### テスト項目
 
 - `trackScreen_初期状態_基本要素が表示される()` - 基本的なUI要素の表示確認
 - `trackScreen_エラー状態_スナックバーとエラーメッセージが表示される()` - エラー状態のUI検証
@@ -52,11 +80,14 @@ app/src/androidTest/java/com/zelretch/aniiiiict/ui/
 # すべてのAndroidテストを実行
 ./gradlew connectedDebugAndroidTest
 
-# 特定のテストクラスのみ実行
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=aniiiiictui.track.TrackScreenComposeTest
+# 特定のテストクラスのみ実行（UIテスト）
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenUITest
+
+# 特定のテストクラスのみ実行（統合テスト）
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenIntegrationTest
 
 # 特定のテストメソッドのみ実行
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=aniiiiictui.track.TrackScreenComposeTest#trackScreen_初期状態_基本要素が表示される
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenUITest#trackScreen_初期状態_基本要素が表示される
 ```
 
 ### 前提条件
