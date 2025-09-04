@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.IOException
 import javax.inject.Inject
 
 data class MainUiState(
@@ -75,10 +74,8 @@ class MainViewModel @Inject constructor(
                     Timber.i("認証されていないため、認証を開始します")
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
-            } catch (e: IOException) {
-                val msg = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "MainViewModel.checkAuthState")
-                )
+            } catch (e: Exception) {
+                val msg = ErrorHandler.handleError(e, "MainViewModel", "checkAuthState")
                 internalUiState.update {
                     it.copy(
                         error = msg,
@@ -105,10 +102,8 @@ class MainViewModel @Inject constructor(
                 // Custom Tabsを使用して認証ページを開く
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
-            } catch (e: IOException) {
-                val msg = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "MainViewModel.startAuth")
-                )
+            } catch (e: Exception) {
+                val msg = ErrorHandler.handleError(e, "MainViewModel", "startAuth")
                 internalUiState.update {
                     it.copy(
                         error = msg,
@@ -161,10 +156,8 @@ class MainViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: IOException) {
-                val msg = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "MainViewModel.handleAuthCallback")
-                )
+            } catch (e: Exception) {
+                val msg = ErrorHandler.handleError(e, "MainViewModel", "handleAuthCallback")
                 delay(AUTH_CALLBACK_DELAY_MS)
                 internalUiState.update {
                     it.copy(
