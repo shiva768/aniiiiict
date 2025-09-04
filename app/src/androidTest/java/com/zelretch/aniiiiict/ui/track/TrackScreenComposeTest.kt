@@ -243,4 +243,154 @@ class TrackScreenComposeTest {
         // Assert
         verify { mockOnNavigateToHistory() }
     }
+
+    @Test
+    fun trackScreen_フィナーレ確認_いいえボタンクリックで閉じる() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val finaleState = TrackUiState(
+            showFinaleConfirmationForWorkId = "work1",
+            showFinaleConfirmationForEpisodeNumber = 12
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(finaleState)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = finaleState,
+                onRecordEpisode = { _, _, _ -> },
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        // Dismiss snackbar by clicking "いいえ"
+        composeTestRule.onNodeWithText("いいえ").performClick()
+
+        // Assert
+        verify { mockViewModel.dismissFinaleConfirmation() }
+    }
+
+    @Test
+    fun trackScreen_エピソード記録ボタン_コールバックが正しく呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val onRecord = mockk<(String, String, StatusState) -> Unit>(relaxed = true)
+
+        val sampleWork = Work(
+            id = "work-123",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val sampleEpisode = Episode(
+            id = "ep-1",
+            title = "第1話",
+            numberText = "1",
+            number = 1
+        )
+        val sampleProgram = Program(
+            id = "prog-1",
+            startedAt = LocalDateTime.now(),
+            channel = Channel(name = "チャンネル"),
+            episode = sampleEpisode
+        )
+        val programWithWork = ProgramWithWork(
+            programs = listOf(sampleProgram),
+            firstProgram = sampleProgram,
+            work = sampleWork
+        )
+        val state = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = onRecord,
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        // 記録ボタンを押下（ProgramCard内の contentDescription="記録する"）
+        composeTestRule.onNodeWithContentDescription("記録する").performClick()
+
+        // Assert
+        verify {
+            onRecord.invoke("ep-1", "work-123", StatusState.WATCHING)
+        }
+    }
+
+    // ==== 以下、Repository呼び出しをcoVerifyする統合的テスト ====
+    private fun buildRealViewModelWithRepoMock():
+        Pair<TrackViewModel, com.zelretch.aniiiiict.data.repository.AnnictRepository> {
+        val repo = mockk<com.zelretch.aniiiiict.data.repository.AnnictRepository>()
+        io.mockk.coEvery { repo.createRecord(any(), any()) } returns true
+        io.mockk.coEvery { repo.updateWorkViewStatus(any(), any()) } returns true
+        io.mockk.coEvery { repo.getRawProgramsData() } returns
+            kotlinx.coroutines.flow.flowOf(emptyList())
+
+        val load = com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase(repo)
+        val update = com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase(repo)
+        val watch = com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase(repo, update)
+        val filter = com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase(
+            com.zelretch.aniiiiict.domain.filter.ProgramFilter()
+        )
+        val judge = mockk<com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase>(relaxed = true)
+        val prefs = mockk<com.zelretch.aniiiiict.data.datastore.FilterPreferences>(relaxed = true) {
+            every { filterState } returns MutableStateFlow(
+                com.zelretch.aniiiiict.domain.filter.FilterState()
+            )
+        }
+        val vm = TrackViewModel(load, watch, update, filter, prefs, judge)
+        return vm to repo
+    }
+
+    @Test
+    fun trackScreen_エピソード記録_Repository呼び出しをcoVerifyできる() {
+        // Arrange real VM + mocked repository
+        val (viewModel, repo) = buildRealViewModelWithRepoMock()
+
+        val work = Work(
+            id = "work-verify",
+            title = "検証アニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val episode = Episode(id = "ep-verify", title = "第1話", numberText = "1", number = 1)
+        val program = Program(
+            id = "prog-verify",
+            startedAt = LocalDateTime.now(),
+            channel = Channel(name = "ch"),
+            episode = episode
+        )
+        val pw = ProgramWithWork(programs = listOf(program), firstProgram = program, work = work)
+        val state = TrackUiState(programs = listOf(pw))
+
+        // Act: render with a callback that delegates to VM.recordEpisode (as production would)
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = viewModel,
+                uiState = state,
+                onRecordEpisode = { epId, wId, status -> viewModel.recordEpisode(epId, wId, status) },
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        // Click the record button
+        composeTestRule.onNodeWithContentDescription("記録する").performClick()
+
+        // Assert repository.createRecord was called with episode/work IDs
+        io.mockk.coVerify(exactly = 1) { repo.createRecord("ep-verify", "work-verify") }
+    }
 }

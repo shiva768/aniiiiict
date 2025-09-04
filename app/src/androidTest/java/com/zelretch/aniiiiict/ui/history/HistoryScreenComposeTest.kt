@@ -12,6 +12,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Rule
@@ -423,5 +424,92 @@ class HistoryScreenComposeTest {
 
         // Assert
         verify { mockOnLoadNextPage() }
+    }
+
+    // ==== 以下、Repository呼び出しをcoVerifyする統合的テスト ====
+    private fun buildHistoryViewModelWithRepoMock(): Pair<HistoryViewModel, AnnictRepository> {
+        val repo = mockk<AnnictRepository>()
+        io.mockk.coEvery { repo.getRecords(null) } returns com.zelretch.aniiiiict.data.model.PaginatedRecords(
+            records = emptyList(),
+            hasNextPage = false,
+            endCursor = null
+        )
+        io.mockk.coEvery { repo.getRecords(any()) } returns com.zelretch.aniiiiict.data.model.PaginatedRecords(
+            records = emptyList(),
+            hasNextPage = false,
+            endCursor = null
+        )
+        io.mockk.coEvery { repo.deleteRecord(any()) } returns true
+        val load = com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase(repo)
+        val search = com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase()
+        val delete = com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase(repo)
+        val vm = HistoryViewModel(load, search, delete)
+        return vm to repo
+    }
+
+    @Test
+    fun historyScreen_再試行クリック_RepositoryのgetRecordsが呼ばれる() {
+        val (viewModel, repo) = buildHistoryViewModelWithRepoMock()
+        val errorState = HistoryUiState(records = emptyList(), error = "エラーです")
+
+        composeTestRule.setContent {
+            HistoryScreen(
+                uiState = errorState,
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = { viewModel.loadRecords() },
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
+            )
+        }
+
+        composeTestRule.onNodeWithText("再試行").performClick()
+
+        io.mockk.coVerify(atLeast = 1) { repo.getRecords(null) }
+    }
+
+    @Test
+    fun historyScreen_削除クリック_RepositoryのdeleteRecordが呼ばれる() {
+        val (viewModel, repo) = buildHistoryViewModelWithRepoMock()
+        val work = Work(
+            id = "w1",
+            title = "Title",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHED
+        )
+        val ep = Episode(id = "e1", title = "第1話", numberText = "1", number = 1)
+        val record = Record(
+            id = "r1",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = ep,
+            work = work
+        )
+        val ui = HistoryUiState(records = listOf(record))
+
+        composeTestRule.setContent {
+            HistoryScreen(
+                uiState = ui,
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = { id -> viewModel.deleteRecord(id) },
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("削除").performClick()
+
+        io.mockk.coVerify(exactly = 1) { repo.deleteRecord("r1") }
     }
 }
