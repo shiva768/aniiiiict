@@ -15,12 +15,14 @@ import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
+import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
+import io.mockk.every
 import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
@@ -53,6 +55,12 @@ class DetailModalIntegrationTest {
     val annictRepository: AnnictRepository = mockk<AnnictRepository>().apply {
         coEvery { updateWorkViewStatus(any(), any()) } returns true
         coEvery { createRecord(any(), any()) } returns true
+    }
+
+    @BindValue
+    @JvmField
+    val customTabsIntentFactory: CustomTabsIntentFactory = mockk<CustomTabsIntentFactory>().apply {
+        every { create() } returns mockk(relaxed = true)
     }
 
     @Test
