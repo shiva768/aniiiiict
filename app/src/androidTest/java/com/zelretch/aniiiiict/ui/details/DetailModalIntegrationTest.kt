@@ -9,8 +9,11 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
+import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -56,6 +59,18 @@ class DetailModalIntegrationTest {
         coEvery { updateWorkViewStatus(any(), any()) } returns true
         coEvery { createRecord(any(), any()) } returns true
     }
+
+    @BindValue
+    @JvmField
+    val aniListRepository: AniListRepository = mockk<AniListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val programFilter: ProgramFilter = mockk<ProgramFilter>(relaxed = true)
 
     @BindValue
     @JvmField
