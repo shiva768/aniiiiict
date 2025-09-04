@@ -61,9 +61,15 @@ class AuthScreenComposeTest {
     fun authScreen_コールバック成功_handleAuthCallbackが呼ばれる() {
         val (vm, repo) = buildMainViewModelWithRepoMock()
         vm.handleAuthCallback("CODE123")
-        // Wait a bit for coroutine to run
-        Thread.sleep(500)
-        coVerify(exactly = 1) { repo.handleAuthCallback("CODE123") }
+        // Wait for coroutine to run and mock to be called
+        composeRule.waitUntil(timeoutMillis = 2000) {
+            try {
+                coVerify(exactly = 1) { repo.handleAuthCallback("CODE123") }
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
     }
 
     @Test
