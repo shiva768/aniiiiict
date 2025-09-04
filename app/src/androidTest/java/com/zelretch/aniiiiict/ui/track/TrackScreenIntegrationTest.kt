@@ -27,10 +27,11 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.coEvery
-import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDateTime
@@ -95,6 +96,7 @@ class TrackScreenIntegrationTest {
 
         // モックの振る舞いを定義
         coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
 
         // Hiltから注入されたUseCaseと手動モックでViewModelを生成
         val viewModel = TrackViewModel(
@@ -137,6 +139,9 @@ class TrackScreenIntegrationTest {
 
         // Assert
         // Repositoryのメソッドが期待通りに呼ばれたかを検証
-        coVerify(exactly = 1) { mockAnnictRepository.createRecord("ep-verify", "work-verify") }
+        coVerifyOrder {
+            mockAnnictRepository.createRecord("ep-verify", "work-verify")
+            mockAnnictRepository.getRawProgramsData()
+        }
     }
 }
