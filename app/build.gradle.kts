@@ -71,7 +71,7 @@ android {
             baseVersionName
         }
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.zelretch.aniiiiict.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -204,6 +204,8 @@ dependencies {
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.bundles.android.testing)
     androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.bundles.compose.debug)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

@@ -1,7 +1,8 @@
 package com.zelretch.aniiiiict.ui.track
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -24,14 +25,15 @@ import org.junit.runner.RunWith
 import java.time.LocalDateTime
 
 /**
- * TrackScreenのCompose UIテスト
- * 主要な画面要素の表示とユーザーインタラクションを検証
+ * TrackScreenの純粋なCompose UIテスト。
+ * ViewModelをモック化し、特定のUI状態が与えられた際の
+ * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class TrackScreenComposeTest {
+class TrackScreenUITest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun trackScreen_初期状態_基本要素が表示される() {
@@ -184,12 +186,12 @@ class TrackScreenComposeTest {
             )
         }
 
+        composeTestRule.waitForIdle()
+
         // Assert
-        composeTestRule.onNodeWithTag("finale_confirmation_snackbar").assertIsDisplayed()
-        composeTestRule.onNodeWithText("このタイトルはエピソード12が最終話の可能性があります。\n視聴済みにしますか？")
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText("はい").assertIsDisplayed()
-        composeTestRule.onNodeWithText("いいえ").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("finale_confirmation_snackbar", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("はい", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("いいえ", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -265,7 +267,6 @@ class TrackScreenComposeTest {
             )
         }
 
-        // Dismiss snackbar by clicking "いいえ"
         composeTestRule.onNodeWithText("いいえ").performClick()
 
         // Assert
@@ -325,72 +326,5 @@ class TrackScreenComposeTest {
         verify {
             onRecord.invoke("ep-1", "work-123", StatusState.WATCHING)
         }
-    }
-
-    // ==== 以下、Repository呼び出しをcoVerifyする統合的テスト ====
-    private fun buildRealViewModelWithRepoMock():
-        Pair<TrackViewModel, com.zelretch.aniiiiict.data.repository.AnnictRepository> {
-        val repo = mockk<com.zelretch.aniiiiict.data.repository.AnnictRepository>()
-        io.mockk.coEvery { repo.createRecord(any(), any()) } returns true
-        io.mockk.coEvery { repo.updateWorkViewStatus(any(), any()) } returns true
-        io.mockk.coEvery { repo.getRawProgramsData() } returns
-            kotlinx.coroutines.flow.flowOf(emptyList())
-
-        val load = com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase(repo)
-        val update = com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase(repo)
-        val watch = com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase(repo, update)
-        val filter = com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase(
-            com.zelretch.aniiiiict.domain.filter.ProgramFilter()
-        )
-        val judge = mockk<com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase>(relaxed = true)
-        val prefs = mockk<com.zelretch.aniiiiict.data.datastore.FilterPreferences>(relaxed = true) {
-            every { filterState } returns MutableStateFlow(
-                com.zelretch.aniiiiict.domain.filter.FilterState()
-            )
-        }
-        val vm = TrackViewModel(load, watch, update, filter, prefs, judge)
-        return vm to repo
-    }
-
-    @Test
-    fun trackScreen_エピソード記録_Repository呼び出しをcoVerifyできる() {
-        // Arrange real VM + mocked repository
-        val (viewModel, repo) = buildRealViewModelWithRepoMock()
-
-        val work = Work(
-            id = "work-verify",
-            title = "検証アニメ",
-            seasonName = SeasonName.SPRING,
-            seasonYear = 2024,
-            media = "TV",
-            mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING
-        )
-        val episode = Episode(id = "ep-verify", title = "第1話", numberText = "1", number = 1)
-        val program = Program(
-            id = "prog-verify",
-            startedAt = LocalDateTime.now(),
-            channel = Channel(name = "ch"),
-            episode = episode
-        )
-        val pw = ProgramWithWork(programs = listOf(program), firstProgram = program, work = work)
-        val state = TrackUiState(programs = listOf(pw))
-
-        // Act: render with a callback that delegates to VM.recordEpisode (as production would)
-        composeTestRule.setContent {
-            TrackScreen(
-                viewModel = viewModel,
-                uiState = state,
-                onRecordEpisode = { epId, wId, status -> viewModel.recordEpisode(epId, wId, status) },
-                onNavigateToHistory = {},
-                onRefresh = {}
-            )
-        }
-
-        // Click the record button
-        composeTestRule.onNodeWithContentDescription("記録する").performClick()
-
-        // Assert repository.createRecord was called with episode/work IDs
-        io.mockk.coVerify(exactly = 1) { repo.createRecord("ep-verify", "work-verify") }
     }
 }

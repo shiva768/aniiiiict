@@ -61,6 +61,8 @@ private class InMemorySharedPreferences : SharedPreferences {
 
     override fun getAll(): MutableMap<String, *> = map
     override fun getString(key: String?, defValue: String?): String? = map[key] as? String ?: defValue
+
+    @Suppress("UNCHECKED_CAST")
     override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String>? =
         (map[key] as? MutableSet<String>) ?: defValues
     override fun getInt(key: String?, defValue: Int): Int = map[key] as? Int ?: defValue
