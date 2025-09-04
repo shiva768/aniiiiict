@@ -6,8 +6,11 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.zelretch.aniiiiict.MainUiState
 import com.zelretch.aniiiiict.MainViewModel
+import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
+import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
@@ -44,6 +47,18 @@ class AuthScreenIntegrationTest {
         coEvery { getAuthUrl() } returns "https://example.com/auth"
         coEvery { handleAuthCallback(any()) } returns true
     }
+
+    @BindValue
+    @JvmField
+    val aniListRepository: AniListRepository = mockk<AniListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val programFilter: ProgramFilter = mockk<ProgramFilter>(relaxed = true)
 
     @BindValue
     @JvmField
