@@ -9,18 +9,23 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
+import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
+import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
+import io.mockk.every
 import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
@@ -62,6 +67,24 @@ class HistoryScreenIntegrationTest {
             endCursor = null
         )
         coEvery { deleteRecord(any()) } returns true
+    }
+
+    @BindValue
+    @JvmField
+    val aniListRepository: AniListRepository = mockk<AniListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val programFilter: ProgramFilter = mockk<ProgramFilter>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val customTabsIntentFactory: CustomTabsIntentFactory = mockk<CustomTabsIntentFactory>().apply {
+        every { create() } returns mockk(relaxed = true)
     }
 
     @Test
