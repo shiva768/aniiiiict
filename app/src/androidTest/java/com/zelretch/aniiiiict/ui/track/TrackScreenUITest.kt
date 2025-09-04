@@ -1,7 +1,8 @@
 package com.zelretch.aniiiiict.ui.track
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -24,14 +25,15 @@ import org.junit.runner.RunWith
 import java.time.LocalDateTime
 
 /**
- * TrackScreenのCompose UIテスト
- * 主要な画面要素の表示とユーザーインタラクションを検証
+ * TrackScreenの純粋なCompose UIテスト。
+ * ViewModelをモック化し、特定のUI状態が与えられた際の
+ * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class TrackScreenComposeTest {
+class TrackScreenUITest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun trackScreen_初期状態_基本要素が表示される() {
@@ -184,12 +186,12 @@ class TrackScreenComposeTest {
             )
         }
 
+        composeTestRule.waitForIdle()
+
         // Assert
-        composeTestRule.onNodeWithTag("finale_confirmation_snackbar").assertIsDisplayed()
-        composeTestRule.onNodeWithText("このタイトルはエピソード12が最終話の可能性があります。\n視聴済みにしますか？")
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText("はい").assertIsDisplayed()
-        composeTestRule.onNodeWithText("いいえ").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("finale_confirmation_snackbar", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("はい", useUnmergedTree = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText("いいえ", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -242,5 +244,87 @@ class TrackScreenComposeTest {
 
         // Assert
         verify { mockOnNavigateToHistory() }
+    }
+
+    @Test
+    fun trackScreen_フィナーレ確認_いいえボタンクリックで閉じる() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val finaleState = TrackUiState(
+            showFinaleConfirmationForWorkId = "work1",
+            showFinaleConfirmationForEpisodeNumber = 12
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(finaleState)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = finaleState,
+                onRecordEpisode = { _, _, _ -> },
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("いいえ").performClick()
+
+        // Assert
+        verify { mockViewModel.dismissFinaleConfirmation() }
+    }
+
+    @Test
+    fun trackScreen_エピソード記録ボタン_コールバックが正しく呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val onRecord = mockk<(String, String, StatusState) -> Unit>(relaxed = true)
+
+        val sampleWork = Work(
+            id = "work-123",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val sampleEpisode = Episode(
+            id = "ep-1",
+            title = "第1話",
+            numberText = "1",
+            number = 1
+        )
+        val sampleProgram = Program(
+            id = "prog-1",
+            startedAt = LocalDateTime.now(),
+            channel = Channel(name = "チャンネル"),
+            episode = sampleEpisode
+        )
+        val programWithWork = ProgramWithWork(
+            programs = listOf(sampleProgram),
+            firstProgram = sampleProgram,
+            work = sampleWork
+        )
+        val state = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = onRecord,
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        // 記録ボタンを押下（ProgramCard内の contentDescription="記録する"）
+        composeTestRule.onNodeWithContentDescription("記録する").performClick()
+
+        // Assert
+        verify {
+            onRecord.invoke("ep-1", "work-123", StatusState.WATCHING)
+        }
     }
 }

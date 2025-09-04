@@ -144,6 +144,7 @@ class TrackViewModel @Inject constructor(
             }
         }
         handleFinaleJudgement(episodeId, workId)
+        refresh()
     }
 
     private suspend fun handleFinaleJudgement(episodeId: String, workId: String) {

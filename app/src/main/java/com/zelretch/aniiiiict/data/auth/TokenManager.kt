@@ -1,20 +1,24 @@
 package com.zelretch.aniiiiict.data.auth
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.edit
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class TokenManager @Inject constructor(context: Context) {
+class TokenManager @VisibleForTesting internal constructor(
+    private val prefs: android.content.SharedPreferences
+) {
     companion object {
         private const val PREFS_NAME = "annict_prefs"
         private const val TOKEN_KEY = "access_token"
         private const val TOKEN_LOG_LENGTH = 10
     }
 
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    @Inject
+    constructor(context: Context) : this(context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
 
     fun saveAccessToken(token: String) {
         if (token.isBlank()) {
