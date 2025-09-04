@@ -34,10 +34,8 @@ class DetailModalUITest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun createMockViewModel(): DetailModalViewModel {
-        return mockk<DetailModalViewModel>(relaxed = true).apply {
-            every { uiState } returns MutableStateFlow(DetailModalUiState())
-        }
+    private fun createMockViewModel(): DetailModalViewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+        every { uiState } returns MutableStateFlow(DetailModalUiState())
     }
 
     private fun sampleProgramWithWork(status: StatusState = StatusState.WATCHING): ProgramWithWork {
@@ -154,7 +152,7 @@ class DetailModalUITest {
     fun detailModal_一括視聴確認ダイアログ_表示内容が正しい() {
         // Arrange
         val viewModel = createMockViewModel()
-        
+
         // 2エピソードのProgramWithWorkを用意
         val work = Work(
             id = "work-2",
@@ -300,7 +298,7 @@ class DetailModalUITest {
     fun detailModal_複数エピソード_正しい件数が表示される() {
         // Arrange
         val viewModel = createMockViewModel()
-        
+
         // 3エピソードのProgramWithWorkを用意
         val work = Work(
             id = "work-multi",

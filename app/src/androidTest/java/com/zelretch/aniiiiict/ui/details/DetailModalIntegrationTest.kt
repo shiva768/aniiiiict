@@ -173,7 +173,7 @@ class DetailModalIntegrationTest {
 
     @Test
     fun detailModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
-        // Arrange 
+        // Arrange
         val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
 
         val work = Work(

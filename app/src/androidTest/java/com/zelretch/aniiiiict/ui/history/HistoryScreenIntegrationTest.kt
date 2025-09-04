@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiict.ui.history
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
