@@ -1,7 +1,8 @@
 package com.zelretch.aniiiiict.ui.history
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,28 +13,32 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
-import com.zelretch.aniiiiict.data.repository.AnnictRepository
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.ZonedDateTime
 
 /**
- * HistoryScreenのCompose UIテスト
- * 履歴画面の主要な機能とUI要素を検証
+ * HistoryScreenの純粋なCompose UIテスト。
+ * ViewModelをモック化し、特定のUI状態が与えられた際の
+ * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class HistoryScreenComposeTest {
+class HistoryScreenUITest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun historyScreen_初期状態_基本要素が表示される() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val initialState = HistoryUiState()
+        every { mockViewModel.uiState } returns MutableStateFlow(initialState)
 
         val mockOnNavigateBack = mockk<() -> Unit>(relaxed = true)
         val mockOnRetry = mockk<() -> Unit>(relaxed = true)
@@ -66,10 +71,12 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_空の状態_適切なメッセージが表示される() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val emptyState = HistoryUiState(
             records = emptyList(),
             isLoading = false
         )
+        every { mockViewModel.uiState } returns MutableStateFlow(emptyState)
 
         // Act
         composeTestRule.setContent {
@@ -94,6 +101,7 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_履歴データ_レコードが表示される() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val sampleWork = Work(
             id = "work1",
             title = "テストアニメ",
@@ -124,6 +132,7 @@ class HistoryScreenComposeTest {
             records = listOf(sampleRecord),
             isLoading = false
         )
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithRecords)
 
         // Act
         composeTestRule.setContent {
@@ -149,8 +158,10 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_戻るボタンクリック_ナビゲーションコールバックが呼ばれる() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnNavigateBack = mockk<() -> Unit>(relaxed = true)
         val initialState = HistoryUiState()
+        every { mockViewModel.uiState } returns MutableStateFlow(initialState)
 
         // Act
         composeTestRule.setContent {
@@ -176,8 +187,10 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_検索入力_コールバックが呼ばれる() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
         val initialState = HistoryUiState()
+        every { mockViewModel.uiState } returns MutableStateFlow(initialState)
 
         // Act
         composeTestRule.setContent {
@@ -203,7 +216,9 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_検索文字入力済み_クリアボタンが表示される() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val stateWithSearchQuery = HistoryUiState(searchQuery = "テストクエリ")
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithSearchQuery)
 
         // Act
         composeTestRule.setContent {
@@ -227,8 +242,10 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_クリアボタンクリック_検索文字がクリアされる() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
         val stateWithSearchQuery = HistoryUiState(searchQuery = "テストクエリ")
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithSearchQuery)
 
         // Act
         composeTestRule.setContent {
@@ -254,6 +271,7 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_削除ボタンクリック_削除コールバックが呼ばれる() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnDeleteRecord = mockk<(String) -> Unit>(relaxed = true)
 
         val sampleWork = Work(
@@ -283,6 +301,7 @@ class HistoryScreenComposeTest {
         )
 
         val stateWithRecords = HistoryUiState(records = listOf(sampleRecord))
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithRecords)
 
         // Act
         composeTestRule.setContent {
@@ -308,11 +327,13 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_エラー状態_エラーメッセージと再試行ボタンが表示される() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val errorState = HistoryUiState(
             records = emptyList(),
             error = "ネットワークエラーが発生しました",
             isLoading = false
         )
+        every { mockViewModel.uiState } returns MutableStateFlow(errorState)
 
         val mockOnRetry = mockk<() -> Unit>(relaxed = true)
 
@@ -339,12 +360,14 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_再試行ボタンクリック_再試行コールバックが呼ばれる() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnRetry = mockk<() -> Unit>(relaxed = true)
         val errorState = HistoryUiState(
             records = emptyList(),
             error = "エラーです",
             isLoading = false
         )
+        every { mockViewModel.uiState } returns MutableStateFlow(errorState)
 
         // Act
         composeTestRule.setContent {
@@ -370,11 +393,13 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_次のページあり_もっと見るボタンが表示される() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val stateWithNextPage = HistoryUiState(
             records = listOf(), // レコードは空でも可
             hasNextPage = true,
             isLoading = false
         )
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithNextPage)
 
         // Act
         composeTestRule.setContent {
@@ -398,12 +423,14 @@ class HistoryScreenComposeTest {
     @Test
     fun historyScreen_もっと見るボタンクリック_次ページ読み込みコールバックが呼ばれる() {
         // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnLoadNextPage = mockk<() -> Unit>(relaxed = true)
         val stateWithNextPage = HistoryUiState(
             records = listOf(),
             hasNextPage = true,
             isLoading = false
         )
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithNextPage)
 
         // Act
         composeTestRule.setContent {
@@ -424,92 +451,5 @@ class HistoryScreenComposeTest {
 
         // Assert
         verify { mockOnLoadNextPage() }
-    }
-
-    // ==== 以下、Repository呼び出しをcoVerifyする統合的テスト ====
-    private fun buildHistoryViewModelWithRepoMock(): Pair<HistoryViewModel, AnnictRepository> {
-        val repo = mockk<AnnictRepository>()
-        io.mockk.coEvery { repo.getRecords(null) } returns com.zelretch.aniiiiict.data.model.PaginatedRecords(
-            records = emptyList(),
-            hasNextPage = false,
-            endCursor = null
-        )
-        io.mockk.coEvery { repo.getRecords(any()) } returns com.zelretch.aniiiiict.data.model.PaginatedRecords(
-            records = emptyList(),
-            hasNextPage = false,
-            endCursor = null
-        )
-        io.mockk.coEvery { repo.deleteRecord(any()) } returns true
-        val load = com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase(repo)
-        val search = com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase()
-        val delete = com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase(repo)
-        val vm = HistoryViewModel(load, search, delete)
-        return vm to repo
-    }
-
-    @Test
-    fun historyScreen_再試行クリック_RepositoryのgetRecordsが呼ばれる() {
-        val (viewModel, repo) = buildHistoryViewModelWithRepoMock()
-        val errorState = HistoryUiState(records = emptyList(), error = "エラーです")
-
-        composeTestRule.setContent {
-            HistoryScreen(
-                uiState = errorState,
-                actions = HistoryScreenActions(
-                    onNavigateBack = {},
-                    onRetry = { viewModel.loadRecords() },
-                    onDeleteRecord = {},
-                    onRefresh = {},
-                    onLoadNextPage = {},
-                    onSearchQueryChange = {}
-                )
-            )
-        }
-
-        composeTestRule.onNodeWithText("再試行").performClick()
-
-        io.mockk.coVerify(atLeast = 1) { repo.getRecords(null) }
-    }
-
-    @Test
-    fun historyScreen_削除クリック_RepositoryのdeleteRecordが呼ばれる() {
-        val (viewModel, repo) = buildHistoryViewModelWithRepoMock()
-        val work = Work(
-            id = "w1",
-            title = "Title",
-            seasonName = SeasonName.SPRING,
-            seasonYear = 2024,
-            media = "TV",
-            mediaText = "TV",
-            viewerStatusState = StatusState.WATCHED
-        )
-        val ep = Episode(id = "e1", title = "第1話", numberText = "1", number = 1)
-        val record = Record(
-            id = "r1",
-            comment = null,
-            rating = null,
-            createdAt = ZonedDateTime.now(),
-            episode = ep,
-            work = work
-        )
-        val ui = HistoryUiState(records = listOf(record))
-
-        composeTestRule.setContent {
-            HistoryScreen(
-                uiState = ui,
-                actions = HistoryScreenActions(
-                    onNavigateBack = {},
-                    onRetry = {},
-                    onDeleteRecord = { id -> viewModel.deleteRecord(id) },
-                    onRefresh = {},
-                    onLoadNextPage = {},
-                    onSearchQueryChange = {}
-                )
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("削除").performClick()
-
-        io.mockk.coVerify(exactly = 1) { repo.deleteRecord("r1") }
     }
 }
