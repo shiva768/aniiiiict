@@ -52,9 +52,15 @@ class AuthScreenComposeTest {
         }
 
         composeRule.onNodeWithText("Annictでログイン").assertIsDisplayed().performClick()
-        // Wait for coroutine
-        Thread.sleep(400)
-        coVerify(atLeast = 1) { repo.getAuthUrl() }
+        // Wait for coroutine to run and mock to be called
+        composeRule.waitUntil(timeoutMillis = 400) {
+            try {
+                coVerify(atLeast = 1) { repo.getAuthUrl() }
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
     }
 
     @Test
@@ -62,11 +68,11 @@ class AuthScreenComposeTest {
         val (vm, repo) = buildMainViewModelWithRepoMock()
         vm.handleAuthCallback("CODE123")
         // Wait for coroutine to run and mock to be called
-        composeRule.waitUntil(timeoutMillis = 2000) {
+        composeRule.waitUntil(timeoutMillis = 500) {
             try {
                 coVerify(exactly = 1) { repo.handleAuthCallback("CODE123") }
                 true
-            } catch (e: AssertionError) {
+            } catch (_: AssertionError) {
                 false
             }
         }
