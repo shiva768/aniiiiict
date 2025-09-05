@@ -162,7 +162,12 @@ class HistoryScreenIntegrationTest {
 
     @Test
     fun historyScreen_次ページ読み込み_正しい順序でRepositoryが呼ばれる() = runBlocking {
-        // Arrange
+        // Arrange - Set up mock to return hasNextPage = true for initial call and data for next page
+        coEvery { annictRepository.getRecords(null) } returns PaginatedRecords(
+            records = emptyList(),
+            hasNextPage = true,
+            endCursor = "cursor1"
+        )
         coEvery { annictRepository.getRecords("cursor1") } returns PaginatedRecords(
             records = emptyList(),
             hasNextPage = false,
@@ -171,25 +176,19 @@ class HistoryScreenIntegrationTest {
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
 
-        // Wait for initial ViewModel loading to complete by waiting for the state to be ready
-        // This ensures the initial repository call has completed
+        // Wait for initial ViewModel loading to complete
         var attempts = 0
         while (viewModel.uiState.value.isLoading && attempts < 50) {
             Thread.sleep(50)
             attempts++
         }
 
-        val stateWithNextPage = HistoryUiState(
-            records = emptyList(),
-            hasNextPage = true,
-            endCursor = "cursor1",
-            isLoading = false
-        )
-
+        // Use the actual ViewModel state which should now have hasNextPage = true
+        val currentState = viewModel.uiState.value
         // Act
         testRule.composeTestRule.setContent {
             HistoryScreen(
-                uiState = stateWithNextPage,
+                uiState = currentState,
                 actions = HistoryScreenActions(
                     onNavigateBack = {},
                     onRetry = {},
