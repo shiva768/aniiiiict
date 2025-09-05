@@ -125,7 +125,15 @@ class DetailModalUITest {
     fun detailModal_ステータスドロップダウン_展開して選択できる() {
         // Arrange
         val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
-        val viewModel = createMockViewModel(programWithWork)
+        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+            every { state } returns MutableStateFlow(
+                DetailModalState(
+                    programs = programWithWork.programs,
+                    selectedStatus = StatusState.WATCHING,
+                    workId = programWithWork.work.id
+                )
+            )
+        }
 
         // Act
         composeTestRule.setContent {
@@ -159,9 +167,8 @@ class DetailModalUITest {
         // Wait for selection to process
         composeTestRule.waitForIdle()
 
-        // 変更後の値が表示されるまで待機し検証（更新イベントで更新される）
-        // 簡易的に再度クリック可能なことだけ確認
-        composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
+        // ViewModelのchangeStatusが呼ばれたことを確認
+        verify { viewModel.changeStatus(StatusState.WATCHED) }
     }
 
     @Test

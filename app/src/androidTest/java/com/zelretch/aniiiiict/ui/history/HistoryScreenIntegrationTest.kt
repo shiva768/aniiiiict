@@ -170,7 +170,7 @@ class HistoryScreenIntegrationTest {
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
 
-        // Wait for initial loading to complete
+        // Wait for initial loading to complete - this will trigger the first getRecords(null) call
         testRule.composeTestRule.waitForIdle()
 
         val stateWithNextPage = HistoryUiState(
@@ -200,9 +200,9 @@ class HistoryScreenIntegrationTest {
         // Wait for next page load to complete
         testRule.composeTestRule.waitForIdle()
 
-        // Assert
+        // Assert - Verify both the initial call from init and the next page call happened
         coVerifyOrder {
-            annictRepository.getRecords(null) // 初期ロード時
+            annictRepository.getRecords(null) // 初期ロード時（init内で呼ばれる）
             annictRepository.getRecords("cursor1") // 次ページ読み込み時
         }
     }
