@@ -27,6 +27,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import java.time.ZonedDateTime
@@ -160,7 +161,7 @@ class HistoryScreenIntegrationTest {
     }
 
     @Test
-    fun historyScreen_次ページ読み込み_正しい順序でRepositoryが呼ばれる() {
+    fun historyScreen_次ページ読み込み_正しい順序でRepositoryが呼ばれる() = runBlocking {
         // Arrange
         coEvery { annictRepository.getRecords("cursor1") } returns PaginatedRecords(
             records = emptyList(),
@@ -170,8 +171,13 @@ class HistoryScreenIntegrationTest {
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
 
-        // Wait for initial loading to complete - this will trigger the first getRecords(null) call
-        testRule.composeTestRule.waitForIdle()
+        // Wait for initial ViewModel loading to complete by waiting for the state to be ready
+        // This ensures the initial repository call has completed
+        var attempts = 0
+        while (viewModel.uiState.value.isLoading && attempts < 50) {
+            Thread.sleep(50)
+            attempts++
+        }
 
         val stateWithNextPage = HistoryUiState(
             records = emptyList(),
@@ -198,7 +204,11 @@ class HistoryScreenIntegrationTest {
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
 
         // Wait for next page load to complete
-        testRule.composeTestRule.waitForIdle()
+        attempts = 0
+        while (viewModel.uiState.value.isLoading && attempts < 50) {
+            Thread.sleep(50)
+            attempts++
+        }
 
         // Assert - Verify both the initial call from init and the next page call happened
         coVerifyOrder {
