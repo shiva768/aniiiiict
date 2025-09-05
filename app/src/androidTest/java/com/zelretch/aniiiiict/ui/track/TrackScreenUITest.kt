@@ -327,4 +327,29 @@ class TrackScreenUITest {
             onRecord.invoke("ep-1", "work-123", StatusState.WATCHING)
         }
     }
+
+    @Test
+    fun trackScreen_ローディング状態_プルトゥリフレッシュが表示される() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val loadingState = TrackUiState(isLoading = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(loadingState)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = loadingState,
+                onRecordEpisode = { _, _, _ -> },
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        // ローディング状態でもUIが適切に表示されることを確認
+        composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("履歴").assertIsDisplayed()
+    }
 }

@@ -1,18 +1,51 @@
 # Compose UI Tests
 
-このプロジェクトでは、主要な画面（TrackScreen、HistoryScreen）に対してCompose UIテストを導入しています。
+このプロジェクトでは、主要な画面（TrackScreen、HistoryScreen、DetailModal、AuthScreen）に対してCompose UIテストを導入しています。
+各画面では、UITestとIntegrationTestの2種類のテストに分割して実装されています。
+
+## テストアプローチ
+
+### UITest vs IntegrationTest
+
+各画面では2つの異なるアプローチでテストを実装しています：
+
+**UITest (*UITest.kt)**
+- ViewModelを完全にモック化
+- 特定のUI状態が与えられた際のUIの描画とインタラクションのみを検証
+- UI層のみに焦点を当てた純粋なテスト
+- 高速で安定したテスト実行
+
+**IntegrationTest (*IntegrationTest.kt)**
+- UI操作からViewModel、UseCaseを経由してRepository（モック）まで
+- コンポーネント間の連携を検証する統合テスト
+- より実際のユーザー操作に近いテストシナリオ
+- ビジネスロジックとUI の結合をテスト
 
 ## テストファイルの場所
 
 ```
 app/src/androidTest/java/com/zelretch/aniiiiict/ui/
-├── track/TrackScreenComposeTest.kt
-└── history/HistoryScreenComposeTest.kt
+├── track/TrackScreenUITest.kt
+├── track/TrackScreenIntegrationTest.kt
+├── history/HistoryScreenUITest.kt
+├── history/HistoryScreenIntegrationTest.kt
+├── details/DetailModalUITest.kt
+├── details/DetailModalIntegrationTest.kt
+├── auth/AuthScreenUITest.kt
+└── auth/AuthScreenIntegrationTest.kt
 ```
 
 ## 実装されたテスト
 
-### TrackScreenのテスト (TrackScreenComposeTest.kt)
+### TrackScreenのテスト
+
+#### UITest (TrackScreenUITest.kt)
+ViewModelをモック化し、特定のUI状態が与えられた際のUIの描画とインタラクションを検証する。
+
+#### IntegrationTest (TrackScreenIntegrationTest.kt)  
+UI操作からViewModel、UseCaseを経由し、Repository（モック）が正しく呼び出されるかという、コンポーネント間の連携を検証する。
+
+#### テスト項目
 
 - `trackScreen_初期状態_基本要素が表示される()` - 基本的なUI要素の表示確認
 - `trackScreen_エラー状態_スナックバーとエラーメッセージが表示される()` - エラー状態のUI検証
@@ -22,7 +55,15 @@ app/src/androidTest/java/com/zelretch/aniiiiict/ui/
 - `trackScreen_フィナーレ確認_はいボタンクリック()` - 確認ダイアログのインタラクション
 - `trackScreen_履歴ナビゲーション_コールバックが呼ばれる()` - ナビゲーションテスト
 
-### HistoryScreenのテスト (HistoryScreenComposeTest.kt)
+### HistoryScreenのテスト
+
+#### UITest (HistoryScreenUITest.kt)
+ViewModelをモック化し、履歴画面のUI状態とインタラクションを検証する。
+
+#### IntegrationTest (HistoryScreenIntegrationTest.kt)
+履歴機能のUI操作からRepository呼び出しまでの統合的な動作を検証する。
+
+#### テスト項目
 
 - `historyScreen_初期状態_基本要素が表示される()` - 基本的なUI要素の表示確認
 - `historyScreen_空の状態_適切なメッセージが表示される()` - 空状態のメッセージ表示
@@ -36,6 +77,36 @@ app/src/androidTest/java/com/zelretch/aniiiiict/ui/
 - `historyScreen_再試行ボタンクリック_再試行コールバックが呼ばれる()` - エラー回復機能
 - `historyScreen_次のページあり_もっと見るボタンが表示される()` - ページネーション表示
 - `historyScreen_もっと見るボタンクリック_次ページ読み込みコールバックが呼ばれる()` - ページネーション機能
+
+### DetailModalのテスト
+
+#### UITest (DetailModalUITest.kt)
+ViewModelをモック化し、詳細モーダルのUI状態とインタラクションを検証する。
+
+#### IntegrationTest (DetailModalIntegrationTest.kt)
+詳細モーダルのUI操作からRepository呼び出しまでの統合的な動作を検証する。
+
+#### テスト項目
+
+- `detailModal_基本要素_タイトルと閉じるボタンが表示される()` - 基本的なUI要素の表示確認
+- `detailModal_ステータスドロップダウン_展開して選択できる()` - ドロップダウン機能テスト
+- `detailModal_一括視聴確認ダイアログ_表示内容が正しい()` - 確認ダイアログのUI検証
+- `detailModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる()` - 統合テスト
+
+### AuthScreenのテスト
+
+#### UITest (AuthScreenUITest.kt)
+認証画面のUI状態とインタラクションを検証する。
+
+#### IntegrationTest (AuthScreenIntegrationTest.kt)
+認証機能のUI操作からRepository呼び出しまでの統合的な動作を検証する。
+
+#### テスト項目
+
+- `authScreen_未認証状態_ログインボタンが表示される()` - 基本的なUI要素の表示確認
+- `authScreen_ログインボタンクリック_onLoginClickが呼ばれる()` - インタラクションテスト
+- `authScreen_ログインボタンクリック_getAuthUrlが呼ばれる()` - 統合テスト
+- `authScreen_コールバック処理_handleAuthCallbackが呼ばれる()` - 認証フロー統合テスト
 
 ## テストの実行方法
 
@@ -52,11 +123,20 @@ app/src/androidTest/java/com/zelretch/aniiiiict/ui/
 # すべてのAndroidテストを実行
 ./gradlew connectedDebugAndroidTest
 
-# 特定のテストクラスのみ実行
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=aniiiiictui.track.TrackScreenComposeTest
+# 特定のテストクラスのみ実行（UIテスト）
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenUITest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.history.HistoryScreenUITest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.details.DetailModalUITest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.auth.AuthScreenUITest
+
+# 特定のテストクラスのみ実行（統合テスト）
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenIntegrationTest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.history.HistoryScreenIntegrationTest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.details.DetailModalIntegrationTest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.auth.AuthScreenIntegrationTest
 
 # 特定のテストメソッドのみ実行
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=aniiiiictui.track.TrackScreenComposeTest#trackScreen_初期状態_基本要素が表示される
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.zelretch.aniiiiict.ui.track.TrackScreenUITest#trackScreen_初期状態_基本要素が表示される
 ```
 
 ### 前提条件
