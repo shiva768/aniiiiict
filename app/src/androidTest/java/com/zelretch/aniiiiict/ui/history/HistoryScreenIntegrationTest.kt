@@ -169,6 +169,10 @@ class HistoryScreenIntegrationTest {
         )
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
+
+        // Wait for initial loading to complete
+        testRule.composeTestRule.waitForIdle()
+
         val stateWithNextPage = HistoryUiState(
             records = emptyList(),
             hasNextPage = true,
@@ -192,6 +196,9 @@ class HistoryScreenIntegrationTest {
         }
 
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
+
+        // Wait for next page load to complete
+        testRule.composeTestRule.waitForIdle()
 
         // Assert
         coVerifyOrder {

@@ -138,17 +138,26 @@ class DetailModalUITest {
             )
         }
 
+        // Wait for composition to complete
+        composeTestRule.waitForIdle()
+
         // Assert - 初期選択状態が表示されている
         composeTestRule.onNodeWithText("WATCHING").assertIsDisplayed()
 
         // クリックでメニュー展開
         composeTestRule.onNodeWithText("WATCHING").performClick()
 
+        // Wait for dropdown to expand
+        composeTestRule.waitForIdle()
+
         // いずれかの選択肢が表示される（WATCHED を例に）
         composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
 
         // 選択できることを確認
         composeTestRule.onNodeWithText("WATCHED").performClick()
+
+        // Wait for selection to process
+        composeTestRule.waitForIdle()
 
         // 変更後の値が表示されるまで待機し検証（更新イベントで更新される）
         // 簡易的に再度クリック可能なことだけ確認
