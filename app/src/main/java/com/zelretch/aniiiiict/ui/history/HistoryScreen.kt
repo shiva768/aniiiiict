@@ -78,11 +78,14 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
     val listState = rememberLazyListState()
     val shouldLoadNextPage = remember {
         derivedStateOf {
-            val lastItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val layoutInfo = listState.layoutInfo
+            val lastItem = layoutInfo.visibleItemsInfo.lastOrNull()
             val hasRecords = uiState.records.isNotEmpty()
+            val isListInitialized = layoutInfo.totalItemsCount > 0 && layoutInfo.viewportSize.height > 0
             lastItem != null &&
                 hasRecords &&
-                lastItem.index >= listState.layoutInfo.totalItemsCount - LOAD_MORE_THRESHOLD
+                isListInitialized &&
+                lastItem.index >= layoutInfo.totalItemsCount - LOAD_MORE_THRESHOLD
         }
     }
 
