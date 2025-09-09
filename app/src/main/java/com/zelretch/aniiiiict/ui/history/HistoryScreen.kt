@@ -81,11 +81,14 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
             val layoutInfo = listState.layoutInfo
             val lastItem = layoutInfo.visibleItemsInfo.lastOrNull()
             val hasRecords = uiState.records.isNotEmpty()
-            val isListInitialized = layoutInfo.totalItemsCount > 0 && layoutInfo.viewportSize.height > 0
+            val totalItems = layoutInfo.totalItemsCount
+            val isListInitialized = totalItems > 1 && layoutInfo.viewportSize.height > 0
+            val hasUserScrolled = listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
             lastItem != null &&
                 hasRecords &&
                 isListInitialized &&
-                lastItem.index >= layoutInfo.totalItemsCount - LOAD_MORE_THRESHOLD
+                hasUserScrolled &&
+                lastItem.index >= totalItems - LOAD_MORE_THRESHOLD
         }
     }
 
