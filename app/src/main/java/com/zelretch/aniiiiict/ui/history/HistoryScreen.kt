@@ -81,14 +81,14 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
             val layoutInfo = listState.layoutInfo
             val lastItem = layoutInfo.visibleItemsInfo.lastOrNull()
             val hasRecords = uiState.records.isNotEmpty()
-            val totalItems = layoutInfo.totalItemsCount
-            val isListInitialized = totalItems > 1 && layoutInfo.viewportSize.height > 0
-            val hasUserScrolled = listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-            lastItem != null &&
-                hasRecords &&
-                isListInitialized &&
-                hasUserScrolled &&
-                lastItem.index >= totalItems - LOAD_MORE_THRESHOLD
+
+            // Never auto-load when records is empty - user must click manually
+            if (!hasRecords) {
+                false
+            } else {
+                // Only auto-load when user has scrolled near bottom with actual records
+                lastItem != null && lastItem.index >= layoutInfo.totalItemsCount - LOAD_MORE_THRESHOLD
+            }
         }
     }
 
