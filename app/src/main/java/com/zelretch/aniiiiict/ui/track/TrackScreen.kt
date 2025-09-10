@@ -133,9 +133,12 @@ private fun TrackScreenContent(
     onRefresh: () -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit
 ) {
+    val isRefreshing = uiState.isLoading && uiState.programs.isNotEmpty()
+    val isInitialLoad = uiState.isLoading && uiState.programs.isEmpty()
+
     PullToRefreshBox(
         modifier = modifier.fillMaxSize(),
-        isRefreshing = uiState.isLoading,
+        isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         state = rememberPullToRefreshState()
     ) {
@@ -154,25 +157,25 @@ private fun TrackScreenContent(
                 )
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                state = rememberLazyListState()
-            ) {
-                items(items = uiState.programs, key = { it.work.id }) { program ->
-                    ProgramCard(
-                        programWithWork = program,
-                        onRecordEpisode = onRecordEpisode,
-                        onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
-                        uiState = uiState
-                    )
+            if (isInitialLoad) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(SHIMMER_ITEM_COUNT) {
+                        ProgramCardPlaceholder()
+                    }
                 }
-            }
-        }
-
-        if (uiState.isLoading) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(SHIMMER_ITEM_COUNT) {
-                    ProgramCardPlaceholder()
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    state = rememberLazyListState()
+                ) {
+                    items(items = uiState.programs, key = { it.work.id }) { program ->
+                        ProgramCard(
+                            programWithWork = program,
+                            onRecordEpisode = onRecordEpisode,
+                            onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
+                            uiState = uiState
+                        )
+                    }
                 }
             }
         }
