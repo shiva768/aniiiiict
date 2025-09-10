@@ -8,17 +8,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -39,6 +38,7 @@ import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgramCard(
     programWithWork: ProgramWithWork,
@@ -47,13 +47,15 @@ fun ProgramCard(
     uiState: TrackUiState,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
+    Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag("program_card_${programWithWork.work.id}"),
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         onClick = { onShowUnwatchedEpisodes(programWithWork) }
     ) {
         Row(
@@ -111,13 +113,13 @@ private fun WorkImage(imageUrl: String?, workTitle: String) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Image,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -162,28 +164,25 @@ private fun RecordButton(
     FilledTonalIconButton(
         onClick = { onRecordEpisode(episodeId, workId, status) },
         modifier = Modifier.size(48.dp),
+        shape = RoundedCornerShape(50),
         enabled = !isRecording && !recordingSuccess,
-        colors = if (recordingSuccess) {
-            IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        } else {
-            IconButtonDefaults.filledTonalIconButtonColors()
-        }
+        colors = IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = if (recordingSuccess) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.secondaryContainer
+            },
+            contentColor = if (recordingSuccess) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            }
+        )
     ) {
-        if (recordingSuccess) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "記録済み",
-                modifier = Modifier.size(24.dp)
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = "記録する",
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = if (recordingSuccess) "記録済み" else "記録する",
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
