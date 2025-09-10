@@ -56,13 +56,13 @@ fun FilterBar(filterState: FilterState, filterOptions: FilterOptions, onFilterCh
     var showStatusDialog by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(8.dp),
-        tonalElevation = 2.dp
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 3.dp
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SearchTextField(
                 searchQuery = filterState.searchQuery,
@@ -110,7 +110,12 @@ private fun SearchTextField(searchQuery: String, onQueryChange: (String) -> Unit
         value = searchQuery,
         onValueChange = onQueryChange,
         modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text("作品名やチャンネル名で検索") },
+        placeholder = {
+            Text(
+                text = "作品名やチャンネル名で検索",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = "検索") },
         trailingIcon = {
             if (searchQuery.isNotEmpty()) {
@@ -123,7 +128,8 @@ private fun SearchTextField(searchQuery: String, onQueryChange: (String) -> Unit
                 }
             }
         },
-        singleLine = true
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge
     )
 }
 
@@ -132,8 +138,8 @@ private fun SearchTextField(searchQuery: String, onQueryChange: (String) -> Unit
 private fun FilterChips(filterState: FilterState, actions: FilterChipActions) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         FilterChip(
             selected = filterState.selectedMedia.isNotEmpty(),
@@ -302,20 +308,42 @@ fun FilterSelectionDialog(
     onItemSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(onDismissRequest = onDismiss, title = { Text(title) }, text = {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items.forEach { item ->
-                FilterChip(selected = item in selectedItems, onClick = {
-                    onItemSelected(item)
-                }, label = { Text(item) })
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items.forEach { item ->
+                    FilterChip(
+                        selected = item in selectedItems,
+                        onClick = {
+                            onItemSelected(item)
+                        },
+                        label = {
+                            Text(
+                                text = item,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "閉じる",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
-    }, confirmButton = {
-        TextButton(onClick = onDismiss) {
-            Text("閉じる")
-        }
-    })
+    )
 }

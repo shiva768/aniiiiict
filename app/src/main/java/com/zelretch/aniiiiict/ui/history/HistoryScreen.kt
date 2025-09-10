@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,11 +89,19 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
     }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("視聴履歴") }, navigationIcon = {
-            IconButton(onClick = actions.onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+        TopAppBar(
+            title = {
+                Text(
+                    text = "視聴履歴",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = actions.onNavigateBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+                }
             }
-        })
+        )
     }) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             HistorySearchBar(uiState.searchQuery, actions.onSearchQueryChange)
@@ -138,7 +145,12 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
         value = query,
         onValueChange = onQueryChange,
         modifier = Modifier.fillMaxWidth().padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
-        placeholder = { Text("作品名で検索") },
+        placeholder = {
+            Text(
+                text = "作品名で検索",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = {
             if (query.isNotEmpty()) {
@@ -151,7 +163,8 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
                 }
             }
         },
-        singleLine = true
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge
     )
 }
 
@@ -179,7 +192,10 @@ private fun LoadMoreButton(isLoading: Boolean, onLoadNextPage: () -> Unit) {
             CircularProgressIndicator()
         } else {
             TextButton(onClick = onLoadNextPage) {
-                Text("もっと見る")
+                Text(
+                    text = "もっと見る",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }
@@ -192,8 +208,11 @@ private fun HistoryEmptyState() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("視聴履歴がありません")
-            Spacer(modifier = Modifier.height(SPACER_HEIGHT))
+            Text(
+                text = "視聴履歴がありません",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "下にスワイプして更新",
                 style = MaterialTheme.typography.bodyMedium,
@@ -212,11 +231,15 @@ private fun HistoryErrorState(error: String?, onRetry: () -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = error ?: "エラーが発生しました",
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(PADDING_LARGE))
             TextButton(onClick = onRetry) {
-                Text("再試行")
+                Text(
+                    text = "再試行",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }
@@ -232,32 +255,31 @@ fun RecordItem(record: Record, onDelete: () -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(
             horizontal = PADDING_HORIZONTAL,
             vertical = PADDING_VERTICAL
-        ).clip(RoundedCornerShape(CARD_CORNER_RADIUS))
+        ).clip(RoundedCornerShape(16.dp))
     ) {
         Row(
-            modifier = Modifier.padding(PADDING_LARGE).fillMaxWidth(),
+            modifier = Modifier.padding(20.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(COLUMN_WEIGHT)) {
                 Text(
                     text = record.work.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = FONT_SIZE_LARGE,
+                    style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(SPACER_HEIGHT_SMALL))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "EP${record.episode.numberText} ${record.episode.title}",
-                    fontSize = FONT_SIZE_MEDIUM,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(SPACER_HEIGHT_SMALL))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = formattedDate,
-                    fontSize = FONT_SIZE_SMALL,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -68,7 +68,7 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
                 // App name
                 Text(
                     text = "Aniiiiict",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.displayMedium,
                     textAlign = TextAlign.Center
                 )
 
@@ -77,7 +77,7 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
                 // Description
                 Text(
                     text = "Annictと連携して、アニメの視聴記録を管理しましょう。",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center
                 )
 
@@ -89,7 +89,10 @@ fun AuthScreen(uiState: MainUiState, onLoginClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(LOGIN_BUTTON_WIDTH_RATIO).height(LOGIN_BUTTON_HEIGHT),
                     enabled = !uiState.isAuthenticating && !uiState.isLoading
                 ) {
-                    Text("Annictでログイン")
+                    Text(
+                        text = "Annictでログイン",
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
 
                 // Show loading indicator if authenticating
