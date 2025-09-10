@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.ui.history
 
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.type.SeasonName
@@ -200,7 +201,7 @@ class HistoryScreenIntegrationTest {
             )
         }
 
-        testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
+        testRule.composeTestRule.onNodeWithTag("load_more_button").performClick()
 
         // Wait for next page load to complete
         attempts = 0
