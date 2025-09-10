@@ -198,6 +198,9 @@ class HistoryScreenIntegrationTest {
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
 
+        // Give the ViewModel a moment to start its initial loading from init block
+        testRule.composeTestRule.waitForIdle()
+
         // Wait for initial ViewModel loading to complete
         testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
             !viewModel.uiState.value.isLoading
