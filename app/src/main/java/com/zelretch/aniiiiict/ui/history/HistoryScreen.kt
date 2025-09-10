@@ -172,7 +172,10 @@ private fun HistoryList(uiState: HistoryUiState, listState: LazyListState, actio
         }
         if (uiState.hasNextPage) {
             item {
-                LoadMoreButton(uiState.isLoading, actions.onLoadNextPage)
+                LoadMoreButton(
+                    isLoading = uiState.isLoading && uiState.records.isNotEmpty(),
+                    onLoadNextPage = actions.onLoadNextPage
+                )
             }
         }
     }
