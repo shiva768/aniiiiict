@@ -153,6 +153,9 @@ class DetailModalIntegrationTest {
         // ステータスをWATCHEDに変更
         viewModel.changeStatus(StatusState.WATCHED)
 
+        // Wait for the coroutine to complete
+        testRule.composeTestRule.waitForIdle()
+
         // Assert: ステータス更新が呼ばれる
         coVerify(exactly = 1) { annictRepository.updateWorkViewStatus("work-status", StatusState.WATCHED) }
     }
