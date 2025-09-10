@@ -52,16 +52,16 @@ fun ProgramCard(
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
             .testTag("program_card_${programWithWork.work.id}"),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(20.dp)
         ) {
             WorkInfoRow(programWithWork = programWithWork)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             EpisodeInfoRow(
                 programWithWork = programWithWork,
                 uiState = uiState,
@@ -82,16 +82,16 @@ private fun WorkInfoRow(programWithWork: ProgramWithWork) {
             imageUrl = programWithWork.work.image?.imageUrl,
             workTitle = programWithWork.work.title
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = programWithWork.work.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.testTag("work_title_${programWithWork.work.id}")
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             WorkTags(programWithWork = programWithWork)
         }
     }
@@ -189,7 +189,7 @@ private fun EpisodeInfoRow(
             }
             Text(
                 text = episodeText,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium
             )
             Text(
@@ -284,13 +284,13 @@ private fun RecordButton(
 fun InfoTag(text: String, color: Color) {
     Surface(
         color = color,
-        shape = RoundedCornerShape(4.dp),
-        modifier = Modifier.height(20.dp)
+        shape = RoundedCornerShape(6.dp),
+        modifier = Modifier.height(22.dp)
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
             color = contentColorFor(color),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis

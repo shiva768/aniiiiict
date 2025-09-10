@@ -15,15 +15,31 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = AnimeBlue80,
+    secondary = AnimeBlueGrey80,
+    tertiary = AnimePink80,
+    background = androidx.compose.ui.graphics.Color(0xFF121212),
+    surface = androidx.compose.ui.graphics.Color(0xFF1E1E1E),
+    surfaceVariant = androidx.compose.ui.graphics.Color(0xFF2D2D2D),
+    onPrimary = androidx.compose.ui.graphics.Color.Black,
+    onSecondary = androidx.compose.ui.graphics.Color.Black,
+    onTertiary = androidx.compose.ui.graphics.Color.Black,
+    onBackground = androidx.compose.ui.graphics.Color(0xFFE3E3E3),
+    onSurface = androidx.compose.ui.graphics.Color(0xFFE3E3E3)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = AnimeBlue40,
+    secondary = AnimeBlueGrey40,
+    tertiary = AnimePink40,
+    background = androidx.compose.ui.graphics.Color(0xFFFBFBFB),
+    surface = androidx.compose.ui.graphics.Color.White,
+    surfaceVariant = androidx.compose.ui.graphics.Color(0xFFF5F5F5),
+    onPrimary = androidx.compose.ui.graphics.Color.White,
+    onSecondary = androidx.compose.ui.graphics.Color.White,
+    onTertiary = androidx.compose.ui.graphics.Color.White,
+    onBackground = androidx.compose.ui.graphics.Color(0xFF1A1A1A),
+    onSurface = androidx.compose.ui.graphics.Color(0xFF1A1A1A)
 )
 
 @Composable
