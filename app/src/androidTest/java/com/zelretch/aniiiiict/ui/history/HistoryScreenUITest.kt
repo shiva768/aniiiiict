@@ -476,7 +476,7 @@ class HistoryScreenUITest {
         // Assert
         verify { mockOnLoadNextPage() }
     }
-    
+
     @Test
     fun historyScreen_レコードカードクリック_詳細表示コールバックが呼ばれる() {
         // Arrange

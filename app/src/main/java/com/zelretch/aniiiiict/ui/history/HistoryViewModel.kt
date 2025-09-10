@@ -102,7 +102,7 @@ class HistoryViewModel @Inject constructor(
             }
         }
     }
-    
+
     fun showRecordDetail(record: Record) {
         _uiState.update {
             it.copy(
@@ -111,7 +111,7 @@ class HistoryViewModel @Inject constructor(
             )
         }
     }
-    
+
     fun hideRecordDetail() {
         _uiState.update {
             it.copy(

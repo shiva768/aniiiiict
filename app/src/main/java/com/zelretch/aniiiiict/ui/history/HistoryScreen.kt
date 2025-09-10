@@ -112,7 +112,7 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
             HistoryContent(uiState, listState, actions)
         }
     }
-    
+
     // Show detail modal when a record is selected
     if (uiState.isDetailModalVisible && uiState.selectedRecord != null) {
         RecordDetailModal(
@@ -185,7 +185,7 @@ private fun HistoryList(uiState: HistoryUiState, listState: LazyListState, actio
     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         items(items = uiState.records, key = { it.id }) { record ->
             RecordItem(
-                record = record, 
+                record = record,
                 onDelete = { actions.onDeleteRecord(record.id) },
                 onClick = { actions.onRecordClick(record) }
             )
@@ -311,10 +311,7 @@ fun RecordItem(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
 }
 
 @Composable
-fun RecordDetailModal(
-    record: Record,
-    onDismiss: () -> Unit
-) {
+fun RecordDetailModal(record: Record, onDismiss: () -> Unit) {
     val formatter = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm")
     val zonedDateTime = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
     val formattedDate = zonedDateTime.format(formatter)
@@ -339,7 +336,7 @@ fun RecordDetailModal(
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-                
+
                 Text(
                     text = "エピソード",
                     style = MaterialTheme.typography.labelMedium,
@@ -355,7 +352,7 @@ fun RecordDetailModal(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-                
+
                 Text(
                     text = "視聴日時",
                     style = MaterialTheme.typography.labelMedium,
@@ -366,7 +363,7 @@ fun RecordDetailModal(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                
+
                 record.comment?.let { comment ->
                     Text(
                         text = "コメント",
@@ -379,7 +376,7 @@ fun RecordDetailModal(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                
+
                 record.rating?.let { rating ->
                     Text(
                         text = "評価",
@@ -387,7 +384,7 @@ fun RecordDetailModal(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${rating}/5.0",
+                        text = "$rating/5.0",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
