@@ -46,6 +46,8 @@ class HistoryScreenUITest {
         val mockOnRefresh = mockk<() -> Unit>(relaxed = true)
         val mockOnLoadNextPage = mockk<() -> Unit>(relaxed = true)
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
+        val mockOnRecordClick = mockk<(Record) -> Unit>(relaxed = true)
+        val mockOnDismissRecordDetail = mockk<() -> Unit>(relaxed = true)
 
         // Act
         composeTestRule.setContent {
@@ -57,7 +59,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = mockOnDeleteRecord,
                     onRefresh = mockOnRefresh,
                     onLoadNextPage = mockOnLoadNextPage,
-                    onSearchQueryChange = mockOnSearchQueryChange
+                    onSearchQueryChange = mockOnSearchQueryChange,
+                    onRecordClick = mockOnRecordClick,
+                    onDismissRecordDetail = mockOnDismissRecordDetail
                 )
             )
         }
@@ -88,7 +92,11 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -144,7 +152,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -173,7 +183,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -230,7 +242,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -313,7 +327,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = mockOnDeleteRecord,
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -347,7 +363,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -379,7 +397,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -411,7 +431,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -442,7 +464,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = mockOnLoadNextPage,
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }

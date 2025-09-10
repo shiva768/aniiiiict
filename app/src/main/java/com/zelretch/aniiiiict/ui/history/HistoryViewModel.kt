@@ -20,7 +20,9 @@ data class HistoryUiState(
     override val error: String? = null,
     val hasNextPage: Boolean = false,
     val endCursor: String? = null,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val selectedRecord: Record? = null,
+    val isDetailModalVisible: Boolean = false
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel
@@ -98,6 +100,24 @@ class HistoryViewModel @Inject constructor(
                     records = searchRecordsUseCase(newAllRecords, currentState.searchQuery)
                 )
             }
+        }
+    }
+    
+    fun showRecordDetail(record: Record) {
+        _uiState.update {
+            it.copy(
+                selectedRecord = record,
+                isDetailModalVisible = true
+            )
+        }
+    }
+    
+    fun hideRecordDetail() {
+        _uiState.update {
+            it.copy(
+                selectedRecord = null,
+                isDetailModalVisible = false
+            )
         }
     }
 }

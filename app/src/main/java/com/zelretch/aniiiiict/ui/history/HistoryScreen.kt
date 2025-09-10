@@ -3,6 +3,7 @@ package com.zelretch.aniiiiict.ui.history
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,7 +70,9 @@ data class HistoryScreenActions(
     val onDeleteRecord: (String) -> Unit,
     val onRefresh: () -> Unit,
     val onLoadNextPage: () -> Unit,
-    val onSearchQueryChange: (String) -> Unit
+    val onSearchQueryChange: (String) -> Unit,
+    val onRecordClick: (Record) -> Unit,
+    val onDismissRecordDetail: () -> Unit
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,6 +111,14 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
             HistorySearchBar(uiState.searchQuery, actions.onSearchQueryChange)
             HistoryContent(uiState, listState, actions)
         }
+    }
+    
+    // Show detail modal when a record is selected
+    if (uiState.isDetailModalVisible && uiState.selectedRecord != null) {
+        RecordDetailModal(
+            record = uiState.selectedRecord,
+            onDismiss = actions.onDismissRecordDetail
+        )
     }
 }
 
@@ -172,7 +184,11 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
 private fun HistoryList(uiState: HistoryUiState, listState: LazyListState, actions: HistoryScreenActions) {
     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         items(items = uiState.records, key = { it.id }) { record ->
-            RecordItem(record = record, onDelete = { actions.onDeleteRecord(record.id) })
+            RecordItem(
+                record = record, 
+                onDelete = { actions.onDeleteRecord(record.id) },
+                onClick = { actions.onRecordClick(record) }
+            )
         }
         if (uiState.hasNextPage) {
             item {
@@ -246,16 +262,20 @@ private fun HistoryErrorState(error: String?, onRetry: () -> Unit) {
 }
 
 @Composable
-fun RecordItem(record: Record, onDelete: () -> Unit) {
+fun RecordItem(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
     val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
     val zonedDateTime = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
     val formattedDate = zonedDateTime.format(formatter)
 
     Card(
-        modifier = Modifier.fillMaxWidth().padding(
-            horizontal = PADDING_HORIZONTAL,
-            vertical = PADDING_VERTICAL
-        ).clip(RoundedCornerShape(16.dp))
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = PADDING_HORIZONTAL,
+                vertical = PADDING_VERTICAL
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() }
     ) {
         Row(
             modifier = Modifier.padding(20.dp).fillMaxWidth(),
@@ -271,7 +291,7 @@ fun RecordItem(record: Record, onDelete: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "EP${record.episode.numberText} ${record.episode.title}",
+                    text = "EP${record.episode.numberText ?: "?"} ${record.episode.title ?: ""}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -288,4 +308,98 @@ fun RecordItem(record: Record, onDelete: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun RecordDetailModal(
+    record: Record,
+    onDismiss: () -> Unit
+) {
+    val formatter = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm")
+    val zonedDateTime = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
+    val formattedDate = zonedDateTime.format(formatter)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "視聴履歴詳細",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "作品名",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = record.work.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                Text(
+                    text = "エピソード",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "EP${record.episode.numberText ?: "?"}",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = record.episode.title ?: "タイトルなし",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                Text(
+                    text = "視聴日時",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                record.comment?.let { comment ->
+                    Text(
+                        text = "コメント",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = comment,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                
+                record.rating?.let { rating ->
+                    Text(
+                        text = "評価",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${rating}/5.0",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "閉じる",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    )
 }
