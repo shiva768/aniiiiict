@@ -176,6 +176,7 @@ dependencies {
     implementation(libs.bundles.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons)
+    implementation("com.google.android.material:material:1.13.0")
 
     // DI (Hilt)
     implementation(libs.hilt.android)
