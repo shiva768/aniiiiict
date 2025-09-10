@@ -47,7 +47,7 @@ fun AniiiiictTheme(
             val window = (view.context as Activity).window
             WindowCompat.setDecorFitsSystemWindows(window, true)
             val controller = WindowCompat.getInsetsController(window, view)
-            controller.isAppearanceLightStatusBars = darkTheme
+            controller.isAppearanceLightStatusBars = !darkTheme
         }
     }
 
