@@ -24,7 +24,6 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -213,7 +212,7 @@ class HistoryScreenIntegrationTest {
                     onRetry = {},
                     onDeleteRecord = {},
                     onRefresh = {},
-                    onLoadNextPage = { 
+                    onLoadNextPage = {
                         // This callback will be called when the button is clicked
                         // We'll verify the call after the test
                     },
@@ -224,7 +223,7 @@ class HistoryScreenIntegrationTest {
 
         // Wait for UI to render
         Thread.sleep(1000)
-        
+
         // Try to find and click the "もっと見る" button
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
 
