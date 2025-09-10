@@ -198,11 +198,12 @@ class HistoryScreenIntegrationTest {
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
 
+        // Give the ViewModel a moment to start its initial loading from init block
+        testRule.composeTestRule.waitForIdle()
+
         // Wait for initial ViewModel loading to complete
-        var attempts = 0
-        while (viewModel.uiState.value.isLoading && attempts < 50) {
-            Thread.sleep(50)
-            attempts++
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
+            !viewModel.uiState.value.isLoading
         }
 
         // For integration testing, we need to ensure the UI state is correct
@@ -231,17 +232,15 @@ class HistoryScreenIntegrationTest {
             )
         }
 
-        // Wait for UI to render
-        Thread.sleep(1000)
+        // Wait for UI to render and be idle
+        testRule.composeTestRule.waitForIdle()
 
         // Click the "もっと見る" button
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
 
         // Wait for next page load to complete
-        attempts = 0
-        while (viewModel.uiState.value.isLoading && attempts < 50) {
-            Thread.sleep(50)
-            attempts++
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
+            !viewModel.uiState.value.isLoading
         }
 
         // Verify that the ViewModel's loadNextPage method was called and completed
