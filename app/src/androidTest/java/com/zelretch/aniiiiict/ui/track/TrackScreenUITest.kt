@@ -166,6 +166,67 @@ class TrackScreenUITest {
     }
 
     @Test
+    fun trackScreen_プログラムカードクリック_詳細モーダルが開く() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+
+        // Create sample program data
+        val sampleWork = Work(
+            id = "1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+
+        val sampleEpisode = Episode(
+            id = "ep1",
+            title = "第1話",
+            numberText = "1",
+            number = 1
+        )
+
+        val sampleChannel = Channel(
+            name = "テストチャンネル"
+        )
+
+        val sampleProgram = Program(
+            id = "prog1",
+            startedAt = LocalDateTime.now(),
+            channel = sampleChannel,
+            episode = sampleEpisode
+        )
+
+        val programWithWork = ProgramWithWork(
+            programs = listOf(sampleProgram),
+            firstProgram = sampleProgram,
+            work = sampleWork
+        )
+
+        val stateWithPrograms = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithPrograms)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = stateWithPrograms,
+                onRecordEpisode = { _, _, _ -> },
+                onNavigateToHistory = {},
+                onRefresh = {}
+            )
+        }
+
+        // プログラムカードをクリック
+        composeTestRule.onNodeWithTag("program_card_1").performClick()
+
+        // Assert - showUnwatchedEpisodesが呼ばれることを確認
+        verify { mockViewModel.showUnwatchedEpisodes(programWithWork) }
+    }
+
+    @Test
     fun trackScreen_フィナーレ確認_適切なスナックバーが表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
