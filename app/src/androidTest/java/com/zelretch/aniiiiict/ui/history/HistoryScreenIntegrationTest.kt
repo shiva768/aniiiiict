@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiict.ui.history
 
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -161,6 +162,36 @@ class HistoryScreenIntegrationTest {
     }
 
     @Test
+    fun test_LoadMoreButton_with_empty_records_shows_text() {
+        val uiState = HistoryUiState(
+            records = emptyList(),
+            hasNextPage = true,
+            isLoading = false,
+            error = null
+        )
+        
+        testRule.composeTestRule.setContent {
+            HistoryScreen(
+                uiState = uiState,
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {}
+                )
+            )
+        }
+        
+        // Allow Compose to complete initial composition
+        testRule.composeTestRule.waitForIdle()
+        
+        // Should find the "もっと見る" button
+        testRule.composeTestRule.onNodeWithText("もっと見る").assertExists()
+    }
+
+    @Test
     fun historyScreen_次ページ読み込み_正しい順序でRepositoryが呼ばれる() = runBlocking {
         // Arrange - Set up mock to return hasNextPage = true for initial call and data for next page
         coEvery { annictRepository.getRecords(null) } returns PaginatedRecords(
@@ -200,6 +231,9 @@ class HistoryScreenIntegrationTest {
             )
         }
 
+        // Allow Compose to complete initial composition
+        testRule.composeTestRule.waitForIdle()
+        
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
 
         // Wait for next page load to complete

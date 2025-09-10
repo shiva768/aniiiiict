@@ -93,7 +93,7 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
     }
 
     LaunchedEffect(shouldLoadNextPage.value) {
-        if (shouldLoadNextPage.value && uiState.hasNextPage && !uiState.isLoading) {
+        if (shouldLoadNextPage.value && uiState.hasNextPage && !uiState.isLoading && uiState.records.isNotEmpty()) {
             actions.onLoadNextPage()
         }
     }
