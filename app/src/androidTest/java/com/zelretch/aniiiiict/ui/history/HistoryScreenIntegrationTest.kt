@@ -22,7 +22,6 @@ import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
@@ -57,7 +56,19 @@ class HistoryScreenIntegrationTest {
 
     @BindValue
     @JvmField
-    val annictRepository: AnnictRepository = mockk<AnnictRepository>(relaxed = true)
+    val annictRepository: AnnictRepository = mockk<AnnictRepository>().apply {
+        coEvery { getRecords(null) } returns PaginatedRecords(
+            records = emptyList(),
+            hasNextPage = false,
+            endCursor = null
+        )
+        coEvery { getRecords(any()) } returns PaginatedRecords(
+            records = emptyList(),
+            hasNextPage = false,
+            endCursor = null
+        )
+        coEvery { deleteRecord(any()) } returns true
+    }
 
     @BindValue
     @JvmField
@@ -80,13 +91,6 @@ class HistoryScreenIntegrationTest {
     @Test
     fun historyScreen_再試行クリック_RepositoryのgetRecordsが呼ばれる() {
         // Arrange
-        clearMocks(annictRepository)
-        coEvery { annictRepository.getRecords(null) } returns PaginatedRecords(
-            records = emptyList(),
-            hasNextPage = false,
-            endCursor = null
-        )
-
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
         val errorState = HistoryUiState(records = emptyList(), error = "エラーです")
 
@@ -114,9 +118,6 @@ class HistoryScreenIntegrationTest {
     @Test
     fun historyScreen_削除クリック_RepositoryのdeleteRecordが呼ばれる() {
         // Arrange
-        clearMocks(annictRepository)
-        coEvery { annictRepository.deleteRecord(any()) } returns true
-
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
         val work = Work(
             id = "w1",
@@ -161,32 +162,9 @@ class HistoryScreenIntegrationTest {
 
     @Test
     fun historyScreen_次ページ読み込み_正しい順序でRepositoryが呼ばれる() = runBlocking {
-        // Arrange - Create test data
-        val work = Work(
-            id = "w1",
-            title = "Test Work",
-            seasonName = SeasonName.SPRING,
-            seasonYear = 2024,
-            media = "TV",
-            mediaText = "TV",
-            viewerStatusState = StatusState.WATCHED
-        )
-        val ep = Episode(id = "e1", title = "第1話", numberText = "1", number = 1)
-        val record = Record(
-            id = "r1",
-            comment = null,
-            rating = null,
-            createdAt = ZonedDateTime.now(),
-            episode = ep,
-            work = work
-        )
-
-        // Clear any existing mocks to avoid conflicts
-        clearMocks(annictRepository)
-
-        // Set up mock to return hasNextPage = true for initial call and data for next page
+        // Arrange - Set up mock to return hasNextPage = true for initial call and data for next page
         coEvery { annictRepository.getRecords(null) } returns PaginatedRecords(
-            records = listOf(record),
+            records = emptyList(),
             hasNextPage = true,
             endCursor = "cursor1"
         )
@@ -198,29 +176,19 @@ class HistoryScreenIntegrationTest {
 
         val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
 
-        // Give the ViewModel a moment to start its initial loading from init block
-        testRule.composeTestRule.waitForIdle()
-
         // Wait for initial ViewModel loading to complete
-        testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
-            !viewModel.uiState.value.isLoading
+        var attempts = 0
+        while (viewModel.uiState.value.isLoading && attempts < 50) {
+            Thread.sleep(50)
+            attempts++
         }
 
-        // For integration testing, we need to ensure the UI state is correct
-        // Create a controlled state that represents the expected state after ViewModel initialization
-        val testState = HistoryUiState(
-            records = listOf(record),
-            allRecords = listOf(record),
-            hasNextPage = true,
-            isLoading = false,
-            error = null,
-            searchQuery = ""
-        )
-
-        // Act - Use the controlled state for reliable integration testing
+        // Use the actual ViewModel state which should now have hasNextPage = true
+        val currentState = viewModel.uiState.value
+        // Act
         testRule.composeTestRule.setContent {
             HistoryScreen(
-                uiState = testState,
+                uiState = currentState,
                 actions = HistoryScreenActions(
                     onNavigateBack = {},
                     onRetry = {},
@@ -232,21 +200,16 @@ class HistoryScreenIntegrationTest {
             )
         }
 
-        // Wait for UI to render and be idle
-        testRule.composeTestRule.waitForIdle()
-
-        // Click the "もっと見る" button
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
 
         // Wait for next page load to complete
-        testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
-            !viewModel.uiState.value.isLoading
+        attempts = 0
+        while (viewModel.uiState.value.isLoading && attempts < 50) {
+            Thread.sleep(50)
+            attempts++
         }
 
-        // Verify that the ViewModel's loadNextPage method was called and completed
-        // This ensures the integration between UI and ViewModel works correctly
-
-        // Assert - Verify both the initial call from init and the next page call happened in correct order
+        // Assert - Verify both the initial call from init and the next page call happened
         coVerifyOrder {
             annictRepository.getRecords(null) // 初期ロード時（init内で呼ばれる）
             annictRepository.getRecords("cursor1") // 次ページ読み込み時

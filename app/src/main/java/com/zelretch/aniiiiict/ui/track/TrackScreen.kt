@@ -1,18 +1,21 @@
 package com.zelretch.aniiiiict.ui.track
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -35,9 +39,6 @@ import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiict.ui.track.components.FilterBar
 import com.zelretch.aniiiiict.ui.track.components.FilterOptions
 import com.zelretch.aniiiiict.ui.track.components.ProgramCard
-import com.zelretch.aniiiiict.ui.track.components.ProgramCardPlaceholder
-
-private const val SHIMMER_ITEM_COUNT = 10
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,12 +134,9 @@ private fun TrackScreenContent(
     onRefresh: () -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit
 ) {
-    val isRefreshing = uiState.isLoading && uiState.programs.isNotEmpty()
-    val isInitialLoad = uiState.isLoading && uiState.programs.isEmpty()
-
     PullToRefreshBox(
         modifier = modifier.fillMaxSize(),
-        isRefreshing = isRefreshing,
+        isRefreshing = uiState.isLoading,
         onRefresh = onRefresh,
         state = rememberPullToRefreshState()
     ) {
@@ -157,26 +155,24 @@ private fun TrackScreenContent(
                 )
             }
 
-            if (isInitialLoad) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(SHIMMER_ITEM_COUNT) {
-                        ProgramCardPlaceholder()
-                    }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = rememberLazyListState()
+            ) {
+                items(items = uiState.programs, key = { it.work.id }) { program ->
+                    ProgramCard(
+                        programWithWork = program,
+                        onRecordEpisode = onRecordEpisode,
+                        onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
+                        uiState = uiState
+                    )
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = rememberLazyListState()
-                ) {
-                    items(items = uiState.programs, key = { it.work.id }) { program ->
-                        ProgramCard(
-                            programWithWork = program,
-                            onRecordEpisode = onRecordEpisode,
-                            onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
-                            uiState = uiState
-                        )
-                    }
-                }
+            }
+        }
+
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(modifier = Modifier.size(48.dp))
             }
         }
     }
