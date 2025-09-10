@@ -169,7 +169,7 @@ class HistoryScreenIntegrationTest {
             isLoading = false,
             error = null
         )
-        
+
         testRule.composeTestRule.setContent {
             HistoryScreen(
                 uiState = uiState,
@@ -183,10 +183,10 @@ class HistoryScreenIntegrationTest {
                 )
             )
         }
-        
+
         // Allow Compose to complete initial composition
         testRule.composeTestRule.waitForIdle()
-        
+
         // Should find the "もっと見る" button
         testRule.composeTestRule.onNodeWithText("もっと見る").assertExists()
     }
@@ -233,7 +233,7 @@ class HistoryScreenIntegrationTest {
 
         // Allow Compose to complete initial composition
         testRule.composeTestRule.waitForIdle()
-        
+
         testRule.composeTestRule.onNodeWithText("もっと見る").performClick()
 
         // Wait for next page load to complete
