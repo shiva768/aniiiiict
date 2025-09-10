@@ -45,6 +45,7 @@ fun AniiiiictTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
+            WindowCompat.setDecorFitsSystemWindows(window, true)
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = darkTheme
         }
