@@ -6,7 +6,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.zelretch.aniiiiict.MainActivity
-import com.zelretch.aniiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -36,6 +35,7 @@ class AppNavigationTest {
     @JvmField
     val mockAnnictRepository: AnnictRepository = mockk(relaxed = true) {
         coEvery { getRawProgramsData() } returns flowOf(emptyList())
+        coEvery { isAuthenticated() } returns true
     }
 
     @BindValue
@@ -49,12 +49,6 @@ class AppNavigationTest {
     @BindValue
     @JvmField
     val mockCustomTabsIntentFactory: CustomTabsIntentFactory = mockk(relaxed = true)
-
-    @BindValue
-    @JvmField
-    val mockTokenManager: TokenManager = mockk(relaxed = true) {
-        coEvery { hasValidToken() } returns true
-    }
 
     @Test
     fun navigationDrawer_menuClick_opensDrawer() {
