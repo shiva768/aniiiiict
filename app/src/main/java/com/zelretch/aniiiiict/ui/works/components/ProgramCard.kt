@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track.components
+package com.zelretch.aniiiiict.ui.works.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiict.ui.track.TrackUiState
+import com.zelretch.aniiiiict.ui.works.WorksUiState
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -48,7 +48,7 @@ fun ProgramCard(
     programWithWork: ProgramWithWork,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit,
-    uiState: TrackUiState,
+    uiState: WorksUiState,
     modifier: Modifier = Modifier
 ) {
     ElevatedCard(
@@ -170,7 +170,7 @@ private fun WorkTags(programWithWork: ProgramWithWork) {
 @Composable
 private fun EpisodeInfoRow(
     programWithWork: ProgramWithWork,
-    uiState: TrackUiState,
+    uiState: WorksUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit
 ) {
@@ -212,7 +212,7 @@ private fun EpisodeInfoRow(
 @Composable
 private fun ActionButtons(
     programWithWork: ProgramWithWork,
-    uiState: TrackUiState,
+    uiState: WorksUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit
 ) {
@@ -246,7 +246,7 @@ private fun RecordButton(
     episodeId: String,
     workId: String,
     status: StatusState,
-    uiState: TrackUiState,
+    uiState: WorksUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit
 ) {
     val isRecording = uiState.isRecording

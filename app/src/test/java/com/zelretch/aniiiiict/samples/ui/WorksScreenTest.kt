@@ -2,8 +2,8 @@ package com.zelretch.aniiiiict.samples.ui
 
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
-import com.zelretch.aniiiiict.ui.track.TrackUiState
-import com.zelretch.aniiiiict.ui.track.TrackViewModelContract
+import com.zelretch.aniiiiict.ui.works.WorksUiState
+import com.zelretch.aniiiiict.ui.works.WorksViewModelContract
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -26,7 +26,7 @@ import kotlinx.coroutines.test.setMain
  * 機能を活用したロジックテストに焦点を当てる
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackScreenTest : BehaviorSpec({
+class WorksScreenTest : BehaviorSpec({
 
     lateinit var testDispatcher: TestDispatcher
 
@@ -39,15 +39,15 @@ class TrackScreenTest : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("TrackScreenのViewModel契約テスト") {
+    given("WorksScreenのViewModel契約テスト") {
 
         `when`("インターフェースベースでテストを作成する") {
             then("ViewModelContractを通じて状態にアクセスできる") {
                 // インターフェースのモックを作成
-                val viewModelContract = mockk<TrackViewModelContract>()
+                val viewModelContract = mockk<WorksViewModelContract>()
 
                 // 初期状態を定義し、モックに設定
-                val initialState = TrackUiState()
+                val initialState = WorksUiState()
                 every { viewModelContract.uiState } returns MutableStateFlow(initialState)
 
                 // 契約経由で状態取得ができることを確認
@@ -60,10 +60,10 @@ class TrackScreenTest : BehaviorSpec({
 
         `when`("TestableViewModelで直接状態を操作する (デモ)") {
             then("エラー状態を簡単に設定できる") {
-                val viewModelContract = mockk<TrackViewModelContract>()
+                val viewModelContract = mockk<WorksViewModelContract>()
 
                 // エラー状態を直接設定
-                val errorState = TrackUiState(error = "ネットワークエラーが発生しました")
+                val errorState = WorksUiState(error = "ネットワークエラーが発生しました")
                 every { viewModelContract.uiState } returns MutableStateFlow(errorState)
 
                 // エラー状態の確認
@@ -73,10 +73,10 @@ class TrackScreenTest : BehaviorSpec({
             }
 
             then("ローディング状態をユーティリティ関数で設定できる") {
-                val viewModelContract = mockk<TrackViewModelContract>()
+                val viewModelContract = mockk<WorksViewModelContract>()
 
                 // ローディング状態を直接設定
-                val loadingState = TrackUiState(isLoading = true)
+                val loadingState = WorksUiState(isLoading = true)
                 every { viewModelContract.uiState } returns MutableStateFlow(loadingState)
 
                 // ローディング状態の確認
@@ -87,7 +87,7 @@ class TrackScreenTest : BehaviorSpec({
 
         `when`("契約メソッドの呼び出しをテストする") {
             then("フィルター切り替えメソッドが正しく呼ばれる") {
-                val viewModelContract = mockk<TrackViewModelContract>(relaxed = true)
+                val viewModelContract = mockk<WorksViewModelContract>(relaxed = true)
 
                 // フィルター切り替えアクション
                 viewModelContract.toggleFilterVisibility()
@@ -99,7 +99,7 @@ class TrackScreenTest : BehaviorSpec({
 
         `when`("複雑な状態の組み合わせをテストする") {
             then("フィルター表示とプログラム一覧を同時にテストできる") {
-                val viewModelContract = mockk<TrackViewModelContract>()
+                val viewModelContract = mockk<WorksViewModelContract>()
 
                 // サンプルプログラム作成
                 val sampleWork = Work(
@@ -120,7 +120,7 @@ class TrackScreenTest : BehaviorSpec({
                 )
 
                 // 複合状態を設定：フィルター表示 + プログラム一覧
-                val complexState = TrackUiState(
+                val complexState = WorksUiState(
                     isFilterVisible = true,
                     programs = listOf(sampleProgram),
                     availableMedia = listOf("TV", "Movie"),
@@ -140,10 +140,10 @@ class TrackScreenTest : BehaviorSpec({
 
         `when`("最終話確認ダイアログの状態をテストする") {
             then("複雑な状態も直接設定してテストできる") {
-                val viewModelContract = mockk<TrackViewModelContract>()
+                val viewModelContract = mockk<WorksViewModelContract>()
 
                 // 最終話確認状態を直接設定
-                val finaleState = TrackUiState(
+                val finaleState = WorksUiState(
                     showFinaleConfirmationForWorkId = "work123",
                     showFinaleConfirmationForEpisodeNumber = 12
                 )

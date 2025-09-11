@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track
+package com.zelretch.aniiiiict.ui.works
 
 import android.content.Context
 import app.cash.turbine.test
@@ -28,7 +28,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackViewModelTest : BehaviorSpec({
+class WorksViewModelTest : BehaviorSpec({
     val dispatcher = UnconfinedTestDispatcher()
     val filterStateFlow = MutableStateFlow(FilterState())
     val filterPreferences = mockk<FilterPreferences> {
@@ -41,7 +41,7 @@ class TrackViewModelTest : BehaviorSpec({
     val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
     val judgeFinalUseCase = mockk<JudgeFinaleUseCase>()
     mockk<Context>(relaxed = true)
-    lateinit var viewModel: TrackViewModel
+    lateinit var viewModel: WorksViewModel
 
     beforeTest {
         Dispatchers.setMain(dispatcher)
@@ -54,7 +54,7 @@ class TrackViewModelTest : BehaviorSpec({
             emptyList(),
             emptyList()
         )
-        viewModel = TrackViewModel(
+        viewModel = WorksViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,

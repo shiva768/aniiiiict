@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track
+package com.zelretch.aniiiiict.ui.works
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -11,16 +11,16 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 /**
- * TrackViewModelの追加テストケース
+ * WorksViewModelの追加テストケース
  *
- * 既存のTrackViewModelTestでカバーしきれない以下のシナリオを追加テスト:
+ * 既存のWorksViewModelTestでカバーしきれない以下のシナリオを追加テスト:
  * - フィルタ表示状態の切り替え
  * - 詳細モーダルの表示/非表示
  * - エラー状態のクリア
  * - 初期状態の検証
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackViewModelAdditionalTest : BehaviorSpec({
+class WorksViewModelAdditionalTest : BehaviorSpec({
 
     val dispatcher = UnconfinedTestDispatcher()
 
@@ -32,7 +32,7 @@ class TrackViewModelAdditionalTest : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("TrackViewModelの状態管理") {
+    given("WorksViewModelの状態管理") {
 
         `when`("フィルタ表示状態を切り替える") {
             then("isFilterVisibleが正しく更新される") {
@@ -180,12 +180,12 @@ class TrackViewModelAdditionalTest : BehaviorSpec({
         }
     }
 
-    given("TrackUiStateの妥当性検証") {
+    given("WorksUiStateの妥当性検証") {
 
         `when`("初期状態を作成") {
             then("適切なデフォルト値が設定される") {
                 runTest {
-                    val initialState = TrackUiState()
+                    val initialState = WorksUiState()
 
                     initialState.programs shouldBe emptyList()
                     initialState.records shouldBe emptyList()
@@ -207,7 +207,7 @@ class TrackViewModelAdditionalTest : BehaviorSpec({
         `when`("状態をコピーして更新") {
             then("適切に状態が更新される") {
                 runTest {
-                    val initialState = TrackUiState()
+                    val initialState = WorksUiState()
 
                     val updatedState = initialState.copy(
                         isLoading = true,

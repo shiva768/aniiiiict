@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track.components
+package com.zelretch.aniiiiict.ui.works.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

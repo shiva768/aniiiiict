@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track
+package com.zelretch.aniiiiict.ui.works
 
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-data class TrackUiState(
+data class WorksUiState(
     val programs: List<ProgramWithWork> = emptyList(),
     val records: List<com.zelretch.aniiiiict.data.model.Record> = emptyList(),
     override val isLoading: Boolean = false,
@@ -47,21 +47,21 @@ data class TrackUiState(
 
 @Suppress("TooManyFunctions")
 @HiltViewModel
-class TrackViewModel @Inject constructor(
+class WorksViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
     private val judgeFinaleUseCase: JudgeFinaleUseCase
-) : BaseViewModel(), TrackViewModelContract {
+) : BaseViewModel(), WorksViewModelContract {
 
     companion object {
         private const val RECORDING_SUCCESS_MESSAGE_DURATION_MS = 2000L
     }
 
-    private val _uiState = MutableStateFlow(TrackUiState())
-    override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(WorksUiState())
+    override val uiState: StateFlow<WorksUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -122,7 +122,7 @@ class TrackViewModel @Inject constructor(
                 onRecordSuccess(episodeId, workId)
             }.onFailure { e ->
                 val msg = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "TrackViewModel.recordEpisode")
+                    ErrorHandler.analyzeError(e, "WorksViewModel.recordEpisode")
                 )
                 _uiState.update { it.copy(error = msg, isRecording = false) }
             }
@@ -186,7 +186,7 @@ class TrackViewModel @Inject constructor(
                     refresh()
                 }.onFailure { e ->
                     val msg = e.message ?: ErrorHandler.getUserMessage(
-                        ErrorHandler.analyzeError(e, "TrackViewModel.confirmWatchedStatus")
+                        ErrorHandler.analyzeError(e, "WorksViewModel.confirmWatchedStatus")
                     )
                     _uiState.update { it.copy(error = msg) }
                 }

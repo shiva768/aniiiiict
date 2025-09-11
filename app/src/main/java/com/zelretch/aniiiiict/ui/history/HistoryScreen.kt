@@ -64,7 +64,6 @@ private val FONT_SIZE_SMALL = 12.sp
 private val SPACER_HEIGHT_SMALL = 4.dp
 
 data class HistoryScreenActions(
-    val onNavigateBack: () -> Unit,
     val onRetry: () -> Unit,
     val onDeleteRecord: (String) -> Unit,
     val onRefresh: () -> Unit,
@@ -89,17 +88,9 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
         }
     }
 
-    Scaffold(topBar = {
-        TopAppBar(title = { Text("視聴履歴") }, navigationIcon = {
-            IconButton(onClick = actions.onNavigateBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
-            }
-        })
-    }) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            HistorySearchBar(uiState.searchQuery, actions.onSearchQueryChange)
-            HistoryContent(uiState, listState, actions)
-        }
+    Column(modifier = Modifier.fillMaxSize()) {
+        HistorySearchBar(uiState.searchQuery, actions.onSearchQueryChange)
+        HistoryContent(uiState, listState, actions)
     }
 }
 

@@ -3,8 +3,8 @@ package com.zelretch.aniiiiict.testing
 import com.zelretch.aniiiiict.MainUiState
 import com.zelretch.aniiiiict.MainViewModel
 import com.zelretch.aniiiiict.ui.base.BaseUiState
-import com.zelretch.aniiiiict.ui.track.TrackUiState
-import com.zelretch.aniiiiict.ui.track.TrackViewModel
+import com.zelretch.aniiiiict.ui.works.WorksUiState
+import com.zelretch.aniiiiict.ui.works.WorksViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
@@ -31,9 +31,9 @@ interface TestableViewModel<T : BaseUiState> {
 interface TestableMainViewModel : TestableViewModel<MainUiState>
 
 /**
- * TrackViewModelのテスト用拡張インターフェース
+ * WorksViewModelのテスト用拡張インターフェース
  */
-interface TestableTrackViewModel : TestableViewModel<TrackUiState>
+interface TestableWorksViewModel : TestableViewModel<WorksUiState>
 
 /**
  * ViewModelをテスト可能にするラッパークラス（汎用）
@@ -110,10 +110,10 @@ class MainViewModelTestWrapper(viewModel: MainViewModel) :
     ViewModelTestWrapper<MainUiState>(viewModel, { MainUiState() }), TestableMainViewModel
 
 /**
- * TrackViewModel専用ラッパー
+ * WorksViewModel専用ラッパー
  */
-class TrackViewModelTestWrapper(viewModel: TrackViewModel) :
-    ViewModelTestWrapper<TrackUiState>(viewModel, { TrackUiState() }), TestableTrackViewModel
+class WorksViewModelTestWrapper(viewModel: WorksViewModel) :
+    ViewModelTestWrapper<WorksUiState>(viewModel, { WorksUiState() }), TestableWorksViewModel
 
 /**
  * MainViewModel用の拡張関数
@@ -121,9 +121,9 @@ class TrackViewModelTestWrapper(viewModel: TrackViewModel) :
 fun MainViewModel.asTestable(): TestableMainViewModel = MainViewModelTestWrapper(this)
 
 /**
- * TrackViewModel用の拡張関数
+ * WorksViewModel用の拡張関数
  */
-fun TrackViewModel.asTestable(): TestableTrackViewModel = TrackViewModelTestWrapper(this)
+fun WorksViewModel.asTestable(): TestableWorksViewModel = WorksViewModelTestWrapper(this)
 
 /**
  * 汎用的なViewModel状態操作のためのヘルパー関数群
@@ -181,19 +181,19 @@ object MainUiStateBuilder {
 }
 
 /**
- * テスト用のTrackUiState作成ヘルパー
+ * テスト用のWorksUiState作成ヘルパー
  */
-object TrackUiStateBuilder {
-    fun loading() = TrackUiState(isLoading = true)
+object WorksUiStateBuilder {
+    fun loading() = WorksUiState(isLoading = true)
 
-    fun error(message: String) = TrackUiState(error = message)
+    fun error(message: String) = WorksUiState(error = message)
 
     fun withPrograms(programs: List<com.zelretch.aniiiiict.data.model.ProgramWithWork>) =
-        TrackUiState(programs = programs)
+        WorksUiState(programs = programs)
 
-    fun recording() = TrackUiState(isRecording = true)
+    fun recording() = WorksUiState(isRecording = true)
 
-    fun filterVisible() = TrackUiState(isFilterVisible = true)
+    fun filterVisible() = WorksUiState(isFilterVisible = true)
 
     fun custom(
         programs: List<com.zelretch.aniiiiict.data.model.ProgramWithWork> = emptyList(),
@@ -201,7 +201,7 @@ object TrackUiStateBuilder {
         error: String? = null,
         isRecording: Boolean = false,
         isFilterVisible: Boolean = false
-    ) = TrackUiState(
+    ) = WorksUiState(
         programs = programs,
         isLoading = isLoading,
         error = error,

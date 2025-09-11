@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track.components
+package com.zelretch.aniiiiict.ui.works.components
 
 import com.annict.type.SeasonName
 

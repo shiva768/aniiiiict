@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.track
+package com.zelretch.aniiiiict.ui.works
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,67 +36,29 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.ui.details.DetailModal
 import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
-import com.zelretch.aniiiiict.ui.track.components.FilterBar
-import com.zelretch.aniiiiict.ui.track.components.FilterOptions
-import com.zelretch.aniiiiict.ui.track.components.ProgramCard
+import com.zelretch.aniiiiict.ui.works.components.FilterBar
+import com.zelretch.aniiiiict.ui.works.components.FilterOptions
+import com.zelretch.aniiiiict.ui.works.components.ProgramCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TrackScreen(
-    viewModel: TrackViewModel,
-    uiState: TrackUiState,
+fun WorksScreen(
+    viewModel: WorksViewModel,
+    uiState: WorksUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    onNavigateToHistory: () -> Unit = {},
     onRefresh: () -> Unit = {}
 ) {
-    Scaffold(topBar = {
-        TrackTopAppBar(
-            isFilterVisible = uiState.isFilterVisible,
-            onFilterClick = { viewModel.toggleFilterVisibility() },
-            onHistoryClick = onNavigateToHistory
-        )
-    }, snackbarHost = {
-        TrackSnackbarHost(
-            uiState = uiState,
-            onConfirmFinale = { viewModel.confirmWatchedStatus() },
-            onDismissFinale = { viewModel.dismissFinaleConfirmation() },
-            onRefresh = { viewModel.refresh() }
-        )
-    }) { paddingValues ->
-        TrackScreenContent(
-            modifier = Modifier.padding(paddingValues),
-            uiState = uiState,
-            viewModel = viewModel,
-            onRefresh = onRefresh,
-            onRecordEpisode = onRecordEpisode
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onHistoryClick: () -> Unit) {
-    TopAppBar(title = { Text("番組一覧") }, actions = {
-        IconButton(onClick = onFilterClick) {
-            Icon(
-                imageVector = Icons.Default.FilterList,
-                contentDescription = "フィルター",
-                tint = if (isFilterVisible) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
-            )
-        }
-        IconButton(onClick = onHistoryClick) {
-            Icon(imageVector = Icons.Default.History, contentDescription = "履歴")
-        }
-    })
+    WorksScreenContent(
+        uiState = uiState,
+        viewModel = viewModel,
+        onRefresh = onRefresh,
+        onRecordEpisode = onRecordEpisode
+    )
 }
 
 @Composable
-private fun TrackSnackbarHost(
-    uiState: TrackUiState,
+private fun WorksSnackbarHost(
+    uiState: WorksUiState,
     onConfirmFinale: () -> Unit,
     onDismissFinale: () -> Unit,
     onRefresh: () -> Unit
@@ -127,10 +89,10 @@ private fun TrackSnackbarHost(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TrackScreenContent(
+private fun WorksScreenContent(
     modifier: Modifier = Modifier,
-    uiState: TrackUiState,
-    viewModel: TrackViewModel,
+    uiState: WorksUiState,
+    viewModel: WorksViewModel,
     onRefresh: () -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit
 ) {

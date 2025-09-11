@@ -1,13 +1,13 @@
-package com.zelretch.aniiiiict.ui.track
+package com.zelretch.aniiiiict.ui.works
 
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.base.ViewModelContract
 
 /**
- * TrackViewModelの契約を定義するインターフェース
+ * WorksViewModelの契約を定義するインターフェース
  * テスト容易性向上のため、ViewModelの公開APIを定義
  */
-interface TrackViewModelContract : ViewModelContract<TrackUiState> {
+interface WorksViewModelContract : ViewModelContract<WorksUiState> {
     /**
      * エピソードを視聴済みとして記録する
      * @param program 対象の番組
