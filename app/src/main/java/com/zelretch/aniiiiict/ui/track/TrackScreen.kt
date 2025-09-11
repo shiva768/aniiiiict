@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,14 +45,14 @@ fun TrackScreen(
     viewModel: TrackViewModel,
     uiState: TrackUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    onNavigateToHistory: () -> Unit = {},
-    onRefresh: () -> Unit = {}
+    onRefresh: () -> Unit = {},
+    onMenuClick: () -> Unit
 ) {
     Scaffold(topBar = {
         TrackTopAppBar(
             isFilterVisible = uiState.isFilterVisible,
             onFilterClick = { viewModel.toggleFilterVisibility() },
-            onHistoryClick = onNavigateToHistory
+            onMenuClick = onMenuClick
         )
     }, snackbarHost = {
         TrackSnackbarHost(
@@ -74,13 +74,21 @@ fun TrackScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onHistoryClick: () -> Unit) {
+private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onMenuClick: () -> Unit) {
     TopAppBar(
         title = {
             Text(
                 text = "番組一覧",
                 style = MaterialTheme.typography.headlineSmall
             )
+        },
+        navigationIcon = {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "メニュー"
+                )
+            }
         },
         actions = {
             IconButton(onClick = onFilterClick) {
@@ -92,12 +100,6 @@ private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, 
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     }
-                )
-            }
-            IconButton(onClick = onHistoryClick) {
-                Icon(
-                    imageVector = Icons.Default.History,
-                    contentDescription = "履歴"
                 )
             }
         }
