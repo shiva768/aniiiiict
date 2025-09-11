@@ -5,14 +5,31 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
@@ -96,45 +113,106 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
+    object Track : Screen("track", "作品一覧", Icons.Default.List)
+    object History : Screen("history", "記録履歴", Icons.Default.History)
+    object Settings : Screen("settings", "設定", Icons.Default.Settings)
+}
+
 @Composable
 private fun AppNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val mainUiState by mainViewModel.uiState.collectAsState()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val items = listOf(Screen.Track, Screen.History, Screen.Settings)
+    val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    NavHost(navController = navController, startDestination = "auth") {
-        composable("auth") {
-            LaunchedEffect(mainUiState.isAuthenticated) {
-                if (mainUiState.isAuthenticated) {
-                    navController.navigate("track") { popUpTo("auth") { inclusive = true } }
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                items.forEach { item ->
+                    NavigationDrawerItem(
+                        icon = { Icon(item.icon, contentDescription = null) },
+                        label = { Text(item.title) },
+                        selected = item.route == selectedItem,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
                 }
             }
-            AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
         }
-        composable("track") {
-            val trackViewModel: TrackViewModel = hiltViewModel()
-            val trackUiState by trackViewModel.uiState.collectAsState()
-            TrackScreen(
-                viewModel = trackViewModel,
-                uiState = trackUiState,
-                onRecordEpisode = { id, workId, status -> trackViewModel.recordEpisode(id, workId, status) },
-                onNavigateToHistory = { navController.navigate("history") },
-                onRefresh = { trackViewModel.refresh() }
-            )
-        }
-        composable("history") {
-            val historyViewModel: HistoryViewModel = hiltViewModel()
-            val historyUiState by historyViewModel.uiState.collectAsState()
-            val actions = HistoryScreenActions(
-                onNavigateBack = { navController.navigateUp() },
-                onRetry = { historyViewModel.loadRecords() },
-                onDeleteRecord = { historyViewModel.deleteRecord(it) },
-                onRefresh = { historyViewModel.loadRecords() },
-                onLoadNextPage = { historyViewModel.loadNextPage() },
-                onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
-                onRecordClick = { historyViewModel.showRecordDetail(it) },
-                onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
-            )
-            HistoryScreen(uiState = historyUiState, actions = actions)
+    ) {
+        NavHost(navController = navController, startDestination = "auth") {
+            composable("auth") {
+                LaunchedEffect(mainUiState.isAuthenticated) {
+                    if (mainUiState.isAuthenticated) {
+                        navController.navigate("track") { popUpTo("auth") { inclusive = true } }
+                    }
+                }
+                AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
+            }
+            composable("track") {
+                val trackViewModel: TrackViewModel = hiltViewModel()
+                val trackUiState by trackViewModel.uiState.collectAsState()
+                TrackScreen(
+                    viewModel = trackViewModel,
+                    uiState = trackUiState,
+                    onRecordEpisode = { id, workId, status ->
+                        trackViewModel.recordEpisode(
+                            id,
+                            workId,
+                            status
+                        )
+                    },
+                    onRefresh = { trackViewModel.refresh() },
+                    onMenuClick = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }
+                )
+            }
+            composable("history") {
+                val historyViewModel: HistoryViewModel = hiltViewModel()
+                val historyUiState by historyViewModel.uiState.collectAsState()
+                val actions = HistoryScreenActions(
+                    onNavigateBack = { navController.navigateUp() },
+                    onRetry = { historyViewModel.loadRecords() },
+                    onDeleteRecord = { historyViewModel.deleteRecord(it) },
+                    onRefresh = { historyViewModel.loadRecords() },
+                    onLoadNextPage = { historyViewModel.loadNextPage() },
+                    onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
+                    onRecordClick = { historyViewModel.showRecordDetail(it) },
+                    onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
+                )
+                HistoryScreen(uiState = historyUiState, actions = actions)
+            }
+            composable("settings") {
+                val historyViewModel: HistoryViewModel = hiltViewModel()
+                val historyUiState by historyViewModel.uiState.collectAsState()
+                val actions = HistoryScreenActions(
+                    onNavigateBack = { navController.navigateUp() },
+                    onRetry = { historyViewModel.loadRecords() },
+                    onDeleteRecord = { historyViewModel.deleteRecord(it) },
+                    onRefresh = { historyViewModel.loadRecords() },
+                    onLoadNextPage = { historyViewModel.loadNextPage() },
+                    onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
+                    onRecordClick = { historyViewModel.showRecordDetail(it) },
+                    onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
+                )
+                HistoryScreen(uiState = historyUiState, actions = actions)
+            }
         }
     }
 }
