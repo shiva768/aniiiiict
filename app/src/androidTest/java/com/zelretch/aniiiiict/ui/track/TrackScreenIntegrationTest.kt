@@ -130,7 +130,7 @@ class TrackScreenIntegrationTest {
                 viewModel = viewModel,
                 uiState = initialState,
                 onRecordEpisode = { epId, wId, status -> viewModel.recordEpisode(epId, wId, status) },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -172,7 +172,7 @@ class TrackScreenIntegrationTest {
                 viewModel = viewModel,
                 uiState = initialState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -226,7 +226,7 @@ class TrackScreenIntegrationTest {
                 viewModel = viewModel,
                 uiState = initialState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }

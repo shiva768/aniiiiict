@@ -48,7 +48,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = initialState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -56,7 +56,7 @@ class TrackScreenUITest {
         // Assert
         composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("履歴").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
     }
 
     @Test
@@ -72,7 +72,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = errorState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -96,7 +96,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = initialState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -156,7 +156,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = stateWithPrograms,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -214,7 +214,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = stateWithPrograms,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -242,7 +242,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = finaleState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -271,7 +271,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = finaleState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -280,31 +280,6 @@ class TrackScreenUITest {
 
         // Assert
         verify { mockViewModel.confirmWatchedStatus() }
-    }
-
-    @Test
-    fun trackScreen_履歴ナビゲーション_コールバックが呼ばれる() {
-        // Arrange
-        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
-        val mockOnNavigateToHistory = mockk<() -> Unit>(relaxed = true)
-        val initialState = TrackUiState()
-        every { mockViewModel.uiState } returns MutableStateFlow(initialState)
-
-        // Act
-        composeTestRule.setContent {
-            TrackScreen(
-                viewModel = mockViewModel,
-                uiState = initialState,
-                onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = mockOnNavigateToHistory,
-                onRefresh = {}
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("履歴").performClick()
-
-        // Assert
-        verify { mockOnNavigateToHistory() }
     }
 
     @Test
@@ -323,7 +298,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = finaleState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -375,7 +350,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = state,
                 onRecordEpisode = onRecord,
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -402,7 +377,7 @@ class TrackScreenUITest {
                 viewModel = mockViewModel,
                 uiState = loadingState,
                 onRecordEpisode = { _, _, _ -> },
-                onNavigateToHistory = {},
+                onMenuClick = {},
                 onRefresh = {}
             )
         }
@@ -411,6 +386,6 @@ class TrackScreenUITest {
         // ローディング状態でもUIが適切に表示されることを確認
         composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("履歴").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
     }
 }
