@@ -7,7 +7,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.zelretch.aniiiiict.MainActivity
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
+import com.zelretch.aniiiiict.domain.filter.ProgramFilter
+import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -33,6 +36,18 @@ class AppNavigationTest {
     val mockAnnictRepository: AnnictRepository = mockk(relaxed = true) {
         coEvery { getRawProgramsData() } returns flowOf(emptyList())
     }
+
+    @BindValue
+    @JvmField
+    val mockMyAnimeListRepository: MyAnimeListRepository = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockProgramFilter: ProgramFilter = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockCustomTabsIntentFactory: CustomTabsIntentFactory = mockk(relaxed = true)
 
     @Test
     fun navigationDrawer_menuClick_opensDrawer() {
