@@ -69,7 +69,7 @@ class HistoryScreenUITest {
         // Assert
         composeTestRule.onNodeWithText("視聴履歴").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("戻る").assertIsDisplayed()
-        composeTestRule.onNodeWithText("作品名で検索").assertIsDisplayed()
+        composeTestRule.onNodeWithText("作品名・エピソード名で検索").assertIsDisplayed()
     }
 
     @Test
@@ -120,8 +120,8 @@ class HistoryScreenUITest {
 
         val sampleEpisode = Episode(
             id = "episode1",
-            title = "第1話　始まりの物語",
-            numberText = "1",
+            title = "始まりの物語",
+            numberText = "EP1",
             number = 1
         )
 
@@ -159,7 +159,7 @@ class HistoryScreenUITest {
 
         // Assert
         composeTestRule.onNodeWithText("テストアニメ").assertIsDisplayed()
-        composeTestRule.onNodeWithText("EP1 第1話　始まりの物語").assertIsDisplayed()
+        composeTestRule.onNodeWithText("EP1 始まりの物語").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("削除").assertIsDisplayed()
     }
 
@@ -219,7 +219,7 @@ class HistoryScreenUITest {
             )
         }
 
-        composeTestRule.onNodeWithText("作品名で検索").performTextInput("テスト")
+        composeTestRule.onNodeWithText("作品名・エピソード名で検索").performTextInput("テスト")
 
         // Assert
         verify { mockOnSearchQueryChange("テスト") }
