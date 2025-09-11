@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.ui.track
 
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
