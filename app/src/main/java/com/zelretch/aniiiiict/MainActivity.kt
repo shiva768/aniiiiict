@@ -130,7 +130,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 onDeleteRecord = { historyViewModel.deleteRecord(it) },
                 onRefresh = { historyViewModel.loadRecords() },
                 onLoadNextPage = { historyViewModel.loadNextPage() },
-                onSearchQueryChange = { historyViewModel.updateSearchQuery(it) }
+                onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
+                onRecordClick = { historyViewModel.showRecordDetail(it) },
+                onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
             )
             HistoryScreen(uiState = historyUiState, actions = actions)
         }

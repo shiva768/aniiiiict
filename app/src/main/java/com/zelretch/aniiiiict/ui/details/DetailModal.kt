@@ -108,21 +108,34 @@ private fun DetailModalDialogs(
     }
 
     if (state.isBulkRecording) {
-        AlertDialog(onDismissRequest = { }, title = { Text("エピソードを記録中...") }, text = {
-            Column {
-                Text("${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中")
-                LinearProgressIndicator(
-                    progress = {
-                        if (state.bulkRecordingTotal > 0) {
-                            state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat()
-                        } else {
-                            0f
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        AlertDialog(
+            onDismissRequest = { },
+            title = {
+                Text(
+                    text = "エピソードを記録中...",
+                    style = MaterialTheme.typography.headlineSmall
                 )
-            }
-        }, confirmButton = { })
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "${state.bulkRecordingProgress}/${state.bulkRecordingTotal}件のエピソードを記録中",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    LinearProgressIndicator(
+                        progress = {
+                            if (state.bulkRecordingTotal > 0) {
+                                state.bulkRecordingProgress.toFloat() / state.bulkRecordingTotal.toFloat()
+                            } else {
+                                0f
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                    )
+                }
+            },
+            confirmButton = { }
+        )
     }
 }
 
@@ -139,7 +152,7 @@ private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onS
         ) {
             Text(
                 text = "未視聴エピソード (${state.programs.size}件)",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
             IconButton(onClick = onDismiss) {
                 Icon(imageVector = Icons.Default.Close, contentDescription = "閉じる")

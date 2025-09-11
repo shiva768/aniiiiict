@@ -100,7 +100,9 @@ class HistoryScreenIntegrationTest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -148,7 +150,9 @@ class HistoryScreenIntegrationTest {
                     onDeleteRecord = { id -> viewModel.deleteRecord(id) },
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -227,7 +231,9 @@ class HistoryScreenIntegrationTest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = { viewModel.loadNextPage() },
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }

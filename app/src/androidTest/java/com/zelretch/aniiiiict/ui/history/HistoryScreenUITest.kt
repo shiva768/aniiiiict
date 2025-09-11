@@ -46,6 +46,8 @@ class HistoryScreenUITest {
         val mockOnRefresh = mockk<() -> Unit>(relaxed = true)
         val mockOnLoadNextPage = mockk<() -> Unit>(relaxed = true)
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
+        val mockOnRecordClick = mockk<(Record) -> Unit>(relaxed = true)
+        val mockOnDismissRecordDetail = mockk<() -> Unit>(relaxed = true)
 
         // Act
         composeTestRule.setContent {
@@ -57,7 +59,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = mockOnDeleteRecord,
                     onRefresh = mockOnRefresh,
                     onLoadNextPage = mockOnLoadNextPage,
-                    onSearchQueryChange = mockOnSearchQueryChange
+                    onSearchQueryChange = mockOnSearchQueryChange,
+                    onRecordClick = mockOnRecordClick,
+                    onDismissRecordDetail = mockOnDismissRecordDetail
                 )
             )
         }
@@ -88,7 +92,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -144,7 +150,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -173,7 +181,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -202,7 +212,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = mockOnSearchQueryChange
+                    onSearchQueryChange = mockOnSearchQueryChange,
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -230,7 +242,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -257,7 +271,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = mockOnSearchQueryChange
+                    onSearchQueryChange = mockOnSearchQueryChange,
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -313,7 +329,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = mockOnDeleteRecord,
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -347,7 +365,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -379,7 +399,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -411,7 +433,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = {},
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -442,7 +466,9 @@ class HistoryScreenUITest {
                     onDeleteRecord = {},
                     onRefresh = {},
                     onLoadNextPage = mockOnLoadNextPage,
-                    onSearchQueryChange = {}
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
                 )
             )
         }
@@ -451,5 +477,64 @@ class HistoryScreenUITest {
 
         // Assert
         verify { mockOnLoadNextPage() }
+    }
+
+    @Test
+    fun historyScreen_レコードカードクリック_詳細表示コールバックが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
+        val mockOnRecordClick = mockk<(Record) -> Unit>(relaxed = true)
+
+        val sampleWork = Work(
+            id = "work1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHED
+        )
+
+        val sampleEpisode = Episode(
+            id = "episode1",
+            title = "第1話",
+            numberText = "1",
+            number = 1
+        )
+
+        val sampleRecord = Record(
+            id = "record1",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = sampleEpisode,
+            work = sampleWork
+        )
+
+        val stateWithRecords = HistoryUiState(records = listOf(sampleRecord))
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithRecords)
+
+        // Act
+        composeTestRule.setContent {
+            HistoryScreen(
+                uiState = stateWithRecords,
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {},
+                    onRecordClick = mockOnRecordClick,
+                    onDismissRecordDetail = {}
+                )
+            )
+        }
+
+        // Click on the record title (part of the clickable card)
+        composeTestRule.onNodeWithText("テストアニメ").performClick()
+
+        // Assert
+        verify { mockOnRecordClick(sampleRecord) }
     }
 }

@@ -75,22 +75,33 @@ fun TrackScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onHistoryClick: () -> Unit) {
-    TopAppBar(title = { Text("番組一覧") }, actions = {
-        IconButton(onClick = onFilterClick) {
-            Icon(
-                imageVector = Icons.Default.FilterList,
-                contentDescription = "フィルター",
-                tint = if (isFilterVisible) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
+    TopAppBar(
+        title = {
+            Text(
+                text = "番組一覧",
+                style = MaterialTheme.typography.headlineSmall
             )
+        },
+        actions = {
+            IconButton(onClick = onFilterClick) {
+                Icon(
+                    imageVector = Icons.Default.FilterList,
+                    contentDescription = "フィルター",
+                    tint = if (isFilterVisible) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+            }
+            IconButton(onClick = onHistoryClick) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = "履歴"
+                )
+            }
         }
-        IconButton(onClick = onHistoryClick) {
-            Icon(imageVector = Icons.Default.History, contentDescription = "履歴")
-        }
-    })
+    )
 }
 
 @Composable
@@ -107,18 +118,39 @@ private fun TrackSnackbarHost(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Place "いいえ" first, then "はい" to avoid any layout quirks causing mis-clicks
-                TextButton(onClick = onDismissFinale) { Text("いいえ") }
-                TextButton(onClick = onConfirmFinale) { Text("はい") }
+                TextButton(onClick = onDismissFinale) {
+                    Text(
+                        text = "いいえ",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+                TextButton(onClick = onConfirmFinale) {
+                    Text(
+                        text = "はい",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }) {
-            Text("このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります。\n視聴済みにしますか？")
+            Text(
+                text = "このタイトルはエピソード${uiState.showFinaleConfirmationForEpisodeNumber}が最終話の可能性があります。\n視聴済みにしますか？",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     } else if (uiState.error != null) {
         Snackbar(modifier = Modifier.testTag("snackbar")) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(uiState.error)
+                Text(
+                    text = uiState.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onRefresh) { Text("再読み込み") }
+                TextButton(onClick = onRefresh) {
+                    Text(
+                        text = "再読み込み",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
             }
         }
     }
