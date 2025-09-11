@@ -10,8 +10,7 @@ class SearchRecordsUseCase @Inject constructor() {
         return records.filter { record ->
             val searchableFields = listOf(
                 record.work.title,
-                record.episode.title,
-                record.comment
+                record.episode.title
             )
 
             searchableFields.any { field ->

@@ -6,4 +6,6 @@ data class Episode(
     val numberText: String? = null,
     val title: String? = null,
     val viewerDidTrack: Boolean? = null
-)
+) {
+    val formattedNumber: String get() = numberText ?: "第${number}話"
+}
