@@ -132,13 +132,13 @@ private fun WorkTags(programWithWork: ProgramWithWork) {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        programWithWork.work.media?.let {
-            InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
-        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(vertical = 1.dp)
         ) {
+            programWithWork.work.media?.let {
+                InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
+            }
             programWithWork.work.seasonName?.let {
                 InfoTag(text = it.name, color = MaterialTheme.colorScheme.secondaryContainer)
             }
@@ -179,8 +179,9 @@ private fun EpisodeInfoRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             val episodeText = buildString {
-                append("Episode ")
-                append(programWithWork.firstProgram.episode.numberText ?: "?")
+                append(
+                    programWithWork.firstProgram.episode.formattedNumber
+                )
                 programWithWork.firstProgram.episode.title?.let {
                     append(" ")
                     append(it)

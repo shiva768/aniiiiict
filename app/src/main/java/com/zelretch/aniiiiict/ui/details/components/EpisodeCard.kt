@@ -60,7 +60,7 @@ private fun EpisodeInfo(program: Program) {
         verticalArrangement = Arrangement.spacedBy(VERTICAL_SPACING)
     ) {
         Text(
-            text = "第${program.episode.number}話",
+            text = program.episode.formattedNumber,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurface
         )

@@ -107,7 +107,11 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
             }
         )
     }) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             HistorySearchBar(uiState.searchQuery, actions.onSearchQueryChange)
             HistoryContent(uiState, listState, actions)
         }
@@ -156,10 +160,12 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
         placeholder = {
             Text(
-                text = "作品名で検索",
+                text = "作品名・エピソード名で検索",
                 style = MaterialTheme.typography.bodyMedium
             )
         },
@@ -201,7 +207,9 @@ private fun HistoryList(uiState: HistoryUiState, listState: LazyListState, actio
 @Composable
 private fun LoadMoreButton(isLoading: Boolean, onLoadNextPage: () -> Unit) {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(PADDING_LARGE),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(PADDING_LARGE),
         contentAlignment = Alignment.Center
     ) {
         if (isLoading) {
@@ -242,7 +250,9 @@ private fun HistoryEmptyState() {
 private fun HistoryErrorState(error: String?, onRetry: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize().padding(PADDING_LARGE)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(PADDING_LARGE)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
@@ -278,7 +288,9 @@ fun RecordItem(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Row(
-            modifier = Modifier.padding(20.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -291,7 +303,7 @@ fun RecordItem(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "EP${record.episode.numberText ?: "?"} ${record.episode.title ?: ""}",
+                    text = "${record.episode.formattedNumber} ${record.episode.title ?: ""}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
