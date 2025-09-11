@@ -9,18 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
-import com.zelretch.aniiiiict.ui.history.HistoryScreen
-import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
-import com.zelretch.aniiiiict.ui.history.HistoryViewModel
+import com.zelretch.aniiiiict.ui.main.MainScreen
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
-import com.zelretch.aniiiiict.ui.track.TrackScreen
-import com.zelretch.aniiiiict.ui.track.TrackViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -105,36 +100,13 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
         composable("auth") {
             LaunchedEffect(mainUiState.isAuthenticated) {
                 if (mainUiState.isAuthenticated) {
-                    navController.navigate("track") { popUpTo("auth") { inclusive = true } }
+                    navController.navigate("main") { popUpTo("auth") { inclusive = true } }
                 }
             }
             AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
         }
-        composable("track") {
-            val trackViewModel: TrackViewModel = hiltViewModel()
-            val trackUiState by trackViewModel.uiState.collectAsState()
-            TrackScreen(
-                viewModel = trackViewModel,
-                uiState = trackUiState,
-                onRecordEpisode = { id, workId, status -> trackViewModel.recordEpisode(id, workId, status) },
-                onNavigateToHistory = { navController.navigate("history") },
-                onRefresh = { trackViewModel.refresh() }
-            )
-        }
-        composable("history") {
-            val historyViewModel: HistoryViewModel = hiltViewModel()
-            val historyUiState by historyViewModel.uiState.collectAsState()
-            val actions = HistoryScreenActions(
-                onNavigateBack = { navController.navigateUp() },
-                onRetry = { historyViewModel.loadRecords() },
-                onDeleteRecord = { historyViewModel.deleteRecord(it) },
-                onRefresh = { historyViewModel.loadRecords() },
-                onLoadNextPage = { historyViewModel.loadNextPage() },
-                onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
-                onRecordClick = { historyViewModel.showRecordDetail(it) },
-                onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
-            )
-            HistoryScreen(uiState = historyUiState, actions = actions)
+        composable("main") {
+            MainScreen()
         }
     }
 }
