@@ -57,7 +57,7 @@ class AppNavigationTest {
             try {
                 composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
                 true
-            } catch (e: AssertionError) {
+            } catch (_: AssertionError) {
                 false
             }
         }

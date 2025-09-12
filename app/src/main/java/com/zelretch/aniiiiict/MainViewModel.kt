@@ -32,7 +32,7 @@ data class MainUiState(
 class MainViewModel @Inject constructor(
     private val annictAuthUseCase: AnnictAuthUseCase,
     private val customTabsIntentFactory: CustomTabsIntentFactory,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : BaseViewModel(), MainViewModelContract {
 
     companion object {

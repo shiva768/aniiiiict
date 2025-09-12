@@ -46,7 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.zelretch.aniiiiict.data.model.Record
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -54,15 +53,9 @@ import java.time.format.DateTimeFormatter
 private const val LOAD_MORE_THRESHOLD = 3
 private val PADDING_HORIZONTAL = 16.dp
 private val PADDING_VERTICAL = 8.dp
-private val SPACER_HEIGHT = 8.dp
 private const val TEXT_ALPHA = 0.7f
 private val PADDING_LARGE = 16.dp
-private val CARD_CORNER_RADIUS = 8.dp
 private const val COLUMN_WEIGHT = 1f
-private val FONT_SIZE_LARGE = 16.sp
-private val FONT_SIZE_MEDIUM = 14.sp
-private val FONT_SIZE_SMALL = 12.sp
-private val SPACER_HEIGHT_SMALL = 4.dp
 
 data class HistoryScreenActions(
     val onNavigateBack: () -> Unit,

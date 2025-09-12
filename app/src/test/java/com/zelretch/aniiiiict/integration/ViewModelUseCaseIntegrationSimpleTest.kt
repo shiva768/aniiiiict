@@ -211,11 +211,11 @@ class ViewModelUseCaseIntegrationSimpleTest : BehaviorSpec({
                         val step2Success = false
                         val step2Error = "Step 2でエラーが発生"
 
-                        if (step2Success) {
-                            vmState = vmState.copy(step2Complete = true)
+                        vmState = if (step2Success) {
+                            vmState.copy(step2Complete = true)
                             // Step 3は実行されない
                         } else {
-                            vmState = vmState.copy(
+                            vmState.copy(
                                 isLoading = false,
                                 error = step2Error
                             )
@@ -319,14 +319,14 @@ class ViewModelUseCaseIntegrationSimpleTest : BehaviorSpec({
                         // UseCase 実行をシミュレート
                         val useCaseSuccess = retryState.attemptCount >= 2 // 2回目で成功
 
-                        if (useCaseSuccess) {
-                            retryState = retryState.copy(
+                        retryState = if (useCaseSuccess) {
+                            retryState.copy(
                                 isRetrying = false,
                                 lastError = null,
                                 isSuccess = true
                             )
                         } else {
-                            retryState = retryState.copy(
+                            retryState.copy(
                                 isRetrying = false,
                                 lastError = "試行 ${retryState.attemptCount} 失敗"
                             )
@@ -366,14 +366,14 @@ class ViewModelUseCaseIntegrationSimpleTest : BehaviorSpec({
                         // UseCase は常に失敗
                         val useCaseSuccess = false
 
-                        if (useCaseSuccess) {
-                            retryState = retryState.copy(
+                        retryState = if (useCaseSuccess) {
+                            retryState.copy(
                                 isRetrying = false,
                                 lastError = null,
                                 isSuccess = true
                             )
                         } else {
-                            retryState = retryState.copy(
+                            retryState.copy(
                                 isRetrying = false,
                                 lastError = "試行 ${retryState.attemptCount} 失敗"
                             )

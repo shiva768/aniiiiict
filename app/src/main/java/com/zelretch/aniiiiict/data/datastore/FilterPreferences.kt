@@ -22,7 +22,7 @@ private val Context.filterDataStore: DataStore<Preferences> by preferencesDataSt
 )
 
 @Singleton
-class FilterPreferences @Inject constructor(@ApplicationContext private val context: Context) {
+class FilterPreferences @Inject constructor(@param:ApplicationContext private val context: Context) {
     private val dataStore = context.filterDataStore
 
     private object PreferencesKeys {
