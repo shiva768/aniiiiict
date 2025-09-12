@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
@@ -114,7 +115,7 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Track : Screen("track", "作品一覧", Icons.Default.List)
+    object Track : Screen("track", "作品一覧", Icons.AutoMirrored.Filled.List)
     object History : Screen("history", "記録履歴", Icons.Default.History)
     object Settings : Screen("settings", "設定", Icons.Default.Settings)
 }
@@ -199,19 +200,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 HistoryScreen(uiState = historyUiState, actions = actions)
             }
             composable("settings") {
-                val historyViewModel: HistoryViewModel = hiltViewModel()
-                val historyUiState by historyViewModel.uiState.collectAsState()
-                val actions = HistoryScreenActions(
-                    onNavigateBack = { navController.navigateUp() },
-                    onRetry = { historyViewModel.loadRecords() },
-                    onDeleteRecord = { historyViewModel.deleteRecord(it) },
-                    onRefresh = { historyViewModel.loadRecords() },
-                    onLoadNextPage = { historyViewModel.loadNextPage() },
-                    onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
-                    onRecordClick = { historyViewModel.showRecordDetail(it) },
-                    onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
-                )
-                HistoryScreen(uiState = historyUiState, actions = actions)
+                // TODO まだ
             }
         }
     }

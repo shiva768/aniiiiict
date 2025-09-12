@@ -14,7 +14,7 @@ class MyAnimeListRepositoryImpl @Inject constructor(
 ) : MyAnimeListRepository {
 
     companion object {
-        private val CLIENT_ID = BuildConfig.MAL_CLIENT_ID
+        private const val CLIENT_ID = BuildConfig.MAL_CLIENT_ID
     }
 
     override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = runCatching {

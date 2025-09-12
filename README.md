@@ -26,38 +26,38 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 
 1. リポジトリをクローン
 
-```bash
-git clone https://github.com/your-username/aniiiiict.git
-cd aniiiiict
-```
+    ```bash
+    git clone https://github.com/your-username/aniiiiict.git
+    cd aniiiiict
+    ```
 
 2. Annictの開発者アカウントを作成
 
-- [Annict](https://annict.com)にアクセス
-- アカウントを作成（まだの場合）
-- [開発者ページ](https://annict.com/oauth/applications)にアクセス
-- 「新しいアプリケーション」をクリック
-- 以下の情報を入力：
-    - アプリケーション名：Aniiiiict
-    - コールバックURL：`aniiiiict://oauth/callback`
-    - スコープ：`read write`
+   - [Annict](https://annict.com)にアクセス
+   - アカウントを作成（まだの場合）
+   - [開発者ページ](https://annict.com/oauth/applications)にアクセス
+   - 「新しいアプリケーション」をクリック
+   - 以下の情報を入力：
+       - アプリケーション名：Aniiiiict
+       - コールバックURL：`aniiiiict://oauth/callback`
+       - スコープ：`read write`
 
 3. 認証情報の設定
 
-- 環境変数にAnnict API認証情報を設定：
+   - 環境変数にAnnict API認証情報を設定：
 
-```bash
-export ANNICT_CLIENT_ID=your_client_id_here
-export ANNICT_CLIENT_SECRET=your_client_secret_here
-```
+    ```bash
+    export ANNICT_CLIENT_ID=your_client_id_here
+    export ANNICT_CLIENT_SECRET=your_client_secret_here
+    ```
 
-または、IDEの実行設定で環境変数を設定してください。
+    または、IDEの実行設定で環境変数を設定してください。
 
 4. ビルドと実行
 
-- Android Studioでプロジェクトを開く
-- Gradleの同期を実行
-- アプリをビルドして実行
+   - Android Studioでプロジェクトを開く
+   - Gradleの同期を実行
+   - アプリをビルドして実行
 
 ## 技術スタック
 
