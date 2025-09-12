@@ -220,7 +220,7 @@ class BeforeAfterComparisonTest : BehaviorSpec({
                 every { viewModelContract.uiState } returns MutableStateFlow(state)
 
                 // このテスト自体が改善後のアプローチの簡潔さを証明
-                state.isAuthenticated shouldBe false
+                state.isAuthenticated shouldBe null
             }
         }
     }

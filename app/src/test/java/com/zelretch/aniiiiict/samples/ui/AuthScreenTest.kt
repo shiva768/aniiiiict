@@ -32,7 +32,7 @@ class AuthScreenTest : BehaviorSpec({
 
                 // 契約経由で状態取得
                 val uiState = viewModelContract.uiState.value
-                uiState.isAuthenticated shouldBe false
+                uiState.isAuthenticated shouldBe null
                 uiState.isAuthenticating shouldBe false
                 uiState.isLoading shouldBe false
                 uiState.error shouldBe null
@@ -50,7 +50,7 @@ class AuthScreenTest : BehaviorSpec({
                 // 認証中状態の確認
                 val currentState = viewModelContract.uiState.value
                 currentState.isAuthenticating shouldBe true
-                currentState.isAuthenticated shouldBe false
+                currentState.isAuthenticated shouldBe null
 
                 // この状態では以下が期待される:
                 // - ログインボタンが無効化される
@@ -174,7 +174,7 @@ class AuthScreenTest : BehaviorSpec({
                 // Step 1: 初期状態
                 val initialState = MainUiState()
                 every { viewModelContract.uiState } returns MutableStateFlow(initialState)
-                viewModelContract.uiState.value.isAuthenticated shouldBe false
+                viewModelContract.uiState.value.isAuthenticated shouldBe null
 
                 // Step 2: 認証開始
                 val authenticatingState = MainUiState(isAuthenticating = true)

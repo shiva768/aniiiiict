@@ -25,7 +25,7 @@ data class MainUiState(
     override val isLoading: Boolean = false,
     override val error: String? = null,
     val isAuthenticating: Boolean = false,
-    val isAuthenticated: Boolean = false
+    val isAuthenticated: Boolean? = null
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel
@@ -70,7 +70,7 @@ class MainViewModel @Inject constructor(
                 internalUiState.update { it.copy(isAuthenticated = isAuthenticated) }
 
                 // 認証されていない場合は認証を開始
-                if (!isAuthenticated) {
+                if (isAuthenticated == false) {
                     Timber.i("認証されていないため、認証を開始します")
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
@@ -79,7 +79,8 @@ class MainViewModel @Inject constructor(
                 internalUiState.update {
                     it.copy(
                         error = msg,
-                        isLoading = false
+                        isLoading = false,
+                        isAuthenticated = false
                     )
                 }
             }
@@ -152,7 +153,8 @@ class MainViewModel @Inject constructor(
                         it.copy(
                             error = "認証に失敗しました。再度お試しください。",
                             isLoading = false,
-                            isAuthenticating = false
+                            isAuthenticating = false,
+                            isAuthenticated = false
                         )
                     }
                 }
@@ -163,7 +165,8 @@ class MainViewModel @Inject constructor(
                     it.copy(
                         error = msg,
                         isLoading = false,
-                        isAuthenticating = false
+                        isAuthenticating = false,
+                        isAuthenticated = false
                     )
                 }
             }
