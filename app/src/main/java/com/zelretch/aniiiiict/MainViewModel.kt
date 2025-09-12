@@ -25,7 +25,7 @@ data class MainUiState(
     override val isLoading: Boolean = false,
     override val error: String? = null,
     val isAuthenticating: Boolean = false,
-    val isAuthenticated: Boolean = false
+    val isAuthenticated: Boolean? = null
 ) : BaseUiState(isLoading, error)
 
 @HiltViewModel

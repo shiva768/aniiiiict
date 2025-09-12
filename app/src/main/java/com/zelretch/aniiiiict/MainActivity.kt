@@ -5,10 +5,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
@@ -101,13 +106,23 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val mainUiState by mainViewModel.uiState.collectAsState()
 
-    NavHost(navController = navController, startDestination = "auth") {
-        composable("auth") {
+    NavHost(navController = navController, startDestination = "splash") {
+        composable("splash") {
+            // TODO: Replace with a proper splash screen
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+
             LaunchedEffect(mainUiState.isAuthenticated) {
-                if (mainUiState.isAuthenticated) {
-                    navController.navigate("track") { popUpTo("auth") { inclusive = true } }
+                if (mainUiState.isAuthenticated != null) {
+                    val destination = if (mainUiState.isAuthenticated == true) "track" else "auth"
+                    navController.navigate(destination) {
+                        popUpTo("splash") { inclusive = true }
+                    }
                 }
             }
+        }
+        composable("auth") {
             AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
         }
         composable("track") {

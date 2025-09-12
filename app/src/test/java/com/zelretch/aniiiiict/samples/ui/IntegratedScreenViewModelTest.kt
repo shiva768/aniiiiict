@@ -40,7 +40,7 @@ class IntegratedScreenViewModelTest : BehaviorSpec({
                 }
 
                 // Step 1: 初期状態の確認
-                currentState.isAuthenticated shouldBe false
+                currentState.isAuthenticated shouldBe null
                 currentState.isAuthenticating shouldBe false
 
                 // Step 2: 認証開始
@@ -140,7 +140,7 @@ class IntegratedScreenViewModelTest : BehaviorSpec({
                 every { mainContract.uiState } returns MutableStateFlow(mainState)
 
                 // 認証状態に基づいた分岐ロジックのテスト
-                if (mainState.isAuthenticated) {
+                if (mainState.isAuthenticated == true) {
                     // 認証済みの場合の処理
                     mainState.isAuthenticated shouldBe true
                 } else {
