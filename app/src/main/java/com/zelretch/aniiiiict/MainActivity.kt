@@ -171,12 +171,20 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
         LaunchedEffect(mainUiState.isAuthenticated, mainUiState.isLoading) {
             val currentRoute = navController.currentDestination?.route
             when {
-                !mainUiState.isLoading && mainUiState.isAuthenticated && currentRoute != "track" -> {
+                !mainUiState.isLoading &&
+                    mainUiState.isAuthenticated &&
+                    (
+                        currentRoute == "auth" ||
+                            currentRoute == "loading"
+                        ) -> {
                     navController.navigate("track") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
-                !mainUiState.isLoading && !mainUiState.isAuthenticated && currentRoute != "auth" -> {
+                !mainUiState.isLoading &&
+                    !mainUiState.isAuthenticated &&
+                    currentRoute != "auth" &&
+                    currentRoute != "loading" -> {
                     navController.navigate("auth") {
                         popUpTo(0) { inclusive = true }
                     }
