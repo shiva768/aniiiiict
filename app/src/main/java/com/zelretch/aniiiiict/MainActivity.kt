@@ -138,7 +138,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     // Determine initial destination based on authentication state
     val startDestination = when {
         mainUiState.isLoading -> "loading"
-        mainUiState.isAuthenticated -> "history"
+        mainUiState.isAuthenticated -> "track"
         else -> "auth"
     }
 
@@ -171,12 +171,20 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
         LaunchedEffect(mainUiState.isAuthenticated, mainUiState.isLoading) {
             val currentRoute = navController.currentDestination?.route
             when {
-                !mainUiState.isLoading && mainUiState.isAuthenticated && currentRoute != "history" -> {
-                    navController.navigate("history") {
+                !mainUiState.isLoading &&
+                    mainUiState.isAuthenticated &&
+                    (
+                        currentRoute == "auth" ||
+                            currentRoute == "loading"
+                    ) -> {
+                    navController.navigate("track") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
-                !mainUiState.isLoading && !mainUiState.isAuthenticated && currentRoute != "auth" -> {
+                !mainUiState.isLoading &&
+                    !mainUiState.isAuthenticated &&
+                    currentRoute != "auth" &&
+                    currentRoute != "loading" -> {
                     navController.navigate("auth") {
                         popUpTo(0) { inclusive = true }
                     }
