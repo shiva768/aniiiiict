@@ -50,6 +50,16 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.uiState.value.isAuthenticated shouldBe false
                 viewModel.uiState.value.isAuthenticating shouldBe false
                 viewModel.uiState.value.error shouldBe null
+                viewModel.uiState.value.isLoading shouldBe false
+            }
+
+            then("ViewModelの初期化時に認証状態がチェックされる") {
+                coEvery { authUseCase.isAuthenticated() } returns true
+                val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
+                testDispatcher.scheduler.advanceUntilIdle()
+                newViewModel.uiState.value.isAuthenticated shouldBe true
+                newViewModel.uiState.value.isLoading shouldBe false
+                coVerify { authUseCase.isAuthenticated() }
             }
         }
 
@@ -108,6 +118,16 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.checkAuthentication()
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe false
+                coVerify { authUseCase.isAuthenticated() }
+            }
+
+            then("認証状態確認中はローディング状態になることを確認") {
+                coEvery { authUseCase.isAuthenticated() } returns true
+                viewModel.checkAuthentication()
+                testDispatcher.scheduler.advanceUntilIdle()
+                // After completion, loading should be false and authenticated should be true
+                viewModel.uiState.value.isLoading shouldBe false
+                viewModel.uiState.value.isAuthenticated shouldBe true
                 coVerify { authUseCase.isAuthenticated() }
             }
         }
