@@ -66,15 +66,15 @@ class MainViewModel @Inject constructor(
             try {
                 // 認証状態をチェック中はローディング状態にする
                 internalUiState.update { it.copy(isLoading = true) }
-                
+
                 val isAuthenticated = annictAuthUseCase.isAuthenticated()
 
                 // UI状態を更新
-                internalUiState.update { 
+                internalUiState.update {
                     it.copy(
                         isAuthenticated = isAuthenticated,
                         isLoading = false
-                    ) 
+                    )
                 }
 
                 // 認証されていない場合は認証を開始

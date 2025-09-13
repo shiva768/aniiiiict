@@ -156,7 +156,10 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     ) {
         // Navigate to appropriate screen after authentication check completes
         LaunchedEffect(mainUiState.isAuthenticated, mainUiState.isLoading) {
-            if (!mainUiState.isLoading && mainUiState.isAuthenticated && navController.currentDestination?.route == "auth") {
+            if (!mainUiState.isLoading &&
+                mainUiState.isAuthenticated &&
+                navController.currentDestination?.route == "auth"
+            ) {
                 navController.navigate("track") { popUpTo("auth") { inclusive = true } }
             }
         }
