@@ -5,12 +5,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
@@ -23,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -129,6 +135,13 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val items = listOf(Screen.Track, Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
+    // Determine initial destination based on authentication state
+    val startDestination = when {
+        mainUiState.isLoading -> "loading"
+        mainUiState.isAuthenticated -> "track"
+        else -> "auth"
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -154,13 +167,28 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             }
         }
     ) {
-        NavHost(navController = navController, startDestination = "auth") {
-            composable("auth") {
-                LaunchedEffect(mainUiState.isAuthenticated) {
-                    if (mainUiState.isAuthenticated) {
-                        navController.navigate("track") { popUpTo("auth") { inclusive = true } }
+        // Navigate to appropriate screen when authentication state changes
+        LaunchedEffect(mainUiState.isAuthenticated, mainUiState.isLoading) {
+            val currentRoute = navController.currentDestination?.route
+            when {
+                !mainUiState.isLoading && mainUiState.isAuthenticated && currentRoute != "track" -> {
+                    navController.navigate("track") {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
+                !mainUiState.isLoading && !mainUiState.isAuthenticated && currentRoute != "auth" -> {
+                    navController.navigate("auth") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+
+        NavHost(navController = navController, startDestination = startDestination) {
+            composable("loading") {
+                LoadingScreen()
+            }
+            composable("auth") {
                 AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
             }
             composable("track") {
@@ -202,6 +230,21 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             composable("settings") {
                 // TODO まだ
             }
+        }
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator()
         }
     }
 }
