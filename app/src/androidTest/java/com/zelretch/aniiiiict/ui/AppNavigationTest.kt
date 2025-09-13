@@ -52,10 +52,10 @@ class AppNavigationTest {
 
     @Test
     fun navigationDrawer_menuClick_opensDrawer() {
-        // Wait for the app to navigate to the track screen
+        // Wait for the app to navigate to the history screen
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
-                composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
+                composeTestRule.onNodeWithText("視聴履歴").assertIsDisplayed()
                 true
             } catch (_: AssertionError) {
                 false
