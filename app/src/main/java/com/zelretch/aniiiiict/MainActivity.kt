@@ -176,7 +176,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                     (
                         currentRoute == "auth" ||
                             currentRoute == "loading"
-                    ) -> {
+                        ) -> {
                     navController.navigate("track") {
                         popUpTo(0) { inclusive = true }
                     }
