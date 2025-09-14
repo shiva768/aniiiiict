@@ -135,12 +135,8 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val items = listOf(Screen.Track, Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    // Determine initial destination based on authentication state
-    val startDestination = when {
-        mainUiState.isLoading -> "loading"
-        mainUiState.isAuthenticated -> "track"
-        else -> "auth"
-    }
+    // Always start with loading screen and let LaunchedEffect handle navigation
+    val startDestination = "loading"
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -175,21 +171,17 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             if (mainUiState.isAuthenticating) return@LaunchedEffect
 
             when {
+                // When authentication completes successfully, navigate to track
                 !mainUiState.isLoading &&
-                    mainUiState.isAuthenticated &&
-                    (
-                        currentRoute == "auth" ||
-                            currentRoute == "loading"
-                        ) -> {
+                    mainUiState.isAuthenticated -> {
                     navController.navigate("track") {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+                // When not authenticated and not loading, navigate to auth
                 !mainUiState.isLoading &&
                     !mainUiState.isAuthenticated &&
-                    !mainUiState.isAuthenticating &&
-                    currentRoute != "auth" &&
-                    currentRoute != "loading" -> {
+                    !mainUiState.isAuthenticating -> {
                     navController.navigate("auth") {
                         popUpTo(0) { inclusive = true }
                     }
