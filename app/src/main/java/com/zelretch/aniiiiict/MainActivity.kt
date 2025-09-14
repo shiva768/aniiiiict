@@ -168,8 +168,12 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
         }
     ) {
         // Navigate to appropriate screen when authentication state changes
-        LaunchedEffect(mainUiState.isAuthenticated, mainUiState.isLoading) {
+        LaunchedEffect(mainUiState.isAuthenticated, mainUiState.isLoading, mainUiState.isAuthenticating) {
             val currentRoute = navController.currentDestination?.route
+
+            // Don't navigate while authentication is in progress
+            if (mainUiState.isAuthenticating) return@LaunchedEffect
+
             when {
                 !mainUiState.isLoading &&
                     mainUiState.isAuthenticated &&
@@ -183,6 +187,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 }
                 !mainUiState.isLoading &&
                     !mainUiState.isAuthenticated &&
+                    !mainUiState.isAuthenticating &&
                     currentRoute != "auth" &&
                     currentRoute != "loading" -> {
                     navController.navigate("auth") {
