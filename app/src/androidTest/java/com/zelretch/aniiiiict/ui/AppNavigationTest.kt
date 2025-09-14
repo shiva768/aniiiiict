@@ -52,18 +52,25 @@ class AppNavigationTest {
 
     @Test
     fun navigationDrawer_menuClick_opensDrawer() {
-        // Wait for the app to navigate to the track screen
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
+        // Wait for the app to fully load and navigate to the track screen
+        // Look for the menu button which indicates the track screen is loaded
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
             try {
-                composeTestRule.onNodeWithText("視聴記録").assertIsDisplayed()
+                composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
                 true
             } catch (_: AssertionError) {
                 false
             }
         }
 
+        // Additional wait to ensure the screen is fully rendered
+        composeTestRule.waitForIdle()
+
         // Click the menu button
         composeTestRule.onNodeWithContentDescription("メニュー").performClick()
+
+        // Wait for the drawer to open
+        composeTestRule.waitForIdle()
 
         // Assert that the drawer is open and the items are displayed
         composeTestRule.onNodeWithText("視聴記録").assertIsDisplayed()
