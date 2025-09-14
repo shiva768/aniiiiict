@@ -179,7 +179,14 @@ class AuthScreenIntegrationTest {
         val context: Context = ApplicationProvider.getApplicationContext()
         MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
 
-        // Assert - 初期化時に認証状態確認が実行される
-        coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
+        // Assert - 初期化時に認証状態確認が実行される（コルーチンの完了を待つ）
+        testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
+            try {
+                coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
     }
 }
