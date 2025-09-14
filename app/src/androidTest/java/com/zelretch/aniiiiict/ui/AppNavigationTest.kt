@@ -55,7 +55,7 @@ class AppNavigationTest {
         // Wait for the app to navigate to the track screen
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
-                composeTestRule.onNodeWithText("番組一覧").assertIsDisplayed()
+                composeTestRule.onNodeWithText("作品管理").assertIsDisplayed()
                 true
             } catch (_: AssertionError) {
                 false
@@ -66,7 +66,7 @@ class AppNavigationTest {
         composeTestRule.onNodeWithContentDescription("メニュー").performClick()
 
         // Assert that the drawer is open and the items are displayed
-        composeTestRule.onNodeWithText("作品一覧").assertIsDisplayed()
+        composeTestRule.onNodeWithText("作品管理").assertIsDisplayed()
         composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
         composeTestRule.onNodeWithText("設定").assertIsDisplayed()
     }

@@ -121,7 +121,7 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Track : Screen("track", "作品一覧", Icons.AutoMirrored.Filled.List)
+    object Track : Screen("track", "作品管理", Icons.AutoMirrored.Filled.List)
     object History : Screen("history", "記録履歴", Icons.Default.History)
     object Settings : Screen("settings", "設定", Icons.Default.Settings)
 }
