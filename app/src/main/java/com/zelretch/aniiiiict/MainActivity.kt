@@ -132,7 +132,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val mainUiState by mainViewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val items = listOf(Screen.Track, Screen.History, Screen.Settings)
+    val items = listOf(Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
     // Determine initial destination based on authentication state
