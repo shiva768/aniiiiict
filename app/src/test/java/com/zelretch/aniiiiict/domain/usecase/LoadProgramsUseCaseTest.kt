@@ -15,7 +15,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 
-class LoadProgramsUseCaseTest : BehaviorSpec({
+class プログラム読み込みユースケーステスト : BehaviorSpec({
     // コンパニオンオブジェクトからヘルパーメソッドを参照
     val helper = TestHelper
     val repository = mockk<AnnictRepository>()

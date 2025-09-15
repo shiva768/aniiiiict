@@ -7,7 +7,7 @@ import com.zelretch.aniiiiict.domain.filter.createProgramWithWork
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 
-class FilterProgramsUseCaseTest : BehaviorSpec({
+class プログラムフィルターユースケーステスト : BehaviorSpec({
     val filterProgramsUseCase = FilterProgramsUseCase(ProgramFilter())
 
     given("複数のProgramWithWorkがあるとき") {

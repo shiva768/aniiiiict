@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 
-class JudgeFinaleUseCaseTest : BehaviorSpec({
+class 最終話判定ユースケーステスト : BehaviorSpec({
 
     val myAnimeListRepository = mockk<MyAnimeListRepository>()
     val judgeFinaleUseCase = JudgeFinaleUseCase(myAnimeListRepository)

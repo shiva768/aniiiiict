@@ -8,7 +8,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 
-class UpdateViewStateUseCaseTest : BehaviorSpec({
+class ビュー状態更新ユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val useCase = UpdateViewStateUseCase(repository)
 

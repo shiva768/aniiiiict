@@ -30,7 +30,7 @@ import java.time.LocalDateTime
  * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class TrackScreenUITest {
+class トラック画面UIテスト {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()

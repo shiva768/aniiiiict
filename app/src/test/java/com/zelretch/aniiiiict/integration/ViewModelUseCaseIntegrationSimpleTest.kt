@@ -19,7 +19,7 @@ import kotlinx.coroutines.test.setMain
  * - データフローの妥当性
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ViewModelUseCaseIntegrationSimpleTest : BehaviorSpec({
+class ビューモデルユースケース統合シンプルテスト : BehaviorSpec({
 
     val dispatcher = UnconfinedTestDispatcher()
 

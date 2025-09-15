@@ -25,7 +25,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
-class AnnictRepositoryImplTest : BehaviorSpec({
+class アニクトリポジトリ実装テスト : BehaviorSpec({
 
     val tokenManager = mockk<TokenManager>()
     val authManager = mockk<AnnictAuthManager>()

@@ -8,7 +8,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 
-class WatchEpisodeUseCaseTest : BehaviorSpec({
+class エピソード視聴ユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
     val useCase = WatchEpisodeUseCase(repository, updateViewStateUseCase)

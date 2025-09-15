@@ -8,7 +8,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.time.ZonedDateTime
 
-class SearchRecordsUseCaseTest : BehaviorSpec({
+class レコード検索ユースケーステスト : BehaviorSpec({
     val useCase = SearchRecordsUseCase()
 
     given("複数のRecordがあるとき") {

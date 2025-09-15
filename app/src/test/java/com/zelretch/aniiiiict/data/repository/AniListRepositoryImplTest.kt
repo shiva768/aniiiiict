@@ -13,7 +13,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
 
-class AniListRepositoryImplTest : BehaviorSpec({
+class アニリストリポジトリ実装テスト : BehaviorSpec({
 
     val mockApolloClient = mockk<AniListApolloClient>()
     val repository = AniListRepositoryImpl(mockApolloClient)

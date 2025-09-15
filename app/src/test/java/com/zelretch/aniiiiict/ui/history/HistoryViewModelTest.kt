@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-open class HistoryViewModelTest : BehaviorSpec({
+open class 履歴ビューモデルテスト : BehaviorSpec({
     val loadRecordsUseCase = mockk<LoadRecordsUseCase>()
     val searchRecordsUseCase = mockk<SearchRecordsUseCase>()
     val deleteRecordUseCase = mockk<DeleteRecordUseCase>()

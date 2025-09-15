@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.io.IOException
 
-class ErrorHandlerTest : BehaviorSpec({
+class エラーハンドラーテスト : BehaviorSpec({
 
     given("エラーハンドラー") {
 

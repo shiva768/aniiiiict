@@ -7,7 +7,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 
-class DeleteRecordUseCaseTest : BehaviorSpec({
+class レコード削除ユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val useCase = DeleteRecordUseCase(repository)
 

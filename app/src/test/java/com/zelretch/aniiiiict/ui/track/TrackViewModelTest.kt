@@ -28,7 +28,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackViewModelTest : BehaviorSpec({
+class トラックビューモデルテスト : BehaviorSpec({
     val dispatcher = UnconfinedTestDispatcher()
     val filterStateFlow = MutableStateFlow(FilterState())
     val filterPreferences = mockk<FilterPreferences> {

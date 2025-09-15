@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.setMain
  * BaseViewModelが提供する共通機能の品質を保証する
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class BaseViewModelTest : BehaviorSpec({
+class ベースビューモデルテスト : BehaviorSpec({
 
     lateinit var testDispatcher: TestDispatcher
 

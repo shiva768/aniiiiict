@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.setMain
  * - 状態遷移の妥当性
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class HistoryViewModelAdditionalTest : BehaviorSpec({
+class 履歴ビューモデル追加テスト : BehaviorSpec({
 
     val dispatcher = UnconfinedTestDispatcher()
 

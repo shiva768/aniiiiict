@@ -28,7 +28,7 @@ import java.time.ZonedDateTime
  * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class HistoryScreenUITest {
+class 履歴画面UIテスト {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()

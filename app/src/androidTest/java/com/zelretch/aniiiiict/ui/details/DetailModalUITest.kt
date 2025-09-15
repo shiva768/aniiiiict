@@ -29,7 +29,7 @@ import java.time.LocalDateTime
  * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class DetailModalUITest {
+class 詳細モーダルUIテスト {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()

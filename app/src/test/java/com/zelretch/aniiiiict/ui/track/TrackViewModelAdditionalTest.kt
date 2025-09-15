@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.setMain
  * - 初期状態の検証
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackViewModelAdditionalTest : BehaviorSpec({
+class トラックビューモデル追加テスト : BehaviorSpec({
 
     val dispatcher = UnconfinedTestDispatcher()
 

@@ -43,7 +43,7 @@ import org.junit.runners.model.Statement
  * }
  * ```
  */
-class HiltComposeTestRule(testInstance: Any) : TestRule {
+class ヒルトコンポーズテストルール(testInstance: Any) : TestRule {
 
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
     private val hiltRule = HiltAndroidRule(testInstance)

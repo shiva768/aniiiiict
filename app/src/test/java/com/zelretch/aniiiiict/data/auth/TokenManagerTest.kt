@@ -8,7 +8,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import timber.log.Timber
 
-class TokenManagerTest : BehaviorSpec({
+class トークンマネージャーテスト : BehaviorSpec({
     lateinit var prefs: SharedPreferences
     lateinit var tokenManager: TokenManager
 

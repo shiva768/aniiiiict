@@ -12,7 +12,7 @@ import io.mockk.mockk
 /**
  * Integration test to verify the MyAnimeList finale judgment works end-to-end
  */
-class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
+class マイアニメリスト最終話判定統合テスト : BehaviorSpec({
 
     given("MyAnimeList finale judgment integration") {
         val repository = mockk<MyAnimeListRepository>()

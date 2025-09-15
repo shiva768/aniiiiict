@@ -45,7 +45,7 @@ import javax.inject.Inject
  */
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
-class TrackScreenIntegrationTest {
+class トラック画面統合テスト {
 
     @get:Rule
     val testRule = HiltComposeTestRule(this)

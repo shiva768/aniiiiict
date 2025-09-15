@@ -7,7 +7,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 
-class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
+class 一括エピソード記録ユースケーステスト : BehaviorSpec({
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     val useCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase)
 

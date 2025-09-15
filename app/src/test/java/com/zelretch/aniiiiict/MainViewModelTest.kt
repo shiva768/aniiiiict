@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainViewModelTest : BehaviorSpec({
+class メインビューモデルテスト : BehaviorSpec({
     val testDispatcher = StandardTestDispatcher()
 
     beforeSpec {

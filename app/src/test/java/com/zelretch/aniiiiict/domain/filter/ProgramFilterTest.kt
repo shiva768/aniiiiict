@@ -42,7 +42,7 @@ fun createProgramWithWork(
     return ProgramWithWork(listOf(program), program, work)
 }
 
-class ProgramFilterTest : BehaviorSpec({
+class プログラムフィルターテスト : BehaviorSpec({
     val programFilter = ProgramFilter()
 
     given("複数のProgramWithWorkがあるとき") {

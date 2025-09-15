@@ -17,7 +17,7 @@ import kotlinx.coroutines.test.runTest
  * - プログレスコールバックの詳細な動作
  * - 大量データ処理のパフォーマンス特性
  */
-class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
+class ユースケース追加エッジケーステスト : BehaviorSpec({
 
     given("BulkRecordEpisodesUseCaseの境界値処理") {
 

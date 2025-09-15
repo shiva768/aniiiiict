@@ -17,7 +17,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DetailModalViewModelTest : BehaviorSpec({
+class 詳細モーダルビューモデルテスト : BehaviorSpec({
     val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>()
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()

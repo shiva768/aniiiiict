@@ -14,7 +14,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
-class LoadRecordsUseCaseTest : BehaviorSpec({
+class レコード読み込みユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val useCase = LoadRecordsUseCase(repository)
 

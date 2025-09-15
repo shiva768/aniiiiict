@@ -6,7 +6,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
-class FilterStateTest : BehaviorSpec({
+class フィルター状態テスト : BehaviorSpec({
     given("新しいFilterState") {
         val filterState = FilterState()
 

@@ -23,7 +23,7 @@ import org.junit.Test
 
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
-class AppNavigationTest {
+class アプリナビゲーションテスト {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)

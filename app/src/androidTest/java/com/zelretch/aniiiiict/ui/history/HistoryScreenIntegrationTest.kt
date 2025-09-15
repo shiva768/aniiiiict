@@ -41,7 +41,7 @@ import javax.inject.Inject
  */
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
-class HistoryScreenIntegrationTest {
+class 履歴画面統合テスト {
 
     @get:Rule
     val testRule = HiltComposeTestRule(this)

@@ -11,7 +11,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 
-class AnnictAuthUseCaseTest {
+class アニクト認証ユースケーステスト {
 
     @Mock
     private lateinit var repository: AnnictRepository

@@ -39,7 +39,7 @@ import javax.inject.Inject
  */
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
-class DetailModalIntegrationTest {
+class 詳細モーダル統合テスト {
 
     @get:Rule
     val testRule = HiltComposeTestRule(this)

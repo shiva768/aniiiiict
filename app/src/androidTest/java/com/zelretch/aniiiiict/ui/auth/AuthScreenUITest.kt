@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
  * UI状態に応じた画面表示とユーザーインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class AuthScreenUITest {
+class 認証画面UIテスト {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
