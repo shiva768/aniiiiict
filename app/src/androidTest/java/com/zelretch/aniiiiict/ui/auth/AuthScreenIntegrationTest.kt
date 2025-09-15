@@ -120,8 +120,15 @@ class AuthScreenIntegrationTest {
         // Act - 認証状態確認を実行
         viewModel.checkAuthentication()
 
-        // Assert
-        coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
+        // Assert - Wait for coroutine to run and mock to be called
+        testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
+            try {
+                coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
     }
 
     @Test
@@ -179,7 +186,14 @@ class AuthScreenIntegrationTest {
         val context: Context = ApplicationProvider.getApplicationContext()
         MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
 
-        // Assert - 初期化時に認証状態確認が実行される
-        coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
+        // Assert - Wait for coroutine to run and mock to be called
+        testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
+            try {
+                coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
     }
 }
