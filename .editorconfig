@@ -15,3 +15,17 @@ ij_xml_new_line_after_last_attribute = false
 
 [*Test.kt]
 ktlint_standard_function-naming = disabled
+ktlint_standard_class-naming = disabled
+ktlint_standard_filename = disabled
+
+[*TestRunner.kt]
+ktlint_standard_class-naming = disabled
+ktlint_standard_filename = disabled
+
+[*TestRule.kt]
+ktlint_standard_class-naming = disabled
+ktlint_standard_filename = disabled
+
+[{**/*test/**,**/*androidTest/**}]
+ktlint_standard_class-naming = disabled
+ktlint_standard_filename = disabled
