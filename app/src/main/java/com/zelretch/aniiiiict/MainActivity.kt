@@ -56,6 +56,7 @@ import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -204,14 +205,8 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             }
         }
 
-        // Restore drawer state when returning to track screen
+        // Clean up restore flag if user navigates to different screens
         LaunchedEffect(selectedItem) {
-            // If we're returning to track screen from another screen and should restore drawer
-            if (selectedItem == "track" && shouldRestoreDrawerOpen.value) {
-                drawerState.open()
-                shouldRestoreDrawerOpen.value = false
-            }
-
             // Clear restore flag if user navigates to a different screen without going back to track
             if (selectedItem != "track" && selectedItem != previousRoute.value) {
                 shouldRestoreDrawerOpen.value = false
@@ -253,7 +248,20 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 val historyViewModel: HistoryViewModel = hiltViewModel()
                 val historyUiState by historyViewModel.uiState.collectAsState()
                 val actions = HistoryScreenActions(
-                    onNavigateBack = { navController.navigateUp() },
+                    onNavigateBack = {
+                        navController.navigateUp()
+                        // If we should restore drawer state, do it after navigation
+                        if (shouldRestoreDrawerOpen.value) {
+                            scope.launch {
+                                // Small delay to ensure navigation completes
+                                delay(150)
+                                if (navController.currentDestination?.route == "track") {
+                                    drawerState.open()
+                                    shouldRestoreDrawerOpen.value = false
+                                }
+                            }
+                        }
+                    },
                     onRetry = { historyViewModel.loadRecords() },
                     onDeleteRecord = { historyViewModel.deleteRecord(it) },
                     onRefresh = { historyViewModel.loadRecords() },
@@ -266,7 +274,20 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             }
             composable("settings") {
                 SettingsScreen(
-                    onNavigateBack = { navController.navigateUp() }
+                    onNavigateBack = {
+                        navController.navigateUp()
+                        // If we should restore drawer state, do it after navigation
+                        if (shouldRestoreDrawerOpen.value) {
+                            scope.launch {
+                                // Small delay to ensure navigation completes
+                                delay(150)
+                                if (navController.currentDestination?.route == "track") {
+                                    drawerState.open()
+                                    shouldRestoreDrawerOpen.value = false
+                                }
+                            }
+                        }
+                    }
                 )
             }
         }

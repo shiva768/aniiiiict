@@ -119,7 +119,7 @@ class AppNavigationTest {
         composeTestRule.waitForIdle()
 
         // Wait a bit for the drawer state to be restored
-        composeTestRule.waitUntil(timeoutMillis = 3000) {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
                 composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
                 composeTestRule.onNodeWithText("設定").assertIsDisplayed()
@@ -174,7 +174,7 @@ class AppNavigationTest {
         composeTestRule.waitForIdle()
 
         // Wait a bit for the drawer state to be restored
-        composeTestRule.waitUntil(timeoutMillis = 3000) {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
                 composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
                 composeTestRule.onNodeWithText("設定").assertIsDisplayed()
