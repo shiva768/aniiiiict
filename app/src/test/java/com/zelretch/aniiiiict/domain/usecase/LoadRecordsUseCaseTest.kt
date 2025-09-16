@@ -38,9 +38,9 @@ class レコード読み込みユースケーステスト : BehaviorSpec({
         image = null
     )
 
-    given("記録一覧をロードする") {
-        `when`("レコードが存在し、次ページもある場合") {
-            then("RecordsResultに正しく変換される") {
+    前提("記録一覧をロードする") {
+        場合("レコードが存在し、次ページもある場合") {
+            そのとき("RecordsResultに正しく変換される") {
                 val fakeRecords = listOf(
                     Record(
                         id = "id1",
@@ -71,8 +71,8 @@ class レコード読み込みユースケーステスト : BehaviorSpec({
                 result.endCursor shouldBe "CURSOR123"
             }
         }
-        `when`("レコードが空の場合") {
-            then("空リストと正しいページ情報が返る") {
+        場合("レコードが空の場合") {
+            そのとき("空リストと正しいページ情報が返る") {
                 val paginated = PaginatedRecords(
                     records = emptyList(),
                     hasNextPage = false,

@@ -11,9 +11,9 @@ import java.time.ZonedDateTime
 class レコード検索ユースケーステスト : BehaviorSpec({
     val useCase = SearchRecordsUseCase()
 
-    given("複数のRecordがあるとき") {
-        `when`("タイトルで検索") {
-            then("該当するRecordだけ返る") {
+    前提("複数のRecordがあるとき") {
+        場合("タイトルで検索") {
+            そのとき("該当するRecordだけ返る") {
                 val records = listOf(
                     Record(
                         "1",

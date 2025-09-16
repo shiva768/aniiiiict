@@ -19,13 +19,13 @@ import kotlinx.coroutines.test.runTest
  */
 class ユースケース追加エッジケーステスト : BehaviorSpec({
 
-    given("BulkRecordEpisodesUseCaseの境界値処理") {
+    前提("BulkRecordEpisodesUseCaseの境界値処理") {
 
         val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
         val bulkUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase)
 
-        `when`("空のエピソードリストを処理") {
-            then("即座に成功を返す") {
+        場合("空のエピソードリストを処理") {
+            そのとき("即座に成功を返す") {
                 runTest {
                     val result = bulkUseCase(
                         episodeIds = emptyList(),
@@ -39,8 +39,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("1つのエピソードのみを処理") {
-            then("正常に処理される") {
+        場合("1つのエピソードのみを処理") {
+            そのとき("正常に処理される") {
                 runTest {
                     val episodeId = "single_episode"
                     val workId = "work1"
@@ -65,8 +65,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("プログレスコールバックでException") {
-            then("例外がキャッチされ、処理が失敗する") {
+        場合("プログレスコールバックでException") {
+            そのとき("例外がキャッチされ、処理が失敗する") {
                 runTest {
                     val episodeIds = listOf("episode1", "episode2")
                     val workId = "work1"
@@ -90,8 +90,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("最初のエピソードで失敗") {
-            then("即座に失敗を返す") {
+        場合("最初のエピソードで失敗") {
+            そのとき("即座に失敗を返す") {
                 runTest {
                     val episodeIds = listOf("failing_episode", "episode2")
                     val workId = "work1"
@@ -117,8 +117,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("途中のエピソードで失敗") {
-            then("失敗する直前までのプログレスが報告される") {
+        場合("途中のエピソードで失敗") {
+            そのとき("失敗する直前までのプログレスが報告される") {
                 runTest {
                     val episodeIds = listOf("episode1", "failing_episode", "episode3")
                     val workId = "work1"
@@ -147,10 +147,10 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
         }
     }
 
-    given("WatchEpisodeUseCaseの特殊ケース") {
+    前提("WatchEpisodeUseCaseの特殊ケース") {
 
-        `when`("異なるStatusStateの組み合わせ") {
-            then("各ステータスに応じた処理が行われる") {
+        場合("異なるStatusStateの組み合わせ") {
+            そのとき("各ステータスに応じた処理が行われる") {
                 runTest {
                     val statusStates = listOf(
                         StatusState.WANNA_WATCH,
@@ -174,8 +174,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("shouldUpdateStatusフラグの動作") {
-            then("フラグに応じて適切に動作する") {
+        場合("shouldUpdateStatusフラグの動作") {
+            そのとき("フラグに応じて適切に動作する") {
                 runTest {
                     // shouldUpdateStatus = true の場合
                     val shouldUpdateStatus = true
@@ -194,10 +194,10 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
         }
     }
 
-    given("UseCaseの並行処理とレースコンディション") {
+    前提("UseCaseの並行処理とレースコンディション") {
 
-        `when`("同じリソースに対する並行アクセス") {
-            then("適切に競合が処理される") {
+        場合("同じリソースに対する並行アクセス") {
+            そのとき("適切に競合が処理される") {
                 runTest {
                     // 競合状態をシミュレートするロジック
                     data class ResourceState(
@@ -234,10 +234,10 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
         }
     }
 
-    given("UseCaseのパフォーマンス特性") {
+    前提("UseCaseのパフォーマンス特性") {
 
-        `when`("大量のエピソードを処理") {
-            then("パフォーマンス特性を確認") {
+        場合("大量のエピソードを処理") {
+            そのとき("パフォーマンス特性を確認") {
                 runTest {
                     // 大量データ処理のシミュレーション
                     val largeEpisodeList = (1..1000).map { "episode$it" }
@@ -258,8 +258,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("メモリ効率的な処理") {
-            then("大量データでもメモリ使用量が適切") {
+        場合("メモリ効率的な処理") {
+            そのとき("大量データでもメモリ使用量が適切") {
                 runTest {
                     // ストリーミング処理のシミュレーション
                     val totalItems = 10000
@@ -291,10 +291,10 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
         }
     }
 
-    given("エラーハンドリングの詳細ケース") {
+    前提("エラーハンドリングの詳細ケース") {
 
-        `when`("ネットワークタイムアウト") {
-            then("適切にタイムアウトエラーが処理される") {
+        場合("ネットワークタイムアウト") {
+            そのとき("適切にタイムアウトエラーが処理される") {
                 runTest {
                     val timeoutError = TestTimeoutException("タイムアウトが発生しました")
 
@@ -309,8 +309,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("認証エラー") {
-            then("認証エラーが適切に分類される") {
+        場合("認証エラー") {
+            そのとき("認証エラーが適切に分類される") {
                 runTest {
                     val authError = TestAuthException("認証に失敗しました")
 
@@ -325,8 +325,8 @@ class ユースケース追加エッジケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("データ形式エラー") {
-            then("データエラーが適切に処理される") {
+        場合("データ形式エラー") {
+            そのとき("データエラーが適切に処理される") {
                 runTest {
                     val dataFormatError = TestDataFormatException("データ形式が不正です")
 

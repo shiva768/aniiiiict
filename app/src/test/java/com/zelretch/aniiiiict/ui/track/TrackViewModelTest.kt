@@ -69,9 +69,9 @@ class トラックビューモデルテスト : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("プログラム一覧ロード") {
-        `when`("正常にロードできる場合") {
-            then("UIStateにプログラムがセットされる") {
+    前提("プログラム一覧ロード") {
+        場合("正常にロードできる場合") {
+            そのとき("UIStateにプログラムがセットされる") {
                 runTest {
                     val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
                     coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
@@ -98,8 +98,8 @@ class トラックビューモデルテスト : BehaviorSpec({
                 }
             }
         }
-        `when`("例外が発生する場合") {
-            then("UIStateにエラーがセットされる") {
+        場合("例外が発生する場合") {
+            そのとき("UIStateにエラーがセットされる") {
                 runTest(dispatcher) {
                     coEvery { loadProgramsUseCase.invoke() } returns flow {
                         throw LoadProgramsException("error")

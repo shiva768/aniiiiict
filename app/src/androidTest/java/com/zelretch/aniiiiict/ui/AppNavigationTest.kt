@@ -51,7 +51,7 @@ class アプリナビゲーションテスト {
     val mockCustomTabsIntentFactory: CustomTabsIntentFactory = mockk(relaxed = true)
 
     @Test
-    fun navigationDrawer_menuClick_opensDrawer() {
+    fun ナビゲーションドロワーでメニューをクリックするとドロワーが開く() {
         // Wait for the app to fully load and navigate to the track screen
         // Look for the menu button which indicates the track screen is loaded
         composeTestRule.waitUntil(timeoutMillis = 10000) {

@@ -13,17 +13,17 @@ class エピソード視聴ユースケーステスト : BehaviorSpec({
     val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
     val useCase = WatchEpisodeUseCase(repository, updateViewStateUseCase)
 
-    given("エピソード視聴記録") {
-        `when`("記録が成功し、ステータスも更新される場合") {
-            then("Result.successになる") {
+    前提("エピソード視聴記録") {
+        場合("記録が成功し、ステータスも更新される場合") {
+            そのとき("Result.successになる") {
                 coEvery { repository.createRecord(any(), any()) } returns true
                 coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
                 val result = runBlocking { useCase("ep1", "w1", StatusState.WANNA_WATCH, true) }
                 result.isSuccess shouldBe true
             }
         }
-        `when`("記録が失敗する場合") {
-            then("Result.failureになる") {
+        場合("記録が失敗する場合") {
+            そのとき("Result.failureになる") {
                 coEvery { repository.createRecord(any(), any()) } returns false
                 val result = runBlocking { useCase("ep1", "w1", StatusState.WANNA_WATCH, true) }
                 result.isFailure shouldBe true

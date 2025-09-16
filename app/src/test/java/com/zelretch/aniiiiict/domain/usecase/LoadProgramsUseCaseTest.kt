@@ -21,9 +21,9 @@ class プログラム読み込みユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val useCase = LoadProgramsUseCase(repository)
 
-    given("プログラムがリポジトリに存在する場合") {
-        `when`("複数の作品と複数のエピソードがある場合") {
-            then("作品ごとにグループ化されて、エピソード番号でソートされた結果が返される") {
+    前提("プログラムがリポジトリに存在する場合") {
+        場合("複数の作品と複数のエピソードがある場合") {
+            そのとき("作品ごとにグループ化されて、エピソード番号でソートされた結果が返される") {
                 // テスト用のモックデータを作成
                 val mockPrograms = helper.createMockPrograms()
                 coEvery { repository.getRawProgramsData() } returns flow { emit(mockPrograms) }
@@ -53,8 +53,8 @@ class プログラム読み込みユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("同じ作品に複数のエピソードがある場合") {
-            then("エピソード番号でソートされる") {
+        場合("同じ作品に複数のエピソードがある場合") {
+            そのとき("エピソード番号でソートされる") {
                 // 同じ作品で番号の異なる複数エピソードを持つデータ
                 val nodes = helper.createMockEpisodesForSameAnime()
                 coEvery { repository.getRawProgramsData() } returns flow { emit(nodes) }
@@ -75,8 +75,8 @@ class プログラム読み込みユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("空のデータが返された場合") {
-            then("空のリストが返される") {
+        場合("空のデータが返された場合") {
+            そのとき("空のリストが返される") {
                 coEvery { repository.getRawProgramsData() } returns flow { emit(emptyList()) }
 
                 val result = useCase().first()

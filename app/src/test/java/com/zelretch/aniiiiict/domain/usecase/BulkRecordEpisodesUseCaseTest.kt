@@ -11,9 +11,9 @@ class 一括エピソード記録ユースケーステスト : BehaviorSpec({
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     val useCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase)
 
-    given("複数エピソードの一括記録") {
-        `when`("全て成功する場合") {
-            then("Result.successになる") {
+    前提("複数エピソードの一括記録") {
+        場合("全て成功する場合") {
+            そのとき("Result.successになる") {
                 val episodeIds = listOf("ep1", "ep2")
                 val workId = "w1"
                 val status = StatusState.WANNA_WATCH
@@ -22,8 +22,8 @@ class 一括エピソード記録ユースケーステスト : BehaviorSpec({
                 result.isSuccess shouldBe true
             }
         }
-        `when`("途中で失敗する場合") {
-            then("Result.failureになる") {
+        場合("途中で失敗する場合") {
+            そのとき("Result.failureになる") {
                 val episodeIds = listOf("ep1", "ep2")
                 val workId = "w1"
                 val status = StatusState.WANNA_WATCH

@@ -12,16 +12,16 @@ class ビュー状態更新ユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val useCase = UpdateViewStateUseCase(repository)
 
-    given("ステータス更新") {
-        `when`("リポジトリがtrueを返す") {
-            then("Result.successになる") {
+    前提("ステータス更新") {
+        場合("リポジトリがtrueを返す") {
+            そのとき("Result.successになる") {
                 coEvery { repository.updateWorkViewStatus(any(), any()) } returns true
                 val result = runBlocking { useCase("w1", StatusState.WATCHING) }
                 result.isSuccess shouldBe true
             }
         }
-        `when`("リポジトリがfalseを返す") {
-            then("Result.successになる（警告ログ出力）") {
+        場合("リポジトリがfalseを返す") {
+            そのとき("Result.successになる（警告ログ出力）") {
                 coEvery { repository.updateWorkViewStatus(any(), any()) } returns false
                 val result = runBlocking { useCase("w1", StatusState.WATCHING) }
                 result.isSuccess shouldBe true

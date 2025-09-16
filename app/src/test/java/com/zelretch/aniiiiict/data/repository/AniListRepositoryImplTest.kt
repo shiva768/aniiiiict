@@ -18,9 +18,9 @@ class アニリストリポジトリ実装テスト : BehaviorSpec({
     val mockApolloClient = mockk<AniListApolloClient>()
     val repository = AniListRepositoryImpl(mockApolloClient)
 
-    given("AniListRepositoryImpl の getMedia メソッド") {
-        `when`("API呼び出しが成功した場合") {
-            then("AniListMediaを返す") {
+    前提("AniListRepositoryImpl の getMedia メソッド") {
+        場合("API呼び出しが成功した場合") {
+            そのとき("AniListMediaを返す") {
                 val mediaId = 123
                 val operation = GetMediaQuery(mediaId)
                 val expectedMedia = GetMediaQuery.Data(
@@ -55,8 +55,8 @@ class アニリストリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("APIエラーが発生した場合") {
-            then("Result.failureを返す") {
+        場合("APIエラーが発生した場合") {
+            そのとき("Result.failureを返す") {
                 val mediaId = 123
                 val mockResponse = ApolloResponse.Builder(
                     operation = GetMediaQuery(id = mediaId),
@@ -79,8 +79,8 @@ class アニリストリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("mediaがnullの場合") {
-            then("Result.failureを返す") {
+        場合("mediaがnullの場合") {
+            そのとき("Result.failureを返す") {
                 val mediaId = 123
                 val mockResponse = ApolloResponse.Builder(
                     operation = GetMediaQuery(id = mediaId),
@@ -97,8 +97,8 @@ class アニリストリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("例外が発生した場合") {
-            then("Result.failureを返す") {
+        場合("例外が発生した場合") {
+            そのとき("Result.failureを返す") {
                 val mediaId = 123
                 coEvery {
                     mockApolloClient.executeQuery(

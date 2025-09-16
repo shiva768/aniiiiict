@@ -32,10 +32,10 @@ class トラックビューモデル追加テスト : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("TrackViewModelの状態管理") {
+    前提("TrackViewModelの状態管理") {
 
-        `when`("フィルタ表示状態を切り替える") {
-            then("isFilterVisibleが正しく更新される") {
+        場合("フィルタ表示状態を切り替える") {
+            そのとき("isFilterVisibleが正しく更新される") {
                 runTest {
                     // モックを使った実際のViewModel作成は複雑すぎるため、
                     // 状態管理のロジックを検証するシンプルなテストを作成
@@ -54,8 +54,8 @@ class トラックビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("詳細モーダルの表示状態を管理する") {
-            then("適切な状態遷移が行われる") {
+        場合("詳細モーダルの表示状態を管理する") {
+            そのとき("適切な状態遷移が行われる") {
                 runTest {
                     // 詳細モーダル状態の管理ロジック
                     data class DetailModalState(
@@ -90,8 +90,8 @@ class トラックビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("最終話確認ダイアログの状態管理") {
-            then("適切にダイアログ状態が管理される") {
+        場合("最終話確認ダイアログの状態管理") {
+            そのとき("適切にダイアログ状態が管理される") {
                 runTest {
                     data class FinaleConfirmationState(
                         val showConfirmationForWorkId: String? = null,
@@ -121,8 +121,8 @@ class トラックビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("記録成功メッセージの自動クリア") {
-            then("成功メッセージが適切に管理される") {
+        場合("記録成功メッセージの自動クリア") {
+            そのとき("成功メッセージが適切に管理される") {
                 runTest {
                     data class RecordingState(
                         val isRecording: Boolean = false,
@@ -164,8 +164,8 @@ class トラックビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("エラー状態の管理") {
-            then("エラーの設定とクリアが正常に動作") {
+        場合("エラー状態の管理") {
+            そのとき("エラーの設定とクリアが正常に動作") {
                 runTest {
 
                     // エラー設定
@@ -180,10 +180,10 @@ class トラックビューモデル追加テスト : BehaviorSpec({
         }
     }
 
-    given("TrackUiStateの妥当性検証") {
+    前提("TrackUiStateの妥当性検証") {
 
-        `when`("初期状態を作成") {
-            then("適切なデフォルト値が設定される") {
+        場合("初期状態を作成") {
+            そのとき("適切なデフォルト値が設定される") {
                 runTest {
                     val initialState = TrackUiState()
 
@@ -204,8 +204,8 @@ class トラックビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("状態をコピーして更新") {
-            then("適切に状態が更新される") {
+        場合("状態をコピーして更新") {
+            そのとき("適切に状態が更新される") {
                 runTest {
                     val initialState = TrackUiState()
 

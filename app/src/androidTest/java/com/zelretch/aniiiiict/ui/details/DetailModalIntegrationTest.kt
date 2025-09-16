@@ -79,7 +79,7 @@ class 詳細モーダル統合テスト {
     }
 
     @Test
-    fun detailModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
+    fun 詳細モーダルで一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
         // Arrange
         val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
 
@@ -122,7 +122,7 @@ class 詳細モーダル統合テスト {
     }
 
     @Test
-    fun detailModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
+    fun 詳細モーダルでステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
         // Arrange
         val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
 
@@ -161,7 +161,7 @@ class 詳細モーダル統合テスト {
     }
 
     @Test
-    fun detailModal_単一エピソード視聴_createRecordが呼ばれる() {
+    fun 詳細モーダルで単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
         val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
 
@@ -198,7 +198,7 @@ class 詳細モーダル統合テスト {
     }
 
     @Test
-    fun detailModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
+    fun 詳細モーダルでWANNA_WATCHからWATCHING経由でのエピソード記録で正しい順序でRepository呼び出し() {
         // Arrange
         val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
 

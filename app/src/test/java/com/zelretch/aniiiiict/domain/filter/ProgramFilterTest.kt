@@ -45,9 +45,9 @@ fun createProgramWithWork(
 class プログラムフィルターテスト : BehaviorSpec({
     val programFilter = ProgramFilter()
 
-    given("複数のProgramWithWorkがあるとき") {
-        `when`("extractAvailableFiltersを呼び出した場合") {
-            then("シーズンの並び順が正しい") {
+    前提("複数のProgramWithWorkがあるとき") {
+        場合("extractAvailableFiltersを呼び出した場合") {
+            そのとき("シーズンの並び順が正しい") {
                 val programs = listOf(
                     createProgramWithWork(seasonName = SeasonName.SUMMER),
                     createProgramWithWork(seasonName = SeasonName.WINTER),
@@ -63,8 +63,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 )
             }
         }
-        `when`("applyFiltersでシーズンフィルターを適用した場合") {
-            then("シーズンフィルターが正しく機能する") {
+        場合("applyFiltersでシーズンフィルターを適用した場合") {
+            そのとき("シーズンフィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(seasonName = SeasonName.WINTER),
                     createProgramWithWork(seasonName = SeasonName.SPRING),
@@ -75,7 +75,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
                 result.map { it.work.seasonName }.toSet() shouldBe setOf(SeasonName.WINTER, SeasonName.SUMMER)
             }
-            then("シーズンフィルターが空の場合は全てのプログラムを返す") {
+            そのとき("シーズンフィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
                     createProgramWithWork(seasonName = SeasonName.WINTER),
                     createProgramWithWork(seasonName = SeasonName.SPRING)
@@ -85,8 +85,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersでシーズンがnullのプログラムがある場合") {
-            then("シーズンがnullのプログラムはフィルターされない") {
+        場合("applyFiltersでシーズンがnullのプログラムがある場合") {
+            そのとき("シーズンがnullのプログラムはフィルターされない") {
                 val programs = listOf(
                     createProgramWithWork(seasonName = null),
                     createProgramWithWork(seasonName = SeasonName.WINTER)
@@ -97,8 +97,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result[0].work.seasonName shouldBe SeasonName.WINTER
             }
         }
-        `when`("applyFiltersでメディアフィルターを適用した場合") {
-            then("メディアフィルターが正しく機能する") {
+        場合("applyFiltersでメディアフィルターを適用した場合") {
+            そのとき("メディアフィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(media = "TV"),
                     createProgramWithWork(media = "MOVIE"),
@@ -109,7 +109,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
                 result.map { it.work.media }.toSet() shouldBe setOf("TV", "OVA")
             }
-            then("メディアフィルターが空の場合は全てのプログラムを返す") {
+            そのとき("メディアフィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
                     createProgramWithWork(media = "TV"),
                     createProgramWithWork(media = "MOVIE")
@@ -119,8 +119,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersで年フィルターを適用した場合") {
-            then("年フィルターが正しく機能する") {
+        場合("applyFiltersで年フィルターを適用した場合") {
+            そのとき("年フィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(seasonYear = 2023),
                     createProgramWithWork(seasonYear = 2024),
@@ -131,7 +131,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
                 result.map { it.work.seasonYear }.toSet() shouldBe setOf(2023, 2025)
             }
-            then("年フィルターが空の場合は全てのプログラムを返す") {
+            そのとき("年フィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
                     createProgramWithWork(seasonYear = 2023),
                     createProgramWithWork(seasonYear = 2024)
@@ -141,8 +141,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersで年フィルターの境界値をテストする場合") {
-            then("年フィルターの境界値が正しく機能する") {
+        場合("applyFiltersで年フィルターの境界値をテストする場合") {
+            そのとき("年フィルターの境界値が正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(seasonYear = 2023),
                     createProgramWithWork(seasonYear = 2024),
@@ -154,8 +154,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result[0].work.seasonYear shouldBe 2024
             }
         }
-        `when`("applyFiltersでチャンネルフィルターを適用した場合") {
-            then("チャンネルフィルターが正しく機能する") {
+        場合("applyFiltersでチャンネルフィルターを適用した場合") {
+            そのとき("チャンネルフィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(channelName = "TOKYO MX"),
                     createProgramWithWork(channelName = "BS11"),
@@ -166,7 +166,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
                 result.map { it.firstProgram.channel.name }.toSet() shouldBe setOf("TOKYO MX", "AT-X")
             }
-            then("チャンネルフィルターが空の場合は全てのプログラムを返す") {
+            そのとき("チャンネルフィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
                     createProgramWithWork(channelName = "TOKYO MX"),
                     createProgramWithWork(channelName = "BS11")
@@ -176,8 +176,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersでステータスフィルターを適用した場合") {
-            then("ステータスフィルターが正しく機能する") {
+        場合("applyFiltersでステータスフィルターを適用した場合") {
+            そのとき("ステータスフィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(status = StatusState.WATCHING),
                     createProgramWithWork(status = StatusState.WANNA_WATCH),
@@ -188,7 +188,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 1
                 result[0].work.viewerStatusState shouldBe StatusState.WATCHING
             }
-            then("ステータスフィルターが空の場合は全てのプログラムを返す") {
+            そのとき("ステータスフィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
                     createProgramWithWork(status = StatusState.WATCHING),
                     createProgramWithWork(status = StatusState.WANNA_WATCH)
@@ -198,8 +198,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersで検索フィルターを適用した場合") {
-            then("検索フィルターが正しく機能する") {
+        場合("applyFiltersで検索フィルターを適用した場合") {
+            そのとき("検索フィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(title = "テスト作品1"),
                     createProgramWithWork(title = "作品2"),
@@ -210,7 +210,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
                 result.map { it.work.title }.toSet() shouldBe setOf("テスト作品1", "テスト作品3")
             }
-            then("検索フィルターが空の場合は全てのプログラムを返す") {
+            そのとき("検索フィルターが空の場合は全てのプログラムを返す") {
                 val programs = listOf(
                     createProgramWithWork(title = "テスト作品1"),
                     createProgramWithWork(title = "作品2")
@@ -220,8 +220,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersで検索フィルターが大文字小文字を区別しない場合") {
-            then("検索フィルターが大文字小文字を区別しない") {
+        場合("applyFiltersで検索フィルターが大文字小文字を区別しない場合") {
+            そのとき("検索フィルターが大文字小文字を区別しない") {
                 val programs = listOf(
                     createProgramWithWork(title = "テスト作品A"),
                     createProgramWithWork(title = "テスト作品a"),
@@ -233,8 +233,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.all { it.work.title.contains("テスト") } shouldBe true
             }
         }
-        `when`("applyFiltersで放送済みフィルターを適用した場合") {
-            then("放送済みフィルターが正しく機能する") {
+        場合("applyFiltersで放送済みフィルターを適用した場合") {
+            そのとき("放送済みフィルターが正しく機能する") {
                 val now = LocalDateTime.now()
                 val programs = listOf(
                     createProgramWithWork(startedAt = now.minusHours(1)), // 放送済み
@@ -245,7 +245,7 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 1
                 result[0].firstProgram.startedAt shouldBe now.minusHours(1)
             }
-            then("放送済みフィルターが無効の場合は全てのプログラムを返す") {
+            そのとき("放送済みフィルターが無効の場合は全てのプログラムを返す") {
                 val now = LocalDateTime.now()
                 val programs = listOf(
                     createProgramWithWork(startedAt = now.minusHours(1)),
@@ -256,8 +256,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result.size shouldBe 2
             }
         }
-        `when`("applyFiltersで放送開始時間の昇順ソートを適用した場合") {
-            then("放送開始時間の昇順ソートが正しく機能する") {
+        場合("applyFiltersで放送開始時間の昇順ソートを適用した場合") {
+            そのとき("放送開始時間の昇順ソートが正しく機能する") {
                 val now = LocalDateTime.now()
                 val programs = listOf(
                     createProgramWithWork(startedAt = now.plusHours(2)),
@@ -272,8 +272,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result[2].firstProgram.startedAt shouldBe now.plusHours(2)
             }
         }
-        `when`("applyFiltersで放送開始時間の降順ソートを適用した場合") {
-            then("放送開始時間の降順ソートが正しく機能する") {
+        場合("applyFiltersで放送開始時間の降順ソートを適用した場合") {
+            そのとき("放送開始時間の降順ソートが正しく機能する") {
                 val now = LocalDateTime.now()
                 val programs = listOf(
                     createProgramWithWork(startedAt = now),
@@ -288,8 +288,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result[2].firstProgram.startedAt shouldBe now
             }
         }
-        `when`("applyFiltersで複数のフィルターを組み合わせた場合") {
-            then("複数のフィルターが正しく機能する") {
+        場合("applyFiltersで複数のフィルターを組み合わせた場合") {
+            そのとき("複数のフィルターが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(
                         seasonName = SeasonName.WINTER,
@@ -324,8 +324,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result[0].work.viewerStatusState shouldBe StatusState.WATCHING
             }
         }
-        `when`("applyFiltersで空のリストを渡した場合") {
-            then("空のリストを返す") {
+        場合("applyFiltersで空のリストを渡した場合") {
+            そのとき("空のリストを返す") {
                 val programs = emptyList<ProgramWithWork>()
                 val filterState = FilterState(
                     selectedSeason = setOf(SeasonName.WINTER),
@@ -335,8 +335,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result shouldBe emptyList()
             }
         }
-        `when`("applyFiltersでフィルターの順序が結果に影響を与えない場合") {
-            then("フィルターの順序が結果に影響を与えない") {
+        場合("applyFiltersでフィルターの順序が結果に影響を与えない場合") {
+            そのとき("フィルターの順序が結果に影響を与えない") {
                 val programs = listOf(
                     createProgramWithWork(
                         seasonName = SeasonName.WINTER,
@@ -364,8 +364,8 @@ class プログラムフィルターテスト : BehaviorSpec({
                 result1.map { it.work.media } shouldBe result2.map { it.work.media }
             }
         }
-        `when`("applyFiltersで特殊文字を含む検索クエリを渡した場合") {
-            then("特殊文字を含む検索クエリが正しく機能する") {
+        場合("applyFiltersで特殊文字を含む検索クエリを渡した場合") {
+            そのとき("特殊文字を含む検索クエリが正しく機能する") {
                 val programs = listOf(
                     createProgramWithWork(title = "テスト作品!"),
                     createProgramWithWork(title = "テスト作品？"),

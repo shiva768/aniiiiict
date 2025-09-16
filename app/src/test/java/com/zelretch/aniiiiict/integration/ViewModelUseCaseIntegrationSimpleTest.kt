@@ -31,10 +31,10 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
         Dispatchers.resetMain()
     }
 
-    given("ViewModel-UseCase連携パターン") {
+    前提("ViewModel-UseCase連携パターン") {
 
-        `when`("UseCase成功時のViewModelへの反映") {
-            then("適切に成功状態が伝播される") {
+        場合("UseCase成功時のViewModelへの反映") {
+            そのとき("適切に成功状態が伝播される") {
                 runTest {
                     // UseCase の結果をシミュレート
                     data class UseCaseResult<T>(
@@ -86,8 +86,8 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
             }
         }
 
-        `when`("UseCase失敗時のViewModelへの反映") {
-            then("適切にエラー状態が伝播される") {
+        場合("UseCase失敗時のViewModelへの反映") {
+            そのとき("適切にエラー状態が伝播される") {
                 runTest {
                     data class UseCaseResult<T>(
                         val isSuccess: Boolean,
@@ -135,8 +135,8 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
             }
         }
 
-        `when`("複数のUseCase結果を順次処理") {
-            then("各処理の結果が適切に管理される") {
+        場合("複数のUseCase結果を順次処理") {
+            そのとき("各処理の結果が適切に管理される") {
                 runTest {
                     data class ViewModelState(
                         val isLoading: Boolean = false,
@@ -187,8 +187,8 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
             }
         }
 
-        `when`("途中のUseCaseで失敗した場合") {
-            then("適切にエラー処理され後続処理が停止される") {
+        場合("途中のUseCaseで失敗した場合") {
+            そのとき("適切にエラー処理され後続処理が停止される") {
                 runTest {
                     data class ViewModelState(
                         val isLoading: Boolean = false,
@@ -233,10 +233,10 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
         }
     }
 
-    given("非同期処理の協調動作") {
+    前提("非同期処理の協調動作") {
 
-        `when`("複数のViewModel が並行動作") {
-            then("互いに干渉せずに処理される") {
+        場合("複数のViewModel が並行動作") {
+            そのとき("互いに干渉せずに処理される") {
                 runTest {
                     data class ViewModelState(
                         val id: String,
@@ -294,10 +294,10 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
         }
     }
 
-    given("エラー回復とリトライパターン") {
+    前提("エラー回復とリトライパターン") {
 
-        `when`("UseCase エラー後のリトライ") {
-            then("適切にリトライ処理が実行される") {
+        場合("UseCase エラー後のリトライ") {
+            そのとき("適切にリトライ処理が実行される") {
                 runTest {
                     data class RetryState(
                         val attemptCount: Int = 0,
@@ -342,8 +342,8 @@ class ビューモデルユースケース統合シンプルテスト : Behavior
             }
         }
 
-        `when`("最大リトライ回数に達した場合") {
-            then("最終的にエラー状態になる") {
+        場合("最大リトライ回数に達した場合") {
+            そのとき("最終的にエラー状態になる") {
                 runTest {
                     data class RetryState(
                         val attemptCount: Int = 0,

@@ -14,12 +14,12 @@ import io.mockk.mockk
  */
 class マイアニメリスト最終話判定統合テスト : BehaviorSpec({
 
-    given("MyAnimeList finale judgment integration") {
+    前提("MyAnimeList finale judgment integration") {
         val repository = mockk<MyAnimeListRepository>()
         val useCase = JudgeFinaleUseCase(repository)
 
-        `when`("anime is finished airing") {
-            then("should confirm finale") {
+        場合("anime is finished airing") {
+            そのとき("should confirm finale") {
                 val media = MyAnimeListResponse(
                     id = 1,
                     mediaType = "tv",
@@ -36,8 +36,8 @@ class マイアニメリスト最終話判定統合テスト : BehaviorSpec({
             }
         }
 
-        `when`("current episode equals total episodes") {
-            then("should confirm finale") {
+        場合("current episode equals total episodes") {
+            そのとき("should confirm finale") {
                 val media = MyAnimeListResponse(
                     id = 2,
                     mediaType = "tv",
@@ -54,8 +54,8 @@ class マイアニメリスト最終話判定統合テスト : BehaviorSpec({
             }
         }
 
-        `when`("anime is currently airing but not at final episode") {
-            then("should not be finale") {
+        場合("anime is currently airing but not at final episode") {
+            そのとき("should not be finale") {
                 val media = MyAnimeListResponse(
                     id = 3,
                     mediaType = "tv",

@@ -6,10 +6,10 @@ import java.io.IOException
 
 class エラーハンドラーテスト : BehaviorSpec({
 
-    given("エラーハンドラー") {
+    前提("エラーハンドラー") {
 
-        `when`("IOExceptionを解析する場合") {
-            then("ネットワークエラーとして分類される") {
+        場合("IOExceptionを解析する場合") {
+            そのとき("ネットワークエラーとして分類される") {
                 val exception = IOException("Network connection failed")
                 val errorInfo = ErrorHandler.analyzeError(exception)
 
@@ -19,8 +19,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("タイムアウトエラーを解析する場合") {
-            then("適切なユーザーメッセージが設定される") {
+        場合("タイムアウトエラーを解析する場合") {
+            そのとき("適切なユーザーメッセージが設定される") {
                 val exception = IOException("Connection timeout")
                 val errorInfo = ErrorHandler.analyzeError(exception)
 
@@ -29,8 +29,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("API系エラーメッセージの処理を検証する場合") {
-            then("適切なAPIエラーメッセージが返される") {
+        場合("API系エラーメッセージの処理を検証する場合") {
+            そのとき("適切なAPIエラーメッセージが返される") {
                 // 401エラーは認証エラーとして処理される
                 val authException = RuntimeException("401 Unauthorized")
                 val authError = ErrorHandler.analyzeError(authException)
@@ -42,8 +42,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("認証関連エラーを解析する場合") {
-            then("認証エラーとして分類される") {
+        場合("認証関連エラーを解析する場合") {
+            そのとき("認証エラーとして分類される") {
                 val exception = RuntimeException("Token expired")
                 val errorInfo = ErrorHandler.analyzeError(exception)
 
@@ -52,8 +52,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("記録作成失敗エラーを解析する場合") {
-            then("ビジネスロジックエラーとして分類される") {
+        場合("記録作成失敗エラーを解析する場合") {
+            そのとき("ビジネスロジックエラーとして分類される") {
                 val exception = Exception("Record creation failed")
                 val errorInfo = ErrorHandler.analyzeError(exception)
 
@@ -62,8 +62,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("TokenManagerのコンテキストでエラーを解析する場合") {
-            then("認証エラーとして分類される") {
+        場合("TokenManagerのコンテキストでエラーを解析する場合") {
+            そのとき("認証エラーとして分類される") {
                 val exception = RuntimeException("Save failed")
                 val errorInfo = ErrorHandler.analyzeError(exception, "TokenManager.saveAccessToken")
 
@@ -72,8 +72,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("不明な例外を解析する場合") {
-            then("不明エラーとして分類される") {
+        場合("不明な例外を解析する場合") {
+            そのとき("不明エラーとして分類される") {
                 val exception = RuntimeException("Unknown error")
                 val errorInfo = ErrorHandler.analyzeError(exception)
 
@@ -83,8 +83,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("ユーザー向けメッセージを取得する場合") {
-            then("カスタムメッセージまたはデフォルトメッセージが返される") {
+        場合("ユーザー向けメッセージを取得する場合") {
+            そのとき("カスタムメッセージまたはデフォルトメッセージが返される") {
                 val networkErrorWithCustom = ErrorHandler.ErrorInfo(
                     ErrorHandler.ErrorType.NETWORK,
                     "Connection failed",
@@ -108,8 +108,8 @@ class エラーハンドラーテスト : BehaviorSpec({
             }
         }
 
-        `when`("handleErrorメソッドを使用する場合") {
-            then("適切なエラーメッセージが返される") {
+        場合("handleErrorメソッドを使用する場合") {
+            そのとき("適切なエラーメッセージが返される") {
                 val ioException = IOException("Network error")
                 val authException = RuntimeException("Token error")
                 val businessException = Exception("Record creation failed")

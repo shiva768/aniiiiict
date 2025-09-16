@@ -24,24 +24,24 @@ class トークンマネージャーテスト : BehaviorSpec({
         tokenManager = TokenManager(prefs)
     }
 
-    given("TokenManagerの基本動作") {
-        `when`("まだトークンが保存されていない") {
-            then("getAccessTokenはnullを返し、hasValidTokenはfalseになる") {
+    前提("TokenManagerの基本動作") {
+        場合("まだトークンが保存されていない") {
+            そのとき("getAccessTokenはnullを返し、hasValidTokenはfalseになる") {
                 tokenManager.getAccessToken().shouldBeNull()
                 tokenManager.hasValidToken().shouldBeFalse()
             }
         }
 
-        `when`("空白ではないトークンを保存する") {
-            then("保存したトークンを取得でき、hasValidTokenはtrueになる") {
+        場合("空白ではないトークンを保存する") {
+            そのとき("保存したトークンを取得でき、hasValidTokenはtrueになる") {
                 tokenManager.saveAccessToken("abc1234567890")
                 tokenManager.getAccessToken() shouldBe "abc1234567890"
                 tokenManager.hasValidToken().shouldBeTrue()
             }
         }
 
-        `when`("空文字や空白のみのトークンを保存しようとする") {
-            then("保存は無視され、直前の有効な値が保持される") {
+        場合("空文字や空白のみのトークンを保存しようとする") {
+            そのとき("保存は無視され、直前の有効な値が保持される") {
                 // 先に有効なトークンを保存
                 tokenManager.saveAccessToken("valid_token")
                 // 空文字・空白のみを保存しようとする

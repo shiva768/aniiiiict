@@ -32,33 +32,33 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
     val annictApolloClient = mockk<AnnictApolloClient>()
     val repository = AnnictRepositoryImpl(tokenManager, authManager, annictApolloClient)
 
-    given("AnnictRepositoryImpl の isAuthenticated メソッド") {
-        `when`("有効なトークンがある場合") {
-            then("trueを返す") {
+    前提("AnnictRepositoryImpl の isAuthenticated メソッド") {
+        場合("有効なトークンがある場合") {
+            そのとき("trueを返す") {
                 coEvery { tokenManager.hasValidToken() } returns true
                 repository.isAuthenticated() shouldBe true
             }
         }
 
-        `when`("有効なトークンがない場合") {
-            then("falseを返す") {
+        場合("有効なトークンがない場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.hasValidToken() } returns false
                 repository.isAuthenticated() shouldBe false
             }
         }
     }
 
-    given("AnnictRepositoryImpl の getAuthUrl メソッド") {
-        `when`("認証URLの取得に成功した場合") {
-            then("正しいURLを返す") {
+    前提("AnnictRepositoryImpl の getAuthUrl メソッド") {
+        場合("認証URLの取得に成功した場合") {
+            そのとき("正しいURLを返す") {
                 val expectedUrl = "https://example.com/auth"
                 coEvery { authManager.getAuthorizationUrl() } returns expectedUrl
                 repository.getAuthUrl() shouldBe expectedUrl
             }
         }
 
-        `when`("認証URLの取得に失敗した場合") {
-            then("例外をスローする") {
+        場合("認証URLの取得に失敗した場合") {
+            そのとき("例外をスローする") {
                 val expectedException = RuntimeException("Failed to get auth URL")
                 coEvery { authManager.getAuthorizationUrl() } throws expectedException
                 try {
@@ -70,31 +70,31 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
         }
     }
 
-    given("AnnictRepositoryImpl の createRecord メソッド") {
+    前提("AnnictRepositoryImpl の createRecord メソッド") {
         val episodeId = "123"
         val workId = "456"
 
-        `when`("episodeIdが空の場合") {
-            then("falseを返す") {
+        場合("episodeIdが空の場合") {
+            そのとき("falseを返す") {
                 repository.createRecord("", workId) shouldBe false
             }
         }
 
-        `when`("workIdが空の場合") {
-            then("falseを返す") {
+        場合("workIdが空の場合") {
+            そのとき("falseを返す") {
                 repository.createRecord(episodeId, "") shouldBe false
             }
         }
 
-        `when`("アクセストークンがない場合") {
-            then("falseを返す") {
+        場合("アクセストークンがない場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns null
                 repository.createRecord(episodeId, workId) shouldBe false
             }
         }
 
-        `when`("API呼び出しが成功した場合") {
-            then("trueを返す") {
+        場合("API呼び出しが成功した場合") {
+            そのとき("trueを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = CreateRecordMutation(episodeId = episodeId),
@@ -111,8 +111,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しがエラーを返す場合") {
-            then("falseを返す") {
+        場合("API呼び出しがエラーを返す場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = CreateRecordMutation(episodeId = episodeId),
@@ -129,8 +129,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しが例外をスローする場合") {
-            then("falseを返す") {
+        場合("API呼び出しが例外をスローする場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 coEvery {
                     annictApolloClient.executeMutation(
@@ -146,42 +146,42 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
         }
     }
 
-    given("AnnictRepositoryImpl の handleAuthCallback メソッド") {
+    前提("AnnictRepositoryImpl の handleAuthCallback メソッド") {
         val code = "test_code"
 
-        `when`("認証が成功した場合") {
-            then("trueを返す") {
+        場合("認証が成功した場合") {
+            そのとき("trueを返す") {
                 coEvery { authManager.handleAuthorizationCode(code) } returns Result.success(Unit)
                 repository.handleAuthCallback(code) shouldBe true
             }
         }
 
-        `when`("認証が失敗した場合") {
-            then("falseを返す") {
+        場合("認証が失敗した場合") {
+            そのとき("falseを返す") {
                 coEvery { authManager.handleAuthorizationCode(code) } returns
                     Result.failure(RuntimeException("Auth failed"))
                 repository.handleAuthCallback(code) shouldBe false
             }
         }
 
-        `when`("認証中に例外が発生した場合") {
-            then("falseを返す") {
+        場合("認証中に例外が発生した場合") {
+            そのとき("falseを返す") {
                 coEvery { authManager.handleAuthorizationCode(code) } throws RuntimeException("Network error")
                 repository.handleAuthCallback(code) shouldBe false
             }
         }
     }
 
-    given("AnnictRepositoryImpl の getRawProgramsData メソッド") {
-        `when`("アクセストークンがない場合") {
-            then("空のリストをemitする") {
+    前提("AnnictRepositoryImpl の getRawProgramsData メソッド") {
+        場合("アクセストークンがない場合") {
+            そのとき("空のリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns null
                 repository.getRawProgramsData().first() shouldBe emptyList()
             }
         }
 
-        `when`("API呼び出しが成功し、データがある場合") {
-            then("GraphQLレスポンスのノードリストをemitする") {
+        場合("API呼び出しが成功し、データがある場合") {
+            そのとき("GraphQLレスポンスのノードリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = ViewerProgramsQuery(),
@@ -208,8 +208,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しがエラーを返す場合") {
-            then("空のリストをemitする") {
+        場合("API呼び出しがエラーを返す場合") {
+            そのとき("空のリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = ViewerProgramsQuery(),
@@ -226,8 +226,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しが例外をスローする場合") {
-            then("空のリストをemitする") {
+        場合("API呼び出しが例外をスローする場合") {
+            そのとき("空のリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 coEvery {
                     annictApolloClient.executeQuery(
@@ -240,8 +240,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("コルーチンがキャンセルされた場合") {
-            then("空のリストをemitする") {
+        場合("コルーチンがキャンセルされた場合") {
+            そのとき("空のリストをemitする") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 coEvery {
                     annictApolloClient.executeQuery(
@@ -259,16 +259,16 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
         }
     }
 
-    given("AnnictRepositoryImpl の getRecords メソッド") {
-        `when`("アクセストークンがない場合") {
-            then("空のPaginatedRecordsを返す") {
+    前提("AnnictRepositoryImpl の getRecords メソッド") {
+        場合("アクセストークンがない場合") {
+            そのとき("空のPaginatedRecordsを返す") {
                 coEvery { tokenManager.getAccessToken() } returns null
                 repository.getRecords() shouldBe PaginatedRecords(emptyList())
             }
         }
 
-        `when`("API呼び出しが成功し、データがある場合") {
-            then("変換されたPaginatedRecordsを返す") {
+        場合("API呼び出しが成功し、データがある場合") {
+            そのとき("変換されたPaginatedRecordsを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = ViewerRecordsQuery(),
@@ -305,8 +305,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しがエラーを返す場合") {
-            then("空のPaginatedRecordsを返す") {
+        場合("API呼び出しがエラーを返す場合") {
+            そのとき("空のPaginatedRecordsを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = ViewerRecordsQuery(),
@@ -323,8 +323,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しが例外をスローする場合") {
-            then("空のPaginatedRecordsを返す") {
+        場合("API呼び出しが例外をスローする場合") {
+            そのとき("空のPaginatedRecordsを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 coEvery {
                     annictApolloClient.executeQuery(
@@ -338,18 +338,18 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
         }
     }
 
-    given("AnnictRepositoryImpl の deleteRecord メソッド") {
+    前提("AnnictRepositoryImpl の deleteRecord メソッド") {
         val recordId = "record123"
 
-        `when`("アクセストークンがない場合") {
-            then("falseを返す") {
+        場合("アクセストークンがない場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns null
                 repository.deleteRecord(recordId) shouldBe false
             }
         }
 
-        `when`("API呼び出しが成功した場合") {
-            then("trueを返す") {
+        場合("API呼び出しが成功した場合") {
+            そのとき("trueを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = DeleteRecordMutation(recordId = recordId),
@@ -366,8 +366,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しがエラーを返す場合") {
-            then("falseを返す") {
+        場合("API呼び出しがエラーを返す場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = DeleteRecordMutation(recordId = recordId),
@@ -384,8 +384,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しが例外をスローする場合") {
-            then("falseを返す") {
+        場合("API呼び出しが例外をスローする場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 coEvery {
                     annictApolloClient.executeMutation(
@@ -399,19 +399,19 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
         }
     }
 
-    given("AnnictRepositoryImpl の updateWorkViewStatus メソッド") {
+    前提("AnnictRepositoryImpl の updateWorkViewStatus メソッド") {
         val workId = "work123"
         val status = StatusState.WATCHING
 
-        `when`("アクセストークンがない場合") {
-            then("falseを返す") {
+        場合("アクセストークンがない場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns null
                 repository.updateWorkViewStatus(workId, status) shouldBe false
             }
         }
 
-        `when`("API呼び出しが成功した場合") {
-            then("trueを返す") {
+        場合("API呼び出しが成功した場合") {
+            そのとき("trueを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = UpdateStatusMutation(workId = workId, state = status),
@@ -428,8 +428,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しがエラーを返す場合") {
-            then("falseを返す") {
+        場合("API呼び出しがエラーを返す場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 val mockResponse = ApolloResponse.Builder(
                     operation = UpdateStatusMutation(workId = workId, state = status),
@@ -446,8 +446,8 @@ class アニクトリポジトリ実装テスト : BehaviorSpec({
             }
         }
 
-        `when`("API呼び出しが例外をスローする場合") {
-            then("falseを返す") {
+        場合("API呼び出しが例外をスローする場合") {
+            そのとき("falseを返す") {
                 coEvery { tokenManager.getAccessToken() } returns "token"
                 coEvery {
                     annictApolloClient.executeMutation(

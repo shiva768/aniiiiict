@@ -10,9 +10,9 @@ import io.kotest.matchers.shouldBe
 class プログラムフィルターユースケーステスト : BehaviorSpec({
     val filterProgramsUseCase = FilterProgramsUseCase(ProgramFilter())
 
-    given("複数のProgramWithWorkがあるとき") {
-        `when`("シーズンでフィルタする") {
-            then("指定したシーズンのみ返る") {
+    前提("複数のProgramWithWorkがあるとき") {
+        場合("シーズンでフィルタする") {
+            そのとき("指定したシーズンのみ返る") {
                 val programs = listOf(
                     createProgramWithWork(seasonName = SeasonName.WINTER),
                     createProgramWithWork(seasonName = SeasonName.SUMMER)

@@ -11,16 +11,16 @@ class レコード削除ユースケーステスト : BehaviorSpec({
     val repository = mockk<AnnictRepository>()
     val useCase = DeleteRecordUseCase(repository)
 
-    given("レコード削除") {
-        `when`("repositoryがtrueを返す場合") {
-            then("trueが返る") {
+    前提("レコード削除") {
+        場合("repositoryがtrueを返す場合") {
+            そのとき("trueが返る") {
                 coEvery { repository.deleteRecord("record1") } returns true
                 val result = runBlocking { useCase("record1") }
                 result shouldBe true
             }
         }
-        `when`("repositoryがfalseを返す場合") {
-            then("falseが返る") {
+        場合("repositoryがfalseを返す場合") {
+            そのとき("falseが返る") {
                 coEvery { repository.deleteRecord("record2") } returns false
                 val result = runBlocking { useCase("record2") }
                 result shouldBe false

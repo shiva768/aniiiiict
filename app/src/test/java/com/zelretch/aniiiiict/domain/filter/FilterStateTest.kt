@@ -7,11 +7,11 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 class フィルター状態テスト : BehaviorSpec({
-    given("新しいFilterState") {
+    前提("新しいFilterState") {
         val filterState = FilterState()
 
-        `when`("初期化されたとき") {
-            then("デフォルト値が正しく設定されているべき") {
+        場合("初期化されたとき") {
+            そのとき("デフォルト値が正しく設定されているべき") {
                 filterState.selectedMedia shouldBe emptySet()
                 filterState.selectedSeason shouldBe emptySet()
                 filterState.selectedYear shouldBe emptySet()
@@ -24,15 +24,15 @@ class フィルター状態テスト : BehaviorSpec({
         }
     }
 
-    given("コピー方法") {
+    前提("コピー方法") {
         val original = FilterState()
         val modified = original.copy(
             selectedMedia = setOf("TV"),
             searchQuery = "テスト"
         )
 
-        `when`("一部のプロパティが変更されたとき") {
-            then("変更が反映されるべき") {
+        場合("一部のプロパティが変更されたとき") {
+            そのとき("変更が反映されるべき") {
                 modified.selectedMedia shouldBe setOf("TV")
                 modified.searchQuery shouldBe "テスト"
                 modified.selectedSeason shouldBe emptySet()
@@ -42,25 +42,25 @@ class フィルター状態テスト : BehaviorSpec({
         }
     }
 
-    given("等価性チェック") {
+    前提("等価性チェック") {
         val state1 = FilterState()
         val state2 = FilterState()
         val state3 = FilterState(selectedMedia = setOf("TV"))
 
-        `when`("2つの空の状態を比較したとき") {
-            then("等しいべき") {
+        場合("2つの空の状態を比較したとき") {
+            そのとき("等しいべき") {
                 state1 shouldBe state2
             }
         }
 
-        `when`("異なる状態を比較したとき") {
-            then("等しくないべき") {
+        場合("異なる状態を比較したとき") {
+            そのとき("等しくないべき") {
                 state1 shouldNotBe state3
             }
         }
     }
 
-    given("不変性チェック") {
+    前提("不変性チェック") {
         val original = FilterState(
             selectedMedia = setOf("TV"),
             selectedSeason = setOf(SeasonName.WINTER),
@@ -72,16 +72,16 @@ class フィルター状態テスト : BehaviorSpec({
             sortOrder = SortOrder.START_TIME_DESC
         )
 
-        `when`("プロパティを変更せずにコピーしたとき") {
+        場合("プロパティを変更せずにコピーしたとき") {
             val copy = original.copy()
-            then("元の状態と等しいべき") {
+            そのとき("元の状態と等しいべき") {
                 copy shouldBe original
             }
         }
 
-        `when`("プロパティを変更したとき") {
+        場合("プロパティを変更したとき") {
             val modified = original.copy(selectedMedia = setOf("OVA"))
-            then("元の状態とは等しくないべき") {
+            そのとき("元の状態とは等しくないべき") {
                 modified shouldNotBe original
             }
         }

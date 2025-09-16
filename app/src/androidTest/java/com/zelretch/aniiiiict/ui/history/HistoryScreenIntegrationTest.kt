@@ -78,7 +78,7 @@ class 履歴画面統合テスト {
     }
 
     @Test
-    fun historyScreen_再試行クリック_RepositoryのgetRecordsが呼ばれる() {
+    fun 履歴画面で再試行をクリックするとRepositoryのgetRecordsが呼ばれる() {
         // Arrange
         clearMocks(annictRepository)
         coEvery { annictRepository.getRecords(null) } returns PaginatedRecords(
@@ -114,7 +114,7 @@ class 履歴画面統合テスト {
     }
 
     @Test
-    fun historyScreen_削除クリック_RepositoryのdeleteRecordが呼ばれる() {
+    fun 履歴画面で削除をクリックするとRepositoryのdeleteRecordが呼ばれる() {
         // Arrange
         clearMocks(annictRepository)
         coEvery { annictRepository.deleteRecord(any()) } returns true
@@ -164,7 +164,7 @@ class 履歴画面統合テスト {
     }
 
     @Test
-    fun historyScreen_次ページ読み込み_正しい順序でRepositoryが呼ばれる() = runBlocking {
+    fun 履歴画面で次ページ読み込みで正しい順序でRepositoryが呼ばれる() = runBlocking {
         // Arrange - Create test data
         val work = Work(
             id = "w1",

@@ -12,9 +12,9 @@ class 最終話判定ユースケーステスト : BehaviorSpec({
     val myAnimeListRepository = mockk<MyAnimeListRepository>()
     val judgeFinaleUseCase = JudgeFinaleUseCase(myAnimeListRepository)
 
-    given("最終話判定ロジック") {
-        `when`("status == currently_airing の場合") {
-            then("not_finale を返す") {
+    前提("最終話判定ロジック") {
+        場合("status == currently_airing の場合") {
+            そのとき("not_finale を返す") {
                 val media = MyAnimeListResponse(
                     id = 1,
                     mediaType = "tv",
@@ -29,8 +29,8 @@ class 最終話判定ユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("numEpisodes が数値 かつ currentEp >= numEpisodes の場合") {
-            then("finale_confirmed を返す") {
+        場合("numEpisodes が数値 かつ currentEp >= numEpisodes の場合") {
+            そのとき("finale_confirmed を返す") {
                 val media = MyAnimeListResponse(
                     id = 2,
                     mediaType = "tv",
@@ -45,8 +45,8 @@ class 最終話判定ユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("status == finished_airing の場合") {
-            then("finale_confirmed を返す") {
+        場合("status == finished_airing の場合") {
+            そのとき("finale_confirmed を返す") {
                 val media = MyAnimeListResponse(
                     id = 3,
                     mediaType = "tv",
@@ -61,8 +61,8 @@ class 最終話判定ユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("currently_airing かつ numEpisodes == null の場合") {
-            then("unknown を返す") {
+        場合("currently_airing かつ numEpisodes == null の場合") {
+            そのとき("unknown を返す") {
                 val media = MyAnimeListResponse(
                     id = 4,
                     mediaType = "tv",
@@ -77,8 +77,8 @@ class 最終話判定ユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("上記いずれの条件も満たさない場合") {
-            then("unknown を返す") {
+        場合("上記いずれの条件も満たさない場合") {
+            そのとき("unknown を返す") {
                 val media = MyAnimeListResponse(
                     id = 5,
                     mediaType = "tv",
@@ -93,8 +93,8 @@ class 最終話判定ユースケーステスト : BehaviorSpec({
             }
         }
 
-        `when`("mediaType が tv ではない場合") {
-            then("unknown を返す") {
+        場合("mediaType が tv ではない場合") {
+            そのとき("unknown を返す") {
                 val media = MyAnimeListResponse(
                     id = 6,
                     mediaType = "movie",

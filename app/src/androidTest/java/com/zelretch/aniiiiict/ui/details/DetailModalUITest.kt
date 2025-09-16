@@ -75,7 +75,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_基本要素_タイトルと閉じるボタンが表示される() {
+    fun 詳細モーダルで基本要素でタイトルと閉じるボタンが表示される() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = createMockViewModel(programWithWork)
@@ -98,7 +98,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_閉じるボタンクリック_onDismissが呼ばれる() {
+    fun 詳細モーダルで閉じるボタンクリックでonDismissが呼ばれる() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = createMockViewModel(programWithWork)
@@ -122,7 +122,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_ステータスドロップダウン_展開して選択できる() {
+    fun 詳細モーダルでステータスドロップダウンで展開して選択できる() {
         // Arrange
         val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
         val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
@@ -172,7 +172,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_一括視聴確認ダイアログ_表示内容が正しい() {
+    fun 詳細モーダルで一括視聴確認ダイアログで表示内容が正しい() {
         // Arrange
         // 2エピソードのProgramWithWorkを用意
         val work = Work(
@@ -235,7 +235,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_一括視聴確認ダイアログ_キャンセルボタンクリック() {
+    fun 詳細モーダルで一括視聴確認ダイアログでキャンセルボタンをクリック() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
@@ -268,7 +268,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_一括視聴確認ダイアログ_確定ボタンクリック() {
+    fun 詳細モーダルで一括視聴確認ダイアログで確定ボタンをクリック() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val mockOnRefresh = mockk<() -> Unit>(relaxed = true)
@@ -302,7 +302,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_ローディング状態_プログレスインジケータが表示される() {
+    fun 詳細モーダルでローディング状態でプログレスインジケータが表示される() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = createMockViewModel(programWithWork)
@@ -324,7 +324,7 @@ class 詳細モーダルUIテスト {
     }
 
     @Test
-    fun detailModal_複数エピソード_正しい件数が表示される() {
+    fun 詳細モーダルで複数エピソードで正しい件数が表示される() {
         // Arrange
         // 3エピソードのProgramWithWorkを用意
         val work = Work(

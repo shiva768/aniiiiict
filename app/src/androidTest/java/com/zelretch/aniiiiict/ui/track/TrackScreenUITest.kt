@@ -36,7 +36,7 @@ class トラック画面UIテスト {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun trackScreen_初期状態_基本要素が表示される() {
+    fun トラック画面で初期状態で基本要素が表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val initialState = TrackUiState()
@@ -60,7 +60,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_エラー状態_スナックバーとエラーメッセージが表示される() {
+    fun トラック画面でエラー状態でスナックバーとエラーメッセージが表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val errorState = TrackUiState(error = "ネットワークエラーが発生しました")
@@ -84,7 +84,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_フィルターボタンクリック_ViewModelメソッドが呼ばれる() {
+    fun トラック画面でフィルターボタンをクリックするとViewModelメソッドが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val initialState = TrackUiState()
@@ -108,7 +108,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_番組リスト_プログラムカードが表示される() {
+    fun トラック画面で番組リストでプログラムカードが表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
 
@@ -166,7 +166,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_プログラムカードクリック_詳細モーダルが開く() {
+    fun トラック画面でプログラムカードをクリックすると詳細モーダルが開く() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
 
@@ -227,7 +227,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_フィナーレ確認_適切なスナックバーが表示される() {
+    fun トラック画面でフィナーレ確認で適切なスナックバーが表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val finaleState = TrackUiState(
@@ -256,7 +256,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_フィナーレ確認_はいボタンクリック() {
+    fun トラック画面でフィナーレ確認ではいボタンをクリックする() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val finaleState = TrackUiState(
@@ -283,7 +283,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_フィナーレ確認_いいえボタンクリックで閉じる() {
+    fun トラック画面でフィナーレ確認でいいえボタンをクリックして閉じる() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val finaleState = TrackUiState(
@@ -310,7 +310,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_エピソード記録ボタン_コールバックが正しく呼ばれる() {
+    fun トラック画面でエピソード記録ボタンでコールバックが正しく呼ばれる() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val onRecord = mockk<(String, String, StatusState) -> Unit>(relaxed = true)
@@ -365,7 +365,7 @@ class トラック画面UIテスト {
     }
 
     @Test
-    fun trackScreen_ローディング状態_プルトゥリフレッシュが表示される() {
+    fun トラック画面でローディング状態でプルトゥリフレッシュが表示される() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val loadingState = TrackUiState(isLoading = true)

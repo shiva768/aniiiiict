@@ -33,7 +33,7 @@ class ベースビューモデルテスト : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("BaseViewModelの実装") {
+    前提("BaseViewModelの実装") {
 
         lateinit var viewModel: TestableBaseViewModel
 
@@ -41,8 +41,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             viewModel = TestableBaseViewModel()
         }
 
-        `when`("executeWithLoadingが正常に完了する場合") {
-            then("ローディング状態が適切に管理される") {
+        場合("executeWithLoadingが正常に完了する場合") {
+            そのとき("ローディング状態が適切に管理される") {
                 runTest(testDispatcher) {
                     var processingStarted = false
                     var processingCompleted = false
@@ -74,8 +74,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("executeWithLoadingで例外が発生する場合") {
-            then("エラー状態が適切に設定される") {
+        場合("executeWithLoadingで例外が発生する場合") {
+            そのとき("エラー状態が適切に設定される") {
                 runTest(testDispatcher) {
                     val errorMessage = "テスト用エラー"
                     val exception = RuntimeException(errorMessage)
@@ -95,8 +95,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("executeWithLoadingで例外メッセージがnullの場合") {
-            then("デフォルトエラーメッセージが設定される") {
+        場合("executeWithLoadingで例外メッセージがnullの場合") {
+            そのとき("デフォルトエラーメッセージが設定される") {
                 runTest(testDispatcher) {
                     val exception = RuntimeException(null as String?)
 
@@ -113,8 +113,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("処理時間が1秒未満の場合") {
-            then("最小限のローディング時間（1秒）が確保される") {
+        場合("処理時間が1秒未満の場合") {
+            そのとき("最小限のローディング時間（1秒）が確保される") {
                 runTest(testDispatcher) {
                     val startTime = testDispatcher.scheduler.currentTime
                     var processingCompleted = false
@@ -141,8 +141,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("処理時間が1秒以上の場合") {
-            then("追加の待機時間は発生しない") {
+        場合("処理時間が1秒以上の場合") {
+            そのとき("追加の待機時間は発生しない") {
                 runTest(testDispatcher) {
                     val startTime = testDispatcher.scheduler.currentTime
 
@@ -160,8 +160,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("複数の処理が並行して実行される場合") {
-            then("それぞれが独立してローディング状態を管理する") {
+        場合("複数の処理が並行して実行される場合") {
+            そのとき("それぞれが独立してローディング状態を管理する") {
                 runTest(testDispatcher) {
                     var process1Completed = false
                     var process2Completed = false
@@ -191,8 +191,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("エラー状態をクリアする") {
-            then("エラー状態がnullになる") {
+        場合("エラー状態をクリアする") {
+            そのとき("エラー状態がnullになる") {
                 runTest(testDispatcher) {
                     // 先にエラー状態を設定
                     viewModel.updateErrorState("テストエラー")
@@ -205,8 +205,8 @@ class ベースビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("ローディング状態を手動で更新する") {
-            then("指定した状態が反映される") {
+        場合("ローディング状態を手動で更新する") {
+            そのとき("指定した状態が反映される") {
                 runTest(testDispatcher) {
                     viewModel.loadingState shouldBe false
 

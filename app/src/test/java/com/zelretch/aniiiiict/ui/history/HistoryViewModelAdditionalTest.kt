@@ -32,10 +32,10 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("HistoryViewModelのページネーション処理") {
+    前提("HistoryViewModelのページネーション処理") {
 
-        `when`("ページネーション境界値を処理") {
-            then("適切に境界条件を処理する") {
+        場合("ページネーション境界値を処理") {
+            そのとき("適切に境界条件を処理する") {
                 runTest {
                     data class PaginationState(
                         val hasNextPage: Boolean = false,
@@ -67,8 +67,8 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("カーソルが空文字列の場合") {
-            then("適切に処理される") {
+        場合("カーソルが空文字列の場合") {
+            そのとき("適切に処理される") {
                 runTest {
                     val emptyCursor = ""
                     val nullCursor: String? = null
@@ -85,10 +85,10 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
         }
     }
 
-    given("HistoryViewModelの検索機能") {
+    前提("HistoryViewModelの検索機能") {
 
-        `when`("検索クエリを正規化") {
-            then("適切にクエリが処理される") {
+        場合("検索クエリを正規化") {
+            そのとき("適切にクエリが処理される") {
                 runTest {
                     // クエリの正規化処理ロジック
                     fun normalizeQuery(query: String): String = query.trim().lowercase()
@@ -108,8 +108,8 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("検索クエリの境界値テスト") {
-            then("特殊な入力値を適切に処理") {
+        場合("検索クエリの境界値テスト") {
+            そのとき("特殊な入力値を適切に処理") {
                 runTest {
                     val testQueries = listOf(
                         "", // 空文字列
@@ -137,10 +137,10 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
         }
     }
 
-    given("HistoryViewModelのエラー処理") {
+    前提("HistoryViewModelのエラー処理") {
 
-        `when`("削除処理でエラーが発生") {
-            then("エラー状態が適切に設定される") {
+        場合("削除処理でエラーが発生") {
+            そのとき("エラー状態が適切に設定される") {
                 runTest {
                     data class DeleteState(
                         val isDeleting: Boolean = false,
@@ -178,8 +178,8 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("ネットワークエラーからの回復") {
-            then("適切にリトライ処理が行われる") {
+        場合("ネットワークエラーからの回復") {
+            そのとき("適切にリトライ処理が行われる") {
                 runTest {
                     data class NetworkState(
                         val isRetrying: Boolean = false,
@@ -218,10 +218,10 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
         }
     }
 
-    given("HistoryUiStateの状態管理") {
+    前提("HistoryUiStateの状態管理") {
 
-        `when`("初期状態を検証") {
-            then("適切なデフォルト値が設定される") {
+        場合("初期状態を検証") {
+            そのとき("適切なデフォルト値が設定される") {
                 runTest {
                     val initialState = HistoryUiState()
 
@@ -236,8 +236,8 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("状態を段階的に更新") {
-            then("各段階で適切な状態になる") {
+        場合("状態を段階的に更新") {
+            そのとき("各段階で適切な状態になる") {
                 runTest {
                     var state = HistoryUiState()
 
@@ -277,8 +277,8 @@ class 履歴ビューモデル追加テスト : BehaviorSpec({
             }
         }
 
-        `when`("データの整合性を検証") {
-            then("records と allRecords の関係が適切") {
+        場合("データの整合性を検証") {
+            そのとき("records と allRecords の関係が適切") {
                 runTest {
                     // 簡単な整合性チェックのロジック
                     val allRecordsCount = 3
