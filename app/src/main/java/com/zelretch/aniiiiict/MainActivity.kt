@@ -8,20 +8,28 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -139,6 +147,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
 
     // Remember if drawer was open when navigating away from track
     val shouldRestoreDrawerOpen = remember { mutableStateOf(false) }
+    
+    // Track the previous route to handle various navigation scenarios
+    val previousRoute = remember { mutableStateOf<String?>(null) }
 
     // Determine initial destination based on authentication state
     val startDestination = when {
@@ -195,10 +206,19 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
 
         // Restore drawer state when returning to track screen
         LaunchedEffect(selectedItem) {
+            // If we're returning to track screen from another screen and should restore drawer
             if (selectedItem == "track" && shouldRestoreDrawerOpen.value) {
                 drawerState.open()
                 shouldRestoreDrawerOpen.value = false
             }
+            
+            // Clear restore flag if user navigates to a different screen without going back to track
+            if (selectedItem != "track" && selectedItem != previousRoute.value) {
+                shouldRestoreDrawerOpen.value = false
+            }
+            
+            // Update previous route
+            previousRoute.value = selectedItem
         }
 
         NavHost(navController = navController, startDestination = startDestination) {
@@ -245,7 +265,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 HistoryScreen(uiState = historyUiState, actions = actions)
             }
             composable("settings") {
-                // TODO まだ
+                SettingsScreen(
+                    onNavigateBack = { navController.navigateUp() }
+                )
             }
         }
     }
@@ -262,6 +284,51 @@ private fun LoadingScreen() {
             verticalArrangement = Arrangement.Center
         ) {
             CircularProgressIndicator()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreen(onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "設定",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "設定画面",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "実装予定",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
