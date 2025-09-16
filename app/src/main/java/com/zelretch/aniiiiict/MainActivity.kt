@@ -56,6 +56,7 @@ import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -166,7 +167,6 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         selected = item.route == selectedItem,
                         onClick = {
                             // Remember if drawer was open when navigating from track screen
-                            // TODO: Implement proper drawer state restoration when Android tests are more stable
                             if (selectedItem == "track" && drawerState.isOpen) {
                                 shouldRestoreDrawerOpen.value = true
                             }
@@ -202,10 +202,15 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             }
         }
 
-        // TODO: Implement drawer state restoration when Android testing environment is more stable
-        // LaunchedEffect for future drawer state restoration
+        // Handle drawer state restoration when returning to track screen
         LaunchedEffect(selectedItem) {
-            // Future implementation will handle drawer restoration here
+            // If we're returning to track screen and should restore drawer
+            if (selectedItem == "track" && shouldRestoreDrawerOpen.value) {
+                // Use a coroutine to handle the drawer opening with proper timing
+                kotlinx.coroutines.delay(100) // Small delay to ensure screen is rendered
+                drawerState.open()
+                shouldRestoreDrawerOpen.value = false
+            }
         }
 
         NavHost(navController = navController, startDestination = startDestination) {
