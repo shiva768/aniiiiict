@@ -56,7 +56,6 @@ import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
