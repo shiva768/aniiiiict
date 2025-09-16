@@ -118,12 +118,25 @@ class AppNavigationTest {
         composeTestRule.onNodeWithContentDescription("戻る").performClick()
         composeTestRule.waitForIdle()
 
-        // Wait a bit for the drawer state to be restored
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
+        // Wait for navigation to complete and then for drawer to restore
+        composeTestRule.waitUntil(timeoutMillis = 8000) {
             try {
-                composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
-                composeTestRule.onNodeWithText("設定").assertIsDisplayed()
-                true
+                // First check if we're back on the track screen
+                val isOnTrackScreen = try {
+                    composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
+                    true
+                } catch (_: AssertionError) {
+                    false
+                }
+
+                // If we're on track screen, check if drawer is open
+                if (isOnTrackScreen) {
+                    composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
+                    composeTestRule.onNodeWithText("設定").assertIsDisplayed()
+                    true
+                } else {
+                    false
+                }
             } catch (_: AssertionError) {
                 false
             }
@@ -173,12 +186,25 @@ class AppNavigationTest {
         composeTestRule.onNodeWithContentDescription("戻る").performClick()
         composeTestRule.waitForIdle()
 
-        // Wait a bit for the drawer state to be restored
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
+        // Wait for navigation to complete and then for drawer to restore
+        composeTestRule.waitUntil(timeoutMillis = 8000) {
             try {
-                composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
-                composeTestRule.onNodeWithText("設定").assertIsDisplayed()
-                true
+                // First check if we're back on the track screen
+                val isOnTrackScreen = try {
+                    composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
+                    true
+                } catch (_: AssertionError) {
+                    false
+                }
+
+                // If we're on track screen, check if drawer is open
+                if (isOnTrackScreen) {
+                    composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
+                    composeTestRule.onNodeWithText("設定").assertIsDisplayed()
+                    true
+                } else {
+                    false
+                }
             } catch (_: AssertionError) {
                 false
             }
