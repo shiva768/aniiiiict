@@ -147,7 +147,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
 
     // Remember if drawer was open when navigating away from track
     val shouldRestoreDrawerOpen = remember { mutableStateOf(false) }
-    
+
     // Track the previous route to handle various navigation scenarios
     val previousRoute = remember { mutableStateOf<String?>(null) }
 
@@ -211,12 +211,12 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 drawerState.open()
                 shouldRestoreDrawerOpen.value = false
             }
-            
+
             // Clear restore flag if user navigates to a different screen without going back to track
             if (selectedItem != "track" && selectedItem != previousRoute.value) {
                 shouldRestoreDrawerOpen.value = false
             }
-            
+
             // Update previous route
             previousRoute.value = selectedItem
         }
