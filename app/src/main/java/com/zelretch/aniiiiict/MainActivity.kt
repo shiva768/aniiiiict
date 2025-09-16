@@ -27,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -135,6 +137,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val items = listOf(Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
+    // Remember if drawer was open when navigating away from track
+    val shouldRestoreDrawerOpen = remember { mutableStateOf(false) }
+
     // Determine initial destination based on authentication state
     val startDestination = when {
         mainUiState.isLoading -> "loading"
@@ -152,6 +157,10 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         label = { Text(item.title) },
                         selected = item.route == selectedItem,
                         onClick = {
+                            // Remember if drawer was open when navigating from track screen
+                            if (selectedItem == "track" && drawerState.isOpen) {
+                                shouldRestoreDrawerOpen.value = true
+                            }
                             scope.launch { drawerState.close() }
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -181,6 +190,14 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            }
+        }
+
+        // Restore drawer state when returning to track screen
+        LaunchedEffect(selectedItem) {
+            if (selectedItem == "track" && shouldRestoreDrawerOpen.value) {
+                drawerState.open()
+                shouldRestoreDrawerOpen.value = false
             }
         }
 

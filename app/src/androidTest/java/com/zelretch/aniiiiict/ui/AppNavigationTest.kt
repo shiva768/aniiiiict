@@ -78,4 +78,59 @@ class AppNavigationTest {
         composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
         composeTestRule.onNodeWithText("設定").assertIsDisplayed()
     }
+
+    @Test
+    fun navigationDrawer_navigateToHistoryAndBack_keepsDrawerOpen() {
+        // Wait for the app to fully load and navigate to the track screen
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            try {
+                composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+
+        composeTestRule.waitForIdle()
+
+        // Open the drawer
+        composeTestRule.onNodeWithContentDescription("メニュー").performClick()
+        composeTestRule.waitForIdle()
+
+        // Verify drawer is open
+        composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
+
+        // Navigate to history
+        composeTestRule.onNodeWithText("記録履歴").performClick()
+        composeTestRule.waitForIdle()
+
+        // Wait for history screen to load
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            try {
+                composeTestRule.onNodeWithText("視聴履歴").assertIsDisplayed()
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+
+        // Navigate back to track screen
+        composeTestRule.onNodeWithContentDescription("戻る").performClick()
+        composeTestRule.waitForIdle()
+
+        // Wait a bit for the drawer state to be restored
+        composeTestRule.waitUntil(timeoutMillis = 3000) {
+            try {
+                composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
+                composeTestRule.onNodeWithText("設定").assertIsDisplayed()
+                true
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+
+        // Verify drawer is open after returning to track screen
+        composeTestRule.onNodeWithText("記録履歴").assertIsDisplayed()
+        composeTestRule.onNodeWithText("設定").assertIsDisplayed()
+    }
 }
