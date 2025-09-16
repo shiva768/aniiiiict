@@ -34,7 +34,7 @@ class 履歴画面UIテスト {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun historyScreen_初期状態_基本要素が表示される() {
+    fun 履歴画面で初期状態で基本要素が表示される() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val initialState = HistoryUiState()
@@ -73,7 +73,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_空の状態_適切なメッセージが表示される() {
+    fun 履歴画面で空の状態で適切なメッセージが表示される() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val emptyState = HistoryUiState(
@@ -105,7 +105,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_履歴データ_レコードが表示される() {
+    fun 履歴画面で履歴データでレコードが表示される() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val sampleWork = Work(
@@ -164,7 +164,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_戻るボタンクリック_ナビゲーションコールバックが呼ばれる() {
+    fun 履歴画面で戻るボタンをクリックするとナビゲーションコールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnNavigateBack = mockk<() -> Unit>(relaxed = true)
@@ -195,7 +195,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_検索入力_コールバックが呼ばれる() {
+    fun 履歴画面で検索入力するとコールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
@@ -226,7 +226,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_検索文字入力済み_クリアボタンが表示される() {
+    fun 履歴画面で検索文字入力済みでクリアボタンが表示される() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val stateWithSearchQuery = HistoryUiState(searchQuery = "テストクエリ")
@@ -254,7 +254,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_クリアボタンクリック_検索文字がクリアされる() {
+    fun 履歴画面でクリアボタンをクリックすると検索文字がクリアされる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnSearchQueryChange = mockk<(String) -> Unit>(relaxed = true)
@@ -285,7 +285,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_削除ボタンクリック_削除コールバックが呼ばれる() {
+    fun 履歴画面で削除ボタンをクリックすると削除コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnDeleteRecord = mockk<(String) -> Unit>(relaxed = true)
@@ -343,7 +343,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_エラー状態_エラーメッセージと再試行ボタンが表示される() {
+    fun 履歴画面でエラー状態でエラーメッセージと再試行ボタンが表示される() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val errorState = HistoryUiState(
@@ -378,7 +378,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_再試行ボタンクリック_再試行コールバックが呼ばれる() {
+    fun 履歴画面で再試行ボタンをクリックすると再試行コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnRetry = mockk<() -> Unit>(relaxed = true)
@@ -413,7 +413,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_次のページあり_もっと見るボタンが表示される() {
+    fun 履歴画面で次のページありでもっと見るボタンが表示される() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val stateWithNextPage = HistoryUiState(
@@ -445,7 +445,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_もっと見るボタンクリック_次ページ読み込みコールバックが呼ばれる() {
+    fun 履歴画面でもっと見るボタンをクリックすると次ページ読み込みコールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnLoadNextPage = mockk<() -> Unit>(relaxed = true)
@@ -480,7 +480,7 @@ class 履歴画面UIテスト {
     }
 
     @Test
-    fun historyScreen_レコードカードクリック_詳細表示コールバックが呼ばれる() {
+    fun 履歴画面でレコードカードをクリックすると詳細表示コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnRecordClick = mockk<(Record) -> Unit>(relaxed = true)

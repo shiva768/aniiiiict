@@ -31,7 +31,7 @@ class メインビューモデルテスト : BehaviorSpec({
         Dispatchers.resetMain()
     }
 
-    given("MainViewModel") {
+    前提("MainViewModel") {
         val authUseCase = mockk<AnnictAuthUseCase>(relaxUnitFun = true)
         val context = mockk<Context>()
         val customTabsIntent = mockk<CustomTabsIntent>(relaxUnitFun = true)
@@ -44,8 +44,8 @@ class メインビューモデルテスト : BehaviorSpec({
             coEvery { authUseCase.isAuthenticated() } returns false
         }
 
-        `when`("初期状態") {
-            then("認証されていない") {
+        場合("初期状態") {
+            そのとき("認証されていない") {
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe false
                 viewModel.uiState.value.isAuthenticating shouldBe false
@@ -53,7 +53,7 @@ class メインビューモデルテスト : BehaviorSpec({
                 viewModel.uiState.value.isLoading shouldBe false
             }
 
-            then("ViewModelの初期化時に認証状態がチェックされる") {
+            そのとき("ViewModelの初期化時に認証状態がチェックされる") {
                 coEvery { authUseCase.isAuthenticated() } returns true
                 val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -63,8 +63,8 @@ class メインビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("認証を開始") {
-            then("isAuthenticatingがtrueになる") {
+        場合("認証を開始") {
+            そのとき("isAuthenticatingがtrueになる") {
                 coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
                 viewModel.startAuth()
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -74,8 +74,8 @@ class メインビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("認証コードを受け取る") {
-            then("有効なコードで認証が成功する") {
+        場合("認証コードを受け取る") {
+            そのとき("有効なコードで認証が成功する") {
                 coEvery { authUseCase.handleAuthCallback(any()) } returns true
                 viewModel.handleAuthCallback("valid_code")
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -85,7 +85,7 @@ class メインビューモデルテスト : BehaviorSpec({
                 coVerify { authUseCase.handleAuthCallback("valid_code") }
             }
 
-            then("無効なコードでエラーが発生する") {
+            そのとき("無効なコードでエラーが発生する") {
                 coEvery { authUseCase.handleAuthCallback(any()) } returns false
                 viewModel.handleAuthCallback("invalid_code")
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -95,7 +95,7 @@ class メインビューモデルテスト : BehaviorSpec({
                 coVerify { authUseCase.handleAuthCallback("invalid_code") }
             }
 
-            then("nullのコードでエラーが発生する") {
+            そのとき("nullのコードでエラーが発生する") {
                 viewModel.handleAuthCallback(null)
                 testDispatcher.scheduler.advanceUntilIdle()
                 viewModel.uiState.value.isAuthenticated shouldBe false
@@ -104,8 +104,8 @@ class メインビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("認証状態を確認") {
-            then("認証済みの場合") {
+        場合("認証状態を確認") {
+            そのとき("認証済みの場合") {
                 coEvery { authUseCase.isAuthenticated() } returns true
                 viewModel.checkAuthentication()
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -113,7 +113,7 @@ class メインビューモデルテスト : BehaviorSpec({
                 coVerify { authUseCase.isAuthenticated() }
             }
 
-            then("未認証の場合") {
+            そのとき("未認証の場合") {
                 coEvery { authUseCase.isAuthenticated() } returns false
                 viewModel.checkAuthentication()
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -121,7 +121,7 @@ class メインビューモデルテスト : BehaviorSpec({
                 coVerify { authUseCase.isAuthenticated() }
             }
 
-            then("認証状態確認中はローディング状態になることを確認") {
+            そのとき("認証状態確認中はローディング状態になることを確認") {
                 coEvery { authUseCase.isAuthenticated() } returns true
                 viewModel.checkAuthentication()
                 testDispatcher.scheduler.advanceUntilIdle()
@@ -132,8 +132,8 @@ class メインビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("エラーをクリア") {
-            then("エラー状態がリセットされる") {
+        場合("エラーをクリア") {
+            そのとき("エラー状態がリセットされる") {
                 viewModel.updateErrorState("テストエラー")
                 viewModel.uiState.value.error shouldNotBe null
                 viewModel.clearError()
@@ -141,8 +141,8 @@ class メインビューモデルテスト : BehaviorSpec({
             }
         }
 
-        `when`("ローディング状態") {
-            then("updateLoadingStateを呼ぶ") {
+        場合("ローディング状態") {
+            そのとき("updateLoadingStateを呼ぶ") {
                 viewModel.updateLoadingState(true)
                 viewModel.uiState.value.isLoading shouldBe true
             }

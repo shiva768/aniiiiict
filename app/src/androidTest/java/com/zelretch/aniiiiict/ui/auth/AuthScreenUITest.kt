@@ -24,7 +24,7 @@ class 認証画面UIテスト {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun authScreen_未認証状態_ログインボタンが表示される() {
+    fun 認証画面で未認証状態でログインボタンが表示される() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = false,
@@ -44,7 +44,7 @@ class 認証画面UIテスト {
     }
 
     @Test
-    fun authScreen_認証中状態_ローディング表示される() {
+    fun 認証画面で認証中状態でローディングが表示される() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = true,
@@ -65,7 +65,7 @@ class 認証画面UIテスト {
     }
 
     @Test
-    fun authScreen_ログインボタンクリック_onLoginClickが呼ばれる() {
+    fun 認証画面でログインボタンをクリックするとonLoginClickが呼ばれる() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = false,
@@ -88,7 +88,7 @@ class 認証画面UIテスト {
     }
 
     @Test
-    fun authScreen_認証完了状態_適切な表示() {
+    fun 認証画面で認証完了状態で適切な表示がされる() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = false,
@@ -110,7 +110,7 @@ class 認証画面UIテスト {
     }
 
     @Test
-    fun authScreen_エラー状態_エラーメッセージ表示() {
+    fun 認証画面でエラー状態でエラーメッセージが表示される() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = false,
@@ -133,7 +133,7 @@ class 認証画面UIテスト {
     }
 
     @Test
-    fun authScreen_タイトルとロゴ_表示される() {
+    fun 認証画面でタイトルとロゴが表示される() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = false,
@@ -155,7 +155,7 @@ class 認証画面UIテスト {
     }
 
     @Test
-    fun authScreen_複数回クリック_複数回コールバックが呼ばれる() {
+    fun 認証画面で複数回クリックすると複数回コールバックが呼ばれる() {
         // Arrange
         val uiState = MainUiState(
             isAuthenticating = false,

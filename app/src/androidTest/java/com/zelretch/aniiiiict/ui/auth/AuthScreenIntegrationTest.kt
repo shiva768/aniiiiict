@@ -67,7 +67,7 @@ class 認証画面統合テスト {
     }
 
     @Test
-    fun authScreen_ログインボタンクリック_getAuthUrlが呼ばれる() {
+    fun 認証画面でログインボタンをクリックするとgetAuthUrlが呼ばれる() {
         // Arrange
         val context: Context = ApplicationProvider.getApplicationContext()
         val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
@@ -92,7 +92,7 @@ class 認証画面統合テスト {
     }
 
     @Test
-    fun authScreen_コールバック処理_handleAuthCallbackが呼ばれる() {
+    fun 認証画面でコールバック処理を行うとhandleAuthCallbackが呼ばれる() {
         // Arrange
         val context: Context = ApplicationProvider.getApplicationContext()
         val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
@@ -112,7 +112,7 @@ class 認証画面統合テスト {
     }
 
     @Test
-    fun authScreen_認証状態確認_isAuthenticatedが呼ばれる() {
+    fun 認証画面で認証状態を確認するとisAuthenticatedが呼ばれる() {
         // Arrange
         val context: Context = ApplicationProvider.getApplicationContext()
         val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
@@ -132,7 +132,7 @@ class 認証画面統合テスト {
     }
 
     @Test
-    fun authScreen_認証失敗時_適切にエラーハンドリング() {
+    fun 認証画面で認証失敗時に適切にエラーハンドリングされる() {
         // Arrange
         coEvery { annictRepository.getAuthUrl() } throws RuntimeException("認証エラー")
 
@@ -159,7 +159,7 @@ class 認証画面統合テスト {
     }
 
     @Test
-    fun authScreen_無効なコールバック_handleAuthCallbackが呼ばれる() {
+    fun 認証画面で無効なコールバックでhandleAuthCallbackが呼ばれる() {
         // Arrange
         coEvery { annictRepository.handleAuthCallback("INVALID") } returns false
 
@@ -181,7 +181,7 @@ class 認証画面統合テスト {
     }
 
     @Test
-    fun authScreen_初期化時認証確認_自動的にisAuthenticatedが呼ばれる() {
+    fun 認証画面で初期化時認証確認で自動的にisAuthenticatedが呼ばれる() {
         // Arrange & Act - ViewModelの初期化（init{}ブロックで認証確認が実行される）
         val context: Context = ApplicationProvider.getApplicationContext()
         MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
