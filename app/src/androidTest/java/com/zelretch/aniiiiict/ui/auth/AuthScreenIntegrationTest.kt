@@ -12,7 +12,7 @@ import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
-import com.zelretch.aniiiiict.testing.HiltComposeTestRule
+import com.zelretch.aniiiiict.testing.ヒルトコンポーズテストルール
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -35,7 +35,7 @@ import javax.inject.Inject
 class 認証画面統合テスト {
 
     @get:Rule
-    val testRule = HiltComposeTestRule(this)
+    val testRule = ヒルトコンポーズテストルール(this)
 
     @Inject
     lateinit var annictAuthUseCase: AnnictAuthUseCase

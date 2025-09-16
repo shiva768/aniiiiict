@@ -17,7 +17,7 @@ import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiict.testing.HiltComposeTestRule
+import com.zelretch.aniiiiict.testing.ヒルトコンポーズテストルール
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -42,7 +42,7 @@ import javax.inject.Inject
 class 詳細モーダル統合テスト {
 
     @get:Rule
-    val testRule = HiltComposeTestRule(this)
+    val testRule = ヒルトコンポーズテストルール(this)
 
     @Inject
     lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase

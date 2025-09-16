@@ -25,7 +25,7 @@ import org.junit.runners.model.Statement
  *
  *     // このルールを宣言するだけで、HiltとComposeの準備が整う
  *     @get:Rule
- *     val testRule = HiltComposeTestRule(this)
+ *     val testRule = ヒルトコンポーズテストルール(this)
  *
  *     // @BindValueを使って、テストしたいRepositoryのモックをDIコンテナに提供
  *     @BindValue

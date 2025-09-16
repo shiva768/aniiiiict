@@ -22,7 +22,7 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiict.testing.HiltComposeTestRule
+import com.zelretch.aniiiiict.testing.ヒルトコンポーズテストルール
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -48,7 +48,7 @@ import javax.inject.Inject
 class トラック画面統合テスト {
 
     @get:Rule
-    val testRule = HiltComposeTestRule(this)
+    val testRule = ヒルトコンポーズテストルール(this)
 
     // --- Hilt Bindings for Test ---
     @BindValue

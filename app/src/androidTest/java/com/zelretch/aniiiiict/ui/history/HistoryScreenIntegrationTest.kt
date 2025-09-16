@@ -17,7 +17,7 @@ import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
-import com.zelretch.aniiiiict.testing.HiltComposeTestRule
+import com.zelretch.aniiiiict.testing.ヒルトコンポーズテストルール
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -44,7 +44,7 @@ import javax.inject.Inject
 class 履歴画面統合テスト {
 
     @get:Rule
-    val testRule = HiltComposeTestRule(this)
+    val testRule = ヒルトコンポーズテストルール(this)
 
     @Inject
     lateinit var loadRecordsUseCase: LoadRecordsUseCase
