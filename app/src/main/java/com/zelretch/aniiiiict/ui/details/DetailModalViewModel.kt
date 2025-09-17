@@ -145,6 +145,9 @@ class DetailModalViewModel @Inject constructor(
                     }
                 ).getOrThrow()
             }.onSuccess {
+                // Handle finale detection for the last recorded episode BEFORE removing programs
+                handleFinaleDetectionAfterBulk(episodeIds.last())
+                
                 val currentPrograms = _state.value.programs
                 val targetPrograms = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
@@ -160,9 +163,6 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
-
-                // Handle finale detection for the last recorded episode
-                handleFinaleDetectionAfterBulk(episodeIds.last())
             }.onFailure { e ->
                 val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.bulkRecordEpisodes")
                 ErrorHandler.logError("DetailModalViewModel", "bulkRecordEpisodes", info)
