@@ -85,7 +85,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         // 2エピソードのProgramWithWork（WATCHING）
         val work = Work(
@@ -128,7 +134,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-status",
@@ -167,7 +179,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-single",
@@ -204,7 +222,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-flow",
