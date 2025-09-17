@@ -502,4 +502,114 @@ class DetailModalIntegrationTest {
         // Assert: ステータスがWATCHEDに更新される
         coVerify(exactly = 1) { annictRepository.updateWorkViewStatus("work-finale-confirm", StatusState.WATCHED) }
     }
+
+    @Test
+    fun detailModal_個別記録フィナーレ検知_最終話の場合確認ダイアログが表示される() {
+        val viewModel = DetailModalViewModel(
+            bulkRecordEpisodesUseCase,
+            watchEpisodeUseCase,
+            updateViewStateUseCase,
+            judgeFinaleUseCase
+        )
+
+        // 最終話(12話)のProgramWithWork
+        val work = Work(
+            id = "work-individual-finale",
+            title = "個別記録最終話テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            malAnimeId = "55555", // MAL ID設定
+            viewerStatusState = StatusState.WATCHING
+        )
+        val ep12 = Episode(id = "ep12", title = "第12話", numberText = "12", number = 12)
+        val program12 = Program(id = "p12", episode = ep12, channel = channel, startedAt = startedAt)
+        val pw = ProgramWithWork(program = program12, work = work)
+
+        // Mock JudgeFinaleUseCase to return finale confirmed for episode 12
+        coEvery { judgeFinaleUseCase(12, 55555) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
+
+        // Act
+        testRule.composeTestRule.setContent {
+            DetailModal(
+                programWithWork = pw,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // 個別記録実行（12話を記録）
+        viewModel.initialize(pw)
+        testRule.composeTestRule.waitForIdle()
+
+        // 「記録する」ボタンをクリック
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
+
+        // Assert - フィナーレ確認ダイアログが表示される
+        testRule.composeTestRule.onNodeWithText("最終話を視聴しました！").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("視聴済みにする").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("キャンセル").assertIsDisplayed()
+    }
+
+    @Test
+    fun detailModal_個別記録フィナーレ検知_最終話でない場合確認ダイアログが表示されない() {
+        val viewModel = DetailModalViewModel(
+            bulkRecordEpisodesUseCase,
+            watchEpisodeUseCase,
+            updateViewStateUseCase,
+            judgeFinaleUseCase
+        )
+
+        // 最終話でない(8話)のProgramWithWork
+        val work = Work(
+            id = "work-individual-not-finale",
+            title = "個別記録非最終話テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            malAnimeId = "66666", // MAL ID設定
+            viewerStatusState = StatusState.WATCHING
+        )
+        val ep8 = Episode(id = "ep8", title = "第8話", numberText = "8", number = 8)
+        val program8 = Program(id = "p8", episode = ep8, channel = channel, startedAt = startedAt)
+        val pw = ProgramWithWork(program = program8, work = work)
+
+        // Mock JudgeFinaleUseCase to return NOT finale for episode 8
+        coEvery { judgeFinaleUseCase(8, 66666) } returns JudgeFinaleResult(FinaleState.NOT_FINALE, false)
+
+        // Act
+        testRule.composeTestRule.setContent {
+            DetailModal(
+                programWithWork = pw,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // 個別記録実行（8話を記録）
+        viewModel.initialize(pw)
+        testRule.composeTestRule.waitForIdle()
+
+        // 「記録する」ボタンをクリック
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
+
+        // Assert - フィナーレ確認ダイアログが表示されない
+        try {
+            testRule.composeTestRule.onNodeWithText("最終話を視聴しました！").assertIsDisplayed()
+            throw AssertionError("フィナーレ確認ダイアログが表示されるべきではない")
+        } catch (e: AssertionError) {
+            if (e.message?.contains("フィナーレ確認ダイアログが表示されるべきではない") == true) {
+                throw e
+            }
+            // Expected - dialog should not exist
+        }
+    }
 }

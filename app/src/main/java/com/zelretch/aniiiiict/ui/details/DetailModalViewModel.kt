@@ -111,6 +111,9 @@ class DetailModalViewModel @Inject constructor(
             runCatching {
                 watchEpisodeUseCase(episodeId, workId, status).getOrThrow()
             }.onSuccess {
+                // Handle finale detection for the recorded episode BEFORE removing from list
+                handleFinaleDetectionAfterIndividual(episodeId)
+
                 // 記録したエピソードのプログラムを表示から消す
                 _state.update {
                     it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
@@ -173,6 +176,26 @@ class DetailModalViewModel @Inject constructor(
                         bulkRecordingTotal = 0
                     )
                 }
+            }
+        }
+    }
+
+    private suspend fun handleFinaleDetectionAfterIndividual(episodeId: String) {
+        val work = _state.value.work ?: return
+
+        val currentEpisode = _state.value.programs.find { it.episode.id == episodeId }
+        val episodeNumber = currentEpisode?.episode?.number ?: return
+
+        val malAnimeId = work.malAnimeId ?: return
+
+        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId.toInt())
+
+        if (judgeResult.isFinale) {
+            _state.update { currentState ->
+                currentState.copy(
+                    showFinaleConfirmationForWorkId = work.id,
+                    showFinaleConfirmationForEpisodeNumber = episodeNumber
+                )
             }
         }
     }
