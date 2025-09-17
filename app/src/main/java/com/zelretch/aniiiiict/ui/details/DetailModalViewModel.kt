@@ -147,7 +147,7 @@ class DetailModalViewModel @Inject constructor(
             }.onSuccess {
                 // Handle finale detection for the last recorded episode BEFORE removing programs
                 handleFinaleDetectionAfterBulk(episodeIds.last())
-                
+
                 val currentPrograms = _state.value.programs
                 val targetPrograms = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
