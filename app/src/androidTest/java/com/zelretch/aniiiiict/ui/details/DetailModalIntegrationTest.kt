@@ -524,8 +524,8 @@ class DetailModalIntegrationTest {
             viewerStatusState = StatusState.WATCHING
         )
         val ep12 = Episode(id = "ep12", title = "第12話", numberText = "12", number = 12)
-        val program12 = Program(id = "p12", episode = ep12, channel = channel, startedAt = startedAt)
-        val pw = ProgramWithWork(program = program12, work = work)
+        val program12 = Program(id = "p12", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep12)
+        val pw = ProgramWithWork(programs = listOf(program12), firstProgram = program12, work = work)
 
         // Mock JudgeFinaleUseCase to return finale confirmed for episode 12
         coEvery { judgeFinaleUseCase(12, 55555) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
@@ -576,8 +576,8 @@ class DetailModalIntegrationTest {
             viewerStatusState = StatusState.WATCHING
         )
         val ep8 = Episode(id = "ep8", title = "第8話", numberText = "8", number = 8)
-        val program8 = Program(id = "p8", episode = ep8, channel = channel, startedAt = startedAt)
-        val pw = ProgramWithWork(program = program8, work = work)
+        val program8 = Program(id = "p8", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep8)
+        val pw = ProgramWithWork(programs = listOf(program8), firstProgram = program8, work = work)
 
         // Mock JudgeFinaleUseCase to return NOT finale for episode 8
         coEvery { judgeFinaleUseCase(8, 66666) } returns JudgeFinaleResult(FinaleState.NOT_FINALE, false)
