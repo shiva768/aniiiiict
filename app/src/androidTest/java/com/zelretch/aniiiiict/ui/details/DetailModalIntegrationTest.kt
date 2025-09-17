@@ -7,7 +7,6 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
-import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
@@ -78,7 +77,7 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
-    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>() {
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository> {
         // No default behavior - all calls must be explicitly mocked
     }
 
