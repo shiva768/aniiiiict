@@ -38,6 +38,8 @@ To run all unit tests and lint checks, use the following command:
 
 This command will execute all unit tests in the project. The build will fail if any tests fail.
 
+When submitting, it is required that the unit tests pass without fail.
+
 ### Instrumentation Tests (`connectedAndroidTest`)
 
 Instrumentation tests (located in the `app/src/androidTest` directory) require a connected Android device or emulator. Due to the limitations of the development environment, you cannot run these tests directly.
