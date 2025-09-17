@@ -17,6 +17,8 @@ import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.FinaleState
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -56,8 +58,12 @@ class DetailModalIntegrationTest {
     @Inject
     lateinit var updateViewStateUseCase: UpdateViewStateUseCase
 
-    @Inject
-    lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    @BindValue
+    @JvmField
+    val judgeFinaleUseCase: JudgeFinaleUseCase = mockk<JudgeFinaleUseCase>().apply {
+        // Default behavior - should not be called unless explicitly mocked
+        coEvery { this@apply(any(), any()) } returns JudgeFinaleResult(FinaleState.UNKNOWN, false)
+    }
 
     @BindValue
     @JvmField
@@ -72,9 +78,8 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
-    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>().apply {
-        // Default behavior for tests that don't specifically mock this
-        coEvery { getMedia(any()) } returns Result.failure(Exception("No mock setup for this media ID"))
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>() {
+        // No default behavior - all calls must be explicitly mocked
     }
 
     @BindValue
@@ -298,15 +303,8 @@ class DetailModalIntegrationTest {
         val p12 = Program(id = "p12", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep12)
         val pw = ProgramWithWork(programs = listOf(p11, p12), firstProgram = p11, work = work)
 
-        // MyAnimeList APIのモック設定：12話で終了する作品
-        val malResponse = MyAnimeListResponse(
-            id = 12345,
-            mediaType = "tv",
-            numEpisodes = 12,
-            status = "currently_airing",
-            broadcast = null
-        )
-        coEvery { myAnimeListRepository.getMedia(12345) } returns Result.success(malResponse)
+        // Mock JudgeFinaleUseCase to return finale detection for episode 12
+        coEvery { judgeFinaleUseCase(12, 12345) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -360,15 +358,8 @@ class DetailModalIntegrationTest {
         val p10 = Program(id = "p10", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep10)
         val pw = ProgramWithWork(programs = listOf(p9, p10), firstProgram = p9, work = work)
 
-        // MyAnimeList APIのモック設定：12話で終了する作品（10話は最終話ではない）
-        val malResponse = MyAnimeListResponse(
-            id = 54321,
-            mediaType = "tv",
-            numEpisodes = 12,
-            status = "currently_airing",
-            broadcast = null
-        )
-        coEvery { myAnimeListRepository.getMedia(54321) } returns Result.success(malResponse)
+        // Mock JudgeFinaleUseCase to return NOT finale for episode 10
+        coEvery { judgeFinaleUseCase(10, 54321) } returns JudgeFinaleResult(FinaleState.NOT_FINALE, false)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -484,15 +475,8 @@ class DetailModalIntegrationTest {
         val p12 = Program(id = "p12", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep12)
         val pw = ProgramWithWork(programs = listOf(p12), firstProgram = p12, work = work)
 
-        // MyAnimeList APIのモック設定：12話で終了する作品
-        val malResponse = MyAnimeListResponse(
-            id = 99999,
-            mediaType = "tv",
-            numEpisodes = 12,
-            status = "currently_airing",
-            broadcast = null
-        )
-        coEvery { myAnimeListRepository.getMedia(99999) } returns Result.success(malResponse)
+        // Mock JudgeFinaleUseCase to return finale for episode 12
+        coEvery { judgeFinaleUseCase(12, 99999) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
 
         // Act
         testRule.composeTestRule.setContent {
