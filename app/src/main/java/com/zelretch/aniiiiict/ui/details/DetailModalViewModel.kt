@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorHandler
@@ -30,20 +32,25 @@ data class DetailModalState(
     val workId: String = "",
     val isBulkRecording: Boolean = false,
     val bulkRecordingProgress: Int = 0,
-    val bulkRecordingTotal: Int = 0
+    val bulkRecordingTotal: Int = 0,
+    val showFinaleConfirmationForWorkId: String? = null,
+    val showFinaleConfirmationForEpisodeNumber: Int? = null,
+    val work: Work? = null
 )
 
 sealed interface DetailModalEvent {
     object StatusChanged : DetailModalEvent
     object EpisodesRecorded : DetailModalEvent
     object BulkEpisodesRecorded : DetailModalEvent
+    data class ShowFinaleConfirmation(val workId: String, val episodeNumber: Int) : DetailModalEvent
 }
 
 @HiltViewModel
 class DetailModalViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
-    private val updateViewStateUseCase: UpdateViewStateUseCase
+    private val updateViewStateUseCase: UpdateViewStateUseCase,
+    private val judgeFinaleUseCase: JudgeFinaleUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DetailModalState())
@@ -57,7 +64,8 @@ class DetailModalViewModel @Inject constructor(
             it.copy(
                 programs = programWithWork.programs,
                 selectedStatus = programWithWork.work.viewerStatusState,
-                workId = programWithWork.work.id
+                workId = programWithWork.work.id,
+                work = programWithWork.work
             )
         }
     }
@@ -152,6 +160,9 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
                 _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+
+                // Handle finale detection for the last recorded episode
+                handleFinaleDetectionAfterBulk(episodeIds.last())
             }.onFailure { e ->
                 val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.bulkRecordEpisodes")
                 ErrorHandler.logError("DetailModalViewModel", "bulkRecordEpisodes", info)
@@ -162,6 +173,55 @@ class DetailModalViewModel @Inject constructor(
                         bulkRecordingTotal = 0
                     )
                 }
+            }
+        }
+    }
+
+    private suspend fun handleFinaleDetectionAfterBulk(lastEpisodeId: String) {
+        val work = _state.value.work ?: return
+        val lastEpisode = _state.value.programs.find { it.episode.id == lastEpisodeId } ?: return
+
+        val episodeNumber = lastEpisode.episode.number ?: return
+        val malAnimeId = work.malAnimeId ?: return
+
+        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId.toInt())
+
+        if (judgeResult.isFinale) {
+            _state.update { currentState ->
+                currentState.copy(
+                    showFinaleConfirmationForWorkId = work.id,
+                    showFinaleConfirmationForEpisodeNumber = episodeNumber
+                )
+            }
+            _events.emit(DetailModalEvent.ShowFinaleConfirmation(work.id, episodeNumber))
+        }
+    }
+
+    fun hideFinaleConfirmation() {
+        _state.update {
+            it.copy(
+                showFinaleConfirmationForWorkId = null,
+                showFinaleConfirmationForEpisodeNumber = null
+            )
+        }
+    }
+
+    fun confirmFinaleWatchedStatus() {
+        val workId = _state.value.showFinaleConfirmationForWorkId ?: return
+        viewModelScope.launch {
+            runCatching {
+                updateViewStateUseCase(workId, StatusState.WATCHED)
+            }.onSuccess {
+                _state.update {
+                    it.copy(
+                        showFinaleConfirmationForWorkId = null,
+                        showFinaleConfirmationForEpisodeNumber = null
+                    )
+                }
+                _events.emit(DetailModalEvent.StatusChanged)
+            }.onFailure { e ->
+                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.confirmFinaleWatchedStatus")
+                ErrorHandler.logError("DetailModalViewModel", "confirmFinaleWatchedStatus", info)
             }
         }
     }

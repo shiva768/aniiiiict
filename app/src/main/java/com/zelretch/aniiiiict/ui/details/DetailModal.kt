@@ -19,6 +19,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,6 +83,10 @@ private fun DetailModalLaunchedEffects(
                 is DetailModalEvent.EpisodesRecorded,
                 is DetailModalEvent.BulkEpisodesRecorded
                 -> onRefresh()
+                is DetailModalEvent.ShowFinaleConfirmation -> {
+                    // Finale confirmation will be handled via state observation
+                    // No action needed here as the UI will show the dialog based on state
+                }
             }
         }
     }
@@ -135,6 +140,35 @@ private fun DetailModalDialogs(
                 }
             },
             confirmButton = { }
+        )
+    }
+
+    // Finale confirmation dialog
+    if (state.showFinaleConfirmationForWorkId != null && state.showFinaleConfirmationForEpisodeNumber != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideFinaleConfirmation() },
+            title = {
+                Text(
+                    text = "最終話記録完了",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = "第${state.showFinaleConfirmationForEpisodeNumber}話が最終話のようです。\n作品のステータスを「視聴済み」に変更しますか？",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmFinaleWatchedStatus() }) {
+                    Text("視聴済みにする")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideFinaleConfirmation() }) {
+                    Text("キャンセル")
+                }
+            }
         )
     }
 }
