@@ -549,10 +549,23 @@ class DetailModalIntegrationTest {
         testRule.composeTestRule.onNodeWithText("記録する").performClick()
         testRule.composeTestRule.waitForIdle()
 
+        // Wait for async finale detection to complete
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
+            try {
+                testRule.composeTestRule.onNodeWithText("最終話を視聴しました！").assertExists()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+
         // Assert - フィナーレ確認ダイアログが表示される
         testRule.composeTestRule.onNodeWithText("最終話を視聴しました！").assertIsDisplayed()
         testRule.composeTestRule.onNodeWithText("視聴済みにする").assertIsDisplayed()
         testRule.composeTestRule.onNodeWithText("キャンセル").assertIsDisplayed()
+
+        // Verify the use case was called with correct parameters
+        coVerify { judgeFinaleUseCase(12, 55555) }
     }
 
     @Test
