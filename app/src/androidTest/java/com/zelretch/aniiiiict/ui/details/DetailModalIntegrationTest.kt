@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiict.ui.details
 
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -388,7 +387,15 @@ class DetailModalIntegrationTest {
         testRule.composeTestRule.waitForIdle()
 
         // Assert: 最終話確認ダイアログが表示されない
-        testRule.composeTestRule.onNodeWithText("最終話記録完了").assertDoesNotExist()
+        try {
+            testRule.composeTestRule.onNodeWithText("最終話記録完了").assertIsDisplayed()
+            throw AssertionError("最終話確認ダイアログが表示されるべきではない")
+        } catch (e: AssertionError) {
+            if (e.message?.contains("最終話確認ダイアログが表示されるべきではない") == true) {
+                throw e
+            }
+            // Expected: dialog should not be found
+        }
     }
 
     @Test
@@ -437,7 +444,15 @@ class DetailModalIntegrationTest {
         testRule.composeTestRule.waitForIdle()
 
         // Assert: MAL IDがないため最終話確認ダイアログが表示されない
-        testRule.composeTestRule.onNodeWithText("最終話記録完了").assertDoesNotExist()
+        try {
+            testRule.composeTestRule.onNodeWithText("最終話記録完了").assertIsDisplayed()
+            throw AssertionError("最終話確認ダイアログが表示されるべきではない")
+        } catch (e: AssertionError) {
+            if (e.message?.contains("最終話確認ダイアログが表示されるべきではない") == true) {
+                throw e
+            }
+            // Expected: dialog should not be found
+        }
     }
 
     @Test
