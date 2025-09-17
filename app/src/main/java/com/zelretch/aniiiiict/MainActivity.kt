@@ -8,25 +8,36 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +57,7 @@ import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -135,6 +147,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val items = listOf(Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
+    // Track drawer state for potential future implementation
+    val shouldRestoreDrawerOpen = remember { mutableStateOf(false) }
+
     // Determine initial destination based on authentication state
     val startDestination = when {
         mainUiState.isLoading -> "loading"
@@ -145,13 +160,19 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(
+                modifier = Modifier.width(280.dp) // Limit drawer width for better UX
+            ) {
                 items.forEach { item ->
                     NavigationDrawerItem(
                         icon = { Icon(item.icon, contentDescription = null) },
                         label = { Text(item.title) },
                         selected = item.route == selectedItem,
                         onClick = {
+                            // Remember if drawer was open when navigating from track screen
+                            if (selectedItem == "track" && drawerState.isOpen) {
+                                shouldRestoreDrawerOpen.value = true
+                            }
                             scope.launch { drawerState.close() }
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.startDestinationId) {
@@ -181,6 +202,17 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            }
+        }
+
+        // Handle drawer state restoration when returning to track screen
+        LaunchedEffect(selectedItem) {
+            // If we're returning to track screen and should restore drawer
+            if (selectedItem == "track" && shouldRestoreDrawerOpen.value) {
+                // Use a coroutine to handle the drawer opening with proper timing
+                kotlinx.coroutines.delay(100) // Small delay to ensure screen is rendered
+                drawerState.open()
+                shouldRestoreDrawerOpen.value = false
             }
         }
 
@@ -228,7 +260,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 HistoryScreen(uiState = historyUiState, actions = actions)
             }
             composable("settings") {
-                // TODO まだ
+                SettingsScreen(
+                    onNavigateBack = { navController.navigateUp() }
+                )
             }
         }
     }
@@ -245,6 +279,51 @@ private fun LoadingScreen() {
             verticalArrangement = Arrangement.Center
         ) {
             CircularProgressIndicator()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsScreen(onNavigateBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "設定",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "設定画面",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "実装予定",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
