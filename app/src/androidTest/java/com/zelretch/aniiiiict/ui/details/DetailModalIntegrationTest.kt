@@ -72,7 +72,10 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
-    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>().apply {
+        // Default behavior for tests that don't specifically mock this
+        coEvery { getMedia(any()) } returns Result.failure(Exception("No mock setup for this media ID"))
+    }
 
     @BindValue
     @JvmField
