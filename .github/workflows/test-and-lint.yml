@@ -1,10 +1,14 @@
 name: Test and Lint
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
+  push:
+    branches: [ master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build_and_test:

@@ -88,7 +88,7 @@ class TrackScreenIntegrationTest {
     lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
 
     @Test
-    fun onRecordEpisode_callsRepositoryCreateRecord() {
+    fun trackScreen_エピソード記録クリック_RepositoryのcreateRecordが呼ばれる() {
         // Arrange
         // Hilt管理外の依存関係は手動でモックを作成
         val mockFilterPreferences: FilterPreferences = mockk {
@@ -147,7 +147,7 @@ class TrackScreenIntegrationTest {
     }
 
     @Test
-    fun onFilterToggle_callsFilterProgramsUseCase() {
+    fun trackScreen_フィルタートグル_FilterProgramsUseCaseが呼ばれる() {
         // Arrange
         val mockFilterPreferences: FilterPreferences = mockk {
             every { filterState } returns MutableStateFlow(FilterState())
@@ -188,7 +188,7 @@ class TrackScreenIntegrationTest {
     }
 
     @Test
-    fun onProgramCardClick_showsDetailModal() {
+    fun trackScreen_プログラムカードクリック_詳細モーダルが表示される() {
         // Arrange
         val mockFilterPreferences: FilterPreferences = mockk {
             every { filterState } returns MutableStateFlow(FilterState())

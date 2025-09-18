@@ -28,6 +28,13 @@ The `local.properties` file is included in `.gitignore` and should not be commit
 
 ## Testing
 
+Before submitting any changes, it's important to ensure the quality of the code by running tests.
+
+For any changes, ensure corresponding tests exist for the following types. If not, add them:
+- UnitTest
+- IntegrationTest
+- UITest
+
 ### Unit Tests
 
 To run all unit tests and lint checks, use the following command:
@@ -36,7 +43,9 @@ To run all unit tests and lint checks, use the following command:
 ./gradlew check
 ```
 
-This command will execute all unit tests in the project. The build will fail if any tests fail.
+All unit tests must pass before committing. The build will fail if any tests fail.
+
+When submitting, it is required that the unit tests pass without fail.
 
 ### Instrumentation Tests (`connectedAndroidTest`)
 
