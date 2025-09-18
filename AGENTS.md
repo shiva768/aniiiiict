@@ -55,3 +55,12 @@ To build a debug version of the application (APK), run the following command:
 This will generate a debug APK in the `app/build/outputs/apk/debug/` directory.
 
 **Important:** Before building, make sure you have configured the necessary secrets as described in the "Secrets Management" section. The build will fail if the secrets are not provided.
+
+## コミットするときの最低限の条件
+
+- 修正した内容に対応したテストが存在しているかを、下記のテスト毎に確認し、存在していない場合追記する
+  - UnitTest
+  - IntegrationTest
+  - UITest
+- UnitTestが通っていること(./gradlew check)
+(AndroidTestは実行できないので、コミット後のCIに任せる)
