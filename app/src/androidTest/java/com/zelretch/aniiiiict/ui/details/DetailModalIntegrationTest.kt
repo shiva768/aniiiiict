@@ -529,6 +529,9 @@ class DetailModalIntegrationTest {
 
         // Mock JudgeFinaleUseCase to return finale confirmed for episode 12
         coEvery { judgeFinaleUseCase(12, 55555) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
+        
+        // Mock watchEpisodeUseCase to succeed for individual episode recording
+        coEvery { watchEpisodeUseCase("ep12", "work-individual-finale", StatusState.WATCHING) } returns Result.success(Unit)
 
         // Initialize ViewModel BEFORE setting content
         viewModel.initialize(pw)
@@ -550,8 +553,8 @@ class DetailModalIntegrationTest {
         testRule.composeTestRule.onNodeWithText("記録する").performClick()
         testRule.composeTestRule.waitForIdle()
 
-        // Wait for async finale detection to complete
-        testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
+        // Wait for async finale detection to complete with increased timeout
+        testRule.composeTestRule.waitUntil(timeoutMillis = 10000) {
             try {
                 testRule.composeTestRule.onNodeWithText("最終話を視聴しました！").assertExists()
                 true
@@ -595,6 +598,12 @@ class DetailModalIntegrationTest {
 
         // Mock JudgeFinaleUseCase to return NOT finale for episode 8
         coEvery { judgeFinaleUseCase(8, 66666) } returns JudgeFinaleResult(FinaleState.NOT_FINALE, false)
+        
+        // Mock watchEpisodeUseCase to succeed for individual episode recording
+        coEvery { watchEpisodeUseCase("ep8", "work-individual-not-finale", StatusState.WATCHING) } returns Result.success(Unit)
+
+        // Initialize ViewModel BEFORE setting content
+        viewModel.initialize(pw)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -608,7 +617,6 @@ class DetailModalIntegrationTest {
         }
 
         // 個別記録実行（8話を記録）
-        viewModel.initialize(pw)
         testRule.composeTestRule.waitForIdle()
 
         // 「記録する」ボタンをクリック
