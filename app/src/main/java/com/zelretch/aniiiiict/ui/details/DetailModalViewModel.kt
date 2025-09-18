@@ -197,6 +197,7 @@ class DetailModalViewModel @Inject constructor(
                     showFinaleConfirmationForEpisodeNumber = episodeNumber
                 )
             }
+            _events.emit(DetailModalEvent.ShowFinaleConfirmation(work.id, episodeNumber))
         }
     }
 

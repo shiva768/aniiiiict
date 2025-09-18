@@ -530,6 +530,9 @@ class DetailModalIntegrationTest {
         // Mock JudgeFinaleUseCase to return finale confirmed for episode 12
         coEvery { judgeFinaleUseCase(12, 55555) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
 
+        // Initialize ViewModel BEFORE setting content
+        viewModel.initialize(pw)
+
         // Act
         testRule.composeTestRule.setContent {
             DetailModal(
@@ -541,8 +544,6 @@ class DetailModalIntegrationTest {
             )
         }
 
-        // 個別記録実行（12話を記録）
-        viewModel.initialize(pw)
         testRule.composeTestRule.waitForIdle()
 
         // 「記録する」ボタンをクリック
