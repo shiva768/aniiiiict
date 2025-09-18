@@ -44,6 +44,21 @@ Instrumentation tests (located in the `app/src/androidTest` directory) require a
 
 These tests are automatically executed by the CI pipeline on every push to the repository. If you need to add or modify instrumentation tests, please push your changes to a branch and the CI will run the tests for you.
 
+### Test Strategy
+
+#### IntegrationTest
+
+- Objects to be mocked:
+  - `Repository`
+  - `ProgramFilter` (because it is difficult to inject)
+  - `customTabsIntentFactory`
+- Other mocks are to be decided on a case-by-case basis.
+
+#### UITest
+
+- Mock the `ViewModel`.
+- Verify the consistency between the `UIState` and the screen's state.
+
 ## Building the Application
 
 To build a debug version of the application (APK), run the following command:
