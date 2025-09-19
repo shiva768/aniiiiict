@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiict.ui.details
 
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.type.SeasonName
@@ -12,6 +13,7 @@ import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
@@ -277,6 +279,73 @@ class DetailModalIntegrationTest {
             annictRepository.updateWorkViewStatus("work-bulk-wanna", StatusState.WATCHING)
             annictRepository.createRecord("ep-b1", "work-bulk-wanna")
             annictRepository.createRecord("ep-b2", "work-bulk-wanna")
+        }
+    }
+
+    @Test
+    fun detailModal_一括視聴_フィナーレ判定_最終話確認ダイアログ表示() {
+        // Arrange
+        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
+
+        // MAL APIの最終話レスポンスをモック
+        val malResponse = MyAnimeListResponse(
+            id = 123,
+            mediaType = "tv",
+            numEpisodes = 12,
+            status = "finished_airing",
+            broadcast = null
+        )
+        coEvery { myAnimeListRepository.getMedia(123) } returns Result.success(malResponse)
+
+        val work = Work(
+            id = "work-finale",
+            title = "フィナーレテスト",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            malAnimeId = "123", // MAL IDを設定
+            viewerStatusState = StatusState.WATCHING
+        )
+        val ep11 = Episode(id = "ep-11", title = "第11話", numberText = "11", number = 11)
+        val ep12 = Episode(id = "ep-12", title = "第12話", numberText = "12", number = 12) // 最終話
+        val p11 = Program(id = "p-11", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep11)
+        val p12 = Program(id = "p-12", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep12)
+        val pw = ProgramWithWork(programs = listOf(p11, p12), firstProgram = p11, work = work)
+
+        // Act
+        testRule.composeTestRule.setContent {
+            DetailModal(
+                programWithWork = pw,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // 一括視聴ダイアログを開いて確定
+        viewModel.showConfirmDialog(1) // 最後の2話を選択
+        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+
+        // フィナーレ確認ダイアログが表示されることを確認
+        testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
+        testRule.composeTestRule.onNodeWithText("第12話は最終話です。").assertExists()
+        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertExists()
+        testRule.composeTestRule.onNodeWithText("後で").assertExists()
+
+        // 視聴完了を選択
+        testRule.composeTestRule.onNodeWithText("視聴完了にする").performClick()
+
+        // Assert: エピソード記録 + フィナーレ判定 + ステータス更新
+        coVerifyOrder {
+            // 最初にエピソード記録
+            annictRepository.createRecord("ep-11", "work-finale")
+            annictRepository.createRecord("ep-12", "work-finale")
+            // MALからメディア情報取得（フィナーレ判定のため）
+            myAnimeListRepository.getMedia(123)
+            // 最終話確認後にWATCHEDに更新
+            annictRepository.updateWorkViewStatus("work-finale", StatusState.WATCHED)
         }
     }
 }
