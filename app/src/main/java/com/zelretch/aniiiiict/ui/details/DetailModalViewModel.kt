@@ -131,18 +131,18 @@ class DetailModalViewModel @Inject constructor(
     private suspend fun handleSingleEpisodeFinaleJudgement(episodeId: String, workId: String) {
         val currentState = _state.value
         val currentEpisode = currentState.programs.find { it.episode.id == episodeId }
-        
+
         if (currentEpisode?.episode?.number == null) {
             return
         }
-        
+
         val episodeNumber = currentEpisode.episode.number
         val malAnimeId = currentState.malAnimeId?.toIntOrNull() ?: return
-        
+
         val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
-        
+
         if (judgeResult.isFinale) {
-            _state.update { 
+            _state.update {
                 it.copy(
                     showSingleEpisodeFinaleConfirmation = true,
                     singleEpisodeFinaleNumber = episodeNumber,

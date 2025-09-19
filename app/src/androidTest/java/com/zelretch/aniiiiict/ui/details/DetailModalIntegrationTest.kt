@@ -7,13 +7,13 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
-import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
@@ -87,7 +87,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         // 2エピソードのProgramWithWork（WATCHING）
         val work = Work(
@@ -130,7 +136,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-status",
@@ -169,7 +181,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-single",
@@ -206,7 +224,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-flow",
@@ -246,7 +270,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_WANNA_WATCH_一括視聴_複数話_順序は更新から各話createRecord() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         val work = Work(
             id = "work-bulk-wanna",
@@ -289,7 +319,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_一括視聴_フィナーレ判定_最終話確認ダイアログ表示() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         // MAL APIの最終話レスポンスをモック
         val malResponse = MyAnimeListResponse(
@@ -356,7 +392,13 @@ class DetailModalIntegrationTest {
     @Test
     fun detailModal_単一エピソード記録_フィナーレ判定_最終話確認ダイアログ表示() {
         // Arrange
-        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase)
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
 
         // MAL APIの最終話レスポンスをモック
         val malResponse = MyAnimeListResponse(
