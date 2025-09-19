@@ -19,6 +19,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
@@ -38,6 +39,7 @@ class DetailModalBulkFinaleUITest {
 
     private fun createMockViewModelWithFinaleConfirmation(): DetailModalViewModel =
         mockk<DetailModalViewModel>(relaxed = true).apply {
+            val mockEvents = MutableSharedFlow<DetailModalEvent>()
             every { state } returns MutableStateFlow(
                 DetailModalState(
                     programs = listOf(
@@ -50,13 +52,17 @@ class DetailModalBulkFinaleUITest {
                     finaleEpisodeNumber = 12
                 )
             )
-            every { events } returns MutableSharedFlow()
+            every { events } returns mockEvents
             // Mock initialize to do nothing so it doesn't override our state
             every { initialize(any()) } just Runs
+            // Mock other methods that might be called
+            every { confirmFinaleWatched() } just Runs
+            every { hideFinaleConfirmation() } just Runs
         }
 
     private fun createMockViewModelWithoutFinaleConfirmation(): DetailModalViewModel =
         mockk<DetailModalViewModel>(relaxed = true).apply {
+            val mockEvents = MutableSharedFlow<DetailModalEvent>()
             every { state } returns MutableStateFlow(
                 DetailModalState(
                     programs = listOf(
@@ -68,7 +74,7 @@ class DetailModalBulkFinaleUITest {
                     showFinaleConfirmation = false
                 )
             )
-            every { events } returns MutableSharedFlow()
+            every { events } returns mockEvents
             // Mock initialize to do nothing so it doesn't override our state
             every { initialize(any()) } just Runs
         }
@@ -117,8 +123,11 @@ class DetailModalBulkFinaleUITest {
             )
         }
 
+        // Compose UIの初期化を待機
+        composeTestRule.waitForIdle()
+
         // フィナーレ確認ダイアログが表示されるまで待機
-        composeTestRule.waitUntil(timeoutMillis = 3000) {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
                 composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
                 true

@@ -364,9 +364,30 @@ class DetailModalIntegrationTest {
             )
         }
 
+        // ViewModel が初期化されるまで待機
+        testRule.composeTestRule.waitUntil(timeoutMillis = 3000) {
+            viewModel.state.value.workId.isNotEmpty()
+        }
+
         // 一括視聴ダイアログを開いて確定
         viewModel.showConfirmDialog(1) // 最後の2話を選択
+        
+        // ダイアログが表示されるまで待機
+        testRule.composeTestRule.waitUntil(timeoutMillis = 3000) {
+            try {
+                testRule.composeTestRule.onNodeWithText("視聴済みにする").assertIsDisplayed()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+        
         testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+
+        // 一括記録が完了するまで待機
+        testRule.composeTestRule.waitUntil(timeoutMillis = 10000) {
+            !viewModel.state.value.isBulkRecording
+        }
 
         // フィナーレ確認ダイアログが表示されるまで待機
         testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
@@ -445,8 +466,27 @@ class DetailModalIntegrationTest {
             )
         }
 
+        // ViewModel が初期化されるまで待機
+        testRule.composeTestRule.waitUntil(timeoutMillis = 3000) {
+            viewModel.state.value.workId.isNotEmpty()
+        }
+
         // 単一エピソードの記録ボタンをクリック
+        testRule.composeTestRule.waitUntil(timeoutMillis = 3000) {
+            try {
+                testRule.composeTestRule.onNodeWithText("記録する").assertIsDisplayed()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+        
         testRule.composeTestRule.onNodeWithText("記録する").performClick()
+
+        // 記録処理が完了するまで待機
+        testRule.composeTestRule.waitUntil(timeoutMillis = 10000) {
+            viewModel.state.value.showSingleEpisodeFinaleConfirmation
+        }
 
         // フィナーレ確認ダイアログが表示されるまで待機
         testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
