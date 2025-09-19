@@ -1,6 +1,5 @@
 package com.zelretch.aniiiiict.ui.details
 
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -372,7 +371,7 @@ class DetailModalIntegrationTest {
         // フィナーレ確認ダイアログが表示されるまで待機
         testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
-                testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
+                testRule.composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
                 true
             } catch (e: AssertionError) {
                 false
@@ -452,7 +451,7 @@ class DetailModalIntegrationTest {
         // フィナーレ確認ダイアログが表示されるまで待機
         testRule.composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
-                testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
+                testRule.composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
                 true
             } catch (e: AssertionError) {
                 false

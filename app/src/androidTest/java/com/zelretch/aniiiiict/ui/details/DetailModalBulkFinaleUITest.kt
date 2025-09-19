@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiict.ui.details
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -121,7 +120,7 @@ class DetailModalBulkFinaleUITest {
         // フィナーレ確認ダイアログが表示されるまで待機
         composeTestRule.waitUntil(timeoutMillis = 3000) {
             try {
-                composeTestRule.onNodeWithText("最終話確認").assertExists()
+                composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
                 true
             } catch (e: AssertionError) {
                 false
