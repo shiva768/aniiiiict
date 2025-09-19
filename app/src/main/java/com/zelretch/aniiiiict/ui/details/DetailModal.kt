@@ -148,6 +148,14 @@ private fun DetailModalDialogs(
             onDismiss = viewModel::hideFinaleConfirmation
         )
     }
+
+    if (state.showSingleEpisodeFinaleConfirmation && state.singleEpisodeFinaleNumber != null) {
+        FinaleConfirmDialog(
+            episodeNumber = state.singleEpisodeFinaleNumber,
+            onConfirm = viewModel::confirmSingleEpisodeFinaleWatched,
+            onDismiss = viewModel::hideSingleEpisodeFinaleConfirmation
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
