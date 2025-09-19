@@ -44,11 +44,12 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 
 3. 認証情報の設定
 
-   - 環境変数にAnnict API認証情報を設定：
+   - 環境変数にAnnict APIと、MyAnimeList API(client_idのみ)認証情報を設定：
 
     ```bash
     export ANNICT_CLIENT_ID=your_client_id_here
     export ANNICT_CLIENT_SECRET=your_client_secret_here
+    export MAL_CLIENT_ID=your_client_id_here
     ```
 
     または、IDEの実行設定で環境変数を設定してください。
