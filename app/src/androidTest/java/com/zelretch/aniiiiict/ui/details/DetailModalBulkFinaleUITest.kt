@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.ui.details
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -13,7 +14,9 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -49,6 +52,8 @@ class DetailModalBulkFinaleUITest {
                 )
             )
             every { events } returns MutableSharedFlow()
+            // Mock initialize to do nothing so it doesn't override our state
+            every { initialize(any()) } just Runs
         }
 
     private fun createMockViewModelWithoutFinaleConfirmation(): DetailModalViewModel =
@@ -65,6 +70,8 @@ class DetailModalBulkFinaleUITest {
                 )
             )
             every { events } returns MutableSharedFlow()
+            // Mock initialize to do nothing so it doesn't override our state
+            every { initialize(any()) } just Runs
         }
 
     private fun createProgram(id: String, number: Int, title: String): Program = Program(
@@ -111,9 +118,19 @@ class DetailModalBulkFinaleUITest {
             )
         }
 
+        // フィナーレ確認ダイアログが表示されるまで待機
+        composeTestRule.waitUntil(timeoutMillis = 3000) {
+            try {
+                composeTestRule.onNodeWithText("最終話確認").assertExists()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+
         // Assert
         composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
-        composeTestRule.onNodeWithText("第12話").assertIsDisplayed()
+        composeTestRule.onNodeWithText("第12話は最終話です。").assertIsDisplayed()
         composeTestRule.onNodeWithText("視聴完了にする").assertIsDisplayed()
         composeTestRule.onNodeWithText("後で").assertIsDisplayed()
     }
