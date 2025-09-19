@@ -1,6 +1,6 @@
 package com.zelretch.aniiiiict.ui.details
 
-import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.type.SeasonName
@@ -369,10 +369,10 @@ class DetailModalIntegrationTest {
         testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
 
         // フィナーレ確認ダイアログが表示されることを確認
-        testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
-        testRule.composeTestRule.onNodeWithText("第12話は最終話です。").assertExists()
-        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertExists()
-        testRule.composeTestRule.onNodeWithText("後で").assertExists()
+        testRule.composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("第12話は最終話です。").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("後で").assertIsDisplayed()
 
         // 視聴完了を選択
         testRule.composeTestRule.onNodeWithText("視聴完了にする").performClick()
@@ -439,10 +439,10 @@ class DetailModalIntegrationTest {
         testRule.composeTestRule.onNodeWithText("記録する").performClick()
 
         // フィナーレ確認ダイアログが表示されることを確認
-        testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
-        testRule.composeTestRule.onNodeWithText("第12話は最終話です。").assertExists()
-        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertExists()
-        testRule.composeTestRule.onNodeWithText("後で").assertExists()
+        testRule.composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("第12話は最終話です。").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertIsDisplayed()
+        testRule.composeTestRule.onNodeWithText("後で").assertIsDisplayed()
 
         // 視聴完了を選択
         testRule.composeTestRule.onNodeWithText("視聴完了にする").performClick()

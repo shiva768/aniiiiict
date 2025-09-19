@@ -69,20 +69,20 @@ class DetailModalBulkFinaleUITest {
 
     private fun createProgram(id: String, number: Int, title: String): Program = Program(
         id = "prog-$id",
-        episode = Episode(id = id, number = number, title = title),
-        work = Work(
+        episode = Episode(id = id, number = number, title = title, numberText = number.toString()),
+        channel = Channel(name = "テストチャンネル"),
+        startedAt = LocalDateTime.now()
+    )
+
+    private fun sampleProgramWithWork(): ProgramWithWork {
+        val work = Work(
             id = "work-1",
             title = "テストアニメ",
             seasonName = SeasonName.AUTUMN,
             seasonYear = 2024,
             viewerStatusState = StatusState.WATCHING,
             malAnimeId = "123"
-        ),
-        channel = Channel(id = "ch1", name = "テストチャンネル"),
-        startedAt = LocalDateTime.now()
-    )
-
-    private fun sampleProgramWithWork(): ProgramWithWork {
+        )
         val programs = listOf(
             createProgram("ep11", 11, "第11話"),
             createProgram("ep12", 12, "最終話")
@@ -90,7 +90,7 @@ class DetailModalBulkFinaleUITest {
         return ProgramWithWork(
             programs = programs,
             firstProgram = programs.first(),
-            work = programs.first().work
+            work = work
         )
     }
 
@@ -105,6 +105,8 @@ class DetailModalBulkFinaleUITest {
             DetailModal(
                 viewModel = viewModel,
                 programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = {},
                 onRefresh = {}
             )
         }
@@ -127,6 +129,8 @@ class DetailModalBulkFinaleUITest {
             DetailModal(
                 viewModel = viewModel,
                 programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = {},
                 onRefresh = {}
             )
         }
@@ -151,6 +155,8 @@ class DetailModalBulkFinaleUITest {
             DetailModal(
                 viewModel = viewModel,
                 programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = {},
                 onRefresh = {}
             )
         }
@@ -175,6 +181,8 @@ class DetailModalBulkFinaleUITest {
             DetailModal(
                 viewModel = viewModel,
                 programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = {},
                 onRefresh = {}
             )
         }
