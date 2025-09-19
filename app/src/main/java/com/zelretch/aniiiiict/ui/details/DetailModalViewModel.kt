@@ -128,7 +128,7 @@ class DetailModalViewModel @Inject constructor(
         val lastEpisodeNumber = currentState.programs
             .find { it.episode.id == episodeIds.lastOrNull() }
             ?.episode?.number
-        
+
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -154,10 +154,10 @@ class DetailModalViewModel @Inject constructor(
                 val targetPrograms = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
                 }
-                
+
                 // フィナーレ判定の結果をチェック
                 val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
-                
+
                 _state.update {
                     it.copy(
                         programs = currentPrograms - targetPrograms.toSet(),
@@ -170,7 +170,7 @@ class DetailModalViewModel @Inject constructor(
                         finaleEpisodeNumber = if (shouldShowFinaleConfirmation) lastEpisodeNumber else null
                     )
                 }
-                
+
                 if (shouldShowFinaleConfirmation) {
                     _events.emit(DetailModalEvent.FinaleConfirmationShown)
                 } else {

@@ -19,9 +19,9 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val workId = "w1"
                 val status = StatusState.WANNA_WATCH
                 coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
-                
+
                 val result = runBlocking { useCase(episodeIds, workId, status) }
-                
+
                 result.isSuccess shouldBe true
                 result.getOrNull()?.finaleResult shouldBe null
             }
@@ -35,14 +35,14 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val malAnimeId = 123
                 val lastEpisodeNumber = 12
                 val finaleResult = JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
-                
+
                 coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
                 coEvery { judgeFinaleUseCase(lastEpisodeNumber, malAnimeId) } returns finaleResult
-                
-                val result = runBlocking { 
+
+                val result = runBlocking {
                     useCase(episodeIds, workId, status, malAnimeId, lastEpisodeNumber)
                 }
-                
+
                 result.isSuccess shouldBe true
                 result.getOrNull()?.finaleResult shouldBe finaleResult
             }
@@ -55,9 +55,9 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val status = StatusState.WANNA_WATCH
                 coEvery { watchEpisodeUseCase("ep1", workId, status, true) } returns Result.success(Unit)
                 coEvery { watchEpisodeUseCase("ep2", workId, status, false) } returns Result.failure(Exception("fail"))
-                
+
                 val result = runBlocking { useCase(episodeIds, workId, status) }
-                
+
                 result.isFailure shouldBe true
             }
         }
@@ -67,9 +67,9 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val episodeIds = emptyList<String>()
                 val workId = "w1"
                 val status = StatusState.WANNA_WATCH
-                
+
                 val result = runBlocking { useCase(episodeIds, workId, status) }
-                
+
                 result.isSuccess shouldBe true
                 result.getOrNull()?.finaleResult shouldBe null
             }

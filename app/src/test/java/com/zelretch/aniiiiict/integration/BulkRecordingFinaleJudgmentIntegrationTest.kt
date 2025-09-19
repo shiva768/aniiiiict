@@ -23,7 +23,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest : BehaviorSpec({
         val annictRepository = mockk<AnnictRepository>()
         val malRepository = mockk<MyAnimeListRepository>()
         val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
-        
+
         val judgeFinaleUseCase = JudgeFinaleUseCase(malRepository)
         val watchEpisodeUseCase = WatchEpisodeUseCase(annictRepository, updateViewStateUseCase)
         val bulkRecordUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase, judgeFinaleUseCase)

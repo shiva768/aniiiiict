@@ -3,7 +3,6 @@ package com.zelretch.aniiiiict.ui.details
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -68,21 +67,20 @@ class DetailModalBulkFinaleUITest {
             every { events } returns MutableSharedFlow()
         }
 
-    private fun createProgram(id: String, number: Int, title: String): Program =
-        Program(
-            id = "prog-$id",
-            episode = Episode(id = id, number = number, title = title),
-            work = Work(
-                id = "work-1",
-                title = "テストアニメ",
-                seasonName = SeasonName.AUTUMN,
-                seasonYear = 2024,
-                viewerStatusState = StatusState.WATCHING,
-                malAnimeId = "123"
-            ),
-            channel = Channel(id = "ch1", name = "テストチャンネル"),
-            startedAt = LocalDateTime.now()
-        )
+    private fun createProgram(id: String, number: Int, title: String): Program = Program(
+        id = "prog-$id",
+        episode = Episode(id = id, number = number, title = title),
+        work = Work(
+            id = "work-1",
+            title = "テストアニメ",
+            seasonName = SeasonName.AUTUMN,
+            seasonYear = 2024,
+            viewerStatusState = StatusState.WATCHING,
+            malAnimeId = "123"
+        ),
+        channel = Channel(id = "ch1", name = "テストチャンネル"),
+        startedAt = LocalDateTime.now()
+    )
 
     private fun sampleProgramWithWork(): ProgramWithWork {
         val programs = listOf(
@@ -135,7 +133,6 @@ class DetailModalBulkFinaleUITest {
 
         // フィナーレ確認ダイアログが表示されていることを確認
         composeTestRule.onNodeWithText("視聴完了にする").assertIsDisplayed()
-        
         // 視聴完了ボタンをクリック
         composeTestRule.onNodeWithText("視聴完了にする").performClick()
 
@@ -160,7 +157,6 @@ class DetailModalBulkFinaleUITest {
 
         // フィナーレ確認ダイアログが表示されていることを確認
         composeTestRule.onNodeWithText("後で").assertIsDisplayed()
-        
         // 後でボタンをクリック
         composeTestRule.onNodeWithText("後で").performClick()
 

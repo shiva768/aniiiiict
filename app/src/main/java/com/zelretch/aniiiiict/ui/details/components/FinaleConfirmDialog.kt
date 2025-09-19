@@ -6,16 +6,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 
 @Composable
-fun FinaleConfirmDialog(
-    episodeNumber: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun FinaleConfirmDialog(episodeNumber: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("最終話確認") },
-        text = { 
-            Text("第${episodeNumber}話は最終話です。\n作品のステータスを「視聴完了」に変更しますか？") 
+        text = {
+            Text("第${episodeNumber}話は最終話です。\n作品のステータスを「視聴完了」に変更しますか？")
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
