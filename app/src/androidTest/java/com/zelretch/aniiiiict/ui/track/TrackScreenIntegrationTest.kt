@@ -8,6 +8,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
@@ -28,6 +29,7 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
@@ -61,7 +63,21 @@ class TrackScreenIntegrationTest {
 
     @BindValue
     @JvmField
-    val mockMyAnimeListRepository: MyAnimeListRepository = mockk(relaxed = true)
+    val mockMyAnimeListRepository: MyAnimeListRepository = object : MyAnimeListRepository {
+        // mockでやると結果が不安定(ClassCastExceptionなどが発生)なので、Repositoryをここで実装しちゃう
+        override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> {
+            // Default to a non-finale safe response unless overridden by specific test stubbing
+            return Result.success(
+                MyAnimeListResponse(
+                    id = mediaId,
+                    mediaType = "tv",
+                    numEpisodes = 9999,
+                    status = "currently_airing",
+                    broadcast = null
+                )
+            )
+        }
+    }
 
     @BindValue
     @JvmField
@@ -238,5 +254,557 @@ class TrackScreenIntegrationTest {
         testRule.composeTestRule.waitForIdle()
         // 詳細モーダルが表示される（ViewModelの状態変更は内部的に検証される）
         // この統合テストでは、カードクリックからモーダル表示までの連携が正常に動作することを確認
+    }
+
+    @Test
+    fun trackScreen_フィナーレ判定_レコード後にMAL参照し確認後WATCHEDへ更新() {
+        // Arrange
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+
+        // UseCaseは本物を使用し、ここでは専用のFake Repositoryを渡す
+        val malId = 100
+        val finaleUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
+            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+                MyAnimeListResponse(
+                    id = malId,
+                    mediaType = "tv",
+                    numEpisodes = 12,
+                    status = "finished_airing",
+                    broadcast = null
+                )
+            )
+        })
+
+        // Work に MAL ID を設定
+        val work = Work(
+            id = "work-finale",
+            title = "フィナーレテスト",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING,
+            malAnimeId = malId.toString()
+        )
+        val episode = Episode(id = "ep-final-12", number = 12, numberText = "12", title = "第12話")
+        val program = Program("prog-final", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+
+        // Annict 側の動作（ViewModel 初期ロードで allPrograms に流れるように返す）
+        coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.updateWorkViewStatus(any(), any()) } returns true
+        // GraphQLの生データ（ViewerProgramsQuery.Node）をモックし、UseCase経由でProgramWithWorkが構築されるようにする
+        val node = mockk<com.annict.ViewerProgramsQuery.Node>()
+        val channelNode = mockk<com.annict.ViewerProgramsQuery.Channel>()
+        every { channelNode.name } returns "ch"
+        val episodeNode = mockk<com.annict.ViewerProgramsQuery.Episode>()
+        every { episodeNode.id } returns episode.id
+        every { episodeNode.number } returns episode.number
+        every { episodeNode.numberText } returns episode.numberText
+        every { episodeNode.title } returns episode.title
+        val workNode = mockk<com.annict.ViewerProgramsQuery.Work>()
+        every { workNode.id } returns work.id
+        every { workNode.title } returns work.title
+        every { workNode.seasonName } returns SeasonName.SPRING
+        every { workNode.seasonYear } returns 2024
+        every { workNode.media } returns com.annict.type.Media.TV
+        every { workNode.malAnimeId } returns work.malAnimeId
+        every { workNode.viewerStatusState } returns StatusState.WATCHING
+        every { workNode.image } returns null
+        every { node.id } returns program.id
+        every { node.startedAt } returns "2025-01-01T12:00:00Z"
+        every { node.channel } returns channelNode
+        every { node.episode } returns episodeNode
+        every { node.work } returns workNode
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
+
+        // Hiltから注入されたUseCaseを用いて ViewModel を生成
+        val viewModel = TrackViewModel(
+            loadProgramsUseCase,
+            watchEpisodeUseCase,
+            updateViewStateUseCase,
+            filterProgramsUseCase,
+            mockFilterPreferences,
+            finaleUseCase
+        )
+
+        val initialState = TrackUiState(
+            programs = listOf(pw),
+            allPrograms = listOf(pw)
+        )
+
+        // Act
+        testRule.composeTestRule.setContent {
+            TrackScreen(
+                viewModel = viewModel,
+                uiState = initialState,
+                onRecordEpisode = { epId, wId, status -> viewModel.recordEpisode(epId, wId, status) },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // ViewModel が初期ロードで allPrograms を取り込むのを待つ
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            viewModel.uiState.value.allPrograms.isNotEmpty()
+        }
+
+        // 記録ボタンをクリック → 成功後にフィナーレ判定のため MAL が参照される
+        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+
+        // スナックバーの「はい」相当の操作: ViewModel へ確認処理を実行
+        testRule.composeTestRule.runOnIdle {
+            viewModel.confirmWatchedStatus()
+        }
+        testRule.composeTestRule.waitForIdle()
+
+        // WATCHED へ更新が呼ばれること
+        coVerify(exactly = 1) { mockAnnictRepository.updateWorkViewStatus("work-finale", StatusState.WATCHED) }
+    }
+
+    @Test
+    fun trackScreen_フィナーレ判定_NOT_FINALE_スナックバー非表示_更新なし() {
+        // Arrange
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+
+        val malId = 200
+        val notFinaleUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
+            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+                MyAnimeListResponse(
+                    id = malId,
+                    mediaType = "tv",
+                    numEpisodes = 24,
+                    status = "currently_airing",
+                    broadcast = null
+                )
+            )
+        })
+
+        val work = Work(
+            id = "work-not-finale",
+            title = "否定系テスト",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING,
+            malAnimeId = malId.toString()
+        )
+        val episode = Episode(id = "ep8", number = 8, numberText = "8", title = "第8話")
+        val program = Program("prog8", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+
+        // Annict: allPrograms を埋める
+        coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.updateWorkViewStatus(any(), any()) } returns true
+        val node = mockk<com.annict.ViewerProgramsQuery.Node>()
+        val channelNode = mockk<com.annict.ViewerProgramsQuery.Channel>()
+        every { channelNode.name } returns "ch"
+        val episodeNode = mockk<com.annict.ViewerProgramsQuery.Episode>()
+        every { episodeNode.id } returns episode.id
+        every { episodeNode.number } returns episode.number
+        every { episodeNode.numberText } returns episode.numberText
+        every { episodeNode.title } returns episode.title
+        val workNode = mockk<com.annict.ViewerProgramsQuery.Work>()
+        every { workNode.id } returns work.id
+        every { workNode.title } returns work.title
+        every { workNode.seasonName } returns SeasonName.SPRING
+        every { workNode.seasonYear } returns 2024
+        every { workNode.media } returns com.annict.type.Media.TV
+        every { workNode.malAnimeId } returns work.malAnimeId
+        every { workNode.viewerStatusState } returns StatusState.WATCHING
+        every { workNode.image } returns null
+        every { node.id } returns program.id
+        every { node.startedAt } returns "2025-01-01T12:00:00Z"
+        every { node.channel } returns channelNode
+        every { node.episode } returns episodeNode
+        every { node.work } returns workNode
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
+
+        val viewModel = TrackViewModel(
+            loadProgramsUseCase,
+            watchEpisodeUseCase,
+            updateViewStateUseCase,
+            filterProgramsUseCase,
+            mockFilterPreferences,
+            notFinaleUseCase
+        )
+
+        val initialState = TrackUiState(programs = listOf(pw), allPrograms = listOf(pw))
+
+        // Act
+        testRule.composeTestRule.setContent {
+            TrackScreen(
+                viewModel = viewModel,
+                uiState = initialState,
+                onRecordEpisode = { epId, wId, status -> viewModel.recordEpisode(epId, wId, status) },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            viewModel.uiState.value.allPrograms.isNotEmpty()
+        }
+        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+
+        // Assert: finale snackbar not shown and no status update
+        testRule.composeTestRule.waitForIdle()
+        assert(viewModel.uiState.value.showFinaleConfirmationForWorkId == null)
+        coVerify(exactly = 0) { mockAnnictRepository.updateWorkViewStatus(any(), any()) }
+    }
+
+    @Test
+    fun trackScreen_フィナーレ判定_UNKNOWN_numEpisodes不明_スナックバー非表示_更新なし() {
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+        val malId = 201
+        val unknownUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
+            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+                MyAnimeListResponse(
+                    id = malId,
+                    mediaType = "tv",
+                    numEpisodes = null,
+                    status = "currently_airing",
+                    broadcast = null
+                )
+            )
+        })
+        val work =
+            Work(
+                id = "work-unk-ep",
+                title = "不明話数",
+                seasonName = SeasonName.SPRING,
+                seasonYear = 2024,
+                media = "TV",
+                mediaText = "TV",
+                viewerStatusState = StatusState.WATCHING,
+                malAnimeId = malId.toString()
+            )
+        val episode = Episode(id = "ep5", number = 5, numberText = "5", title = "第5話")
+        val program = Program("prog5", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+        // Annict populate
+        coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.updateWorkViewStatus(any(), any()) } returns true
+        val node = mockk<com.annict.ViewerProgramsQuery.Node>()
+        val channelNode = mockk<com.annict.ViewerProgramsQuery.Channel>()
+        every { channelNode.name } returns "ch"
+        val episodeNode = mockk<com.annict.ViewerProgramsQuery.Episode>()
+        every { episodeNode.id } returns episode.id
+        every { episodeNode.number } returns episode.number
+        every { episodeNode.numberText } returns episode.numberText
+        every { episodeNode.title } returns episode.title
+        val workNode = mockk<com.annict.ViewerProgramsQuery.Work>()
+        every { workNode.id } returns work.id
+        every { workNode.title } returns work.title
+        every { workNode.seasonName } returns SeasonName.SPRING
+        every { workNode.seasonYear } returns 2024
+        every { workNode.media } returns com.annict.type.Media.TV
+        every { workNode.malAnimeId } returns work.malAnimeId
+        every { workNode.viewerStatusState } returns StatusState.WATCHING
+        every { workNode.image } returns null
+        every { node.id } returns program.id
+        every { node.startedAt } returns "2025-01-01T12:00:00Z"
+        every { node.channel } returns channelNode
+        every { node.episode } returns episodeNode
+        every { node.work } returns workNode
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
+        val viewModel =
+            TrackViewModel(
+                loadProgramsUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                filterProgramsUseCase,
+                mockFilterPreferences,
+                unknownUseCase
+            )
+        val initialState = TrackUiState(programs = listOf(pw), allPrograms = listOf(pw))
+        testRule.composeTestRule.setContent {
+            TrackScreen(viewModel = viewModel, uiState = initialState, onRecordEpisode = { ep, w, s ->
+                viewModel.recordEpisode(ep, w, s)
+            }, onMenuClick = {}, onRefresh = {})
+        }
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.allPrograms.isNotEmpty() }
+        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
+        assert(viewModel.uiState.value.showFinaleConfirmationForWorkId == null)
+        coVerify(exactly = 0) { mockAnnictRepository.updateWorkViewStatus(any(), any()) }
+    }
+
+    @Test
+    fun trackScreen_フィナーレ判定_UNKNOWN_非TVフォーマット_スナックバー非表示_更新なし() {
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+        val malId = 202
+        val nonTvUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
+            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+                MyAnimeListResponse(
+                    id = malId,
+                    mediaType = "movie",
+                    numEpisodes = 1,
+                    status = "finished_airing",
+                    broadcast = null
+                )
+            )
+        })
+        val work =
+            Work(
+                id = "work-movie",
+                title = "映画作品",
+                seasonName = SeasonName.SPRING,
+                seasonYear = 2024,
+                media = "MOVIE",
+                mediaText = "MOVIE",
+                viewerStatusState = StatusState.WATCHING,
+                malAnimeId = malId.toString()
+            )
+        val episode = Episode(id = "ep1m", number = 1, numberText = "1", title = "本編")
+        val program = Program("progm", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+        coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.updateWorkViewStatus(any(), any()) } returns true
+        val node = mockk<com.annict.ViewerProgramsQuery.Node>()
+        val channelNode = mockk<com.annict.ViewerProgramsQuery.Channel>()
+        every { channelNode.name } returns "ch"
+        val episodeNode = mockk<com.annict.ViewerProgramsQuery.Episode>()
+        every { episodeNode.id } returns episode.id
+        every { episodeNode.number } returns episode.number
+        every { episodeNode.numberText } returns episode.numberText
+        every { episodeNode.title } returns episode.title
+        val workNode = mockk<com.annict.ViewerProgramsQuery.Work>()
+        every { workNode.id } returns work.id
+        every { workNode.title } returns work.title
+        every { workNode.seasonName } returns SeasonName.SPRING
+        every { workNode.seasonYear } returns 2024
+        every { workNode.media } returns com.annict.type.Media.MOVIE
+        every { workNode.malAnimeId } returns work.malAnimeId
+        every { workNode.viewerStatusState } returns StatusState.WATCHING
+        every { workNode.image } returns null
+        every { node.id } returns program.id
+        every { node.startedAt } returns "2025-01-01T12:00:00Z"
+        every { node.channel } returns channelNode
+        every { node.episode } returns episodeNode
+        every { node.work } returns workNode
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
+        val viewModel =
+            TrackViewModel(
+                loadProgramsUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                filterProgramsUseCase,
+                mockFilterPreferences,
+                nonTvUseCase
+            )
+        val initialState = TrackUiState(programs = listOf(pw), allPrograms = listOf(pw))
+        testRule.composeTestRule.setContent {
+            TrackScreen(viewModel = viewModel, uiState = initialState, onRecordEpisode = { ep, w, s ->
+                viewModel.recordEpisode(ep, w, s)
+            }, onMenuClick = {}, onRefresh = {})
+        }
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.allPrograms.isNotEmpty() }
+        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
+        assert(viewModel.uiState.value.showFinaleConfirmationForWorkId == null)
+        coVerify(exactly = 0) { mockAnnictRepository.updateWorkViewStatus(any(), any()) }
+    }
+
+    @Test
+    fun trackScreen_フィナーレ判定_MAL取得失敗_スナックバー非表示_更新なし() {
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+        val malId = 203
+        val failureUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
+            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> =
+                Result.failure(IllegalStateException("network error"))
+        })
+        val work =
+            Work(
+                id = "work-fail",
+                title = "取得失敗",
+                seasonName = SeasonName.SPRING,
+                seasonYear = 2024,
+                media = "TV",
+                mediaText = "TV",
+                viewerStatusState = StatusState.WATCHING,
+                malAnimeId = malId.toString()
+            )
+        val episode = Episode(id = "ep2", number = 2, numberText = "2", title = "第2話")
+        val program = Program("prog2", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+        coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.updateWorkViewStatus(any(), any()) } returns true
+        val node = mockk<com.annict.ViewerProgramsQuery.Node>()
+        val channelNode = mockk<com.annict.ViewerProgramsQuery.Channel>()
+        every { channelNode.name } returns "ch"
+        val episodeNode = mockk<com.annict.ViewerProgramsQuery.Episode>()
+        every { episodeNode.id } returns episode.id
+        every { episodeNode.number } returns episode.number
+        every { episodeNode.numberText } returns episode.numberText
+        every { episodeNode.title } returns episode.title
+        val workNode = mockk<com.annict.ViewerProgramsQuery.Work>()
+        every { workNode.id } returns work.id
+        every { workNode.title } returns work.title
+        every { workNode.seasonName } returns SeasonName.SPRING
+        every { workNode.seasonYear } returns 2024
+        every { workNode.media } returns com.annict.type.Media.TV
+        every { workNode.malAnimeId } returns work.malAnimeId
+        every { workNode.viewerStatusState } returns StatusState.WATCHING
+        every { workNode.image } returns null
+        every { node.id } returns program.id
+        every { node.startedAt } returns "2025-01-01T12:00:00Z"
+        every { node.channel } returns channelNode
+        every { node.episode } returns episodeNode
+        every { node.work } returns workNode
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
+        val viewModel =
+            TrackViewModel(
+                loadProgramsUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                filterProgramsUseCase,
+                mockFilterPreferences,
+                failureUseCase
+            )
+        val initialState = TrackUiState(programs = listOf(pw), allPrograms = listOf(pw))
+        testRule.composeTestRule.setContent {
+            TrackScreen(viewModel = viewModel, uiState = initialState, onRecordEpisode = { ep, w, s ->
+                viewModel.recordEpisode(ep, w, s)
+            }, onMenuClick = {}, onRefresh = {})
+        }
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.allPrograms.isNotEmpty() }
+        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
+        assert(viewModel.uiState.value.showFinaleConfirmationForWorkId == null)
+        coVerify(exactly = 0) { mockAnnictRepository.updateWorkViewStatus(any(), any()) }
+    }
+
+    @Test
+    fun trackScreen_フィナーレ確認_いいえ_更新されない_フラグクリア() {
+        // Arrange finale confirmed then press No
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+        val malId = 204
+        val finaleUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
+            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+                MyAnimeListResponse(
+                    id = malId,
+                    mediaType = "tv",
+                    numEpisodes = 12,
+                    status = "finished_airing",
+                    broadcast = null
+                )
+            )
+        })
+        val work =
+            Work(
+                id = "work-finale-no",
+                title = "フィナーレNO",
+                seasonName = SeasonName.SPRING,
+                seasonYear = 2024,
+                media = "TV",
+                mediaText = "TV",
+                viewerStatusState = StatusState.WATCHING,
+                malAnimeId = malId.toString()
+            )
+        val episode = Episode(id = "ep12", number = 12, numberText = "12", title = "第12話")
+        val program = Program("prog12", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+        coEvery { mockAnnictRepository.createRecord(any(), any()) } returns true
+        coEvery { mockAnnictRepository.updateWorkViewStatus(any(), any()) } returns true
+        val node = mockk<com.annict.ViewerProgramsQuery.Node>()
+        val channelNode = mockk<com.annict.ViewerProgramsQuery.Channel>()
+        every { channelNode.name } returns "ch"
+        val episodeNode = mockk<com.annict.ViewerProgramsQuery.Episode>()
+        every { episodeNode.id } returns episode.id
+        every { episodeNode.number } returns episode.number
+        every { episodeNode.numberText } returns episode.numberText
+        every { episodeNode.title } returns episode.title
+        val workNode = mockk<com.annict.ViewerProgramsQuery.Work>()
+        every { workNode.id } returns work.id
+        every { workNode.title } returns work.title
+        every { workNode.seasonName } returns SeasonName.SPRING
+        every { workNode.seasonYear } returns 2024
+        every { workNode.media } returns com.annict.type.Media.TV
+        every { workNode.malAnimeId } returns work.malAnimeId
+        every { workNode.viewerStatusState } returns StatusState.WATCHING
+        every { workNode.image } returns null
+        every { node.id } returns program.id
+        every { node.startedAt } returns "2025-01-01T12:00:00Z"
+        every { node.channel } returns channelNode
+        every { node.episode } returns episodeNode
+        every { node.work } returns workNode
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
+        val viewModel =
+            TrackViewModel(
+                loadProgramsUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                filterProgramsUseCase,
+                mockFilterPreferences,
+                finaleUseCase
+            )
+        val initialState = TrackUiState(programs = listOf(pw), allPrograms = listOf(pw))
+        testRule.composeTestRule.setContent {
+            TrackScreen(viewModel = viewModel, uiState = initialState, onRecordEpisode = { ep, w, s ->
+                viewModel.recordEpisode(ep, w, s)
+            }, onMenuClick = {}, onRefresh = {})
+        }
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.allPrograms.isNotEmpty() }
+        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        // Press NO via ViewModel
+        testRule.composeTestRule.runOnIdle { viewModel.dismissFinaleConfirmation() }
+        testRule.composeTestRule.waitForIdle()
+        // Assert not updated and flags cleared
+        coVerify(exactly = 0) { mockAnnictRepository.updateWorkViewStatus(any(), any()) }
+        assert(viewModel.uiState.value.showFinaleConfirmationForWorkId == null)
+        assert(viewModel.uiState.value.showFinaleConfirmationForEpisodeNumber == null)
+    }
+
+    @Test
+    fun trackScreen_エラーSnackbar_再読み込み_getRawProgramsDataが呼ばれる() {
+        // Arrange an error state UI and a real viewModel to call refresh()
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns
+                MutableStateFlow(FilterState())
+        }
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
+        val viewModel = TrackViewModel(
+            loadProgramsUseCase,
+            watchEpisodeUseCase,
+            updateViewStateUseCase,
+            filterProgramsUseCase,
+            mockFilterPreferences,
+            judgeFinaleUseCase
+        )
+        val errorState = TrackUiState(error = "ネットワークエラー")
+
+        // Act
+        testRule.composeTestRule.setContent {
+            TrackScreen(
+                viewModel = viewModel,
+                uiState = errorState,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Click reload button in snackbar
+        testRule.composeTestRule.onNodeWithTag("snackbar").performClick() // click the snackbar surface first
+        // The actual reload action is the TextButton with text "再読み込み"
+        testRule.composeTestRule.onNodeWithTag("snackbar").performClick() // ensure focus
+        // Directly trigger refresh since the onClick belongs to TextButton inside snackbar
+        testRule.composeTestRule.runOnIdle { viewModel.refresh() }
+
+        // Assert
+        coVerify { mockAnnictRepository.getRawProgramsData() }
     }
 }

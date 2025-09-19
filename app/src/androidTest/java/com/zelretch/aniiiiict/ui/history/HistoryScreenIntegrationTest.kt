@@ -258,4 +258,75 @@ class HistoryScreenIntegrationTest {
             annictRepository.getRecords("cursor1") // 次ページ読み込み時
         }
     }
+
+    @Test
+    fun historyScreen_検索実行_検索クエリで表示が更新される() {
+        // Arrange
+        val work = Work(
+            id = "w1",
+            title = "Alpha Show",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHED
+        )
+        val ep = Episode(id = "e1", title = "第1話", numberText = "1", number = 1)
+        val recordA = Record(
+            id = "rA",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = ep,
+            work = work.copy(title = "Alpha Show")
+        )
+        val recordB = Record(
+            id = "rB",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = ep,
+            work = work.copy(title = "Beta Show")
+        )
+
+        // 初期ロードで2件返す
+        coEvery { annictRepository.getRecords(null) } returns PaginatedRecords(
+            records = listOf(recordA, recordB),
+            hasNextPage = false,
+            endCursor = null
+        )
+
+        val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase)
+
+        // Wait for initial load
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) { !viewModel.uiState.value.isLoading }
+
+        // Use current vm state for UI
+        val initialUi = viewModel.uiState.value
+
+        // Act: render and then search for "Alpha"
+        testRule.composeTestRule.setContent {
+            HistoryScreen(
+                uiState = initialUi,
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = { q -> viewModel.updateSearchQuery(q) },
+                    onRecordClick = {},
+                    onDismissRecordDetail = {}
+                )
+            )
+        }
+
+        // 検索クエリを更新
+        // 直接 ViewModel を呼んでから UI の確認対象（records 件数）が更新されるのを待つ
+        testRule.composeTestRule.runOnIdle { viewModel.updateSearchQuery("Alpha") }
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) { viewModel.uiState.value.records.size == 1 }
+
+        // Assert: フィルタされた件数が1件（Alphaのみ）
+        assert(viewModel.uiState.value.records.first().work.title.contains("Alpha"))
+    }
 }

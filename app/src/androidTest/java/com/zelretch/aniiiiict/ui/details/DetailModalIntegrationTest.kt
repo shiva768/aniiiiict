@@ -236,4 +236,47 @@ class DetailModalIntegrationTest {
             annictRepository.createRecord("epFlow", "work-flow")
         }
     }
+
+    @Test
+    fun detailModal_WANNA_WATCH_一括視聴_複数話_順序は更新から各話createRecord() {
+        // Arrange
+        val viewModel = DetailModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase)
+
+        val work = Work(
+            id = "work-bulk-wanna",
+            title = "一括視聴WANNA",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WANNA_WATCH
+        )
+        val ep1 = Episode(id = "ep-b1", title = "第1話", numberText = "1", number = 1)
+        val ep2 = Episode(id = "ep-b2", title = "第2話", numberText = "2", number = 2)
+        val p1 = Program(id = "p-b1", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep1)
+        val p2 = Program(id = "p-b2", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep2)
+        val pw = ProgramWithWork(programs = listOf(p1, p2), firstProgram = p1, work = work)
+
+        // Act
+        testRule.composeTestRule.setContent {
+            DetailModal(
+                programWithWork = pw,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // 一括視聴ダイアログを開いて確定
+        viewModel.showConfirmDialog(1)
+        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+
+        // Assert: WANNA_WATCH の場合、先にWATCHINGに更新 → 各話のcreateRecord
+        coVerifyOrder {
+            annictRepository.updateWorkViewStatus("work-bulk-wanna", StatusState.WATCHING)
+            annictRepository.createRecord("ep-b1", "work-bulk-wanna")
+            annictRepository.createRecord("ep-b2", "work-bulk-wanna")
+        }
+    }
 }

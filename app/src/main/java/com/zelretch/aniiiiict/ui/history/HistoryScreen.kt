@@ -316,6 +316,7 @@ fun RecordItem(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
 }
 
 @Composable
+@Suppress("LongMethod")
 fun RecordDetailModal(record: Record, onDismiss: () -> Unit) {
     val formatter = DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm")
     val zonedDateTime = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))

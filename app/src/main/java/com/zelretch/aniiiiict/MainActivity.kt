@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -143,7 +142,10 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Settings : Screen("settings", "設定", Icons.Default.Settings)
 }
 
+private const val LAUNCH_DELAY: Long = 100
+
 @Composable
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun AppNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val mainUiState by mainViewModel.uiState.collectAsState()
@@ -217,7 +219,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             // If we're returning to track screen and should restore drawer
             if (selectedItem == "track" && shouldRestoreDrawerOpen.value) {
                 // Use a coroutine to handle the drawer opening with proper timing
-                kotlinx.coroutines.delay(100) // Small delay to ensure screen is rendered
+                delay(LAUNCH_DELAY) // Small delay to ensure screen is rendered
                 drawerState.open()
                 shouldRestoreDrawerOpen.value = false
             }

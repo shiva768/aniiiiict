@@ -388,4 +388,27 @@ class TrackScreenUITest {
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
     }
+
+    @Test
+    fun trackScreen_エラーSnackbar_再読み込みクリック_ViewModelのrefreshが呼ばれる() {
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val errorState = TrackUiState(error = "通信エラー")
+        every { mockViewModel.uiState } returns MutableStateFlow(errorState)
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = errorState,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // スナックバーの「再読み込み」をクリック
+        composeTestRule.onNodeWithText("再読み込み").performClick()
+
+        // ViewModel.refresh が呼ばれる
+        verify { mockViewModel.refresh() }
+    }
 }

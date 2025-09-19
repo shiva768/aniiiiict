@@ -49,24 +49,62 @@ When submitting, it is required that the unit tests pass without fail.
 
 ### Instrumentation Tests (`connectedAndroidTest`)
 
-Instrumentation tests (located in the `app/src/androidTest` directory) require a connected Android device or emulator. Due to the limitations of the development environment, you cannot run these tests directly.
+Instrumentation tests (located in `app/src/androidTest`) require a connected Android device or an emulator. You SHOULD run them locally before submitting changes.
 
-These tests are automatically executed by the CI pipeline on every push to the repository. If you need to add or modify instrumentation tests, please push your changes to a branch and the CI will run the tests for you.
+Prerequisites:
+- A running Android emulator or a USB-connected device with USB debugging enabled (API level 26+ recommended)
+- Required secrets configured (see "Secrets Management"): either environment variables or entries in `local.properties`
+
+Alternatively, run via Gradle directly:
+
+```bash
+./gradlew connectedDebugAndroidTest
+# or clean and re-run
+./gradlew cleanConnectedDebugAndroidTest connectedDebugAndroidTest
+```
+
+Reports are generated at:
+- `app/build/reports/androidTests/connected/`
+
+CI still runs instrumentation tests automatically on every push. However, please execute them locally (connectedDebugAndroidTest) when developing on your machine to catch issues earlier.
 
 ### Test Strategy
 
 #### IntegrationTest
 
-- Objects to be mocked:
+Integration tests verify the collaboration between multiple components (e.g., UseCase + Repository) to ensure they work together as expected.
+
+- Mock external boundaries such as:
   - `Repository`
-  - `ProgramFilter` (because it is difficult to inject)
+  - `ProgramFilter` (difficult to inject)
   - `customTabsIntentFactory`
-- Other mocks are to be decided on a case-by-case basis.
+- Do NOT mock domain UseCases that encapsulate logic across repositories (e.g., `JudgeFinaleUseCase`).
+  - Instead, provide repository fakes/mocks to drive their behavior.
+- Prefer verifying outcomes (data/state changes, UI behavior) rather than internal method-call counts.
+- Other mocks should be decided on a case-by-case basis, following the principle of minimizing unnecessary mocking.
 
 #### UITest
 
 - Mock the `ViewModel`.
 - Verify the consistency between the `UIState` and the screen's state.
+
+### Test Roles Overview
+
+- **UnitTest**
+  - Focus on small, isolated units of code (functions, classes).
+  - Use mocks extensively to verify method calls and internal behavior.
+  - Appropriate for asserting that specific methods are invoked with expected parameters.
+
+- **IntegrationTest**
+  - Focus on collaboration between multiple components (e.g., UseCase + Repository).
+  - Prefer verifying outcomes (data/state changes, interactions) rather than internal method calls.
+  - Mock external boundaries (Repository, ProgramFilter, customTabsIntentFactory) but avoid mocking domain UseCases.
+  - Suitable for checking system-level correctness within module boundaries.
+
+- **UITest**
+  - Focus on end-user visible behavior and UI consistency.
+  - Do not verify internal method calls.
+  - Mock the ViewModel and ensure that the UI state matches the screen’s state and that user interactions produce the correct results.
 
 ## Building the Application
 
