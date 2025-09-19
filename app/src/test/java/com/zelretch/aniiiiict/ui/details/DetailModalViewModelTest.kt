@@ -39,6 +39,7 @@ class DetailModalViewModelTest : BehaviorSpec({
                 val work = mockk<Work> {
                     every { viewerStatusState } returns StatusState.WATCHING
                     every { id } returns "work-id"
+                    every { malAnimeId } returns "123"
                 }
                 val programWithWork = ProgramWithWork(
                     programs = listOf(program),
@@ -53,6 +54,7 @@ class DetailModalViewModelTest : BehaviorSpec({
                         updated.programs shouldBe listOf(program)
                         updated.selectedStatus shouldBe StatusState.WATCHING
                         updated.workId shouldBe "work-id"
+                        updated.malAnimeId shouldBe "123"
                     }
                 }
             }
