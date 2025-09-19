@@ -65,7 +65,7 @@ class AnnictAuthManager @Inject constructor(
     }
     private fun validateClientSecret() {
         if (BuildConfig.ANNICT_CLIENT_SECRET.isEmpty()) {
-            throw IllegalStateException("[AnnictAuthManager] クライアントシークレットが設定されていません")
+            error("[AnnictAuthManager] クライアントシークレットが設定されていません")
         }
     }
 
