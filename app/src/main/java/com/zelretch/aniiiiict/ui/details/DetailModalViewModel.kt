@@ -136,7 +136,15 @@ class DetailModalViewModel @Inject constructor(
         }
 
         val episodeNumber = currentEpisode.episode.number
-        val malAnimeId = _state.value.malAnimeId?.toIntOrNull() ?: return
+        val malAnimeIdString = _state.value.malAnimeId
+        if (malAnimeIdString.isNullOrEmpty()) {
+            return
+        }
+
+        val malAnimeId = malAnimeIdString.toIntOrNull()
+        if (malAnimeId == null) {
+            return
+        }
 
         val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
 
