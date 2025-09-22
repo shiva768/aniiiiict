@@ -371,7 +371,7 @@ class DetailModalIntegrationTest {
 
         // 一括視聴ダイアログを開いて確定
         viewModel.showConfirmDialog(1) // 最後の2話を選択
-        
+
         // ダイアログが表示されるまで待機
         testRule.composeTestRule.waitUntil(timeoutMillis = 3000) {
             try {
@@ -381,7 +381,7 @@ class DetailModalIntegrationTest {
                 false
             }
         }
-        
+
         testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
 
         // 一括記録が完了するまで待機
@@ -480,7 +480,7 @@ class DetailModalIntegrationTest {
                 false
             }
         }
-        
+
         testRule.composeTestRule.onNodeWithText("記録する").performClick()
 
         // 記録処理が完了するまで待機
