@@ -111,18 +111,30 @@ class DetailModalViewModel @Inject constructor(
         val workId = _state.value.workId
         // エピソード情報をフィナーレ判定用に事前に取得
         val currentEpisode = _state.value.programs.find { it.episode.id == episodeId }
+        timber.log.Timber.d(
+            "DetailModal: recordEpisode - episodeId=$episodeId, workId=$workId, " +
+                "currentEpisode=${currentEpisode?.episode?.number}, malAnimeId=${_state.value.malAnimeId}"
+        )
         viewModelScope.launch {
             runCatching {
                 watchEpisodeUseCase(episodeId, workId, status).getOrThrow()
             }.onSuccess {
+                timber.log.Timber.d(
+                    "DetailModal: recordEpisode - watchEpisodeUseCase succeeded, " +
+                        "calling handleSingleEpisodeFinaleJudgement"
+                )
+                // フィナーレ判定を実行（エピソードを削除する前に）
+                handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
+                
                 // 記録したエピソードのプログラムを表示から消す
                 _state.update {
-                    it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
+                    it.copy(
+                        programs = _state.value.programs.filter { it.episode.id != episodeId }
+                    )
                 }
-                // フィナーレ判定を実行（事前に取得したエピソード情報を使用）
-                handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
                 _events.emit(DetailModalEvent.EpisodesRecorded)
             }.onFailure { e ->
+                timber.log.Timber.e(e, "DetailModal: recordEpisode - watchEpisodeUseCase failed")
                 // 表示は親で処理する設計のため、ここではユーザ向け文言を整形してログ化のみ
                 val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.recordEpisode")
                 ErrorHandler.logError("DetailModalViewModel", "recordEpisode", info)
@@ -132,23 +144,49 @@ class DetailModalViewModel @Inject constructor(
 
     private suspend fun handleSingleEpisodeFinaleJudgement(currentEpisode: Program?, workId: String) {
         if (currentEpisode?.episode?.number == null) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - " +
+                    "currentEpisode is null or episode number is null"
+            )
             return
         }
 
         val episodeNumber = currentEpisode.episode.number
         val malAnimeIdString = _state.value.malAnimeId
+        timber.log.Timber.d(
+            "DetailModal: handleSingleEpisodeFinaleJudgement - " +
+                "episodeNumber=$episodeNumber, malAnimeIdString=$malAnimeIdString"
+        )
+
         if (malAnimeIdString.isNullOrEmpty()) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - malAnimeIdString is null or empty"
+            )
             return
         }
 
         val malAnimeId = malAnimeIdString.toIntOrNull()
         if (malAnimeId == null) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - malAnimeId could not be parsed as int"
+            )
             return
         }
 
+        timber.log.Timber.d(
+            "DetailModal: handleSingleEpisodeFinaleJudgement - calling judgeFinaleUseCase " +
+                "with episodeNumber=$episodeNumber, malAnimeId=$malAnimeId"
+        )
         val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
+        timber.log.Timber.d(
+            "DetailModal: handleSingleEpisodeFinaleJudgement - " +
+                "judgeResult.isFinale=${judgeResult.isFinale}, judgeResult.state=${judgeResult.state}"
+        )
 
         if (judgeResult.isFinale) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - finale detected, updating state"
+            )
             _state.update {
                 it.copy(
                     showSingleEpisodeFinaleConfirmation = true,
@@ -157,6 +195,10 @@ class DetailModalViewModel @Inject constructor(
                 )
             }
             _events.emit(DetailModalEvent.FinaleConfirmationShown)
+        } else {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - not a finale"
+            )
         }
     }
 
