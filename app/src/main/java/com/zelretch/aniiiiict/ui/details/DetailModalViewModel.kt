@@ -109,6 +109,8 @@ class DetailModalViewModel @Inject constructor(
 
     fun recordEpisode(episodeId: String, status: StatusState) {
         val workId = _state.value.workId
+        // エピソード情報をフィナーレ判定用に事前に取得
+        val currentEpisode = _state.value.programs.find { it.episode.id == episodeId }
         viewModelScope.launch {
             runCatching {
                 watchEpisodeUseCase(episodeId, workId, status).getOrThrow()
@@ -117,8 +119,8 @@ class DetailModalViewModel @Inject constructor(
                 _state.update {
                     it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
                 }
-                // フィナーレ判定を実行
-                handleSingleEpisodeFinaleJudgement(episodeId, workId)
+                // フィナーレ判定を実行（事前に取得したエピソード情報を使用）
+                handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
                 _events.emit(DetailModalEvent.EpisodesRecorded)
             }.onFailure { e ->
                 // 表示は親で処理する設計のため、ここではユーザ向け文言を整形してログ化のみ
@@ -128,16 +130,13 @@ class DetailModalViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handleSingleEpisodeFinaleJudgement(episodeId: String, workId: String) {
-        val currentState = _state.value
-        val currentEpisode = currentState.programs.find { it.episode.id == episodeId }
-
+    private suspend fun handleSingleEpisodeFinaleJudgement(currentEpisode: Program?, workId: String) {
         if (currentEpisode?.episode?.number == null) {
             return
         }
 
         val episodeNumber = currentEpisode.episode.number
-        val malAnimeId = currentState.malAnimeId?.toIntOrNull() ?: return
+        val malAnimeId = _state.value.malAnimeId?.toIntOrNull() ?: return
 
         val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
 

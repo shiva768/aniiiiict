@@ -11,28 +11,37 @@ import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DetailModalViewModelTest : BehaviorSpec({
-    val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>()
-    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
-    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
-    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
+    val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>(relaxed = true)
+    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>(relaxed = true)
+    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>(relaxed = true)
+    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>(relaxed = true)
     val dispatcher = UnconfinedTestDispatcher()
     lateinit var viewModel: DetailModalViewModel
 
     beforeTest {
+        Dispatchers.setMain(dispatcher)
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
             judgeFinaleUseCase
         )
+    }
+
+    afterTest {
+        Dispatchers.resetMain()
     }
 
     Given("initialize呼び出し") {
@@ -80,8 +89,6 @@ class DetailModalViewModelTest : BehaviorSpec({
         }
     }
 
-    // FIXME: These tests need to be fixed - temporarily commented out to make check pass
-    /*
     Given("単一エピソード記録でのフィナーレ判定") {
         When("最終話を記録した場合") {
             Then("フィナーレ確認ダイアログが表示される") {
@@ -91,13 +98,15 @@ class DetailModalViewModelTest : BehaviorSpec({
                     every { id } returns "work-finale"
                     every { malAnimeId } returns "123"
                 }
-                val episode = Episode(id = "ep-12", number = 12, title = "最終話")
-                val program = Program(
-                    id = "prog-12",
-                    episode = episode,
-                    channel = mockk(relaxed = true),
-                    startedAt = mockk(relaxed = true)
-                )
+                val episode = mockk<com.zelretch.aniiiiict.data.model.Episode> {
+                    every { id } returns "ep-12"
+                    every { number } returns 12
+                    every { title } returns "最終話"
+                }
+                val program = mockk<Program> {
+                    every { this@mockk.episode } returns episode
+                    every { id } returns "prog-12"
+                }
                 val programWithWork = ProgramWithWork(
                     programs = listOf(program),
                     firstProgram = program,
@@ -135,13 +144,15 @@ class DetailModalViewModelTest : BehaviorSpec({
                     every { id } returns "work-normal"
                     every { malAnimeId } returns "123"
                 }
-                val episode = Episode(id = "ep-10", number = 10, title = "第10話")
-                val program = Program(
-                    id = "prog-10",
-                    episode = episode,
-                    channel = mockk(relaxed = true),
-                    startedAt = mockk(relaxed = true)
-                )
+                val episode = mockk<com.zelretch.aniiiiict.data.model.Episode> {
+                    every { id } returns "ep-10"
+                    every { number } returns 10
+                    every { title } returns "第10話"
+                }
+                val program = mockk<Program> {
+                    every { this@mockk.episode } returns episode
+                    every { id } returns "prog-10"
+                }
                 val programWithWork = ProgramWithWork(
                     programs = listOf(program),
                     firstProgram = program,
@@ -171,5 +182,4 @@ class DetailModalViewModelTest : BehaviorSpec({
             }
         }
     }
-     */
 })
