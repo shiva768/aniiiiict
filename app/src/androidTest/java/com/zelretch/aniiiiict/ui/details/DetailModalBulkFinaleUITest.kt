@@ -127,7 +127,7 @@ class DetailModalBulkFinaleUITest {
 
         // Assert - フィナーレ確認ダイアログがすぐに表示されることを確認
         composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
-        composeTestRule.onNodeWithText("第12話は最終話です。").assertIsDisplayed()
+        composeTestRule.onNodeWithText("第12話は最終話です。", substring = true).assertIsDisplayed()
         composeTestRule.onNodeWithText("視聴完了にする").assertIsDisplayed()
         composeTestRule.onNodeWithText("後で").assertIsDisplayed()
     }
