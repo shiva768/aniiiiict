@@ -125,17 +125,7 @@ class DetailModalBulkFinaleUITest {
         // Compose UIの初期化を待機
         composeTestRule.waitForIdle()
 
-        // フィナーレ確認ダイアログが表示されるまで待機
-        composeTestRule.waitUntil(timeoutMillis = 5000) {
-            try {
-                composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
-                true
-            } catch (e: AssertionError) {
-                false
-            }
-        }
-
-        // Assert
+        // Assert - フィナーレ確認ダイアログがすぐに表示されることを確認
         composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
         composeTestRule.onNodeWithText("第12話は最終話です。").assertIsDisplayed()
         composeTestRule.onNodeWithText("視聴完了にする").assertIsDisplayed()
