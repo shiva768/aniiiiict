@@ -6,6 +6,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorHandler
@@ -28,22 +29,30 @@ data class DetailModalState(
     val isStatusChanging: Boolean = false,
     val statusChangeError: String? = null,
     val workId: String = "",
+    val malAnimeId: String? = null,
     val isBulkRecording: Boolean = false,
     val bulkRecordingProgress: Int = 0,
-    val bulkRecordingTotal: Int = 0
+    val bulkRecordingTotal: Int = 0,
+    val showFinaleConfirmation: Boolean = false,
+    val finaleEpisodeNumber: Int? = null,
+    val showSingleEpisodeFinaleConfirmation: Boolean = false,
+    val singleEpisodeFinaleNumber: Int? = null,
+    val singleEpisodeFinaleWorkId: String? = null
 )
 
 sealed interface DetailModalEvent {
     object StatusChanged : DetailModalEvent
     object EpisodesRecorded : DetailModalEvent
     object BulkEpisodesRecorded : DetailModalEvent
+    object FinaleConfirmationShown : DetailModalEvent
 }
 
 @HiltViewModel
 class DetailModalViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
-    private val updateViewStateUseCase: UpdateViewStateUseCase
+    private val updateViewStateUseCase: UpdateViewStateUseCase,
+    private val judgeFinaleUseCase: JudgeFinaleUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DetailModalState())
@@ -57,13 +66,29 @@ class DetailModalViewModel @Inject constructor(
             it.copy(
                 programs = programWithWork.programs,
                 selectedStatus = programWithWork.work.viewerStatusState,
-                workId = programWithWork.work.id
+                workId = programWithWork.work.id,
+                malAnimeId = programWithWork.work.malAnimeId
             )
         }
     }
 
     fun showConfirmDialog(index: Int) {
-        _state.update { it.copy(showConfirmDialog = true, selectedEpisodeIndex = index) }
+        if (index <= 0) {
+            // 単一エピソードの場合は確認ダイアログを出さず、そのまま記録を実行する
+            val firstProgram = _state.value.programs.firstOrNull()
+            val status = _state.value.selectedStatus
+            val episodeId = firstProgram?.episode?.id
+            if (episodeId != null && status != null) {
+                // bulkRecordEpisodes 内で selectedEpisodeIndex を参照するため事前に設定
+                _state.update { it.copy(showConfirmDialog = false, selectedEpisodeIndex = 0) }
+                bulkRecordEpisodes(listOf(episodeId), status)
+            } else {
+                // データが不足している場合はフォールバックとしてダイアログも出さない
+                _state.update { it.copy(showConfirmDialog = false, selectedEpisodeIndex = null) }
+            }
+        } else {
+            _state.update { it.copy(showConfirmDialog = true, selectedEpisodeIndex = index) }
+        }
     }
 
     fun hideConfirmDialog() {
@@ -99,16 +124,32 @@ class DetailModalViewModel @Inject constructor(
 
     fun recordEpisode(episodeId: String, status: StatusState) {
         val workId = _state.value.workId
+        // エピソード情報をフィナーレ判定用に事前に取得
+        val currentEpisode = _state.value.programs.find { it.episode.id == episodeId }
+        timber.log.Timber.d(
+            "DetailModal: recordEpisode - episodeId=$episodeId, workId=$workId, " +
+                "currentEpisode=${currentEpisode?.episode?.number}, malAnimeId=${_state.value.malAnimeId}"
+        )
         viewModelScope.launch {
             runCatching {
                 watchEpisodeUseCase(episodeId, workId, status).getOrThrow()
             }.onSuccess {
+                timber.log.Timber.d(
+                    "DetailModal: recordEpisode - watchEpisodeUseCase succeeded, " +
+                        "calling handleSingleEpisodeFinaleJudgement"
+                )
+                // フィナーレ判定を実行（エピソードを削除する前に）
+                handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
+
                 // 記録したエピソードのプログラムを表示から消す
                 _state.update {
-                    it.copy(programs = _state.value.programs.filter { it.episode.id != episodeId })
+                    it.copy(
+                        programs = _state.value.programs.filter { it.episode.id != episodeId }
+                    )
                 }
                 _events.emit(DetailModalEvent.EpisodesRecorded)
             }.onFailure { e ->
+                timber.log.Timber.e(e, "DetailModal: recordEpisode - watchEpisodeUseCase failed")
                 // 表示は親で処理する設計のため、ここではユーザ向け文言を整形してログ化のみ
                 val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.recordEpisode")
                 ErrorHandler.logError("DetailModalViewModel", "recordEpisode", info)
@@ -116,8 +157,74 @@ class DetailModalViewModel @Inject constructor(
         }
     }
 
+    private suspend fun handleSingleEpisodeFinaleJudgement(currentEpisode: Program?, workId: String) {
+        if (currentEpisode?.episode?.number == null) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - " +
+                    "currentEpisode is null or episode number is null"
+            )
+            return
+        }
+
+        val episodeNumber = currentEpisode.episode.number
+        val malAnimeIdString = _state.value.malAnimeId
+        timber.log.Timber.d(
+            "DetailModal: handleSingleEpisodeFinaleJudgement - " +
+                "episodeNumber=$episodeNumber, malAnimeIdString=$malAnimeIdString"
+        )
+
+        if (malAnimeIdString.isNullOrEmpty()) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - malAnimeIdString is null or empty"
+            )
+            return
+        }
+
+        val malAnimeId = malAnimeIdString.toIntOrNull()
+        if (malAnimeId == null) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - malAnimeId could not be parsed as int"
+            )
+            return
+        }
+
+        timber.log.Timber.d(
+            "DetailModal: handleSingleEpisodeFinaleJudgement - calling judgeFinaleUseCase " +
+                "with episodeNumber=$episodeNumber, malAnimeId=$malAnimeId"
+        )
+        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
+        timber.log.Timber.d(
+            "DetailModal: handleSingleEpisodeFinaleJudgement - " +
+                "judgeResult.isFinale=${judgeResult.isFinale}, judgeResult.state=${judgeResult.state}"
+        )
+
+        if (judgeResult.isFinale) {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - finale detected, updating state"
+            )
+            _state.update {
+                it.copy(
+                    showSingleEpisodeFinaleConfirmation = true,
+                    singleEpisodeFinaleNumber = episodeNumber,
+                    singleEpisodeFinaleWorkId = workId
+                )
+            }
+            _events.emit(DetailModalEvent.FinaleConfirmationShown)
+        } else {
+            timber.log.Timber.d(
+                "DetailModal: handleSingleEpisodeFinaleJudgement - not a finale"
+            )
+        }
+    }
+
     fun bulkRecordEpisodes(episodeIds: List<String>, status: StatusState) {
         val workId = _state.value.workId
+        val currentState = _state.value
+        val malAnimeId = currentState.malAnimeId?.toIntOrNull()
+        val lastEpisodeNumber = currentState.programs
+            .find { it.episode.id == episodeIds.lastOrNull() }
+            ?.episode?.number
+
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -132,15 +239,21 @@ class DetailModalViewModel @Inject constructor(
                     episodeIds = episodeIds,
                     workId = workId,
                     currentStatus = status,
+                    malAnimeId = malAnimeId,
+                    lastEpisodeNumber = lastEpisodeNumber,
                     onProgress = { progress ->
                         _state.update { it.copy(bulkRecordingProgress = progress) }
                     }
                 ).getOrThrow()
-            }.onSuccess {
+            }.onSuccess { result ->
                 val currentPrograms = _state.value.programs
                 val targetPrograms = currentPrograms.filterIndexed { index, _ ->
                     index <= (_state.value.selectedEpisodeIndex ?: return@launch)
                 }
+
+                // フィナーレ判定の結果をチェック
+                val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
+
                 _state.update {
                     it.copy(
                         programs = currentPrograms - targetPrograms.toSet(),
@@ -148,10 +261,17 @@ class DetailModalViewModel @Inject constructor(
                         selectedEpisodeIndex = null,
                         isBulkRecording = false,
                         bulkRecordingProgress = 0,
-                        bulkRecordingTotal = 0
+                        bulkRecordingTotal = 0,
+                        showFinaleConfirmation = shouldShowFinaleConfirmation,
+                        finaleEpisodeNumber = if (shouldShowFinaleConfirmation) lastEpisodeNumber else null
                     )
                 }
-                _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+
+                if (shouldShowFinaleConfirmation) {
+                    _events.emit(DetailModalEvent.FinaleConfirmationShown)
+                } else {
+                    _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+                }
             }.onFailure { e ->
                 val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.bulkRecordEpisodes")
                 ErrorHandler.logError("DetailModalViewModel", "bulkRecordEpisodes", info)
@@ -163,6 +283,72 @@ class DetailModalViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    fun confirmFinaleWatched() {
+        val workId = _state.value.workId
+        viewModelScope.launch {
+            runCatching {
+                updateViewStateUseCase(workId, StatusState.WATCHED)
+            }.onSuccess {
+                _state.update {
+                    it.copy(
+                        showFinaleConfirmation = false,
+                        finaleEpisodeNumber = null
+                    )
+                }
+                _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+            }.onFailure { e ->
+                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.confirmFinaleWatched")
+                ErrorHandler.logError("DetailModalViewModel", "confirmFinaleWatched", info)
+            }
+        }
+    }
+
+    fun hideFinaleConfirmation() {
+        _state.update {
+            it.copy(
+                showFinaleConfirmation = false,
+                finaleEpisodeNumber = null
+            )
+        }
+        viewModelScope.launch {
+            _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+        }
+    }
+
+    fun confirmSingleEpisodeFinaleWatched() {
+        val workId = _state.value.singleEpisodeFinaleWorkId ?: return
+        viewModelScope.launch {
+            runCatching {
+                updateViewStateUseCase(workId, StatusState.WATCHED)
+            }.onSuccess {
+                _state.update {
+                    it.copy(
+                        showSingleEpisodeFinaleConfirmation = false,
+                        singleEpisodeFinaleNumber = null,
+                        singleEpisodeFinaleWorkId = null
+                    )
+                }
+                _events.emit(DetailModalEvent.EpisodesRecorded)
+            }.onFailure { e ->
+                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.confirmSingleEpisodeFinaleWatched")
+                ErrorHandler.logError("DetailModalViewModel", "confirmSingleEpisodeFinaleWatched", info)
+            }
+        }
+    }
+
+    fun hideSingleEpisodeFinaleConfirmation() {
+        _state.update {
+            it.copy(
+                showSingleEpisodeFinaleConfirmation = false,
+                singleEpisodeFinaleNumber = null,
+                singleEpisodeFinaleWorkId = null
+            )
+        }
+        viewModelScope.launch {
+            _events.emit(DetailModalEvent.EpisodesRecorded)
         }
     }
 }

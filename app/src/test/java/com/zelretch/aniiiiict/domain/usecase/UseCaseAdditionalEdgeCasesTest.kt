@@ -22,7 +22,8 @@ class UseCaseAdditionalEdgeCasesTest : BehaviorSpec({
     given("BulkRecordEpisodesUseCaseの境界値処理") {
 
         val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
-        val bulkUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase)
+        val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
+        val bulkUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase, judgeFinaleUseCase)
 
         `when`("空のエピソードリストを処理") {
             then("即座に成功を返す") {

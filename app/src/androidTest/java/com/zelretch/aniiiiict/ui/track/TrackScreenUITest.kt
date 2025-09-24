@@ -360,7 +360,7 @@ class TrackScreenUITest {
 
         // Assert
         verify {
-            onRecord.invoke("ep-1", "work-123", StatusState.WATCHING)
+            onRecord("ep-1", "work-123", StatusState.WATCHING)
         }
     }
 

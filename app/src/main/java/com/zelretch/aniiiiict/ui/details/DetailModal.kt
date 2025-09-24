@@ -34,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.details.components.ConfirmDialog
+import com.zelretch.aniiiiict.ui.details.components.FinaleConfirmDialog
 import com.zelretch.aniiiiict.ui.details.components.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest
 
@@ -82,6 +83,8 @@ private fun DetailModalLaunchedEffects(
                 is DetailModalEvent.EpisodesRecorded,
                 is DetailModalEvent.BulkEpisodesRecorded
                 -> onRefresh()
+                is DetailModalEvent.FinaleConfirmationShown
+                -> { /* UI already handles this via state */ }
             }
         }
     }
@@ -135,6 +138,22 @@ private fun DetailModalDialogs(
                 }
             },
             confirmButton = { }
+        )
+    }
+
+    if (state.showFinaleConfirmation && state.finaleEpisodeNumber != null) {
+        FinaleConfirmDialog(
+            episodeNumber = state.finaleEpisodeNumber,
+            onConfirm = viewModel::confirmFinaleWatched,
+            onDismiss = viewModel::hideFinaleConfirmation
+        )
+    }
+
+    if (state.showSingleEpisodeFinaleConfirmation && state.singleEpisodeFinaleNumber != null) {
+        FinaleConfirmDialog(
+            episodeNumber = state.singleEpisodeFinaleNumber,
+            onConfirm = viewModel::confirmSingleEpisodeFinaleWatched,
+            onDismiss = viewModel::hideSingleEpisodeFinaleConfirmation
         )
     }
 }

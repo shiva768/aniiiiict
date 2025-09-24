@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.filter.SortOrder
@@ -234,7 +235,7 @@ private fun SeasonFilterDialog(
         items = filterOptions.seasons.map { it.name },
         selectedItems = filterState.selectedSeason.map { it.name }.toSet(),
         onItemSelected = { seasonStr ->
-            val season = com.annict.type.SeasonName.valueOf(seasonStr)
+            val season = SeasonName.valueOf(seasonStr)
             val newSelection = filterState.selectedSeason.toMutableSet()
             if (season in newSelection) newSelection.remove(season) else newSelection.add(season)
             onFilterChange(filterState.copy(selectedSeason = newSelection))

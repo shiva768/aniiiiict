@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 data class TrackUiState(
     val programs: List<ProgramWithWork> = emptyList(),
-    val records: List<com.zelretch.aniiiiict.data.model.Record> = emptyList(),
+    val records: List<Record> = emptyList(),
     override val isLoading: Boolean = false,
     override val error: String? = null,
     val isRecording: Boolean = false,
