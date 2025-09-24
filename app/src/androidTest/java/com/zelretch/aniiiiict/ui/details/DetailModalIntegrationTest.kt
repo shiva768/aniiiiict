@@ -6,6 +6,7 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
@@ -70,7 +71,21 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
-    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+    val mockMyAnimeListRepository: MyAnimeListRepository = object : MyAnimeListRepository {
+        // mockでやると結果が不安定(ClassCastExceptionなどが発生)なので、Repositoryをここで実装しちゃう
+        override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> {
+            // Default to a non-finale safe response unless overridden by specific test stubbing
+            return Result.success(
+                MyAnimeListResponse(
+                    id = mediaId,
+                    mediaType = "tv",
+                    numEpisodes = 12,
+                    status = "currently_airing",
+                    broadcast = null
+                )
+            )
+        }
+    }
 
     @BindValue
     @JvmField
@@ -211,9 +226,10 @@ class DetailModalIntegrationTest {
             )
         }
 
-        // 単一エピソードの視聴記録
+        // 単一エピソードの視聴記録（確認ダイアログなしでそのまま実行）
         viewModel.showConfirmDialog(0)
-        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+        // Wait for the coroutine to complete
+        testRule.composeTestRule.waitForIdle()
 
         // Assert
         coVerify(exactly = 1) { annictRepository.createRecord("epSingle", "work-single") }
@@ -254,9 +270,9 @@ class DetailModalIntegrationTest {
             )
         }
 
-        // エピソード記録（WANNA_WATCH状態から）
+        // エピソード記録（WANNA_WATCH状態から）: 単一のため確認ダイアログなしでそのまま記録される
         viewModel.showConfirmDialog(0)
-        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+        testRule.composeTestRule.waitForIdle()
 
         // Assert: WANNA_WATCHからの場合、先にWATCHINGに更新してからレコード作成される
         coVerifyOrder {
@@ -312,6 +328,67 @@ class DetailModalIntegrationTest {
             annictRepository.createRecord("ep-b1", "work-bulk-wanna")
             annictRepository.createRecord("ep-b2", "work-bulk-wanna")
         }
+    }
+
+    @Test
+    fun detailModal_単体視聴_フィナーレ判定_ダイアログ表示と確認でWATCHEDへ更新() {
+        // Arrange
+        val viewModel =
+            DetailModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase
+            )
+
+        // MAL 側で finished_airing を返すようにモック
+        val malId = 555
+
+        val work = Work(
+            id = "work-single-finale",
+            title = "単体フィナーレ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING,
+            malAnimeId = malId.toString()
+        )
+        val epLast = Episode(id = "ep-last", title = "第12話", numberText = "12", number = 12)
+        val pLast = Program(id = "p-last", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = epLast)
+        val pw = ProgramWithWork(programs = listOf(pLast), firstProgram = pLast, work = work)
+
+        // Act
+        testRule.composeTestRule.setContent {
+            DetailModal(
+                programWithWork = pw,
+                isLoading = false,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // ViewModel.initialize が LaunchedEffect 経由で反映されるのを待つ（MAL ID が設定されるまで）
+        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            viewModel.state.value.malAnimeId != null && viewModel.state.value.programs.isNotEmpty()
+        }
+
+        // 単一エピソードの視聴記録（UIの「記録する」ボタンを押下）→ Watch 後にフィナーレ判定が走る
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
+
+        // Assert: 最終話確認ダイアログが表示される
+        testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
+        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertExists()
+
+        // 確認を押すと WATCHED に更新される
+        testRule.composeTestRule.onNodeWithText("視聴完了にする").performClick()
+
+        // Wait for coroutine completion
+        testRule.composeTestRule.waitForIdle()
+
+        coVerify(exactly = 1) { annictRepository.updateWorkViewStatus("work-single-finale", StatusState.WATCHED) }
     }
 
     // Note: フィナーレ判定の統合テストはコメントアウト

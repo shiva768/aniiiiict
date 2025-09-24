@@ -45,22 +45,6 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
             }
         }
 
-        `when`("status == finished_airing の場合") {
-            then("finale_confirmed を返す") {
-                val media = MyAnimeListResponse(
-                    id = 3,
-                    mediaType = "tv",
-                    numEpisodes = null,
-                    status = "finished_airing",
-                    broadcast = null
-                )
-                coEvery { myAnimeListRepository.getMedia(media.id) } returns Result.success(media)
-                val result = judgeFinaleUseCase(10, media.id)
-                result.state shouldBe FinaleState.FINALE_CONFIRMED
-                result.isFinale shouldBe true
-            }
-        }
-
         `when`("currently_airing かつ numEpisodes == null の場合") {
             then("unknown を返す") {
                 val media = MyAnimeListResponse(

@@ -73,7 +73,22 @@ class DetailModalViewModel @Inject constructor(
     }
 
     fun showConfirmDialog(index: Int) {
-        _state.update { it.copy(showConfirmDialog = true, selectedEpisodeIndex = index) }
+        if (index <= 0) {
+            // 単一エピソードの場合は確認ダイアログを出さず、そのまま記録を実行する
+            val firstProgram = _state.value.programs.firstOrNull()
+            val status = _state.value.selectedStatus
+            val episodeId = firstProgram?.episode?.id
+            if (episodeId != null && status != null) {
+                // bulkRecordEpisodes 内で selectedEpisodeIndex を参照するため事前に設定
+                _state.update { it.copy(showConfirmDialog = false, selectedEpisodeIndex = 0) }
+                bulkRecordEpisodes(listOf(episodeId), status)
+            } else {
+                // データが不足している場合はフォールバックとしてダイアログも出さない
+                _state.update { it.copy(showConfirmDialog = false, selectedEpisodeIndex = null) }
+            }
+        } else {
+            _state.update { it.copy(showConfirmDialog = true, selectedEpisodeIndex = index) }
+        }
     }
 
     fun hideConfirmDialog() {

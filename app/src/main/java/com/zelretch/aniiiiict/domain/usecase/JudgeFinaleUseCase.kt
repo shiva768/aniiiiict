@@ -35,11 +35,6 @@ class JudgeFinaleUseCase @Inject constructor(
                 // MyAnimeListには nextAiringEpisode 相当の情報がないため、
                 // status と num_episodes で判定する
 
-                // 1. status == finished_airing → finale_confirmed
-                media.status == "finished_airing" -> {
-                    Timber.i("ステータスが finished_airing のため FINALE_CONFIRMED")
-                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
-                }
                 // 2. num_episodes が数値 かつ currentEp >= num_episodes → finale_confirmed
                 media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes -> {
                     Timber.i("現在のエピソードが総エピソード数に達したためFINALE_CONFIRMED")
