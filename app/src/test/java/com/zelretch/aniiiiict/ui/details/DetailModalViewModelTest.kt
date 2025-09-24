@@ -6,6 +6,8 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.FinaleState
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -23,10 +25,10 @@ import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DetailModalViewModelTest : BehaviorSpec({
-    val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>(relaxed = true)
-    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>(relaxed = true)
-    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>(relaxed = true)
-    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>(relaxed = true)
+    val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>()
+    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
+    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
+    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
     val dispatcher = UnconfinedTestDispatcher()
     lateinit var viewModel: DetailModalViewModel
 
@@ -117,9 +119,9 @@ class DetailModalViewModelTest : BehaviorSpec({
                 coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
 
                 // JudgeFinaleUseCaseのモック設定（最終話判定）
-                coEvery { judgeFinaleUseCase(12, 123) } returns mockk {
-                    every { isFinale } returns true
-                }
+                coEvery {
+                    judgeFinaleUseCase(12, 123)
+                } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
 
                 runTest(dispatcher) {
                     viewModel.initialize(programWithWork)
@@ -163,9 +165,9 @@ class DetailModalViewModelTest : BehaviorSpec({
                 coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
 
                 // JudgeFinaleUseCaseのモック設定（非最終話判定）
-                coEvery { judgeFinaleUseCase(10, 123) } returns mockk {
-                    every { isFinale } returns false
-                }
+                coEvery {
+                    judgeFinaleUseCase(10, 123)
+                } returns JudgeFinaleResult(FinaleState.NOT_FINALE)
 
                 runTest(dispatcher) {
                     viewModel.initialize(programWithWork)

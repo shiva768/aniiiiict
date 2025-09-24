@@ -34,7 +34,7 @@ class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
                 val status = StatusState.WANNA_WATCH
                 val malAnimeId = 123
                 val lastEpisodeNumber = 12
-                val finaleResult = JudgeFinaleResult(FinaleState.FINALE_CONFIRMED, true)
+                val finaleResult = JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
 
                 coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
                 coEvery { judgeFinaleUseCase(lastEpisodeNumber, malAnimeId) } returns finaleResult

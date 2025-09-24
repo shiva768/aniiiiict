@@ -125,7 +125,7 @@ class DetailModalViewModel @Inject constructor(
                 )
                 // フィナーレ判定を実行（エピソードを削除する前に）
                 handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
-                
+
                 // 記録したエピソードのプログラムを表示から消す
                 _state.update {
                     it.copy(
