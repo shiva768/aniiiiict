@@ -3,8 +3,10 @@ package com.zelretch.aniiiiict.ui.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
@@ -37,7 +39,10 @@ data class DetailModalState(
     val finaleEpisodeNumber: Int? = null,
     val showSingleEpisodeFinaleConfirmation: Boolean = false,
     val singleEpisodeFinaleNumber: Int? = null,
-    val singleEpisodeFinaleWorkId: String? = null
+    val singleEpisodeFinaleWorkId: String? = null,
+    val animeDetailInfo: AnimeDetailInfo? = null,
+    val isLoadingDetailInfo: Boolean = false,
+    val detailInfoError: String? = null
 )
 
 sealed interface DetailModalEvent {
@@ -52,7 +57,8 @@ class DetailModalViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
-    private val judgeFinaleUseCase: JudgeFinaleUseCase
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
+    private val animeDetailRepository: AnimeDetailRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DetailModalState())
@@ -69,6 +75,34 @@ class DetailModalViewModel @Inject constructor(
                 workId = programWithWork.work.id,
                 malAnimeId = programWithWork.work.malAnimeId
             )
+        }
+        
+        // Fetch detailed anime information
+        fetchAnimeDetailInfo(programWithWork.work.id, programWithWork.work.malAnimeId)
+    }
+
+    private fun fetchAnimeDetailInfo(workId: String, malAnimeId: String?) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingDetailInfo = true, detailInfoError = null) }
+            
+            animeDetailRepository.getAnimeDetailInfo(workId, malAnimeId)
+                .onSuccess { detailInfo ->
+                    _state.update { 
+                        it.copy(
+                            animeDetailInfo = detailInfo,
+                            isLoadingDetailInfo = false
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    timber.log.Timber.e(error, "Failed to fetch anime detail info")
+                    _state.update { 
+                        it.copy(
+                            isLoadingDetailInfo = false,
+                            detailInfoError = error.message ?: "詳細情報の取得に失敗しました"
+                        )
+                    }
+                }
         }
     }
 

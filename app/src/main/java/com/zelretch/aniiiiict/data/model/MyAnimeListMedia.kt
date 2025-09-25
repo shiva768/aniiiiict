@@ -9,6 +9,22 @@ data class MyAnimeListBroadcast(
     val time: String?
 )
 
+data class MyAnimeListImage(
+    @SerializedName("medium")
+    val medium: String?,
+
+    @SerializedName("large")
+    val large: String?
+)
+
+data class MyAnimeListMainPicture(
+    @SerializedName("medium")
+    val medium: String?,
+
+    @SerializedName("large")
+    val large: String?
+)
+
 data class MyAnimeListResponse(
     val id: Int,
 
@@ -20,5 +36,8 @@ data class MyAnimeListResponse(
 
     val status: String?, // "finished_airing", "currently_airing", "not_yet_aired"
 
-    val broadcast: MyAnimeListBroadcast?
+    val broadcast: MyAnimeListBroadcast?,
+
+    @SerializedName("main_picture")
+    val mainPicture: MyAnimeListMainPicture?
 )
