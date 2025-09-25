@@ -27,7 +27,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     status = "finished_airing",
                     broadcast = null
                 )
-                coEvery { repository.getMedia(1) } returns Result.success(media)
+                coEvery { repository.getAnimeDetail(1) } returns Result.success(media)
 
                 val result = useCase(12, 1)
 
@@ -45,7 +45,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     status = "currently_airing",
                     broadcast = null
                 )
-                coEvery { repository.getMedia(2) } returns Result.success(media)
+                coEvery { repository.getAnimeDetail(2) } returns Result.success(media)
 
                 val result = useCase(24, 2)
 
@@ -63,7 +63,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     status = "currently_airing",
                     broadcast = null
                 )
-                coEvery { repository.getMedia(3) } returns Result.success(media)
+                coEvery { repository.getAnimeDetail(3) } returns Result.success(media)
 
                 val result = useCase(8, 3)
 

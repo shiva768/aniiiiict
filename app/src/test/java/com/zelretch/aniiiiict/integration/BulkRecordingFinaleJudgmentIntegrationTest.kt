@@ -45,7 +45,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest : BehaviorSpec({
 
                 coEvery { annictRepository.createRecord(any(), any()) } returns true
                 coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
-                coEvery { malRepository.getMedia(malAnimeId) } returns Result.success(media)
+                coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
                 // Act
                 val result = bulkRecordUseCase(
@@ -81,7 +81,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest : BehaviorSpec({
 
                 coEvery { annictRepository.createRecord(any(), any()) } returns true
                 coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
-                coEvery { malRepository.getMedia(malAnimeId) } returns Result.success(media)
+                coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
                 // Act
                 val result = bulkRecordUseCase(
