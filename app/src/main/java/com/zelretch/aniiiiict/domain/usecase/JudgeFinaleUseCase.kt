@@ -18,12 +18,12 @@ data class JudgeFinaleResult(val state: FinaleState) {
 class JudgeFinaleUseCase @Inject constructor(
     private val myAnimeListRepository: MyAnimeListRepository
 ) {
-    suspend operator fun invoke(currentEpisodeNumber: Int, mediaId: Int): JudgeFinaleResult {
+    suspend operator fun invoke(currentEpisodeNumber: Int, animeId: Int): JudgeFinaleResult {
         Timber.i(
-            "最終話判定を開始: currentEpisode=$currentEpisodeNumber, mediaId=$mediaId"
+            "最終話判定を開始: currentEpisode=$currentEpisodeNumber, animeId=$animeId"
         )
 
-        val result = myAnimeListRepository.getMedia(mediaId)
+        val result = myAnimeListRepository.getAnimeDetail(animeId)
 
         return result.fold(onSuccess = { media ->
             when {

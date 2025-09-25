@@ -22,7 +22,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "currently_airing",
                     broadcast = null
                 )
-                coEvery { myAnimeListRepository.getMedia(media.id) } returns Result.success(media)
+                coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.NOT_FINALE
                 result.isFinale shouldBe false
@@ -38,7 +38,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "currently_airing",
                     broadcast = null
                 )
-                coEvery { myAnimeListRepository.getMedia(media.id) } returns Result.success(media)
+                coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(12, media.id)
                 result.state shouldBe FinaleState.FINALE_CONFIRMED
                 result.isFinale shouldBe true
@@ -54,7 +54,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "currently_airing",
                     broadcast = null
                 )
-                coEvery { myAnimeListRepository.getMedia(media.id) } returns Result.success(media)
+                coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.UNKNOWN
                 result.isFinale shouldBe false
@@ -70,7 +70,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "not_yet_aired",
                     broadcast = null
                 )
-                coEvery { myAnimeListRepository.getMedia(media.id) } returns Result.success(media)
+                coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(10, media.id)
                 result.state shouldBe FinaleState.UNKNOWN
                 result.isFinale shouldBe false
@@ -86,7 +86,7 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     status = "finished_airing",
                     broadcast = null
                 )
-                coEvery { myAnimeListRepository.getMedia(media.id) } returns Result.success(media)
+                coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(1, media.id)
                 result.state shouldBe FinaleState.UNKNOWN
                 result.isFinale shouldBe false

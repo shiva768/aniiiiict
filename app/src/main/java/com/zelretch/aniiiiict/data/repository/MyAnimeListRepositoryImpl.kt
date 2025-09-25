@@ -17,9 +17,9 @@ class MyAnimeListRepositoryImpl @Inject constructor(
         private const val CLIENT_ID = BuildConfig.MAL_CLIENT_ID
     }
 
-    override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = runCatching {
+    override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> = runCatching {
         val response = api.getAnime(
-            animeId = mediaId,
+            animeId = animeId,
             clientId = CLIENT_ID
         )
 
@@ -29,6 +29,6 @@ class MyAnimeListRepositoryImpl @Inject constructor(
             throw IOException("API request failed: ${response.code()} ${response.message()}")
         }
     }.onFailure { e ->
-        ErrorHandler.handleError(e, "MyAnimeListRepositoryImpl", "getMedia")
+        ErrorHandler.handleError(e, "MyAnimeListRepositoryImpl", "getAnimeDetail")
     }
 }

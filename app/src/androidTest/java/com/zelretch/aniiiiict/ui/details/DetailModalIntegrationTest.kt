@@ -73,11 +73,11 @@ class DetailModalIntegrationTest {
     @JvmField
     val mockMyAnimeListRepository: MyAnimeListRepository = object : MyAnimeListRepository {
         // mockでやると結果が不安定(ClassCastExceptionなどが発生)なので、Repositoryをここで実装しちゃう
-        override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> {
+        override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> {
             // Default to a non-finale safe response unless overridden by specific test stubbing
             return Result.success(
                 MyAnimeListResponse(
-                    id = mediaId,
+                    id = animeId,
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",

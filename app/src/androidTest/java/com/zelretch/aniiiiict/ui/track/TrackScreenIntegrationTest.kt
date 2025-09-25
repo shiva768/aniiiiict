@@ -66,11 +66,11 @@ class TrackScreenIntegrationTest {
     @JvmField
     val mockMyAnimeListRepository: MyAnimeListRepository = object : MyAnimeListRepository {
         // mockでやると結果が不安定(ClassCastExceptionなどが発生)なので、Repositoryをここで実装しちゃう
-        override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> {
+        override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> {
             // Default to a non-finale safe response unless overridden by specific test stubbing
             return Result.success(
                 MyAnimeListResponse(
-                    id = mediaId,
+                    id = animeId,
                     mediaType = "tv",
                     numEpisodes = 9999,
                     status = "currently_airing",
@@ -267,7 +267,7 @@ class TrackScreenIntegrationTest {
         // UseCaseは本物を使用し、ここでは専用のFake Repositoryを渡す
         val malId = 100
         val finaleUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
-            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+            override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> = Result.success(
                 MyAnimeListResponse(
                     id = malId,
                     mediaType = "tv",
@@ -374,7 +374,7 @@ class TrackScreenIntegrationTest {
 
         val malId = 200
         val notFinaleUseCase = JudgeFinaleUseCase(object : MyAnimeListRepository {
-            override suspend fun getMedia(mediaId: Int): Result<MyAnimeListResponse> = Result.success(
+            override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> = Result.success(
                 MyAnimeListResponse(
                     id = malId,
                     mediaType = "tv",
