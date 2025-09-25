@@ -280,6 +280,7 @@ tasks.register("printFailedAndroidTests") {
         reports.forEach { report ->
             val root = parser.parse(report)
 
+            @Suppress("UNCHECKED_CAST")
             (root["testcase"] as List<Node>).forEach { tc ->
                 val failures = tc["failure"] as List<Node>
                 if (failures.isNotEmpty()) {
