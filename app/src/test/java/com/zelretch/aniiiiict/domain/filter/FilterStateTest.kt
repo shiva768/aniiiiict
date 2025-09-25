@@ -19,7 +19,7 @@ class FilterStateTest : BehaviorSpec({
                 filterState.selectedStatus shouldBe emptySet()
                 filterState.searchQuery shouldBe ""
                 filterState.showOnlyAired shouldBe true
-                filterState.sortOrder shouldBe SortOrder.START_TIME_DESC
+                filterState.sortOrder shouldBe SortOrder.START_TIME_ASC
             }
         }
     }
@@ -69,7 +69,7 @@ class FilterStateTest : BehaviorSpec({
             selectedStatus = setOf(StatusState.WATCHING),
             searchQuery = "テスト",
             showOnlyAired = true,
-            sortOrder = SortOrder.START_TIME_DESC
+            sortOrder = SortOrder.START_TIME_ASC
         )
 
         `when`("プロパティを変更せずにコピーしたとき") {
