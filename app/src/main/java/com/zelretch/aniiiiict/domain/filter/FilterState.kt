@@ -11,7 +11,7 @@ data class FilterState(
     val selectedStatus: Set<StatusState> = emptySet(),
     val searchQuery: String = "",
     val showOnlyAired: Boolean = true,
-    val sortOrder: SortOrder = SortOrder.START_TIME_DESC
+    val sortOrder: SortOrder = SortOrder.START_TIME_ASC
 )
 
 enum class SortOrder {

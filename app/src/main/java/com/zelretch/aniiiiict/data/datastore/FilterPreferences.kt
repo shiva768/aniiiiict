@@ -53,7 +53,7 @@ class FilterPreferences @Inject constructor(@param:ApplicationContext private va
             showOnlyAired = preferences[PreferencesKeys.SHOW_ONLY_AIRED] != false,
             sortOrder = preferences[PreferencesKeys.SORT_ORDER]?.let {
                 runCatching { SortOrder.valueOf(it) }.getOrNull()
-            } ?: SortOrder.START_TIME_DESC
+            } ?: SortOrder.START_TIME_ASC
         )
     }
 
