@@ -4,15 +4,17 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ master ]
+    types: [ synchronize ]
   push:
     branches: [ master ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pr-build-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   build:
+    if: ${{ !(github.event.action == 'opened' && github.event.pull_request.user.login == 'Copilot') }}
     runs-on: ubuntu-latest
     env:
       GRADLE_OPTS: -Dorg.gradle.configuration-cache=false
