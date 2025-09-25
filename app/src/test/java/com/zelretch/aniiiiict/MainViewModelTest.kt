@@ -147,5 +147,19 @@ class MainViewModelTest : BehaviorSpec({
                 viewModel.uiState.value.isLoading shouldBe true
             }
         }
+
+        `when`("認証をキャンセル") {
+            then("isAuthenticatingがfalseになる") {
+                // 最初に認証を開始してisAuthenticatingをtrueにする
+                coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
+                viewModel.startAuth()
+                testDispatcher.scheduler.advanceUntilIdle()
+                viewModel.uiState.value.isAuthenticating shouldBe true
+
+                // 認証をキャンセル
+                viewModel.cancelAuth()
+                viewModel.uiState.value.isAuthenticating shouldBe false
+            }
+        }
     }
 })

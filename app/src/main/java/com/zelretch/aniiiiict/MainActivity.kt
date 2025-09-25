@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private val mainViewModel: MainViewModel by viewModels()
+    private var wasAuthenticating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,10 +124,32 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // ブラウザから戻ってきた時、認証中だったのに認証コードがない場合は
+        // ユーザーがブラウザを閉じたとみなして認証をキャンセルする
+        if (wasAuthenticating && intent.action != Intent.ACTION_VIEW) {
+            Timber.d("認証中にブラウザから戻ってきましたが、認証コードがないため認証をキャンセルします")
+            mainViewModel.cancelAuth()
+        }
+        wasAuthenticating = false
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // 認証中かどうかを記録
+        lifecycleScope.launch {
+            mainViewModel.uiState.value.let { state ->
+                wasAuthenticating = state.isAuthenticating
+            }
+        }
+    }
+
     private fun handleIntent(intent: Intent) {
         if (intent.action == Intent.ACTION_VIEW) {
             intent.data?.getQueryParameter("code")?.let { code ->
                 Timber.d("Processing authentication code: ${code.take(AUTH_CODE_LOG_LENGTH)}...")
+                wasAuthenticating = false // 認証コードを受け取ったのでフラグをリセット
                 lifecycleScope.launch {
                     mainViewModel.handleAuthCallback(code)
                     mainViewModel.checkAuthentication()
