@@ -1,7 +1,14 @@
 package com.zelretch.aniiiiict.ui.details.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -11,7 +18,14 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,10 +43,7 @@ import com.zelretch.aniiiiict.data.model.StreamingPlatform
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimeDetailSection(
-    animeDetailInfo: AnimeDetailInfo,
-    modifier: Modifier = Modifier
-) {
+fun AnimeDetailSection(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -85,7 +96,7 @@ private fun EpisodeCountSection(animeDetailInfo: AnimeDetailInfo) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -102,7 +113,7 @@ private fun EpisodeCountSection(animeDetailInfo: AnimeDetailInfo) {
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-                
+
                 // MyAnimeList episode count
                 if (animeDetailInfo.malEpisodeCount != null) {
                     Column {
@@ -149,7 +160,7 @@ private fun StreamingPlatformsSection(platforms: List<StreamingPlatform>) {
                     fontWeight = FontWeight.Bold
                 )
             }
-            
+
             platforms.forEach { platform ->
                 PlatformItem(platform)
             }
@@ -171,7 +182,7 @@ private fun PlatformItem(platform: StreamingPlatform) {
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f)
         )
-        
+
         if (platform.channelGroup != null) {
             Text(
                 text = platform.channelGroup,
@@ -179,7 +190,7 @@ private fun PlatformItem(platform: StreamingPlatform) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
+
         if (platform.isRebroadcast) {
             AssistChip(
                 onClick = { },
@@ -197,7 +208,7 @@ private fun PlatformItem(platform: StreamingPlatform) {
 @Composable
 private fun ExternalLinksSection(animeDetailInfo: AnimeDetailInfo) {
     val uriHandler = LocalUriHandler.current
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -223,7 +234,7 @@ private fun ExternalLinksSection(animeDetailInfo: AnimeDetailInfo) {
                     fontWeight = FontWeight.Bold
                 )
             }
-            
+
             animeDetailInfo.officialSiteUrl?.let { url ->
                 ExternalLinkItem(
                     title = "公式サイト",
@@ -231,7 +242,7 @@ private fun ExternalLinksSection(animeDetailInfo: AnimeDetailInfo) {
                     onClick = { uriHandler.openUri(url) }
                 )
             }
-            
+
             animeDetailInfo.wikipediaUrl?.let { url ->
                 ExternalLinkItem(
                     title = "Wikipedia",
@@ -239,7 +250,7 @@ private fun ExternalLinksSection(animeDetailInfo: AnimeDetailInfo) {
                     onClick = { uriHandler.openUri(url) }
                 )
             }
-            
+
             if (animeDetailInfo.twitterUsername != null) {
                 ExternalLinkItem(
                     title = "Twitter",
@@ -252,11 +263,7 @@ private fun ExternalLinksSection(animeDetailInfo: AnimeDetailInfo) {
 }
 
 @Composable
-private fun ExternalLinkItem(
-    title: String,
-    url: String,
-    onClick: () -> Unit
-) {
+private fun ExternalLinkItem(title: String, url: String, onClick: () -> Unit) {
     OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -312,7 +319,7 @@ private fun StatisticsSection(animeDetailInfo: AnimeDetailInfo) {
                     fontWeight = FontWeight.Bold
                 )
             }
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -322,13 +329,13 @@ private fun StatisticsSection(animeDetailInfo: AnimeDetailInfo) {
                     label = "視聴者数",
                     value = "${animeDetailInfo.watchersCount ?: 0}人"
                 )
-                
+
                 StatisticItem(
                     icon = Icons.Default.Star,
                     label = "レビュー数",
                     value = "${animeDetailInfo.reviewsCount ?: 0}件"
                 )
-                
+
                 if (animeDetailInfo.satisfactionRate != null) {
                     StatisticItem(
                         icon = Icons.Default.Star,
@@ -342,11 +349,7 @@ private fun StatisticsSection(animeDetailInfo: AnimeDetailInfo) {
 }
 
 @Composable
-private fun StatisticItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
-) {
+private fun StatisticItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -387,7 +390,7 @@ private fun RelatedWorksSection(relatedSeries: List<RelatedSeries>) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             relatedSeries.forEach { series ->
                 RelatedSeriesItem(series)
             }
@@ -405,7 +408,7 @@ private fun RelatedSeriesItem(series: RelatedSeries) {
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
-        
+
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -439,14 +442,14 @@ private fun RelatedWorkItem(work: RelatedWork) {
                     contentScale = ContentScale.Crop
                 )
             }
-            
+
             Text(
                 text = work.title,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            
+
             if (work.seasonName != null && work.seasonYear != null) {
                 Text(
                     text = "${work.seasonYear}年 ${work.seasonName}",

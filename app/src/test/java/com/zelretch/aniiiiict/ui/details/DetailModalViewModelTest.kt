@@ -35,10 +35,11 @@ class DetailModalViewModelTest : BehaviorSpec({
 
     beforeTest {
         Dispatchers.setMain(dispatcher)
-        
+
         // Setup default behavior for anime detail repository
-        coEvery { animeDetailRepository.getAnimeDetailInfo(any(), any()) } returns Result.failure(Exception("Not implemented"))
-        
+        coEvery { animeDetailRepository.getAnimeDetailInfo(any(), any()) } returns
+            Result.failure(Exception("Not implemented"))
+
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,

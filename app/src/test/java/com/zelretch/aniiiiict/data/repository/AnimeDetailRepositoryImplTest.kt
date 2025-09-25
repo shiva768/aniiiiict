@@ -1,8 +1,6 @@
 package com.zelretch.aniiiiict.data.repository
 
 import com.annict.WorkDetailQuery
-import com.annict.type.Media
-import com.annict.type.SeasonName
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Error
 import com.zelretch.aniiiiict.data.api.AnnictApolloClient

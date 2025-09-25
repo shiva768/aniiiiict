@@ -3,25 +3,16 @@ package com.zelretch.aniiiiict.ui.details
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.annict.type.SeasonName
-import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.model.*
-import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
-import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
-import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
-import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
-import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
+import com.zelretch.aniiiiict.data.model.RelatedSeries
+import com.zelretch.aniiiiict.data.model.RelatedWork
+import com.zelretch.aniiiiict.data.model.StreamingPlatform
 import com.zelretch.aniiiiict.ui.details.components.AnimeDetailSection
-import io.mockk.coEvery
-import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.LocalDateTime
 
 @RunWith(AndroidJUnit4::class)
 class DetailModalEnhancedUITest {
@@ -101,7 +92,7 @@ class DetailModalEnhancedUITest {
         }
 
         // Assert - Check that all sections are displayed
-        
+
         // Episode Count Section
         composeTestRule.onNodeWithText("エピソード情報").assertIsDisplayed()
         composeTestRule.onNodeWithText("Annict").assertIsDisplayed()
@@ -187,16 +178,16 @@ class DetailModalEnhancedUITest {
         // This test would verify that the ViewModel correctly calls the repository
         // when initialized with program data, but since we can't run the full build,
         // we'll document what this test would verify:
-        
+
         // 1. When initialize() is called with ProgramWithWork
         // 2. The ViewModel should call animeDetailRepository.getAnimeDetailInfo()
         // 3. On success, the state should be updated with animeDetailInfo
         // 4. On failure, the state should show an error
         // 5. Loading state should be managed correctly
-        
+
         // This functionality is already implemented in fetchAnimeDetailInfo() method
         // in DetailModalViewModel.kt
-        
+
         composeTestRule.setContent {
             // Mock UI test that would show loading, success, and error states
             // of the enhanced DetailModal

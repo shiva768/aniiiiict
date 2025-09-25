@@ -76,7 +76,7 @@ class DetailModalViewModel @Inject constructor(
                 malAnimeId = programWithWork.work.malAnimeId
             )
         }
-        
+
         // Fetch detailed anime information
         fetchAnimeDetailInfo(programWithWork.work.id, programWithWork.work.malAnimeId)
     }
@@ -84,10 +84,10 @@ class DetailModalViewModel @Inject constructor(
     private fun fetchAnimeDetailInfo(workId: String, malAnimeId: String?) {
         viewModelScope.launch {
             _state.update { it.copy(isLoadingDetailInfo = true, detailInfoError = null) }
-            
+
             animeDetailRepository.getAnimeDetailInfo(workId, malAnimeId)
                 .onSuccess { detailInfo ->
-                    _state.update { 
+                    _state.update {
                         it.copy(
                             animeDetailInfo = detailInfo,
                             isLoadingDetailInfo = false
@@ -96,7 +96,7 @@ class DetailModalViewModel @Inject constructor(
                 }
                 .onFailure { error ->
                     timber.log.Timber.e(error, "Failed to fetch anime detail info")
-                    _state.update { 
+                    _state.update {
                         it.copy(
                             isLoadingDetailInfo = false,
                             detailInfoError = error.message ?: "詳細情報の取得に失敗しました"
