@@ -23,4 +23,9 @@ interface MainViewModelContract : ViewModelContract<MainUiState> {
      * 認証状態を手動で確認する
      */
     fun checkAuthentication()
+
+    /**
+     * 認証をキャンセルする（ブラウザを閉じた場合など）
+     */
+    fun cancelAuth()
 }

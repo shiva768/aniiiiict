@@ -187,4 +187,12 @@ class MainViewModel @Inject constructor(
     override fun checkAuthentication() {
         checkAuthState()
     }
+
+    // 認証をキャンセルする（公開メソッド）
+    override fun cancelAuth() {
+        internalUiState.update {
+            it.copy(isAuthenticating = false)
+        }
+        Timber.d("MainViewModel: 認証がキャンセルされました")
+    }
 }
