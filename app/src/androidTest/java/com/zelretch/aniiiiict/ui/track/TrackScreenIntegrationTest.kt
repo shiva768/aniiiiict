@@ -74,7 +74,8 @@ class TrackScreenIntegrationTest {
                     mediaType = "tv",
                     numEpisodes = 9999,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
             )
         }
@@ -273,7 +274,8 @@ class TrackScreenIntegrationTest {
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "finished_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
             )
         })
@@ -380,7 +382,8 @@ class TrackScreenIntegrationTest {
                     mediaType = "tv",
                     numEpisodes = 24,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
             )
         })

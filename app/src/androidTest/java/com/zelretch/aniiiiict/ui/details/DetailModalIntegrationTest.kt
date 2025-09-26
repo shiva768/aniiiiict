@@ -11,6 +11,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -81,11 +82,16 @@ class DetailModalIntegrationTest {
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
             )
         }
     }
+
+    @BindValue
+    @JvmField
+    val animeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>(relaxed = true)
 
     @BindValue
     @JvmField
@@ -105,7 +111,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         // 2エピソードのProgramWithWork（WATCHING）
@@ -154,7 +161,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -199,7 +207,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -243,7 +252,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -289,7 +299,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -338,7 +349,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         // MAL 側で finished_airing を返すようにモック
