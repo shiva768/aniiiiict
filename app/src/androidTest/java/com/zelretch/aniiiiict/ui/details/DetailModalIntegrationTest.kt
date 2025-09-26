@@ -6,6 +6,7 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
@@ -30,6 +31,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.coEvery
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDateTime
@@ -91,7 +93,32 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
-    val animeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>(relaxed = true)
+    val animeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>().apply {
+        coEvery { getAnimeDetailInfo(any(), any()) } returns Result.success(
+            AnimeDetailInfo(
+                workId = "test_work",
+                title = "Test Anime",
+                titleEn = null,
+                titleKana = null,
+                titleRo = null,
+                episodesCount = 12,
+                noEpisodes = false,
+                officialSiteUrl = null,
+                officialSiteUrlEn = null,
+                wikipediaUrl = null,
+                wikipediaUrlEn = null,
+                twitterHashtag = null,
+                twitterUsername = null,
+                satisfactionRate = null,
+                watchersCount = 100,
+                reviewsCount = 0,
+                streamingPlatforms = emptyList(),
+                relatedSeries = emptyList(),
+                malEpisodeCount = null,
+                malImageUrl = null
+            )
+        )
+    }
 
     @BindValue
     @JvmField

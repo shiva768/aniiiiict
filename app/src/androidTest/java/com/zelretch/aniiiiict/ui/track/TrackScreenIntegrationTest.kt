@@ -9,6 +9,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
@@ -35,6 +36,7 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.coEvery
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -84,7 +86,32 @@ class TrackScreenIntegrationTest {
 
     @BindValue
     @JvmField
-    val mockAnimeDetailRepository: AnimeDetailRepository = mockk(relaxed = true)
+    val mockAnimeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>().apply {
+        coEvery { getAnimeDetailInfo(any(), any()) } returns Result.success(
+            AnimeDetailInfo(
+                workId = "test_work",
+                title = "Test Anime",
+                titleEn = null,
+                titleKana = null,
+                titleRo = null,
+                episodesCount = 12,
+                noEpisodes = false,
+                officialSiteUrl = null,
+                officialSiteUrlEn = null,
+                wikipediaUrl = null,
+                wikipediaUrlEn = null,
+                twitterHashtag = null,
+                twitterUsername = null,
+                satisfactionRate = null,
+                watchersCount = 100,
+                reviewsCount = 0,
+                streamingPlatforms = emptyList(),
+                relatedSeries = emptyList(),
+                malEpisodeCount = null,
+                malImageUrl = null
+            )
+        )
+    }
 
     @BindValue
     @JvmField
