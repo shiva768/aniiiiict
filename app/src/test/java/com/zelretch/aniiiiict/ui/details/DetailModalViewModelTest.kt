@@ -69,13 +69,15 @@ class DetailModalViewModelTest : BehaviorSpec({
                 )
                 runTest(dispatcher) {
                     viewModel.state.test {
-                        awaitItem()
+                        val initial = awaitItem()
                         viewModel.initialize(programWithWork)
                         val updated = awaitItem()
                         updated.programs shouldBe listOf(program)
                         updated.selectedStatus shouldBe StatusState.WATCHING
                         updated.workId shouldBe "work-id"
                         updated.malAnimeId shouldBe "123"
+                        // Skip any additional state emissions from async operations
+                        cancelAndIgnoreRemainingEvents()
                     }
                 }
             }
