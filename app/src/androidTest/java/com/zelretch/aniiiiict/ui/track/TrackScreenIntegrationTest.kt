@@ -14,6 +14,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -80,6 +81,10 @@ class TrackScreenIntegrationTest {
             )
         }
     }
+
+    @BindValue
+    @JvmField
+    val mockAnimeDetailRepository: AnimeDetailRepository = mockk(relaxed = true)
 
     @BindValue
     @JvmField
