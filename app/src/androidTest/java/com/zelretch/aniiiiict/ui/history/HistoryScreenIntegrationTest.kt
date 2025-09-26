@@ -10,6 +10,7 @@ import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -66,6 +67,10 @@ class HistoryScreenIntegrationTest {
     @BindValue
     @JvmField
     val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val animeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>(relaxed = true)
 
     @BindValue
     @JvmField

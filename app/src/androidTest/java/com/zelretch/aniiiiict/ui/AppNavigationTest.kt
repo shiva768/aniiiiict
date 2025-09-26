@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.zelretch.aniiiiict.MainActivity
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -41,6 +42,10 @@ class AppNavigationTest {
     @BindValue
     @JvmField
     val mockMyAnimeListRepository: MyAnimeListRepository = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockAnimeDetailRepository: AnimeDetailRepository = mockk(relaxed = true)
 
     @BindValue
     @JvmField
