@@ -6,11 +6,11 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.zelretch.aniiiiict.MainUiState
 import com.zelretch.aniiiiict.MainViewModel
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
-import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
@@ -23,7 +23,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.coEvery
 import org.junit.Rule
 import org.junit.Test
 import javax.inject.Inject

@@ -5,8 +5,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
@@ -30,7 +30,6 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.coEvery
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
