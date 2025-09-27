@@ -40,7 +40,8 @@ class BulkRecordingFinaleJudgmentIntegrationTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "finished_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
 
                 coEvery { annictRepository.createRecord(any(), any()) } returns true
@@ -76,7 +77,8 @@ class BulkRecordingFinaleJudgmentIntegrationTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
 
                 coEvery { annictRepository.createRecord(any(), any()) } returns true

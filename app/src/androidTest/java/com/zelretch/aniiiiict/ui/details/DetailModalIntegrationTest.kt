@@ -4,6 +4,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
@@ -11,6 +12,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -81,10 +83,40 @@ class DetailModalIntegrationTest {
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
             )
         }
+    }
+
+    @BindValue
+    @JvmField
+    val animeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>().apply {
+        coEvery { getAnimeDetailInfo(any(), any()) } returns Result.success(
+            AnimeDetailInfo(
+                workId = "test_work",
+                title = "Test Anime",
+                titleEn = null,
+                titleKana = null,
+                titleRo = null,
+                episodesCount = 12,
+                noEpisodes = false,
+                officialSiteUrl = null,
+                officialSiteUrlEn = null,
+                wikipediaUrl = null,
+                wikipediaUrlEn = null,
+                twitterHashtag = null,
+                twitterUsername = null,
+                satisfactionRate = null,
+                watchersCount = 100,
+                reviewsCount = 0,
+                streamingPlatforms = emptyList(),
+                relatedSeries = emptyList(),
+                malEpisodeCount = null,
+                malImageUrl = null
+            )
+        )
     }
 
     @BindValue
@@ -105,7 +137,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         // 2エピソードのProgramWithWork（WATCHING）
@@ -154,7 +187,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -199,7 +233,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -243,7 +278,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -289,7 +325,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         val work = Work(
@@ -338,7 +375,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                animeDetailRepository
             )
 
         // MAL 側で finished_airing を返すようにモック

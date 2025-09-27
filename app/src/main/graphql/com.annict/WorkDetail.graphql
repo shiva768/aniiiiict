@@ -1,0 +1,65 @@
+query WorkDetail($workId: ID!) {
+  node(id: $workId) {
+    ... on Work {
+      id
+      title
+      titleEn
+      titleKana
+      titleRo
+      seasonName
+      seasonYear
+      media
+      malAnimeId
+      episodesCount
+      noEpisodes
+      officialSiteUrl
+      officialSiteUrlEn
+      wikipediaUrl
+      wikipediaUrlEn
+      twitterHashtag
+      twitterUsername
+      satisfactionRate
+      watchersCount
+      reviewsCount
+      image {
+        recommendedImageUrl
+        facebookOgImageUrl
+      }
+      programs(orderBy: { field: STARTED_AT, direction: ASC }) {
+        nodes {
+          id
+          startedAt
+          rebroadcast
+          channel {
+            id
+            name
+            channelGroup {
+              id
+              name
+            }
+          }
+        }
+      }
+      seriesList {
+        nodes {
+          id
+          name
+          nameEn
+          nameRo
+          works {
+            nodes {
+              id
+              title
+              seasonName
+              seasonYear
+              media
+              image {
+                recommendedImageUrl
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

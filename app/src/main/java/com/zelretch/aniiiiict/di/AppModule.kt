@@ -10,6 +10,8 @@ import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AniListRepositoryImpl
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepositoryImpl
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepositoryImpl
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
@@ -110,6 +112,16 @@ object AppModule {
     @Provides
     @Singleton
     fun provideMyAnimeListRepository(api: MyAnimeListApi): MyAnimeListRepository = MyAnimeListRepositoryImpl(api)
+
+    @Provides
+    @Singleton
+    fun provideAnimeDetailRepository(
+        annictApolloClient: AnnictApolloClient,
+        myAnimeListRepository: MyAnimeListRepository
+    ): AnimeDetailRepository = AnimeDetailRepositoryImpl(
+        annictApolloClient = annictApolloClient,
+        myAnimeListRepository = myAnimeListRepository
+    )
 
     @Provides
     @Singleton

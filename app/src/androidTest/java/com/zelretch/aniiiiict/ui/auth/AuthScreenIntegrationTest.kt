@@ -6,7 +6,9 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.zelretch.aniiiiict.MainUiState
 import com.zelretch.aniiiiict.MainViewModel
+import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.repository.AniListRepository
+import com.zelretch.aniiiiict.data.repository.AnimeDetailRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
@@ -55,6 +57,35 @@ class AuthScreenIntegrationTest {
     @BindValue
     @JvmField
     val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val animeDetailRepository: AnimeDetailRepository = mockk<AnimeDetailRepository>().apply {
+        coEvery { getAnimeDetailInfo(any(), any()) } returns Result.success(
+            AnimeDetailInfo(
+                workId = "test_work",
+                title = "Test Anime",
+                titleEn = null,
+                titleKana = null,
+                titleRo = null,
+                episodesCount = 12,
+                noEpisodes = false,
+                officialSiteUrl = null,
+                officialSiteUrlEn = null,
+                wikipediaUrl = null,
+                wikipediaUrlEn = null,
+                twitterHashtag = null,
+                twitterUsername = null,
+                satisfactionRate = null,
+                watchersCount = 100,
+                reviewsCount = 0,
+                streamingPlatforms = emptyList(),
+                relatedSeries = emptyList(),
+                malEpisodeCount = null,
+                malImageUrl = null
+            )
+        )
+    }
 
     @BindValue
     @JvmField

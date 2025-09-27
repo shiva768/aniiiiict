@@ -25,7 +25,8 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "finished_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
                 coEvery { repository.getAnimeDetail(1) } returns Result.success(media)
 
@@ -43,7 +44,8 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 24,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
                 coEvery { repository.getAnimeDetail(2) } returns Result.success(media)
 
@@ -61,7 +63,8 @@ class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
                 coEvery { repository.getAnimeDetail(3) } returns Result.success(media)
 

@@ -29,16 +29,23 @@ class DetailModalViewModelTest : BehaviorSpec({
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
     val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
+    val animeDetailRepository = mockk<com.zelretch.aniiiiict.data.repository.AnimeDetailRepository>()
     val dispatcher = UnconfinedTestDispatcher()
     lateinit var viewModel: DetailModalViewModel
 
     beforeTest {
         Dispatchers.setMain(dispatcher)
+
+        // Setup default behavior for anime detail repository
+        coEvery { animeDetailRepository.getAnimeDetailInfo(any(), any()) } returns
+            Result.failure(Exception("Not implemented"))
+
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            animeDetailRepository
         )
     }
 
@@ -62,13 +69,15 @@ class DetailModalViewModelTest : BehaviorSpec({
                 )
                 runTest(dispatcher) {
                     viewModel.state.test {
-                        awaitItem()
+                        val initial = awaitItem()
                         viewModel.initialize(programWithWork)
                         val updated = awaitItem()
                         updated.programs shouldBe listOf(program)
                         updated.selectedStatus shouldBe StatusState.WATCHING
                         updated.workId shouldBe "work-id"
                         updated.malAnimeId shouldBe "123"
+                        // Skip any additional state emissions from async operations
+                        cancelAndIgnoreRemainingEvents()
                     }
                 }
             }

@@ -4,9 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -18,14 +23,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,10 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.ui.details.components.AnimeDetailSection
 import com.zelretch.aniiiiict.ui.details.components.ConfirmDialog
 import com.zelretch.aniiiiict.ui.details.components.FinaleConfirmDialog
 import com.zelretch.aniiiiict.ui.details.components.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @Composable
 fun DetailModal(
@@ -56,11 +67,17 @@ fun DetailModal(
         onDismissRequest = onDismiss,
         title = { DetailModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus) },
         text = {
-            UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
-                viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
-            }, onMarkUpToAsWatched = { index ->
-                viewModel.showConfirmDialog(index)
-            })
+            DetailModalTabbedContent(
+                state = state,
+                programWithWork = programWithWork,
+                isLoading = isLoading,
+                onRecordEpisode = { episodeId ->
+                    viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
+                },
+                onMarkUpToAsWatched = { index ->
+                    viewModel.showConfirmDialog(index)
+                }
+            )
         },
         confirmButton = { }
     )
@@ -234,6 +251,127 @@ private fun StatusDropdownMenu(
                         onExpandedChange(false)
                         onStatusChange(status)
                     })
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DetailModalTabbedContent(
+    state: DetailModalState,
+    programWithWork: ProgramWithWork,
+    isLoading: Boolean,
+    onRecordEpisode: (String) -> Unit,
+    onMarkUpToAsWatched: (Int) -> Unit
+) {
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)
+    ) {
+        SecondaryTabRow(
+            selectedTabIndex = selectedTabIndex,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Tab(
+                selected = selectedTabIndex == 0,
+                onClick = {
+                    selectedTabIndex = 0
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(0)
+                    }
+                },
+                text = { Text("エピソード") },
+                icon = { Icon(Icons.Default.List, contentDescription = null) }
+            )
+            Tab(
+                selected = selectedTabIndex == 1,
+                onClick = {
+                    selectedTabIndex = 1
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(1)
+                    }
+                },
+                text = { Text("詳細情報") },
+                icon = { Icon(Icons.Default.Info, contentDescription = null) }
+            )
+        }
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { page ->
+            LaunchedEffect(pagerState.currentPage) {
+                selectedTabIndex = pagerState.currentPage
+            }
+
+            when (page) {
+                0 -> {
+                    // Episodes tab
+                    UnwatchedEpisodesContent(
+                        programs = state.programs,
+                        isLoading = isLoading,
+                        onRecordEpisode = onRecordEpisode,
+                        onMarkUpToAsWatched = onMarkUpToAsWatched
+                    )
+                }
+                1 -> {
+                    // Anime details tab
+                    if (state.isLoadingDetailInfo) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Text(
+                                text = "詳細情報を読み込み中...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    } else if (state.detailInfoError != null) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "詳細情報の取得に失敗しました",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = state.detailInfoError,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                    } else if (state.animeDetailInfo != null) {
+                        AnimeDetailSection(
+                            animeDetailInfo = state.animeDetailInfo,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "詳細情報がありません",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }
