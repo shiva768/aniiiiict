@@ -37,7 +37,7 @@ class DetailModalViewModelTest : BehaviorSpec({
         Dispatchers.setMain(dispatcher)
         // Mock MyAnimeList repository to return failure for all calls by default
         coEvery { myAnimeListRepository.getAnimeDetail(any()) } returns Result.failure(Exception("Not configured"))
-        
+
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
@@ -69,7 +69,7 @@ class DetailModalViewModelTest : BehaviorSpec({
                     viewModel.state.test {
                         awaitItem() // initial state
                         viewModel.initialize(programWithWork)
-                        
+
                         val updated = awaitItem()
                         updated.programs shouldBe listOf(program)
                         updated.selectedStatus shouldBe StatusState.WATCHING

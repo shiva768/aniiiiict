@@ -78,7 +78,7 @@ class DetailModalViewModel @Inject constructor(
                 work = programWithWork.work
             )
         }
-        
+
         // Fetch MyAnimeList data if malAnimeId is available
         programWithWork.work.malAnimeId?.toIntOrNull()?.let { malId ->
             fetchMyAnimeListData(malId)

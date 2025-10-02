@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -68,14 +67,22 @@ fun DetailModal(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 AnimeInfoSection(state = state)
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
-                    viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
-                }, onMarkUpToAsWatched = { index ->
-                    viewModel.showConfirmDialog(index)
-                })
+
+                UnwatchedEpisodesContent(
+                    programs = state.programs,
+                    isLoading = isLoading,
+                    onRecordEpisode = { episodeId ->
+                        viewModel.recordEpisode(
+                            episodeId,
+                            programWithWork.work.viewerStatusState
+                        )
+                    },
+                    onMarkUpToAsWatched = { index ->
+                        viewModel.showConfirmDialog(index)
+                    }
+                )
             }
         },
         confirmButton = { }
@@ -261,16 +268,16 @@ private fun AnimeInfoSection(state: DetailModalState) {
     val uriHandler = LocalUriHandler.current
     val work = state.work
     val malData = state.myAnimeListData
-    
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = "アニメ情報",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         // MyAnimeList episode count
         if (malData?.numEpisodes != null) {
             InfoRow(
@@ -278,7 +285,7 @@ private fun AnimeInfoSection(state: DetailModalState) {
                 value = "${malData.numEpisodes}話"
             )
         }
-        
+
         // Official site URL
         val officialSite = work?.officialSiteUrl ?: work?.officialSiteUrlEn
         if (!officialSite.isNullOrEmpty()) {
@@ -288,7 +295,7 @@ private fun AnimeInfoSection(state: DetailModalState) {
                 onClick = { uriHandler.openUri(officialSite) }
             )
         }
-        
+
         // Wikipedia URL
         val wikipediaUrl = work?.wikipediaUrl ?: work?.wikipediaUrlEn
         if (!wikipediaUrl.isNullOrEmpty()) {
@@ -298,7 +305,7 @@ private fun AnimeInfoSection(state: DetailModalState) {
                 onClick = { uriHandler.openUri(wikipediaUrl) }
             )
         }
-        
+
         // Streaming platform info (via syobocal)
         if (work?.syobocalTid != null) {
             ClickableInfoRow(
@@ -307,7 +314,7 @@ private fun AnimeInfoSection(state: DetailModalState) {
                 onClick = { uriHandler.openUri("https://cal.syoboi.jp/tid/${work.syobocalTid}") }
             )
         }
-        
+
         if (state.isLoadingMyAnimeList) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
@@ -321,7 +328,7 @@ private fun AnimeInfoSection(state: DetailModalState) {
                 )
             }
         }
-        
+
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
     }
 }
