@@ -1,18 +1,26 @@
 package com.zelretch.aniiiiict.ui.details
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -29,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
@@ -56,11 +66,17 @@ fun DetailModal(
         onDismissRequest = onDismiss,
         title = { DetailModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus) },
         text = {
-            UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
-                viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
-            }, onMarkUpToAsWatched = { index ->
-                viewModel.showConfirmDialog(index)
-            })
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                AnimeInfoSection(state = state)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
+                    viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
+                }, onMarkUpToAsWatched = { index ->
+                    viewModel.showConfirmDialog(index)
+                })
+            }
         },
         confirmButton = { }
     )
@@ -236,6 +252,128 @@ private fun StatusDropdownMenu(
                     })
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AnimeInfoSection(state: DetailModalState) {
+    val uriHandler = LocalUriHandler.current
+    val work = state.work
+    val malData = state.myAnimeListData
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "アニメ情報",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // MyAnimeList episode count
+        if (malData?.numEpisodes != null) {
+            InfoRow(
+                label = "エピソード数",
+                value = "${malData.numEpisodes}話"
+            )
+        }
+        
+        // Official site URL
+        val officialSite = work?.officialSiteUrl ?: work?.officialSiteUrlEn
+        if (!officialSite.isNullOrEmpty()) {
+            ClickableInfoRow(
+                label = "公式サイト",
+                value = "開く",
+                onClick = { uriHandler.openUri(officialSite) }
+            )
+        }
+        
+        // Wikipedia URL
+        val wikipediaUrl = work?.wikipediaUrl ?: work?.wikipediaUrlEn
+        if (!wikipediaUrl.isNullOrEmpty()) {
+            ClickableInfoRow(
+                label = "Wikipedia",
+                value = "開く",
+                onClick = { uriHandler.openUri(wikipediaUrl) }
+            )
+        }
+        
+        // Streaming platform info (via syobocal)
+        if (work?.syobocalTid != null) {
+            ClickableInfoRow(
+                label = "配信・放送情報",
+                value = "しょぼいカレンダーで確認",
+                onClick = { uriHandler.openUri("https://cal.syoboi.jp/tid/${work.syobocalTid}") }
+            )
+        }
+        
+        if (state.isLoadingMyAnimeList) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
+                Text(
+                    text = "追加情報を読み込み中...",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+        }
+        
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun ClickableInfoRow(label: String, value: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline
+            )
+            Icon(
+                imageVector = Icons.Default.OpenInNew,
+                contentDescription = "外部リンクを開く",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 4.dp)
+            )
         }
     }
 }

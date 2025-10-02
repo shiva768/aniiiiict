@@ -20,7 +20,9 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null,
+                    alternativeTitles = null
                 )
                 coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(10, media.id)
@@ -36,7 +38,9 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null,
+                    alternativeTitles = null
                 )
                 coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(12, media.id)
@@ -52,7 +56,9 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = null,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null,
+                    alternativeTitles = null
                 )
                 coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(10, media.id)
@@ -68,7 +74,9 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "not_yet_aired",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null,
+                    alternativeTitles = null
                 )
                 coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(10, media.id)
@@ -84,7 +92,9 @@ class JudgeFinaleUseCaseTest : BehaviorSpec({
                     mediaType = "movie",
                     numEpisodes = 1,
                     status = "finished_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null,
+                    alternativeTitles = null
                 )
                 coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
                 val result = judgeFinaleUseCase(1, media.id)

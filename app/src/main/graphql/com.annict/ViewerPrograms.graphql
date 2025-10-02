@@ -31,6 +31,11 @@ query ViewerPrograms {
           media
           malAnimeId
           viewerStatusState
+          wikipediaUrl
+          wikipediaUrlEn
+          officialSiteUrl
+          officialSiteUrlEn
+          syobocalTid
           image {
             recommendedImageUrl
             facebookOgImageUrl

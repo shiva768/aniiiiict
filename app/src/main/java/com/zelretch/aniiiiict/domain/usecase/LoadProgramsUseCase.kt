@@ -67,7 +67,12 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
                 media = node.work.media.toString(),
                 malAnimeId = node.work.malAnimeId,
                 viewerStatusState = node.work.viewerStatusState ?: StatusState.UNKNOWN__,
-                image = workImage
+                image = workImage,
+                wikipediaUrl = node.work.wikipediaUrl,
+                wikipediaUrlEn = node.work.wikipediaUrlEn,
+                officialSiteUrl = node.work.officialSiteUrl,
+                officialSiteUrlEn = node.work.officialSiteUrlEn,
+                syobocalTid = node.work.syobocalTid
             )
 
             val program = Program(

@@ -3,8 +3,11 @@ package com.zelretch.aniiiiict.ui.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
@@ -37,7 +40,10 @@ data class DetailModalState(
     val finaleEpisodeNumber: Int? = null,
     val showSingleEpisodeFinaleConfirmation: Boolean = false,
     val singleEpisodeFinaleNumber: Int? = null,
-    val singleEpisodeFinaleWorkId: String? = null
+    val singleEpisodeFinaleWorkId: String? = null,
+    val myAnimeListData: MyAnimeListResponse? = null,
+    val isLoadingMyAnimeList: Boolean = false,
+    val work: Work? = null
 )
 
 sealed interface DetailModalEvent {
@@ -52,7 +58,8 @@ class DetailModalViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
-    private val judgeFinaleUseCase: JudgeFinaleUseCase
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
+    private val myAnimeListRepository: MyAnimeListRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DetailModalState())
@@ -67,8 +74,28 @@ class DetailModalViewModel @Inject constructor(
                 programs = programWithWork.programs,
                 selectedStatus = programWithWork.work.viewerStatusState,
                 workId = programWithWork.work.id,
-                malAnimeId = programWithWork.work.malAnimeId
+                malAnimeId = programWithWork.work.malAnimeId,
+                work = programWithWork.work
             )
+        }
+        
+        // Fetch MyAnimeList data if malAnimeId is available
+        programWithWork.work.malAnimeId?.toIntOrNull()?.let { malId ->
+            fetchMyAnimeListData(malId)
+        }
+    }
+
+    private fun fetchMyAnimeListData(malAnimeId: Int) {
+        _state.update { it.copy(isLoadingMyAnimeList = true) }
+        viewModelScope.launch {
+            myAnimeListRepository.getAnimeDetail(malAnimeId)
+                .onSuccess { malData ->
+                    _state.update { it.copy(myAnimeListData = malData, isLoadingMyAnimeList = false) }
+                }
+                .onFailure { e ->
+                    timber.log.Timber.w(e, "Failed to fetch MyAnimeList data for ID: $malAnimeId")
+                    _state.update { it.copy(isLoadingMyAnimeList = false) }
+                }
         }
     }
 

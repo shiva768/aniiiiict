@@ -12,6 +12,6 @@ interface MyAnimeListApi {
     suspend fun getAnime(
         @Path("anime_id") animeId: Int,
         @Header("X-MAL-CLIENT-ID") clientId: String,
-        @Query("fields") fields: String = "media_type,num_episodes,status,broadcast"
+        @Query("fields") fields: String = "media_type,num_episodes,status,broadcast,main_picture,alternative_titles"
     ): Response<MyAnimeListResponse>
 }

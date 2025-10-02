@@ -29,16 +29,21 @@ class DetailModalViewModelTest : BehaviorSpec({
     val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
     val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
     val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
+    val myAnimeListRepository = mockk<com.zelretch.aniiiiict.data.repository.MyAnimeListRepository>()
     val dispatcher = UnconfinedTestDispatcher()
     lateinit var viewModel: DetailModalViewModel
 
     beforeTest {
         Dispatchers.setMain(dispatcher)
+        // Mock MyAnimeList repository to return failure for all calls by default
+        coEvery { myAnimeListRepository.getAnimeDetail(any()) } returns Result.failure(Exception("Not configured"))
+        
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            myAnimeListRepository
         )
     }
 
@@ -53,7 +58,7 @@ class DetailModalViewModelTest : BehaviorSpec({
                 val work = mockk<Work> {
                     every { viewerStatusState } returns StatusState.WATCHING
                     every { id } returns "work-id"
-                    every { malAnimeId } returns "123"
+                    every { malAnimeId } returns null // Set null to avoid MAL call
                 }
                 val programWithWork = ProgramWithWork(
                     programs = listOf(program),
@@ -62,13 +67,15 @@ class DetailModalViewModelTest : BehaviorSpec({
                 )
                 runTest(dispatcher) {
                     viewModel.state.test {
-                        awaitItem()
+                        awaitItem() // initial state
                         viewModel.initialize(programWithWork)
+                        
                         val updated = awaitItem()
                         updated.programs shouldBe listOf(program)
                         updated.selectedStatus shouldBe StatusState.WATCHING
                         updated.workId shouldBe "work-id"
-                        updated.malAnimeId shouldBe "123"
+                        updated.malAnimeId shouldBe null
+                        updated.work shouldBe work
                     }
                 }
             }

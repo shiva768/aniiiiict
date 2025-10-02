@@ -196,6 +196,11 @@ class LoadProgramsUseCaseTest : BehaviorSpec({
             every { work.malAnimeId } returns "456"
             every { work.viewerStatusState } returns StatusState.WATCHING
             every { work.image } returns null
+            every { work.wikipediaUrl } returns null
+            every { work.wikipediaUrlEn } returns null
+            every { work.officialSiteUrl } returns null
+            every { work.officialSiteUrlEn } returns null
+            every { work.syobocalTid } returns null
             every { node.work } returns work
 
             return node

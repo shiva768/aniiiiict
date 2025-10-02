@@ -13,5 +13,10 @@ data class Work(
     val malAnimeId: String? = null,
     val viewerStatusState: StatusState,
     val seasonNameText: String? = null,
-    val image: WorkImage? = null
+    val image: WorkImage? = null,
+    val wikipediaUrl: String? = null,
+    val wikipediaUrlEn: String? = null,
+    val officialSiteUrl: String? = null,
+    val officialSiteUrlEn: String? = null,
+    val syobocalTid: Int? = null
 )
