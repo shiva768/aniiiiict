@@ -53,6 +53,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.Channel
+import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.Program
+import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailScreen
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
@@ -64,6 +71,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.time.LocalDateTime
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -273,6 +281,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         scope.launch {
                             drawerState.open()
                         }
+                    },
+                    onShowAnimeDetail = { programWithWork ->
+                        navController.navigate("anime_detail/${programWithWork.work.id}")
                     }
                 )
             }
@@ -290,6 +301,37 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                     onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
                 )
                 HistoryScreen(uiState = historyUiState, actions = actions)
+            }
+            composable("anime_detail/{workId}") { backStackEntry ->
+                val workId = backStackEntry.arguments?.getString("workId") ?: ""
+                // 現在は仮のデータで表示（実際のProgramWithWorkデータの取得が必要）
+                val work = Work(
+                    id = workId,
+                    title = "サンプルアニメ",
+                    viewerStatusState = StatusState.WATCHING
+                )
+                val program = Program(
+                    id = "program-id",
+                    startedAt = LocalDateTime.now(),
+                    channel = Channel(
+                        name = "テストチャンネル"
+                    ),
+                    episode = Episode(
+                        id = "episode-id",
+                        number = 1,
+                        numberText = "1",
+                        title = "第1話"
+                    )
+                )
+                val programWithWork = ProgramWithWork(
+                    programs = listOf(program),
+                    firstProgram = program,
+                    work = work
+                )
+                AnimeDetailScreen(
+                    programWithWork = programWithWork,
+                    onNavigateBack = { navController.navigateUp() }
+                )
             }
             composable("settings") {
                 SettingsScreen(

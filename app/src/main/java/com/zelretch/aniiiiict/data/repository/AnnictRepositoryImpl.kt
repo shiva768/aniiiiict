@@ -5,6 +5,7 @@ import com.annict.DeleteRecordMutation
 import com.annict.UpdateStatusMutation
 import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
+import com.annict.WorkDetailQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.exception.ApolloException
@@ -285,6 +286,28 @@ class AnnictRepositoryImpl @Inject constructor(
                 "GraphQLエラー: ${response.errors}"
             )
             false
+        }
+    }
+
+    override suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?> = executeApiRequest(
+        operation = "getWorkDetail",
+        defaultValue = Result.failure(IOException("Work detail request failed"))
+    ) {
+        Timber.i("作品詳細情報を取得中: workId=$workId")
+
+        val query = WorkDetailQuery(workId = workId)
+        val response = annictApolloClient.executeQuery(
+            operation = query,
+            context = "AnnictRepositoryImpl.getWorkDetail"
+        )
+
+        if (!response.hasErrors()) {
+            val node = response.data?.node
+            Timber.i("作品詳細情報を取得しました: workId=$workId")
+            Result.success(node)
+        } else {
+            Timber.e("GraphQLエラー: ${response.errors}")
+            Result.failure(IOException("GraphQL error: ${response.errors}"))
         }
     }
 

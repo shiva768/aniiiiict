@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.details.DetailModal
 import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiict.ui.track.components.FilterBar
@@ -46,7 +47,8 @@ fun TrackScreen(
     uiState: TrackUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onRefresh: () -> Unit = {},
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    onShowAnimeDetail: (ProgramWithWork) -> Unit = {}
 ) {
     Scaffold(topBar = {
         TrackTopAppBar(
@@ -67,7 +69,8 @@ fun TrackScreen(
             uiState = uiState,
             viewModel = viewModel,
             onRefresh = onRefresh,
-            onRecordEpisode = onRecordEpisode
+            onRecordEpisode = onRecordEpisode,
+            onShowAnimeDetail = onShowAnimeDetail
         )
     }
 }
@@ -165,7 +168,8 @@ private fun TrackScreenContent(
     uiState: TrackUiState,
     viewModel: TrackViewModel,
     onRefresh: () -> Unit,
-    onRecordEpisode: (String, String, StatusState) -> Unit
+    onRecordEpisode: (String, String, StatusState) -> Unit,
+    onShowAnimeDetail: (ProgramWithWork) -> Unit
 ) {
     val isRefreshing = uiState.isLoading && uiState.programs.isNotEmpty()
     val isInitialLoad = uiState.isLoading && uiState.programs.isEmpty()
@@ -207,6 +211,7 @@ private fun TrackScreenContent(
                             programWithWork = program,
                             onRecordEpisode = onRecordEpisode,
                             onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
+                            onShowAnimeDetail = onShowAnimeDetail,
                             uiState = uiState
                         )
                     }

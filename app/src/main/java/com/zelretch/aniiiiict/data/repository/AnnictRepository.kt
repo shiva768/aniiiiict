@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.data.repository
 
 import com.annict.ViewerProgramsQuery
+import com.annict.WorkDetailQuery
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import kotlinx.coroutines.flow.Flow
@@ -14,4 +15,5 @@ interface AnnictRepository {
     suspend fun getRecords(after: String? = null): PaginatedRecords
     suspend fun deleteRecord(recordId: String): Boolean
     suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean
+    suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?>
 }
