@@ -262,10 +262,11 @@ class AnimeDetailScreenUITest {
 
     // Helper functions
 
-    private fun createMockViewModel(state: UiState<AnimeDetailData>): AnimeDetailViewModel = mockk<AnimeDetailViewModel> {
-        coEvery { this@mockk.uiState } returns MutableStateFlow(state)
-        coEvery { loadAnimeDetail(any()) } returns Unit
-    }
+    private fun createMockViewModel(state: UiState<AnimeDetailData>): AnimeDetailViewModel =
+        mockk<AnimeDetailViewModel> {
+            coEvery { this@mockk.uiState } returns MutableStateFlow(state)
+            coEvery { loadAnimeDetail(any()) } returns Unit
+        }
 
     private fun createSampleProgramWithWork(): ProgramWithWork {
         val work = Work(
