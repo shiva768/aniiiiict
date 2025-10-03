@@ -35,7 +35,13 @@ class GetAnimeDetailUseCase @Inject constructor(
 
             // 統合情報の構築
             val episodeCount = malInfo?.numEpisodes ?: annictDetail?.onWork?.episodesCount
-            val imageUrl = annictDetail?.onWork?.image?.recommendedImageUrl ?: work.image?.recommendedImageUrl
+
+            // 画像のフォールバック: Annict詳細 → MAL → Work既存画像
+            val imageUrl = annictDetail?.onWork?.image?.recommendedImageUrl
+                ?: malInfo?.mainPicture?.large
+                ?: malInfo?.mainPicture?.medium
+                ?: work.image?.recommendedImageUrl
+
             val officialSiteUrl = annictDetail?.onWork?.officialSiteUrl
             val wikipediaUrl = annictDetail?.onWork?.wikipediaUrl
 

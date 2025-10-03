@@ -1,5 +1,8 @@
 package com.zelretch.aniiiiict.ui.animedetail
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -227,6 +231,7 @@ private fun AnimeDetailBasicInfo(animeDetailInfo: AnimeDetailInfo, modifier: Mod
 
 @Composable
 private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val links = listOfNotNull(
         animeDetailInfo.officialSiteUrl?.let { "公式サイト" to it },
         animeDetailInfo.wikipediaUrl?.let { "Wikipedia" to it }
@@ -250,7 +255,14 @@ private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier:
                 links.forEach { (label, url) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                context.startActivity(intent)
+                            }
+                            .padding(vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Link,
@@ -260,7 +272,8 @@ private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier:
                         Text(
                             text = label,
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -271,6 +284,13 @@ private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier:
 
 @Composable
 private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier: Modifier = Modifier) {
+    // チャンネル名の重複を排除
+    val uniqueChannels = programs
+        .filterNotNull()
+        .map { it.channel.name }
+        .distinct()
+        .sorted()
+
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION_DP.dp)
@@ -285,13 +305,13 @@ private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier
                 fontWeight = FontWeight.Bold
             )
 
-            programs.filterNotNull().forEach { program ->
+            uniqueChannels.forEach { channelName ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = program.channel.name,
+                        text = channelName,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

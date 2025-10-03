@@ -125,7 +125,8 @@ class AnimeDetailScreenUITest {
             mediaType = "tv",
             numEpisodes = 24,
             status = "finished_airing",
-            broadcast = null
+            broadcast = null,
+            mainPicture = null
         )
         val animeDetailInfo = createAnimeDetailInfo(
             malInfo = malInfo

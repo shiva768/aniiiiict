@@ -167,6 +167,40 @@ class GetAnimeDetailUseCaseTest {
         assertNull(animeDetailInfo?.wikipediaUrl) // Annictデータがnullなのでnull
     }
 
+    @Test
+    fun `invoke should fallback to MAL image when Annict image is null`() = runTest {
+        // Given
+        val programWithWork = createSampleProgramWithWork()
+        val annictDetail = createMockAnnictDetail()
+        val malResponse = createMockMyAnimeListResponse()
+
+        // Annictの画像をnullに設定
+        val mockOnWork = mockk<WorkDetailQuery.OnWork>()
+        every { mockOnWork.id } returns "test-work-id"
+        every { mockOnWork.episodesCount } returns 12
+        every { mockOnWork.image } returns null // 画像なし
+        every { mockOnWork.officialSiteUrl } returns "https://example.com/official"
+        every { mockOnWork.wikipediaUrl } returns "https://ja.wikipedia.org/wiki/test"
+        every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
+        every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
+
+        val mockNode = mockk<WorkDetailQuery.Node>()
+        every { mockNode.onWork } returns mockOnWork
+
+        coEvery { annictRepository.getWorkDetail(any()) } returns Result.success(mockNode)
+        coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.success(malResponse)
+
+        // When
+        val result = useCase(programWithWork)
+
+        // Then
+        assertTrue(result.isSuccess)
+        val animeDetailInfo = result.getOrNull()
+        assertNotNull(animeDetailInfo)
+        // MALのlarge画像が使用される
+        assertEquals("https://cdn.myanimelist.net/images/anime/large.jpg", animeDetailInfo?.imageUrl)
+    }
+
     private fun createSampleProgramWithWork(malAnimeId: String? = "12345"): ProgramWithWork {
         val work = Work(
             id = "test-work-id",
@@ -252,11 +286,18 @@ class GetAnimeDetailUseCaseTest {
         return mockNode
     }
 
-    private fun createMockMyAnimeListResponse(): MyAnimeListResponse = MyAnimeListResponse(
-        id = 12345,
-        mediaType = "tv",
-        numEpisodes = 24,
-        status = "currently_airing",
-        broadcast = null
-    )
+    private fun createMockMyAnimeListResponse(): MyAnimeListResponse {
+        val mainPicture = com.zelretch.aniiiiict.data.model.MyAnimeListPicture(
+            medium = "https://cdn.myanimelist.net/images/anime/medium.jpg",
+            large = "https://cdn.myanimelist.net/images/anime/large.jpg"
+        )
+        return MyAnimeListResponse(
+            id = 12345,
+            mediaType = "tv",
+            numEpisodes = 24,
+            status = "currently_airing",
+            broadcast = null,
+            mainPicture = mainPicture
+        )
+    }
 }

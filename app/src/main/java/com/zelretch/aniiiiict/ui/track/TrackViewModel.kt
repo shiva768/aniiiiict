@@ -275,4 +275,6 @@ class TrackViewModel @Inject constructor(
     override fun recordFinale(workId: String, episodeNumber: Int) {
         confirmWatchedStatus()
     }
+
+    fun getProgramWithWork(workId: String): ProgramWithWork? = _uiState.value.allPrograms.find { it.work.id == workId }
 }

@@ -130,7 +130,8 @@ class AnimeDetailViewModelTest {
             mediaType = "tv",
             numEpisodes = 24,
             status = "currently_airing",
-            broadcast = null
+            broadcast = null,
+            mainPicture = null
         )
 
         return AnimeDetailInfo(
