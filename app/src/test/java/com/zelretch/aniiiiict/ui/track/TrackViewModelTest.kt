@@ -19,6 +19,7 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -54,6 +55,7 @@ class TrackViewModelTest {
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var filterProgramsUseCase: FilterProgramsUseCase
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: TrackViewModel
 
     @BeforeEach
@@ -69,6 +71,7 @@ class TrackViewModelTest {
         updateViewStateUseCase = mockk()
         filterProgramsUseCase = mockk()
         judgeFinaleUseCase = mockk()
+        errorMapper = mockk(relaxed = true)
         mockk<Context>(relaxed = true)
 
         // デフォルトで空リストを返すflow
@@ -87,7 +90,8 @@ class TrackViewModelTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             filterPreferences,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
         dispatcher.scheduler.advanceUntilIdle()
     }
