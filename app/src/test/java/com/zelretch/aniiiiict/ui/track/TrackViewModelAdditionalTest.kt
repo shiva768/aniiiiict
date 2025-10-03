@@ -1,14 +1,21 @@
 package com.zelretch.aniiiiict.ui.track
 
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 /**
  * TrackViewModelの追加テストケース
@@ -20,215 +27,230 @@ import kotlinx.coroutines.test.setMain
  * - 初期状態の検証
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackViewModelAdditionalTest : BehaviorSpec({
+@DisplayName("TrackViewModel追加テスト")
+class TrackViewModelAdditionalTest {
 
-    val dispatcher = UnconfinedTestDispatcher()
+    private val dispatcher = UnconfinedTestDispatcher()
 
-    beforeTest {
+    @BeforeEach
+    fun setup() {
         Dispatchers.setMain(dispatcher)
     }
 
-    afterTest {
+    @AfterEach
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
-    given("TrackViewModelの状態管理") {
+    @Nested
+    @DisplayName("状態管理")
+    inner class StateManagement {
 
-        `when`("フィルタ表示状態を切り替える") {
-            then("isFilterVisibleが正しく更新される") {
-                runTest {
-                    // モックを使った実際のViewModel作成は複雑すぎるため、
-                    // 状態管理のロジックを検証するシンプルなテストを作成
+        @Test
+        @DisplayName("フィルタ表示状態が正しく切り替わる")
+        fun フィルタ表示状態が正しく切り替わる() = runTest {
+            // Given: 初期状態: フィルタ非表示
+            var isFilterVisible = false
 
-                    // 初期状態: フィルタ非表示
-                    var isFilterVisible = false
+            // When: 表示に切り替え
+            isFilterVisible = !isFilterVisible
 
-                    // 表示に切り替え
-                    isFilterVisible = !isFilterVisible
-                    isFilterVisible shouldBe true
+            // Then
+            assertTrue(isFilterVisible)
 
-                    // 非表示に切り替え
-                    isFilterVisible = !isFilterVisible
-                    isFilterVisible shouldBe false
-                }
-            }
+            // When: 非表示に切り替え
+            isFilterVisible = !isFilterVisible
+
+            // Then
+            assertFalse(isFilterVisible)
         }
 
-        `when`("詳細モーダルの表示状態を管理する") {
-            then("適切な状態遷移が行われる") {
-                runTest {
-                    // 詳細モーダル状態の管理ロジック
-                    data class DetailModalState(
-                        val isVisible: Boolean = false,
-                        val selectedProgramId: String? = null,
-                        val isLoading: Boolean = false
-                    )
+        @Test
+        @DisplayName("詳細モーダルの状態遷移が適切に行われる")
+        fun 詳細モーダルの状態遷移が適切に行われる() = runTest {
+            // Given
+            data class DetailModalState(
+                val isVisible: Boolean = false,
+                val selectedProgramId: String? = null,
+                val isLoading: Boolean = false
+            )
 
-                    var state = DetailModalState()
+            var state = DetailModalState()
 
-                    // 詳細表示
-                    state = state.copy(
-                        isVisible = true,
-                        selectedProgramId = "program123",
-                        isLoading = false
-                    )
+            // When: 詳細表示
+            state = state.copy(
+                isVisible = true,
+                selectedProgramId = "program123",
+                isLoading = false
+            )
 
-                    state.isVisible shouldBe true
-                    state.selectedProgramId shouldBe "program123"
-                    state.isLoading shouldBe false
+            // Then
+            assertTrue(state.isVisible)
+            assertEquals("program123", state.selectedProgramId)
+            assertFalse(state.isLoading)
 
-                    // 詳細非表示
-                    state = state.copy(
-                        isVisible = false,
-                        selectedProgramId = null,
-                        isLoading = false
-                    )
+            // When: 詳細非表示
+            state = state.copy(
+                isVisible = false,
+                selectedProgramId = null,
+                isLoading = false
+            )
 
-                    state.isVisible shouldBe false
-                    state.selectedProgramId shouldBe null
-                }
-            }
+            // Then
+            assertFalse(state.isVisible)
+            assertNull(state.selectedProgramId)
         }
 
-        `when`("最終話確認ダイアログの状態管理") {
-            then("適切にダイアログ状態が管理される") {
-                runTest {
-                    data class FinaleConfirmationState(
-                        val showConfirmationForWorkId: String? = null,
-                        val showConfirmationForEpisodeNumber: Int? = null
-                    )
+        @Test
+        @DisplayName("最終話確認ダイアログの状態が適切に管理される")
+        fun 最終話確認ダイアログの状態が適切に管理される() = runTest {
+            // Given
+            data class FinaleConfirmationState(
+                val showConfirmationForWorkId: String? = null,
+                val showConfirmationForEpisodeNumber: Int? = null
+            )
 
-                    var state = FinaleConfirmationState()
+            var state = FinaleConfirmationState()
 
-                    // 最終話確認ダイアログ表示
-                    state = state.copy(
-                        showConfirmationForWorkId = "work123",
-                        showConfirmationForEpisodeNumber = 12
-                    )
+            // When: 最終話確認ダイアログ表示
+            state = state.copy(
+                showConfirmationForWorkId = "work123",
+                showConfirmationForEpisodeNumber = 12
+            )
 
-                    state.showConfirmationForWorkId shouldBe "work123"
-                    state.showConfirmationForEpisodeNumber shouldBe 12
+            // Then
+            assertEquals("work123", state.showConfirmationForWorkId)
+            assertEquals(12, state.showConfirmationForEpisodeNumber)
 
-                    // ダイアログ閉じる
-                    state = state.copy(
-                        showConfirmationForWorkId = null,
-                        showConfirmationForEpisodeNumber = null
-                    )
+            // When: ダイアログ閉じる
+            state = state.copy(
+                showConfirmationForWorkId = null,
+                showConfirmationForEpisodeNumber = null
+            )
 
-                    state.showConfirmationForWorkId shouldBe null
-                    state.showConfirmationForEpisodeNumber shouldBe null
-                }
-            }
+            // Then
+            assertNull(state.showConfirmationForWorkId)
+            assertNull(state.showConfirmationForEpisodeNumber)
         }
 
-        `when`("記録成功メッセージの自動クリア") {
-            then("成功メッセージが適切に管理される") {
-                runTest {
-                    data class RecordingState(
-                        val isRecording: Boolean = false,
-                        val recordingSuccess: String? = null,
-                        val error: String? = null
-                    )
+        @Test
+        @DisplayName("記録成功メッセージが適切に管理される")
+        fun 記録成功メッセージが適切に管理される() = runTest {
+            // Given
+            data class RecordingState(
+                val isRecording: Boolean = false,
+                val recordingSuccess: String? = null,
+                val error: String? = null
+            )
 
-                    var state = RecordingState()
+            var state = RecordingState()
 
-                    // 記録開始
-                    state = state.copy(isRecording = true, error = null)
-                    state.isRecording shouldBe true
-                    state.error shouldBe null
+            // When: 記録開始
+            state = state.copy(isRecording = true, error = null)
 
-                    // 記録成功
-                    state = state.copy(
-                        isRecording = false,
-                        recordingSuccess = "episode123",
-                        error = null
-                    )
-                    state.isRecording shouldBe false
-                    state.recordingSuccess shouldBe "episode123"
-                    state.error shouldBe null
+            // Then
+            assertTrue(state.isRecording)
+            assertNull(state.error)
 
-                    // 成功メッセージクリア（2秒後を想定）
-                    state = state.copy(recordingSuccess = null)
-                    state.recordingSuccess shouldBe null
+            // When: 記録成功
+            state = state.copy(
+                isRecording = false,
+                recordingSuccess = "episode123",
+                error = null
+            )
 
-                    // 記録エラー
-                    state = state.copy(
-                        isRecording = false,
-                        recordingSuccess = null,
-                        error = "ネットワークエラー"
-                    )
-                    state.isRecording shouldBe false
-                    state.recordingSuccess shouldBe null
-                    state.error shouldNotBe null
-                }
-            }
+            // Then
+            assertFalse(state.isRecording)
+            assertEquals("episode123", state.recordingSuccess)
+            assertNull(state.error)
+
+            // When: 成功メッセージクリア（2秒後を想定）
+            state = state.copy(recordingSuccess = null)
+
+            // Then
+            assertNull(state.recordingSuccess)
+
+            // When: 記録エラー
+            state = state.copy(
+                isRecording = false,
+                recordingSuccess = null,
+                error = "ネットワークエラー"
+            )
+
+            // Then
+            assertFalse(state.isRecording)
+            assertNull(state.recordingSuccess)
+            assertNotNull(state.error)
         }
 
-        `when`("エラー状態の管理") {
-            then("エラーの設定とクリアが正常に動作") {
-                runTest {
+        @Test
+        @DisplayName("エラーの設定とクリアが正常に動作する")
+        fun エラーの設定とクリアが正常に動作する() = runTest {
+            // Given: エラー設定
+            var errorState: String? = "テストエラー"
 
-                    // エラー設定
-                    var errorState: String? = "テストエラー"
-                    errorState shouldBe "テストエラー"
+            // Then
+            assertEquals("テストエラー", errorState)
 
-                    // エラークリア
-                    errorState = null
-                    errorState shouldBe null
-                }
-            }
-        }
-    }
+            // When: エラークリア
+            errorState = null
 
-    given("TrackUiStateの妥当性検証") {
-
-        `when`("初期状態を作成") {
-            then("適切なデフォルト値が設定される") {
-                runTest {
-                    val initialState = TrackUiState()
-
-                    initialState.programs shouldBe emptyList()
-                    initialState.records shouldBe emptyList()
-                    initialState.isLoading shouldBe false
-                    initialState.error shouldBe null
-                    initialState.isRecording shouldBe false
-                    initialState.recordingSuccess shouldBe null
-                    initialState.isFilterVisible shouldBe false
-                    initialState.allPrograms shouldBe emptyList()
-                    initialState.selectedProgram shouldBe null
-                    initialState.isDetailModalVisible shouldBe false
-                    initialState.isLoadingDetail shouldBe false
-                    initialState.showFinaleConfirmationForWorkId shouldBe null
-                    initialState.showFinaleConfirmationForEpisodeNumber shouldBe null
-                }
-            }
-        }
-
-        `when`("状態をコピーして更新") {
-            then("適切に状態が更新される") {
-                runTest {
-                    val initialState = TrackUiState()
-
-                    val updatedState = initialState.copy(
-                        isLoading = true,
-                        error = "テストエラー",
-                        isRecording = true,
-                        isFilterVisible = true
-                    )
-
-                    // 更新された値の確認
-                    updatedState.isLoading shouldBe true
-                    updatedState.error shouldBe "テストエラー"
-                    updatedState.isRecording shouldBe true
-                    updatedState.isFilterVisible shouldBe true
-
-                    // 元の状態は変更されていない
-                    initialState.isLoading shouldBe false
-                    initialState.error shouldBe null
-                    initialState.isRecording shouldBe false
-                    initialState.isFilterVisible shouldBe false
-                }
-            }
+            // Then
+            assertNull(errorState)
         }
     }
-})
+
+    @Nested
+    @DisplayName("TrackUiStateの妥当性検証")
+    inner class TrackUiStateValidation {
+
+        @Test
+        @DisplayName("初期状態が適切なデフォルト値で設定される")
+        fun 初期状態が適切なデフォルト値で設定される() = runTest {
+            // When
+            val initialState = TrackUiState()
+
+            // Then
+            assertEquals(emptyList<Any>(), initialState.programs)
+            assertEquals(emptyList<Any>(), initialState.records)
+            assertFalse(initialState.isLoading)
+            assertNull(initialState.error)
+            assertFalse(initialState.isRecording)
+            assertNull(initialState.recordingSuccess)
+            assertFalse(initialState.isFilterVisible)
+            assertEquals(emptyList<Any>(), initialState.allPrograms)
+            assertNull(initialState.selectedProgram)
+            assertFalse(initialState.isDetailModalVisible)
+            assertFalse(initialState.isLoadingDetail)
+            assertNull(initialState.showFinaleConfirmationForWorkId)
+            assertNull(initialState.showFinaleConfirmationForEpisodeNumber)
+        }
+
+        @Test
+        @DisplayName("状態をコピーして更新すると適切に反映される")
+        fun 状態をコピーして更新すると適切に反映される() = runTest {
+            // Given
+            val initialState = TrackUiState()
+
+            // When
+            val updatedState = initialState.copy(
+                isLoading = true,
+                error = "テストエラー",
+                isRecording = true,
+                isFilterVisible = true
+            )
+
+            // Then: 更新された値の確認
+            assertTrue(updatedState.isLoading)
+            assertEquals("テストエラー", updatedState.error)
+            assertTrue(updatedState.isRecording)
+            assertTrue(updatedState.isFilterVisible)
+
+            // Then: 元の状態は変更されていない
+            assertFalse(initialState.isLoading)
+            assertNull(initialState.error)
+            assertFalse(initialState.isRecording)
+            assertFalse(initialState.isFilterVisible)
+        }
+    }
+}
