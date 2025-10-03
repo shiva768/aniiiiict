@@ -53,7 +53,7 @@ private const val CARD_ELEVATION = 2
 fun AnimeDetailScreen(
     programWithWork: ProgramWithWork,
     onNavigateBack: () -> Unit,
-    viewModel: AnimeDetailViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    viewModel: AnimeDetailViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AnimeDetailViewModel>()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
