@@ -2,32 +2,58 @@ package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
-class WatchEpisodeUseCaseTest : BehaviorSpec({
-    val repository = mockk<AnnictRepository>()
-    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
-    val useCase = WatchEpisodeUseCase(repository, updateViewStateUseCase)
+@DisplayName("WatchEpisodeUseCase")
+class WatchEpisodeUseCaseTest {
 
-    given("エピソード視聴記録") {
-        `when`("記録が成功し、ステータスも更新される場合") {
-            then("Result.successになる") {
-                coEvery { repository.createRecord(any(), any()) } returns true
-                coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
-                val result = runBlocking { useCase("ep1", "w1", StatusState.WANNA_WATCH, true) }
-                result.isSuccess shouldBe true
-            }
+    private lateinit var repository: AnnictRepository
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
+    private lateinit var useCase: WatchEpisodeUseCase
+
+    @BeforeEach
+    fun setup() {
+        repository = mockk()
+        updateViewStateUseCase = mockk()
+        useCase = WatchEpisodeUseCase(repository, updateViewStateUseCase)
+    }
+
+    @Nested
+    @DisplayName("エピソード視聴記録")
+    inner class RecordEpisode {
+
+        @Test
+        @DisplayName("記録成功時にResult.successを返す")
+        fun 記録成功時にResultSuccessを返す() = runTest {
+            // Given
+            coEvery { repository.createRecord(any(), any()) } returns true
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
+
+            // When
+            val result = useCase("ep1", "w1", StatusState.WANNA_WATCH, true)
+
+            // Then
+            assertTrue(result.isSuccess)
         }
-        `when`("記録が失敗する場合") {
-            then("Result.failureになる") {
-                coEvery { repository.createRecord(any(), any()) } returns false
-                val result = runBlocking { useCase("ep1", "w1", StatusState.WANNA_WATCH, true) }
-                result.isFailure shouldBe true
-            }
+
+        @Test
+        @DisplayName("記録失敗時にResult.failureを返す")
+        fun 記録失敗時にResultFailureを返す() = runTest {
+            // Given
+            coEvery { repository.createRecord(any(), any()) } returns false
+
+            // When
+            val result = useCase("ep1", "w1", StatusState.WANNA_WATCH, true)
+
+            // Then
+            assertTrue(result.isFailure)
         }
     }
-})
+}
