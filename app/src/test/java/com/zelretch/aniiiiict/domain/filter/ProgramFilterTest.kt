@@ -62,7 +62,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("シーズンの並び順が正しい")
-        fun シーズンの並び順が正しい() {
+        fun withCorrectOrder() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonName = SeasonName.SUMMER),
@@ -88,7 +88,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("指定したシーズンのみ返る")
-        fun 指定したシーズンのみ返る() {
+        fun withSelectedSeasons() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonName = SeasonName.WINTER),
@@ -107,7 +107,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("フィルターが空の場合は全てのプログラムを返す")
-        fun フィルターが空の場合は全てのプログラムを返す() {
+        fun withEmptySeasonFilter() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonName = SeasonName.WINTER),
@@ -124,7 +124,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("シーズンがnullのプログラムはフィルターされる")
-        fun シーズンがnullのプログラムはフィルターされる() {
+        fun withNullSeason() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonName = null),
@@ -147,7 +147,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("指定したメディアのみ返る")
-        fun 指定したメディアのみ返る() {
+        fun withSelectedMedia() {
             // Given
             val programs = listOf(
                 createProgramWithWork(media = "TV"),
@@ -166,7 +166,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("フィルターが空の場合は全てのプログラムを返す")
-        fun フィルターが空の場合は全てのプログラムを返す() {
+        fun withEmptyMediaFilter() {
             // Given
             val programs = listOf(
                 createProgramWithWork(media = "TV"),
@@ -188,7 +188,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("指定した年のみ返る")
-        fun 指定した年のみ返る() {
+        fun withSelectedYears() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonYear = 2023),
@@ -207,7 +207,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("フィルターが空の場合は全てのプログラムを返す")
-        fun フィルターが空の場合は全てのプログラムを返す() {
+        fun withEmptyYearFilter() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonYear = 2023),
@@ -224,7 +224,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("境界値が正しく機能する")
-        fun 境界値が正しく機能する() {
+        fun withBoundaryValues() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonYear = 2023),
@@ -248,7 +248,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("指定したチャンネルのみ返る")
-        fun 指定したチャンネルのみ返る() {
+        fun withSelectedChannels() {
             // Given
             val programs = listOf(
                 createProgramWithWork(channelName = "TOKYO MX"),
@@ -267,7 +267,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("フィルターが空の場合は全てのプログラムを返す")
-        fun フィルターが空の場合は全てのプログラムを返す() {
+        fun withEmptyChannelFilter() {
             // Given
             val programs = listOf(
                 createProgramWithWork(channelName = "TOKYO MX"),
@@ -289,7 +289,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("指定したステータスのみ返る")
-        fun 指定したステータスのみ返る() {
+        fun withSelectedStatuses() {
             // Given
             val programs = listOf(
                 createProgramWithWork(status = StatusState.WATCHING),
@@ -308,7 +308,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("フィルターが空の場合は全てのプログラムを返す")
-        fun フィルターが空の場合は全てのプログラムを返す() {
+        fun withEmptyStatusFilter() {
             // Given
             val programs = listOf(
                 createProgramWithWork(status = StatusState.WATCHING),
@@ -330,7 +330,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("タイトルで検索できる")
-        fun タイトルで検索できる() {
+        fun byTitle() {
             // Given
             val programs = listOf(
                 createProgramWithWork(title = "テスト作品1"),
@@ -349,7 +349,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("検索クエリが空の場合は全てのプログラムを返す")
-        fun 検索クエリが空の場合は全てのプログラムを返す() {
+        fun withEmptyQuery() {
             // Given
             val programs = listOf(
                 createProgramWithWork(title = "テスト作品1"),
@@ -366,7 +366,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("大文字小文字を区別しない")
-        fun 大文字小文字を区別しない() {
+        fun caseInsensitive() {
             // Given
             val programs = listOf(
                 createProgramWithWork(title = "テスト作品A"),
@@ -385,7 +385,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("特殊文字を含む検索クエリが正しく機能する")
-        fun 特殊文字を含む検索クエリが正しく機能する() {
+        fun withSpecialCharacters() {
             // Given
             val programs = listOf(
                 createProgramWithWork(title = "テスト作品!"),
@@ -409,7 +409,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("放送済みのみ返る")
-        fun 放送済みのみ返る() {
+        fun onlyAired() {
             // Given
             val now = LocalDateTime.now()
             val programs = listOf(
@@ -428,7 +428,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("無効の場合は全てのプログラムを返す")
-        fun 無効の場合は全てのプログラムを返す() {
+        fun whenDisabled() {
             // Given
             val now = LocalDateTime.now()
             val programs = listOf(
@@ -451,7 +451,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("放送開始時間の昇順ソートが正しく機能する")
-        fun 放送開始時間の昇順ソートが正しく機能する() {
+        fun sortAscending() {
             // Given
             val now = LocalDateTime.now()
             val programs = listOf(
@@ -473,7 +473,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("放送開始時間の降順ソートが正しく機能する")
-        fun 放送開始時間の降順ソートが正しく機能する() {
+        fun sortDescending() {
             // Given
             val now = LocalDateTime.now()
             val programs = listOf(
@@ -500,7 +500,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("複数のフィルターを組み合わせて正しく機能する")
-        fun 複数のフィルターを組み合わせて正しく機能する() {
+        fun withMultipleFilters() {
             // Given
             val programs = listOf(
                 createProgramWithWork(
@@ -542,7 +542,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("空のリストを渡すと空のリストを返す")
-        fun 空のリストを渡すと空のリストを返す() {
+        fun withEmptyList() {
             // Given
             val programs = emptyList<ProgramWithWork>()
             val filterState = FilterState(
@@ -559,7 +559,7 @@ class ProgramFilterTest {
 
         @Test
         @DisplayName("フィルターの順序が結果に影響を与えない")
-        fun フィルターの順序が結果に影響を与えない() {
+        fun orderIndependent() {
             // Given
             val programs = listOf(
                 createProgramWithWork(
