@@ -16,7 +16,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -40,16 +39,16 @@ class MainViewModelTest {
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        
+
         authUseCase = mockk(relaxUnitFun = true)
         context = mockk()
         customTabsIntent = mockk(relaxUnitFun = true)
         customTabsIntentFactory = mockk()
         every { customTabsIntentFactory.create() } returns customTabsIntent
         every { customTabsIntent.launchUrl(any(), any()) } just Runs
-        
+
         coEvery { authUseCase.isAuthenticated() } returns false
-        
+
         viewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
     }
 
@@ -80,7 +79,7 @@ class MainViewModelTest {
         fun 初期化時に認証状態がチェックされる() {
             // Given
             coEvery { authUseCase.isAuthenticated() } returns true
-            
+
             // When
             val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
             testDispatcher.scheduler.advanceUntilIdle()
