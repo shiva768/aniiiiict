@@ -18,10 +18,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -48,6 +50,7 @@ fun ProgramCard(
     programWithWork: ProgramWithWork,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit,
+    onShowAnimeDetail: (ProgramWithWork) -> Unit,
     uiState: TrackUiState,
     modifier: Modifier = Modifier
 ) {
@@ -61,7 +64,10 @@ fun ProgramCard(
         Column(
             modifier = Modifier.fillMaxWidth().padding(20.dp)
         ) {
-            WorkInfoRow(programWithWork = programWithWork)
+            WorkInfoRow(
+                programWithWork = programWithWork,
+                onShowAnimeDetail = onShowAnimeDetail
+            )
             Spacer(modifier = Modifier.height(12.dp))
             EpisodeInfoRow(
                 programWithWork = programWithWork,
@@ -73,7 +79,7 @@ fun ProgramCard(
 }
 
 @Composable
-private fun WorkInfoRow(programWithWork: ProgramWithWork) {
+private fun WorkInfoRow(programWithWork: ProgramWithWork, onShowAnimeDetail: (ProgramWithWork) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
@@ -84,13 +90,31 @@ private fun WorkInfoRow(programWithWork: ProgramWithWork) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = programWithWork.work.title,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag("work_title_${programWithWork.work.id}")
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = programWithWork.work.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("work_title_${programWithWork.work.id}")
+                )
+                IconButton(
+                    onClick = { onShowAnimeDetail(programWithWork) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "詳細を見る",
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(6.dp))
             WorkTags(programWithWork = programWithWork)
         }

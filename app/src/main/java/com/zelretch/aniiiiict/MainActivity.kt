@@ -53,6 +53,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailScreen
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
@@ -273,6 +274,9 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         scope.launch {
                             drawerState.open()
                         }
+                    },
+                    onShowAnimeDetail = { programWithWork ->
+                        navController.navigate("anime_detail/${programWithWork.work.id}")
                     }
                 )
             }
@@ -290,6 +294,26 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                     onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
                 )
                 HistoryScreen(uiState = historyUiState, actions = actions)
+            }
+            composable("anime_detail/{workId}") { backStackEntry ->
+                val workId = backStackEntry.arguments?.getString("workId") ?: ""
+                val trackBackStackEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("track")
+                }
+                val trackViewModel: TrackViewModel = hiltViewModel(trackBackStackEntry)
+                val programWithWork = trackViewModel.getProgramWithWork(workId)
+
+                if (programWithWork != null) {
+                    AnimeDetailScreen(
+                        programWithWork = programWithWork,
+                        onNavigateBack = { navController.navigateUp() }
+                    )
+                } else {
+                    // データが見つからない場合はTrack画面に戻る
+                    LaunchedEffect(Unit) {
+                        navController.navigateUp()
+                    }
+                }
             }
             composable("settings") {
                 SettingsScreen(

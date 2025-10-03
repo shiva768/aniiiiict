@@ -81,7 +81,8 @@ class DetailModalIntegrationTest {
                     mediaType = "tv",
                     numEpisodes = 12,
                     status = "currently_airing",
-                    broadcast = null
+                    broadcast = null,
+                    mainPicture = null
                 )
             )
         }

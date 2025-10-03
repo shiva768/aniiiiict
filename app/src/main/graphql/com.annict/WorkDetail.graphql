@@ -1,0 +1,52 @@
+query WorkDetail($workId: ID!) {
+  node(id: $workId) {
+    ... on Work {
+      id
+      title
+      titleEn
+      seasonName
+      seasonYear
+      media
+      malAnimeId
+      viewerStatusState
+      officialSiteUrl
+      officialSiteUrlEn
+      wikipediaUrl
+      wikipediaUrlEn
+      episodesCount
+      image {
+        recommendedImageUrl
+        facebookOgImageUrl
+      }
+      programs(first: 20) {
+        nodes {
+          id
+          startedAt
+          channel {
+            id
+            name
+          }
+        }
+      }
+      seriesList(first: 5) {
+        nodes {
+          id
+          name
+          nameEn
+          works(first: 10) {
+            nodes {
+              id
+              title
+              titleEn
+              seasonName
+              seasonYear
+              image {
+                recommendedImageUrl
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
