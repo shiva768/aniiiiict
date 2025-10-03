@@ -37,7 +37,7 @@ class LoadProgramsUseCaseTest {
 
         @Test
         @DisplayName("複数の作品と複数のエピソードがある場合作品ごとにグループ化されエピソード番号でソートされる")
-        fun 複数の作品と複数のエピソードがある場合作品ごとにグループ化されエピソード番号でソートされる() = runTest {
+        fun groupedAndSorted() = runTest {
             // Given
             val mockPrograms = TestHelper.createMockPrograms()
             coEvery { repository.getRawProgramsData() } returns flow { emit(mockPrograms) }
@@ -68,7 +68,7 @@ class LoadProgramsUseCaseTest {
 
         @Test
         @DisplayName("同じ作品に複数のエピソードがある場合エピソード番号でソートされる")
-        fun 同じ作品に複数のエピソードがある場合エピソード番号でソートされる() = runTest {
+        fun sortedByEpisodeNumber() = runTest {
             // Given
             val nodes = TestHelper.createMockEpisodesForSameAnime()
             coEvery { repository.getRawProgramsData() } returns flow { emit(nodes) }
@@ -92,7 +92,7 @@ class LoadProgramsUseCaseTest {
 
         @Test
         @DisplayName("空のデータが返された場合空のリストが返される")
-        fun 空のデータが返された場合空のリストが返される() = runTest {
+        fun withEmptyData() = runTest {
             // Given
             coEvery { repository.getRawProgramsData() } returns flow { emit(emptyList()) }
 

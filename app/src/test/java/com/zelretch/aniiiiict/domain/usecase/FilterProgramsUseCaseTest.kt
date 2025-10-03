@@ -26,7 +26,7 @@ class FilterProgramsUseCaseTest {
 
         @Test
         @DisplayName("指定したシーズンのみ返る")
-        fun 指定したシーズンのみ返る() {
+        fun withSelectedSeasons() {
             // Given
             val programs = listOf(
                 createProgramWithWork(seasonName = SeasonName.WINTER),

@@ -126,7 +126,7 @@ class AniListRepositoryImplTest {
 
         @Test
         @DisplayName("例外発生時にResult.failureを返す")
-        fun 例外発生時にResultFailureを返す() = runTest {
+        fun onException() = runTest {
             // Given
             val mediaId = 123
             coEvery {

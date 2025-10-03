@@ -63,7 +63,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("認証されていない状態で初期化される")
-        fun 認証されていない状態で初期化される() {
+        fun notAuthenticated() {
             // When
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -76,7 +76,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("初期化時に認証状態がチェックされる")
-        fun 初期化時に認証状態がチェックされる() {
+        fun checkAuthOnInit() {
             // Given
             coEvery { authUseCase.isAuthenticated() } returns true
 
@@ -97,7 +97,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("認証開始時にisAuthenticatingがtrueになる")
-        fun 認証開始時にisAuthenticatingがtrueになる() {
+        fun startAuth() {
             // Given
             coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
 
@@ -118,7 +118,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("有効なコードで認証が成功する")
-        fun 有効なコードで認証が成功する() {
+        fun withValidCode() {
             // Given
             coEvery { authUseCase.handleAuthCallback(any()) } returns true
 
@@ -135,7 +135,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("無効なコードでエラーが発生する")
-        fun 無効なコードでエラーが発生する() {
+        fun withInvalidCode() {
             // Given
             coEvery { authUseCase.handleAuthCallback(any()) } returns false
 
@@ -170,7 +170,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("認証済みの場合trueになる")
-        fun 認証済みの場合trueになる() {
+        fun whenAuthenticated() {
             // Given
             coEvery { authUseCase.isAuthenticated() } returns true
 
@@ -185,7 +185,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("未認証の場合falseになる")
-        fun 未認証の場合falseになる() {
+        fun whenNotAuthenticated() {
             // Given
             coEvery { authUseCase.isAuthenticated() } returns false
 
@@ -200,7 +200,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("認証状態確認中はローディング状態になる")
-        fun 認証状態確認中はローディング状態になる() {
+        fun checkingAuth() {
             // Given
             coEvery { authUseCase.isAuthenticated() } returns true
 
@@ -221,7 +221,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("エラーをクリアできる")
-        fun エラーをクリアできる() {
+        fun clearError() {
             // Given
             viewModel.updateErrorState("テストエラー")
             assertNotNull(viewModel.uiState.value.error)
@@ -240,7 +240,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("ローディング状態を更新できる")
-        fun ローディング状態を更新できる() {
+        fun updateLoading() {
             // When
             viewModel.updateLoadingState(true)
 
@@ -255,7 +255,7 @@ class MainViewModelTest {
 
         @Test
         @DisplayName("認証をキャンセルするとisAuthenticatingがfalseになる")
-        fun 認証をキャンセルするとisAuthenticatingがfalseになる() {
+        fun cancelAuth() {
             // Given: 最初に認証を開始してisAuthenticatingをtrueにする
             coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
             viewModel.startAuth()

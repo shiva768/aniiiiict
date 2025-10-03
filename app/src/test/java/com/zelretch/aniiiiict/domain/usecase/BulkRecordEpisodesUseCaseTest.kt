@@ -32,7 +32,7 @@ class BulkRecordEpisodesUseCaseTest {
 
         @Test
         @DisplayName("全て成功しフィナーレ情報なしの場合Result.successでfinaleResultはnull")
-        fun 全て成功しフィナーレ情報なしの場合ResultSuccessでfinaleResultはnull() = runTest {
+        fun withoutFinale() = runTest {
             // Given
             val episodeIds = listOf("ep1", "ep2")
             val workId = "w1"
@@ -49,7 +49,7 @@ class BulkRecordEpisodesUseCaseTest {
 
         @Test
         @DisplayName("全て成功しフィナーレ判定ありの場合Result.successでfinaleResultが含まれる")
-        fun 全て成功しフィナーレ判定ありの場合ResultSuccessでfinaleResultが含まれる() = runTest {
+        fun withFinale() = runTest {
             // Given
             val episodeIds = listOf("ep1", "ep2")
             val workId = "w1"
@@ -71,7 +71,7 @@ class BulkRecordEpisodesUseCaseTest {
 
         @Test
         @DisplayName("途中で失敗する場合Result.failureを返す")
-        fun 途中で失敗する場合ResultFailureを返す() = runTest {
+        fun onFailure() = runTest {
             // Given
             val episodeIds = listOf("ep1", "ep2")
             val workId = "w1"
@@ -88,7 +88,7 @@ class BulkRecordEpisodesUseCaseTest {
 
         @Test
         @DisplayName("空のエピソードリストの場合空のResultが返される")
-        fun 空のエピソードリストの場合空のResultが返される() = runTest {
+        fun withEmptyList() = runTest {
             // Given
             val episodeIds = emptyList<String>()
             val workId = "w1"

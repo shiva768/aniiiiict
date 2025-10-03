@@ -36,7 +36,7 @@ class LoadRecordsUseCaseTest {
 
         @Test
         @DisplayName("レコードが存在し次ページもある場合正しく変換される")
-        fun レコードが存在し次ページもある場合正しく変換される() = runTest {
+        fun withRecordsAndNextPage() = runTest {
             // Given
             val fakeRecords = listOf(
                 Record(
@@ -74,7 +74,7 @@ class LoadRecordsUseCaseTest {
 
         @Test
         @DisplayName("レコードが空の場合正しいページ情報が返る")
-        fun レコードが空の場合正しいページ情報が返る() = runTest {
+        fun withEmptyRecords() = runTest {
             // Given
             val paginated = PaginatedRecords(
                 records = emptyList(),

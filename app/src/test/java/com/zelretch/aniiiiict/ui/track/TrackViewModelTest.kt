@@ -103,7 +103,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("正常にロードできる場合UIStateにプログラムがセットされる")
-        fun 正常にロードできる場合UIStateにプログラムがセットされる() = runTest {
+        fun onSuccess() = runTest {
             // Given
             val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
             coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
@@ -133,7 +133,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("例外が発生する場合UIStateにエラーがセットされる")
-        fun 例外が発生する場合UIStateにエラーがセットされる() = runTest(dispatcher) {
+        fun onException() = runTest(dispatcher) {
             // Given
             coEvery { loadProgramsUseCase.invoke() } returns flow {
                 throw LoadProgramsException("error")
@@ -160,7 +160,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("最終話を記録し確認ダイアログでいいえを選択するとステータスは更新されずダイアログが閉じる")
-        fun 最終話を記録し確認ダイアログでいいえを選択するとステータスは更新されずダイアログが閉じる() = runTest {
+        fun finaleDialogNo() = runTest {
             // Given
             val workId = "work-finale-no"
             val episodeId = "ep-final-12-no"
@@ -193,7 +193,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("フィナーレ判定に失敗した場合フィナーレ確認は表示されずステータス更新もされない")
-        fun フィナーレ判定に失敗した場合フィナーレ確認は表示されずステータス更新もされない() = runTest {
+        fun finaleJudgmentFailure() = runTest {
             // Given
             val workId = "work-unk-ep"
             val episodeId = "ep5"
@@ -223,7 +223,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("フィナーレ判定UNKNOWNの場合ステータス更新されない")
-        fun フィナーレ判定UNKNOWNの場合ステータス更新されない() = runTest {
+        fun finaleUnknown() = runTest {
             // Given
             val workId = "work1"
             val episodeId = "ep1"

@@ -79,7 +79,7 @@ open class HistoryViewModelTest {
 
         @Test
         @DisplayName("クエリを渡すとsearchQueryとrecordsが更新される")
-        fun クエリを渡すとsearchQueryとrecordsが更新される() = runTest(dispatcher) {
+        fun withQuery() = runTest(dispatcher) {
             // Given
             val dummyRecords = listOf(
                 mockk<Record> {
@@ -113,7 +113,7 @@ open class HistoryViewModelTest {
 
         @Test
         @DisplayName("レコードIDを渡すとrecordsとallRecordsから削除される")
-        fun レコードIDを渡すとrecordsとallRecordsから削除される() = runTest(dispatcher) {
+        fun byId() = runTest(dispatcher) {
             // Given
             val record = mockk<Record> {
                 every { id } returns "id1"
@@ -144,7 +144,7 @@ open class HistoryViewModelTest {
 
         @Test
         @DisplayName("検索クエリ有効時にレコード削除するとフィルタリングが適用される")
-        fun 検索クエリ有効時にレコード削除するとフィルタリングが適用される() = runTest(dispatcher) {
+        fun withActiveSearch() = runTest(dispatcher) {
             // Given
             val record1 = mockk<Record> {
                 every { id } returns "id1"

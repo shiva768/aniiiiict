@@ -150,7 +150,7 @@ class ViewModelUseCaseIntegrationSimpleTest {
 
         @Test
         @DisplayName("複数のUseCase結果を順次処理できる")
-        fun 複数のUseCase結果を順次処理できる() = runTest {
+        fun sequential() = runTest {
             data class ViewModelState(
                 val isLoading: Boolean = false,
                 val step1Complete: Boolean = false,
@@ -200,7 +200,7 @@ class ViewModelUseCaseIntegrationSimpleTest {
 
         @Test
         @DisplayName("途中のUseCaseで失敗した場合適切にエラー処理され後続処理が停止される")
-        fun 途中のUseCaseで失敗した場合適切にエラー処理され後続処理が停止される() = runTest {
+        fun onFailure() = runTest {
             data class ViewModelState(
                 val isLoading: Boolean = false,
                 val step1Complete: Boolean = false,
@@ -248,7 +248,7 @@ class ViewModelUseCaseIntegrationSimpleTest {
 
         @Test
         @DisplayName("複数のViewModelが並行動作しても互いに干渉しない")
-        fun 複数のViewModelが並行動作しても互いに干渉しない() = runTest {
+        fun concurrent() = runTest {
             data class ViewModelState(
                 val id: String,
                 val isLoading: Boolean = false,
@@ -353,7 +353,7 @@ class ViewModelUseCaseIntegrationSimpleTest {
 
         @Test
         @DisplayName("最大リトライ回数に達した場合最終的にエラー状態になる")
-        fun 最大リトライ回数に達した場合最終的にエラー状態になる() = runTest {
+        fun maxRetries() = runTest {
             data class RetryState(
                 val attemptCount: Int = 0,
                 val maxAttempts: Int = 3,

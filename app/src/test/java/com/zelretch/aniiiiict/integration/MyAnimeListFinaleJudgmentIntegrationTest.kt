@@ -36,7 +36,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest {
 
         @Test
         @DisplayName("放送終了アニメは最終話として確認される")
-        fun 放送終了アニメは最終話として確認される() = runTest {
+        fun finishedAiring() = runTest {
             // Given
             val media = MyAnimeListResponse(
                 id = 1,
@@ -58,7 +58,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest {
 
         @Test
         @DisplayName("現在のエピソード数が全エピソード数に等しい場合最終話として確認される")
-        fun 現在のエピソード数が全エピソード数に等しい場合最終話として確認される() = runTest {
+        fun lastEpisodeReached() = runTest {
             // Given
             val media = MyAnimeListResponse(
                 id = 2,
@@ -80,7 +80,7 @@ class MyAnimeListFinaleJudgmentIntegrationTest {
 
         @Test
         @DisplayName("現在放送中で最終話でない場合最終話ではないと判定される")
-        fun 現在放送中で最終話でない場合最終話ではないと判定される() = runTest {
+        fun currentlyAiring() = runTest {
             // Given
             val media = MyAnimeListResponse(
                 id = 3,

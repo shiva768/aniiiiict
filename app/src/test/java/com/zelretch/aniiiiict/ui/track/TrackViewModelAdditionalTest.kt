@@ -48,7 +48,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("フィルタ表示状態が正しく切り替わる")
-        fun フィルタ表示状態が正しく切り替わる() = runTest {
+        fun filterToggle() = runTest {
             // Given: 初期状態: フィルタ非表示
             var isFilterVisible = false
 
@@ -67,7 +67,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("詳細モーダルの状態遷移が適切に行われる")
-        fun 詳細モーダルの状態遷移が適切に行われる() = runTest {
+        fun detailModal() = runTest {
             // Given
             data class DetailModalState(
                 val isVisible: Boolean = false,
@@ -103,7 +103,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("最終話確認ダイアログの状態が適切に管理される")
-        fun 最終話確認ダイアログの状態が適切に管理される() = runTest {
+        fun finaleDialog() = runTest {
             // Given
             data class FinaleConfirmationState(
                 val showConfirmationForWorkId: String? = null,
@@ -135,7 +135,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("記録成功メッセージが適切に管理される")
-        fun 記録成功メッセージが適切に管理される() = runTest {
+        fun recordSuccessMessage() = runTest {
             // Given
             data class RecordingState(
                 val isRecording: Boolean = false,
@@ -185,7 +185,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("エラーの設定とクリアが正常に動作する")
-        fun エラーの設定とクリアが正常に動作する() = runTest {
+        fun errorHandling() = runTest {
             // Given: エラー設定
             var errorState: String? = "テストエラー"
 
@@ -206,7 +206,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("初期状態が適切なデフォルト値で設定される")
-        fun 初期状態が適切なデフォルト値で設定される() = runTest {
+        fun initialState() = runTest {
             // When
             val initialState = TrackUiState()
 
@@ -228,7 +228,7 @@ class TrackViewModelAdditionalTest {
 
         @Test
         @DisplayName("状態をコピーして更新すると適切に反映される")
-        fun 状態をコピーして更新すると適切に反映される() = runTest {
+        fun stateCopy() = runTest {
             // Given
             val initialState = TrackUiState()
 

@@ -118,7 +118,7 @@ class DetailModalViewModelTest {
 
         @Test
         @DisplayName("最終話を記録した場合フィナーレ確認ダイアログが表示される")
-        fun 最終話を記録した場合フィナーレ確認ダイアログが表示される() = runTest(dispatcher) {
+        fun onFinaleEpisode() = runTest(dispatcher) {
             // Given
             val work = mockk<Work> {
                 every { viewerStatusState } returns StatusState.WATCHING
@@ -159,7 +159,7 @@ class DetailModalViewModelTest {
 
         @Test
         @DisplayName("最終話ではないエピソードを記録した場合フィナーレ確認ダイアログは表示されない")
-        fun 最終話ではないエピソードを記録した場合フィナーレ確認ダイアログは表示されない() = runTest(dispatcher) {
+        fun onRegularEpisode() = runTest(dispatcher) {
             // Given
             val work = mockk<Work> {
                 every { viewerStatusState } returns StatusState.WATCHING

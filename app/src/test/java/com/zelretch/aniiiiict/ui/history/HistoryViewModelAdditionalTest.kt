@@ -48,7 +48,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("ページネーション境界条件を適切に処理する")
-        fun ページネーション境界条件を適切に処理する() = runTest {
+        fun paginationBoundary() = runTest {
             // Given
             data class PaginationState(
                 val hasNextPage: Boolean = false,
@@ -82,7 +82,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("カーソルが空文字列やnullの場合適切に処理される")
-        fun カーソルが空文字列やnullの場合適切に処理される() = runTest {
+        fun emptyCursor() = runTest {
             // Given
             val emptyCursor = ""
             val nullCursor: String? = null
@@ -103,7 +103,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("検索クエリが適切に正規化される")
-        fun 検索クエリが適切に正規化される() = runTest {
+        fun queryNormalization() = runTest {
             // Given
             fun normalizeQuery(query: String): String = query.trim().lowercase()
 
@@ -122,7 +122,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("特殊な検索クエリ入力値を適切に処理する")
-        fun 特殊な検索クエリ入力値を適切に処理する() = runTest {
+        fun specialQuery() = runTest {
             // Given
             val testQueries = listOf(
                 "", // 空文字列
@@ -154,7 +154,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("削除処理エラーが適切に設定される")
-        fun 削除処理エラーが適切に設定される() = runTest {
+        fun deleteError() = runTest {
             // Given
             data class DeleteState(
                 val isDeleting: Boolean = false,
@@ -198,7 +198,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("ネットワークエラーからの回復が適切に行われる")
-        fun ネットワークエラーからの回復が適切に行われる() = runTest {
+        fun networkRecovery() = runTest {
             // Given
             data class NetworkState(
                 val isRetrying: Boolean = false,
@@ -241,7 +241,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("初期状態が適切なデフォルト値で設定される")
-        fun 初期状態が適切なデフォルト値で設定される() = runTest {
+        fun initialState() = runTest {
             // When
             val initialState = HistoryUiState()
 
@@ -257,7 +257,7 @@ class HistoryViewModelAdditionalTest {
 
         @Test
         @DisplayName("状態を段階的に更新すると各段階で適切な状態になる")
-        fun 状態を段階的に更新すると各段階で適切な状態になる() = runTest {
+        fun incrementalUpdate() = runTest {
             // Given
             var state = HistoryUiState()
 

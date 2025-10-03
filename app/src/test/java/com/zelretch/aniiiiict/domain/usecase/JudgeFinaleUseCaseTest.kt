@@ -97,7 +97,7 @@ class JudgeFinaleUseCaseTest {
 
         @Test
         @DisplayName("上記いずれの条件も満たさない場合はunknownを返す")
-        fun 上記いずれの条件も満たさない場合はunknownを返す() = runTest {
+        fun otherwise() = runTest {
             // Given
             val media = MyAnimeListResponse(
                 id = 5,

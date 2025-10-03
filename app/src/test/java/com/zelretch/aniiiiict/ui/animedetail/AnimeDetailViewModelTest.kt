@@ -56,7 +56,7 @@ class AnimeDetailViewModelTest {
 
         @Test
         @DisplayName("ローディング状態で初期化される")
-        fun ローディング状態で初期化される() {
+        fun initialLoading() {
             // When
             val initialState = viewModel.state.value
 
@@ -73,7 +73,7 @@ class AnimeDetailViewModelTest {
 
         @Test
         @DisplayName("成功時にUIStateが更新される")
-        fun 成功時にUIStateが更新される() = runTest {
+        fun onSuccess() = runTest {
             // Given
             val programWithWork = createSampleProgramWithWork()
             val animeDetailInfo = createSampleAnimeDetailInfo()
@@ -94,7 +94,7 @@ class AnimeDetailViewModelTest {
 
         @Test
         @DisplayName("失敗時にエラーメッセージが表示される")
-        fun 失敗時にエラーメッセージが表示される() = runTest {
+        fun onError() = runTest {
             // Given
             val programWithWork = createSampleProgramWithWork()
 

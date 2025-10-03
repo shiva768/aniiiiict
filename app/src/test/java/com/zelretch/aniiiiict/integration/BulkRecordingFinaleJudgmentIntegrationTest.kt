@@ -51,7 +51,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
 
         @Test
         @DisplayName("最終話を含むエピソードをバルク記録するとフィナーレ判定が実行される")
-        fun 最終話を含むエピソードをバルク記録するとフィナーレ判定が実行される() = runTest {
+        fun withFinaleEpisode() = runTest {
             // Arrange
             val episodeIds = listOf("ep11", "ep12")
             val workId = "work1"
@@ -88,7 +88,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
 
         @Test
         @DisplayName("最終話でないエピソードをバルク記録すると非最終話として判定される")
-        fun 最終話でないエピソードをバルク記録すると非最終話として判定される() = runTest {
+        fun withNonFinaleEpisode() = runTest {
             // Arrange
             val episodeIds = listOf("ep8", "ep9")
             val workId = "work1"
