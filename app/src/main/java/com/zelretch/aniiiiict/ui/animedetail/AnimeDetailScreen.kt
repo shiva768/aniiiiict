@@ -43,6 +43,7 @@ import coil.compose.AsyncImage
 import com.annict.WorkDetailQuery
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.ui.base.UiState
 
 private const val IMAGE_SIZE = 120
 private const val CARD_ELEVATION = 2
@@ -54,7 +55,7 @@ fun AnimeDetailScreen(
     onNavigateBack: () -> Unit,
     viewModel: AnimeDetailViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(programWithWork) {
         viewModel.loadAnimeDetail(programWithWork)
@@ -73,8 +74,8 @@ fun AnimeDetailScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                state.isLoading -> {
+            when (val state = uiState) {
+                is UiState.Loading -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -85,22 +86,22 @@ fun AnimeDetailScreen(
                     }
                 }
 
-                state.error != null -> {
+                is com.zelretch.aniiiiict.ui.base.UiState.Error -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = state.error ?: "エラーが発生しました",
+                            text = state.message,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
 
-                state.animeDetailInfo != null -> {
+                is UiState.Success -> {
                     AnimeDetailContent(
-                        animeDetailInfo = state.animeDetailInfo as AnimeDetailInfo,
+                        animeDetailInfo = state.data.animeDetailInfo,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
