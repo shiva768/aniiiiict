@@ -1,0 +1,773 @@
+{
+	"data": {
+		"viewer": {
+			"libraryEntries": {
+				"nodes": [
+					{
+						"work": {
+							"id": "V29yay0xMzAy",
+							"title": "超者ライディーン",
+							"seasonName": "AUTUMN",
+							"seasonYear": 1996,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "https://img.sunrise-inc.co.jp/images/datacard/112_main.jpg",
+								"facebookOgImageUrl": "http://img.sunrise-inc.co.jp/images/datacard/112_main.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": null,
+							"numberText": "第1話",
+							"title": "飛翔、時をこえて"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMDEzMg==",
+							"title": "天国大魔境",
+							"seasonName": "SPRING",
+							"seasonYear": 2023,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://tdm-anime.com/assets/siteinfo/og_image.jpg?v3"
+							}
+						},
+						"nextEpisode": {
+							"number": 9,
+							"numberText": "第9話",
+							"title": "学園の子供たち"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMDA4Nw==",
+							"title": "その着せ替え人形は恋をする Season 2",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://bisquedoll-anime.com/ogp_2503.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 23,
+							"numberText": "第23話",
+							"title": "自分の人生には良い事なんて起こらないと思ってた"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMDEwNQ==",
+							"title": "はたらく魔王さま！！2nd Season",
+							"seasonName": "SUMMER",
+							"seasonYear": 2023,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://maousama.jp/assets/og/ogp5.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 14,
+							"numberText": "第14話",
+							"title": "魔王と勇者、日常に惑う"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMDA5Nw==",
+							"title": "Fate/strange Fake -Whispers of Dawn-",
+							"seasonName": "SUMMER",
+							"seasonYear": 2023,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://fate-strange-fake.com/assets/siteinfo/og_image.jpg?20230327"
+							}
+						},
+						"nextEpisode": null
+					},
+					{
+						"work": {
+							"id": "V29yay04NjU5",
+							"title": "アリスとテレスのまぼろし工場",
+							"seasonName": "SUMMER",
+							"seasonYear": 2023,
+							"media": "MOVIE",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "https://maboroshi.movie/assets/og/ogp.jpg",
+								"facebookOgImageUrl": "https://maboroshi.movie/assets/og/ogp4.jpg"
+							}
+						},
+						"nextEpisode": null
+					},
+					{
+						"work": {
+							"id": "V29yay0xMDgwNg==",
+							"title": "境界戦機 極鋼ノ装鬼",
+							"seasonName": "SUMMER",
+							"seasonYear": 2023,
+							"media": "WEB",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://www.kyoukai-senki.net/kyokko-no-souki/og.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 1,
+							"numberText": "第一話",
+							"title": ""
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMjgxMQ==",
+							"title": "好きでも嫌いなあまのじゃく",
+							"seasonName": "SPRING",
+							"seasonYear": 2024,
+							"media": "MOVIE",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://www.amanojaku-movie.com/ogp.jpg?v=240424"
+							}
+						},
+						"nextEpisode": null
+					},
+					{
+						"work": {
+							"id": "V29yay0zMTQ2",
+							"title": "イヴの時間 劇場版",
+							"seasonName": "SPRING",
+							"seasonYear": 2010,
+							"media": "MOVIE",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "/images/ogp.png"
+							}
+						},
+						"nextEpisode": null
+					},
+					{
+						"work": {
+							"id": "V29yay01NjAz",
+							"title": "Caligula -カリギュラ-",
+							"seasonName": "SPRING",
+							"seasonYear": 2018,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "http://caligula-anime.com/images/sb_fbsum.jpg",
+								"facebookOgImageUrl": "http://caligula-anime.com/images/sb_fbsum.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "#11",
+							"title": "人は常に正解を求める。だが、正しければ本当にそれでいいのか？"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzYyOA==",
+							"title": "魔法少女リリカルなのは 20周年記念セレクション",
+							"seasonName": "AUTUMN",
+							"seasonYear": 2024,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://king-cr.jp/nanoha/20th/ogimage.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 8,
+							"numberText": "第8話",
+							"title": "真実の鎖"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzg5NA==",
+							"title": "Re:ゼロから始める異世界生活 3rd season 反撃編",
+							"seasonName": "WINTER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "http://re-zero-anime.jp/tv/og-image.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 60,
+							"numberText": "第60話",
+							"title": "強欲攻略戦"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzc5Mg==",
+							"title": "ウィッチウォッチ",
+							"seasonName": "SPRING",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://witchwatch-anime.com/wp/wp-content/themes/witchwatch-main/ogp3.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 22,
+							"numberText": "総集編",
+							"title": "カンニコチャンネル／カンシのバイト日記～内職～"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay04ODcx",
+							"title": "鬼人幻燈抄",
+							"seasonName": "SPRING",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://kijin-anime.com/wp/wp-content/themes/teaser/images/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 13,
+							"numberText": "特別番組",
+							"title": "回顧夜咄・一"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDc5MQ==",
+							"title": "宇宙人ムームー",
+							"seasonName": "SPRING",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://ucyujin-mumu.com/wordpress/wp-content/themes/umumu_theme/images/ogp.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 24,
+							"numberText": "第24話",
+							"title": "ムームーと桜子と地球が停止する日"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDk0NA==",
+							"title": "えぶりでいホスト",
+							"seasonName": "SPRING",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://www.tv-tokyo.co.jp/anime/everydayhost/images/facebook_icon.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 22,
+							"numberText": "22杯目",
+							"title": "裸のお付き合い"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay00NDQ5",
+							"title": "終物語",
+							"seasonName": "AUTUMN",
+							"seasonYear": 2015,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "https://www.monogatari-series.com/ogp.png",
+								"facebookOgImageUrl": "https://www.monogatari-series.com/finalseason_bdbox/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 4,
+							"numberText": "第4話",
+							"title": "そだちロスト 其ノ壹"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDk2NQ==",
+							"title": "ダンダダン 第2期",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://anime-dandadan.com/ogp3_ja.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 24,
+							"numberText": "第24話",
+							"title": "激突！ 宇宙怪獣対巨大ロボ！"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMTg1Mg==",
+							"title": "青春ブタ野郎はサンタクロースの夢を見ない",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://ao-buta.com/santa/assets/icon/ogp.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第11話",
+							"title": "夢見る世界"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMjc4Nw==",
+							"title": "よふかしのうた Season2",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://yofukashi-no-uta.com/2ndwp/wp-content/themes/a86b1fe590d6/static/ogp.webp"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "第12夜",
+							"title": "Call of the Night"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDAwMQ==",
+							"title": "薫る花は凛と咲く",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://kaoruhana-anime.com/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "第12話",
+							"title": "海辺の惑い"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzc0NA==",
+							"title": "サイレント・ウィッチ 沈黙の魔女の隠しごと",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://silentwitch.net/ogp.png?v2"
+							}
+						},
+						"nextEpisode": {
+							"number": 13,
+							"numberText": "#13",
+							"title": "本の価値"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzA0Nw==",
+							"title": "光が死んだ夏",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://hikanatsu-anime.com/core_sys/images/others/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第十一話",
+							"title": "忌堂の扉"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzU1Mg==",
+							"title": "怪獣8号 第2期",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://kaiju-no8.net/assets/og/ogp9.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 22,
+							"numberText": "第22話",
+							"title": "群発災害"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNTc5Mg==",
+							"title": "Dr.STONE SCIENCE FUTURE 第2クール",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": ""
+							}
+						},
+						"nextEpisode": {
+							"number": 23,
+							"numberText": "第23話",
+							"title": "ひとりぼっちのサイエンティスト"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzk3OQ==",
+							"title": "瑠璃の宝石",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://rurinohouseki.com/assets/icons/ogp2.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第11話",
+							"title": "サファイアのゆりかご"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzcyMw==",
+							"title": "カッコウの許嫁 Season2",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://cuckoos-anime.com/og-image6.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "11羽目",
+							"title": "はじめてカッコイイと思った"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzIzNA==",
+							"title": "ガチアクタ",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://gachiakuta-anime.com/ogp_jp_v2.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 10,
+							"numberText": "第10話",
+							"title": "砂漠の禁域「ペンタ」"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzY4OA==",
+							"title": "地獄先生ぬ〜べ〜 (2025)",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://nube-anime.com/images/ogp-250516.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "第12話",
+							"title": "霊獣・霊霧魚"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMTMwNw==",
+							"title": "公女殿下の家庭教師",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://koujodenka-anime.com/_astro/ogimage.BSln4PYg_ZklOSk.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 10,
+							"numberText": "第10話",
+							"title": "フェリシアの決断"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzgxMQ==",
+							"title": "まったく最近の探偵ときたら",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://mattan-anime.com/core_sys/images/others/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "第12話",
+							"title": "名雲、羽織る／名雲探偵事務所をプロデュース／名雲探偵事務所、消滅"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMDkyNg==",
+							"title": "うたごえはミルフィーユ",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://utamille.com/wp/wp-content/themes/utamille_v1/assets/images/common/ogp_3.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 10,
+							"numberText": "第10話",
+							"title": "手と手"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzYwNA==",
+							"title": "帝乃三姉妹は案外、チョロい。",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://mikadono.family/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "home.11",
+							"title": "わかってた、コト。"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMjkyNw==",
+							"title": "桃源暗鬼",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://tougenanki-anime.com/img/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第十一話",
+							"title": "ありがとう！"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNTA0Mg==",
+							"title": "ふたりソロキャンプ",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://2solocamp-anime.com/core_sys/images/others/ogp.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第11話",
+							"title": "さようなら、厳くん"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDcyNg==",
+							"title": "出禁のモグラ",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://dekinnomogura.com/wp/wp-content/themes/dekinnomogura-teaser/ogp2.png"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第11話",
+							"title": "人魚と化け猫"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMzczMg==",
+							"title": "勇者パーティーを追放された白魔導師、Sランク冒険者に拾われる ～この白魔導師が規格外すぎる～",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://tsuiho-shiromadoshi.com/assets/img/ogp2.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 11,
+							"numberText": "第11話",
+							"title": "ロイド、飛ぶ！"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDI5NQ==",
+							"title": "カラオケ行こ！",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://karaoke-muchusa.com/og-image2.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 5,
+							"numberText": "第5話",
+							"title": "歯車"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNDYwNQ==",
+							"title": "ホテル・インヒューマンズ",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://hotel-inhumans.com/images/ogp.jpg?0606"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "request 12.",
+							"title": "アナザー・スカイ3"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xNTU5Ng==",
+							"title": "陰陽廻天 Re:バース",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://onmyo-kaiten.com/ogp1.jpg"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "第12話",
+							"title": "未来を諦めんな！望み続けた可能性をこの手に"
+						}
+					},
+					{
+						"work": {
+							"id": "V29yay0xMjY0MQ==",
+							"title": "ニャイト・オブ・ザ・リビングキャット",
+							"seasonName": "SUMMER",
+							"seasonYear": 2025,
+							"media": "TV",
+							"viewerStatusState": "WATCHING",
+							"image": {
+								"recommendedImageUrl": "",
+								"facebookOgImageUrl": "https://nyailivi.com/dist/img/ogp.jpg?ver=1.0001"
+							}
+						},
+						"nextEpisode": {
+							"number": 12,
+							"numberText": "Chapter 12",
+							"title": "アイ・ミャウ・レジェネコ"
+						}
+					}
+				]
+			}
+		}
+	}
+}

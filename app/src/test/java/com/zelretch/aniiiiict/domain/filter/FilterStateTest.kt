@@ -2,88 +2,135 @@ package com.zelretch.aniiiiict.domain.filter
 
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
-class FilterStateTest : BehaviorSpec({
-    given("新しいFilterState") {
-        val filterState = FilterState()
+@DisplayName("FilterState")
+class FilterStateTest {
 
-        `when`("初期化されたとき") {
-            then("デフォルト値が正しく設定されているべき") {
-                filterState.selectedMedia shouldBe emptySet()
-                filterState.selectedSeason shouldBe emptySet()
-                filterState.selectedYear shouldBe emptySet()
-                filterState.selectedChannel shouldBe emptySet()
-                filterState.selectedStatus shouldBe emptySet()
-                filterState.searchQuery shouldBe ""
-                filterState.showOnlyAired shouldBe true
-                filterState.sortOrder shouldBe SortOrder.START_TIME_ASC
-            }
+    @Nested
+    @DisplayName("初期化")
+    inner class Initialization {
+
+        @Test
+        @DisplayName("デフォルト値が正しく設定される")
+        fun withDefaultValues() {
+            // When
+            val filterState = FilterState()
+
+            // Then
+            assertEquals(emptySet<String>(), filterState.selectedMedia)
+            assertEquals(emptySet<SeasonName>(), filterState.selectedSeason)
+            assertEquals(emptySet<Int>(), filterState.selectedYear)
+            assertEquals(emptySet<String>(), filterState.selectedChannel)
+            assertEquals(emptySet<StatusState>(), filterState.selectedStatus)
+            assertEquals("", filterState.searchQuery)
+            assertEquals(true, filterState.showOnlyAired)
+            assertEquals(SortOrder.START_TIME_ASC, filterState.sortOrder)
         }
     }
 
-    given("コピー方法") {
-        val original = FilterState()
-        val modified = original.copy(
-            selectedMedia = setOf("TV"),
-            searchQuery = "テスト"
-        )
+    @Nested
+    @DisplayName("コピー")
+    inner class Copy {
 
-        `when`("一部のプロパティが変更されたとき") {
-            then("変更が反映されるべき") {
-                modified.selectedMedia shouldBe setOf("TV")
-                modified.searchQuery shouldBe "テスト"
-                modified.selectedSeason shouldBe emptySet()
-                modified.selectedYear shouldBe emptySet()
-                modified.selectedChannel shouldBe emptySet()
-            }
-        }
-    }
+        @Test
+        @DisplayName("一部のプロパティが変更される")
+        fun withPartialChanges() {
+            // Given
+            val original = FilterState()
 
-    given("等価性チェック") {
-        val state1 = FilterState()
-        val state2 = FilterState()
-        val state3 = FilterState(selectedMedia = setOf("TV"))
+            // When
+            val modified = original.copy(
+                selectedMedia = setOf("TV"),
+                searchQuery = "テスト"
+            )
 
-        `when`("2つの空の状態を比較したとき") {
-            then("等しいべき") {
-                state1 shouldBe state2
-            }
+            // Then
+            assertEquals(setOf("TV"), modified.selectedMedia)
+            assertEquals("テスト", modified.searchQuery)
+            assertEquals(emptySet<SeasonName>(), modified.selectedSeason)
+            assertEquals(emptySet<Int>(), modified.selectedYear)
+            assertEquals(emptySet<String>(), modified.selectedChannel)
         }
 
-        `when`("異なる状態を比較したとき") {
-            then("等しくないべき") {
-                state1 shouldNotBe state3
-            }
-        }
-    }
+        @Test
+        @DisplayName("プロパティを変更せずにコピーすると元と等しい")
+        fun withoutChanges() {
+            // Given
+            val original = FilterState(
+                selectedMedia = setOf("TV"),
+                selectedSeason = setOf(SeasonName.WINTER),
+                selectedYear = setOf(2023),
+                selectedChannel = setOf("TOKYO MX"),
+                selectedStatus = setOf(StatusState.WATCHING),
+                searchQuery = "テスト",
+                showOnlyAired = true,
+                sortOrder = SortOrder.START_TIME_ASC
+            )
 
-    given("不変性チェック") {
-        val original = FilterState(
-            selectedMedia = setOf("TV"),
-            selectedSeason = setOf(SeasonName.WINTER),
-            selectedYear = setOf(2023),
-            selectedChannel = setOf("TOKYO MX"),
-            selectedStatus = setOf(StatusState.WATCHING),
-            searchQuery = "テスト",
-            showOnlyAired = true,
-            sortOrder = SortOrder.START_TIME_ASC
-        )
-
-        `when`("プロパティを変更せずにコピーしたとき") {
+            // When
             val copy = original.copy()
-            then("元の状態と等しいべき") {
-                copy shouldBe original
-            }
-        }
 
-        `when`("プロパティを変更したとき") {
-            val modified = original.copy(selectedMedia = setOf("OVA"))
-            then("元の状態とは等しくないべき") {
-                modified shouldNotBe original
-            }
+            // Then
+            assertEquals(original, copy)
         }
     }
-})
+
+    @Nested
+    @DisplayName("等価性")
+    inner class Equality {
+
+        @Test
+        @DisplayName("2つの空の状態は等しい")
+        fun emptyStates() {
+            // Given
+            val state1 = FilterState()
+            val state2 = FilterState()
+
+            // Then
+            assertEquals(state1, state2)
+        }
+
+        @Test
+        @DisplayName("異なる状態は等しくない")
+        fun differentStates() {
+            // Given
+            val state1 = FilterState()
+            val state3 = FilterState(selectedMedia = setOf("TV"))
+
+            // Then
+            assertNotEquals(state1, state3)
+        }
+    }
+
+    @Nested
+    @DisplayName("不変性")
+    inner class Immutability {
+
+        @Test
+        @DisplayName("プロパティ変更時に元の状態とは等しくない")
+        fun afterModification() {
+            // Given
+            val original = FilterState(
+                selectedMedia = setOf("TV"),
+                selectedSeason = setOf(SeasonName.WINTER),
+                selectedYear = setOf(2023),
+                selectedChannel = setOf("TOKYO MX"),
+                selectedStatus = setOf(StatusState.WATCHING),
+                searchQuery = "テスト",
+                showOnlyAired = true,
+                sortOrder = SortOrder.START_TIME_ASC
+            )
+
+            // When
+            val modified = original.copy(selectedMedia = setOf("OVA"))
+
+            // Then
+            assertNotEquals(original, modified)
+        }
+    }
+}

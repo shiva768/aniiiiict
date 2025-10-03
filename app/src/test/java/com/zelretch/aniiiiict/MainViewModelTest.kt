@@ -4,9 +4,6 @@ import android.content.Context
 import androidx.browser.customtabs.CustomTabsIntent
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,148 +15,258 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MainViewModelTest : BehaviorSpec({
-    val testDispatcher = StandardTestDispatcher()
+@DisplayName("MainViewModel")
+class MainViewModelTest {
 
-    beforeSpec {
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var authUseCase: AnnictAuthUseCase
+    private lateinit var context: Context
+    private lateinit var customTabsIntent: CustomTabsIntent
+    private lateinit var customTabsIntentFactory: CustomTabsIntentFactory
+    private lateinit var viewModel: MainViewModel
+
+    @BeforeEach
+    fun setup() {
         Dispatchers.setMain(testDispatcher)
+
+        authUseCase = mockk(relaxUnitFun = true)
+        context = mockk()
+        customTabsIntent = mockk(relaxUnitFun = true)
+        customTabsIntentFactory = mockk()
+        every { customTabsIntentFactory.create() } returns customTabsIntent
+        every { customTabsIntent.launchUrl(any(), any()) } just Runs
+
+        coEvery { authUseCase.isAuthenticated() } returns false
+
+        viewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
     }
 
-    afterSpec {
+    @AfterEach
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
-    given("MainViewModel") {
-        val authUseCase = mockk<AnnictAuthUseCase>(relaxUnitFun = true)
-        val context = mockk<Context>()
-        val customTabsIntent = mockk<CustomTabsIntent>(relaxUnitFun = true)
-        val customTabsIntentFactory = mockk<CustomTabsIntentFactory>()
-        every { customTabsIntentFactory.create() } returns customTabsIntent
-        every { customTabsIntent.launchUrl(any(), any()) } just Runs
-        val viewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
+    @Nested
+    @DisplayName("初期状態")
+    inner class InitialState {
 
-        beforeTest {
-            coEvery { authUseCase.isAuthenticated() } returns false
+        @Test
+        @DisplayName("認証されていない状態で初期化される")
+        fun notAuthenticated() {
+            // When
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertFalse(viewModel.uiState.value.isAuthenticated)
+            assertFalse(viewModel.uiState.value.isAuthenticating)
+            assertNull(viewModel.uiState.value.error)
+            assertFalse(viewModel.uiState.value.isLoading)
         }
 
-        `when`("初期状態") {
-            then("認証されていない") {
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticated shouldBe false
-                viewModel.uiState.value.isAuthenticating shouldBe false
-                viewModel.uiState.value.error shouldBe null
-                viewModel.uiState.value.isLoading shouldBe false
-            }
+        @Test
+        @DisplayName("初期化時に認証状態がチェックされる")
+        fun checkAuthOnInit() {
+            // Given
+            coEvery { authUseCase.isAuthenticated() } returns true
 
-            then("ViewModelの初期化時に認証状態がチェックされる") {
-                coEvery { authUseCase.isAuthenticated() } returns true
-                val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
-                testDispatcher.scheduler.advanceUntilIdle()
-                newViewModel.uiState.value.isAuthenticated shouldBe true
-                newViewModel.uiState.value.isLoading shouldBe false
-                coVerify { authUseCase.isAuthenticated() }
-            }
-        }
+            // When
+            val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
+            testDispatcher.scheduler.advanceUntilIdle()
 
-        `when`("認証を開始") {
-            then("isAuthenticatingがtrueになる") {
-                coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
-                viewModel.startAuth()
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.error shouldBe null
-                viewModel.uiState.value.isAuthenticating shouldBe true
-                coVerify { authUseCase.getAuthUrl() }
-            }
-        }
-
-        `when`("認証コードを受け取る") {
-            then("有効なコードで認証が成功する") {
-                coEvery { authUseCase.handleAuthCallback(any()) } returns true
-                viewModel.handleAuthCallback("valid_code")
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticated shouldBe true
-                viewModel.uiState.value.isAuthenticating shouldBe false
-                viewModel.uiState.value.error shouldBe null
-                coVerify { authUseCase.handleAuthCallback("valid_code") }
-            }
-
-            then("無効なコードでエラーが発生する") {
-                coEvery { authUseCase.handleAuthCallback(any()) } returns false
-                viewModel.handleAuthCallback("invalid_code")
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticated shouldBe false
-                viewModel.uiState.value.isAuthenticating shouldBe false
-                viewModel.uiState.value.error shouldNotBe null
-                coVerify { authUseCase.handleAuthCallback("invalid_code") }
-            }
-
-            then("nullのコードでエラーが発生する") {
-                viewModel.handleAuthCallback(null)
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticated shouldBe false
-                viewModel.uiState.value.isAuthenticating shouldBe false
-                viewModel.uiState.value.error shouldNotBe null
-            }
-        }
-
-        `when`("認証状態を確認") {
-            then("認証済みの場合") {
-                coEvery { authUseCase.isAuthenticated() } returns true
-                viewModel.checkAuthentication()
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticated shouldBe true
-                coVerify { authUseCase.isAuthenticated() }
-            }
-
-            then("未認証の場合") {
-                coEvery { authUseCase.isAuthenticated() } returns false
-                viewModel.checkAuthentication()
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticated shouldBe false
-                coVerify { authUseCase.isAuthenticated() }
-            }
-
-            then("認証状態確認中はローディング状態になることを確認") {
-                coEvery { authUseCase.isAuthenticated() } returns true
-                viewModel.checkAuthentication()
-                testDispatcher.scheduler.advanceUntilIdle()
-                // After completion, loading should be false and authenticated should be true
-                viewModel.uiState.value.isLoading shouldBe false
-                viewModel.uiState.value.isAuthenticated shouldBe true
-                coVerify { authUseCase.isAuthenticated() }
-            }
-        }
-
-        `when`("エラーをクリア") {
-            then("エラー状態がリセットされる") {
-                viewModel.updateErrorState("テストエラー")
-                viewModel.uiState.value.error shouldNotBe null
-                viewModel.clearError()
-                viewModel.uiState.value.error shouldBe null
-            }
-        }
-
-        `when`("ローディング状態") {
-            then("updateLoadingStateを呼ぶ") {
-                viewModel.updateLoadingState(true)
-                viewModel.uiState.value.isLoading shouldBe true
-            }
-        }
-
-        `when`("認証をキャンセル") {
-            then("isAuthenticatingがfalseになる") {
-                // 最初に認証を開始してisAuthenticatingをtrueにする
-                coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
-                viewModel.startAuth()
-                testDispatcher.scheduler.advanceUntilIdle()
-                viewModel.uiState.value.isAuthenticating shouldBe true
-
-                // 認証をキャンセル
-                viewModel.cancelAuth()
-                viewModel.uiState.value.isAuthenticating shouldBe false
-            }
+            // Then
+            assertTrue(newViewModel.uiState.value.isAuthenticated)
+            assertFalse(newViewModel.uiState.value.isLoading)
+            coVerify { authUseCase.isAuthenticated() }
         }
     }
-})
+
+    @Nested
+    @DisplayName("認証開始")
+    inner class StartAuth {
+
+        @Test
+        @DisplayName("認証開始時にisAuthenticatingがtrueになる")
+        fun startAuth() {
+            // Given
+            coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
+
+            // When
+            viewModel.startAuth()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertNull(viewModel.uiState.value.error)
+            assertTrue(viewModel.uiState.value.isAuthenticating)
+            coVerify { authUseCase.getAuthUrl() }
+        }
+    }
+
+    @Nested
+    @DisplayName("認証コールバック処理")
+    inner class HandleAuthCallback {
+
+        @Test
+        @DisplayName("有効なコードで認証が成功する")
+        fun withValidCode() {
+            // Given
+            coEvery { authUseCase.handleAuthCallback(any()) } returns true
+
+            // When
+            viewModel.handleAuthCallback("valid_code")
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertTrue(viewModel.uiState.value.isAuthenticated)
+            assertFalse(viewModel.uiState.value.isAuthenticating)
+            assertNull(viewModel.uiState.value.error)
+            coVerify { authUseCase.handleAuthCallback("valid_code") }
+        }
+
+        @Test
+        @DisplayName("無効なコードでエラーが発生する")
+        fun withInvalidCode() {
+            // Given
+            coEvery { authUseCase.handleAuthCallback(any()) } returns false
+
+            // When
+            viewModel.handleAuthCallback("invalid_code")
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertFalse(viewModel.uiState.value.isAuthenticated)
+            assertFalse(viewModel.uiState.value.isAuthenticating)
+            assertNotNull(viewModel.uiState.value.error)
+            coVerify { authUseCase.handleAuthCallback("invalid_code") }
+        }
+
+        @Test
+        @DisplayName("nullのコードでエラーが発生する")
+        fun nullのコードでエラーが発生する() {
+            // When
+            viewModel.handleAuthCallback(null)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertFalse(viewModel.uiState.value.isAuthenticated)
+            assertFalse(viewModel.uiState.value.isAuthenticating)
+            assertNotNull(viewModel.uiState.value.error)
+        }
+    }
+
+    @Nested
+    @DisplayName("認証状態の確認")
+    inner class CheckAuthentication {
+
+        @Test
+        @DisplayName("認証済みの場合trueになる")
+        fun whenAuthenticated() {
+            // Given
+            coEvery { authUseCase.isAuthenticated() } returns true
+
+            // When
+            viewModel.checkAuthentication()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertTrue(viewModel.uiState.value.isAuthenticated)
+            coVerify { authUseCase.isAuthenticated() }
+        }
+
+        @Test
+        @DisplayName("未認証の場合falseになる")
+        fun whenNotAuthenticated() {
+            // Given
+            coEvery { authUseCase.isAuthenticated() } returns false
+
+            // When
+            viewModel.checkAuthentication()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertFalse(viewModel.uiState.value.isAuthenticated)
+            coVerify { authUseCase.isAuthenticated() }
+        }
+
+        @Test
+        @DisplayName("認証状態確認中はローディング状態になる")
+        fun checkingAuth() {
+            // Given
+            coEvery { authUseCase.isAuthenticated() } returns true
+
+            // When
+            viewModel.checkAuthentication()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertFalse(viewModel.uiState.value.isLoading) // After completion, loading should be false
+            assertTrue(viewModel.uiState.value.isAuthenticated)
+            coVerify { authUseCase.isAuthenticated() }
+        }
+    }
+
+    @Nested
+    @DisplayName("エラー処理")
+    inner class ErrorHandling {
+
+        @Test
+        @DisplayName("エラーをクリアできる")
+        fun clearError() {
+            // Given
+            viewModel.updateErrorState("テストエラー")
+            assertNotNull(viewModel.uiState.value.error)
+
+            // When
+            viewModel.clearError()
+
+            // Then
+            assertNull(viewModel.uiState.value.error)
+        }
+    }
+
+    @Nested
+    @DisplayName("ローディング状態")
+    inner class LoadingState {
+
+        @Test
+        @DisplayName("ローディング状態を更新できる")
+        fun updateLoading() {
+            // When
+            viewModel.updateLoadingState(true)
+
+            // Then
+            assertTrue(viewModel.uiState.value.isLoading)
+        }
+    }
+
+    @Nested
+    @DisplayName("認証キャンセル")
+    inner class CancelAuth {
+
+        @Test
+        @DisplayName("認証をキャンセルするとisAuthenticatingがfalseになる")
+        fun cancelAuth() {
+            // Given: 最初に認証を開始してisAuthenticatingをtrueにする
+            coEvery { authUseCase.getAuthUrl() } returns "https://example.com/auth"
+            viewModel.startAuth()
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isAuthenticating)
+
+            // When: 認証をキャンセル
+            viewModel.cancelAuth()
+
+            // Then
+            assertFalse(viewModel.uiState.value.isAuthenticating)
+        }
+    }
+}

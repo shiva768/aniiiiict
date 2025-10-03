@@ -2,30 +2,55 @@ package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
-class UpdateViewStateUseCaseTest : BehaviorSpec({
-    val repository = mockk<AnnictRepository>()
-    val useCase = UpdateViewStateUseCase(repository)
+@DisplayName("UpdateViewStateUseCase")
+class UpdateViewStateUseCaseTest {
 
-    given("ステータス更新") {
-        `when`("リポジトリがtrueを返す") {
-            then("Result.successになる") {
-                coEvery { repository.updateWorkViewStatus(any(), any()) } returns true
-                val result = runBlocking { useCase("w1", StatusState.WATCHING) }
-                result.isSuccess shouldBe true
-            }
+    private lateinit var repository: AnnictRepository
+    private lateinit var useCase: UpdateViewStateUseCase
+
+    @BeforeEach
+    fun setup() {
+        repository = mockk()
+        useCase = UpdateViewStateUseCase(repository)
+    }
+
+    @Nested
+    @DisplayName("ステータス更新")
+    inner class UpdateStatus {
+
+        @Test
+        @DisplayName("Repository成功時にResult.successを返す")
+        fun onRepositorySuccess() = runTest {
+            // Given
+            coEvery { repository.updateWorkViewStatus(any(), any()) } returns true
+
+            // When
+            val result = useCase("w1", StatusState.WATCHING)
+
+            // Then
+            assertTrue(result.isSuccess)
         }
-        `when`("リポジトリがfalseを返す") {
-            then("Result.successになる（警告ログ出力）") {
-                coEvery { repository.updateWorkViewStatus(any(), any()) } returns false
-                val result = runBlocking { useCase("w1", StatusState.WATCHING) }
-                result.isSuccess shouldBe true
-            }
+
+        @Test
+        @DisplayName("Repository失敗時でもResult.successを返す（警告ログ出力）")
+        fun onRepositoryFailure() = runTest {
+            // Given
+            coEvery { repository.updateWorkViewStatus(any(), any()) } returns false
+
+            // When
+            val result = useCase("w1", StatusState.WATCHING)
+
+            // Then
+            assertTrue(result.isSuccess)
         }
     }
-})
+}

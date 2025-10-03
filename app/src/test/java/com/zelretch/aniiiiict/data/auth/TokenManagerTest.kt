@@ -1,59 +1,83 @@
 package com.zelretch.aniiiiict.data.auth
 
 import android.content.SharedPreferences
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.booleans.shouldBeFalse
-import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import timber.log.Timber
 
-class TokenManagerTest : BehaviorSpec({
-    lateinit var prefs: SharedPreferences
-    lateinit var tokenManager: TokenManager
+@DisplayName("TokenManager")
+class TokenManagerTest {
 
-    // テスト中はTimberのログを抑制
-    beforeSpec {
+    private lateinit var prefs: SharedPreferences
+    private lateinit var tokenManager: TokenManager
+
+    @BeforeEach
+    fun setup() {
+        // テスト中はTimberのログを抑制
         if (Timber.forest().isEmpty()) {
             Timber.plant(object : Timber.DebugTree() {})
         }
-    }
 
-    beforeTest {
         prefs = InMemorySharedPreferences()
         tokenManager = TokenManager(prefs)
     }
 
-    given("TokenManagerの基本動作") {
-        `when`("まだトークンが保存されていない") {
-            then("getAccessTokenはnullを返し、hasValidTokenはfalseになる") {
-                tokenManager.getAccessToken().shouldBeNull()
-                tokenManager.hasValidToken().shouldBeFalse()
-            }
+    @Nested
+    @DisplayName("トークン保存前")
+    inner class BeforeSaveToken {
+
+        @Test
+        @DisplayName("getAccessTokenはnullを返す")
+        fun getAccessToken() {
+            // Then
+            assertNull(tokenManager.getAccessToken())
         }
 
-        `when`("空白ではないトークンを保存する") {
-            then("保存したトークンを取得でき、hasValidTokenはtrueになる") {
-                tokenManager.saveAccessToken("abc1234567890")
-                tokenManager.getAccessToken() shouldBe "abc1234567890"
-                tokenManager.hasValidToken().shouldBeTrue()
-            }
-        }
-
-        `when`("空文字や空白のみのトークンを保存しようとする") {
-            then("保存は無視され、直前の有効な値が保持される") {
-                // 先に有効なトークンを保存
-                tokenManager.saveAccessToken("valid_token")
-                // 空文字・空白のみを保存しようとする
-                tokenManager.saveAccessToken("")
-                tokenManager.saveAccessToken("   ")
-
-                tokenManager.getAccessToken() shouldBe "valid_token"
-                tokenManager.hasValidToken().shouldBeTrue()
-            }
+        @Test
+        @DisplayName("hasValidTokenはfalseを返す")
+        fun hasValidToken() {
+            // Then
+            assertFalse(tokenManager.hasValidToken())
         }
     }
-})
+
+    @Nested
+    @DisplayName("トークン保存")
+    inner class SaveToken {
+
+        @Test
+        @DisplayName("有効なトークンを保存して取得できる")
+        fun withValidToken() {
+            // When
+            tokenManager.saveAccessToken("abc1234567890")
+
+            // Then
+            assertEquals("abc1234567890", tokenManager.getAccessToken())
+            assertTrue(tokenManager.hasValidToken())
+        }
+
+        @Test
+        @DisplayName("空文字や空白のみのトークンは保存されない")
+        fun withEmptyOrBlankToken() {
+            // Given: 先に有効なトークンを保存
+            tokenManager.saveAccessToken("valid_token")
+
+            // When: 空文字・空白のみを保存しようとする
+            tokenManager.saveAccessToken("")
+            tokenManager.saveAccessToken("   ")
+
+            // Then: 直前の有効な値が保持される
+            assertEquals("valid_token", tokenManager.getAccessToken())
+            assertTrue(tokenManager.hasValidToken())
+        }
+    }
+}
 
 // シンプルなインメモリ実装（テスト用）
 private class InMemorySharedPreferences : SharedPreferences {

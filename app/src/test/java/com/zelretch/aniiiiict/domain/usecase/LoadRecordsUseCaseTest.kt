@@ -7,18 +7,93 @@ import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.ZonedDateTime
 
-class LoadRecordsUseCaseTest : BehaviorSpec({
-    val repository = mockk<AnnictRepository>()
-    val useCase = LoadRecordsUseCase(repository)
+@DisplayName("LoadRecordsUseCase")
+class LoadRecordsUseCaseTest {
 
-    fun dummyEpisode(id: String) = Episode(
+    private lateinit var repository: AnnictRepository
+    private lateinit var useCase: LoadRecordsUseCase
+
+    @BeforeEach
+    fun setup() {
+        repository = mockk()
+        useCase = LoadRecordsUseCase(repository)
+    }
+
+    @Nested
+    @DisplayName("記録一覧のロード")
+    inner class LoadRecords {
+
+        @Test
+        @DisplayName("レコードが存在し次ページもある場合正しく変換される")
+        fun withRecordsAndNextPage() = runTest {
+            // Given
+            val fakeRecords = listOf(
+                Record(
+                    id = "id1",
+                    comment = "test1",
+                    rating = 4.5,
+                    createdAt = ZonedDateTime.now(),
+                    episode = dummyEpisode("ep1"),
+                    work = dummyWork("w1")
+                ),
+                Record(
+                    id = "id2",
+                    comment = "test2",
+                    rating = 5.0,
+                    createdAt = ZonedDateTime.now(),
+                    episode = dummyEpisode("ep2"),
+                    work = dummyWork("w2")
+                )
+            )
+            val paginated = PaginatedRecords(
+                records = fakeRecords,
+                hasNextPage = true,
+                endCursor = "CURSOR123"
+            )
+            coEvery { repository.getRecords(null) } returns paginated
+
+            // When
+            val result = useCase()
+
+            // Then
+            assertEquals(fakeRecords, result.records)
+            assertEquals(true, result.hasNextPage)
+            assertEquals("CURSOR123", result.endCursor)
+        }
+
+        @Test
+        @DisplayName("レコードが空の場合正しいページ情報が返る")
+        fun withEmptyRecords() = runTest {
+            // Given
+            val paginated = PaginatedRecords(
+                records = emptyList(),
+                hasNextPage = false,
+                endCursor = null
+            )
+            coEvery { repository.getRecords(null) } returns paginated
+
+            // When
+            val result = useCase()
+
+            // Then
+            assertEquals(emptyList<Record>(), result.records)
+            assertEquals(false, result.hasNextPage)
+            assertNull(result.endCursor)
+        }
+    }
+
+    private fun dummyEpisode(id: String) = Episode(
         id = id,
         number = 1,
         numberText = "1",
@@ -26,7 +101,7 @@ class LoadRecordsUseCaseTest : BehaviorSpec({
         viewerDidTrack = false
     )
 
-    fun dummyWork(id: String) = Work(
+    private fun dummyWork(id: String) = Work(
         id = id,
         title = "Dummy Work",
         seasonName = SeasonName.SPRING,
@@ -37,53 +112,4 @@ class LoadRecordsUseCaseTest : BehaviorSpec({
         seasonNameText = "春",
         image = null
     )
-
-    given("記録一覧をロードする") {
-        `when`("レコードが存在し、次ページもある場合") {
-            then("RecordsResultに正しく変換される") {
-                val fakeRecords = listOf(
-                    Record(
-                        id = "id1",
-                        comment = "test1",
-                        rating = 4.5,
-                        createdAt = ZonedDateTime.now(),
-                        episode = dummyEpisode("ep1"),
-                        work = dummyWork("w1")
-                    ),
-                    Record(
-                        id = "id2",
-                        comment = "test2",
-                        rating = 5.0,
-                        createdAt = ZonedDateTime.now(),
-                        episode = dummyEpisode("ep2"),
-                        work = dummyWork("w2")
-                    )
-                )
-                val paginated = PaginatedRecords(
-                    records = fakeRecords,
-                    hasNextPage = true,
-                    endCursor = "CURSOR123"
-                )
-                coEvery { repository.getRecords(null) } returns paginated
-                val result = runBlocking { useCase() }
-                result.records shouldBe fakeRecords
-                result.hasNextPage shouldBe true
-                result.endCursor shouldBe "CURSOR123"
-            }
-        }
-        `when`("レコードが空の場合") {
-            then("空リストと正しいページ情報が返る") {
-                val paginated = PaginatedRecords(
-                    records = emptyList(),
-                    hasNextPage = false,
-                    endCursor = null
-                )
-                coEvery { repository.getRecords(null) } returns paginated
-                val result = runBlocking { useCase() }
-                result.records shouldBe emptyList()
-                result.hasNextPage shouldBe false
-                result.endCursor shouldBe null
-            }
-        }
-    }
-})
+}

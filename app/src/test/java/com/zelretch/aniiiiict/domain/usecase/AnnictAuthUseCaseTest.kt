@@ -1,59 +1,116 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
-class AnnictAuthUseCaseTest : BehaviorSpec({
+@DisplayName("AnnictAuthUseCase")
+class AnnictAuthUseCaseTest {
 
-    given("Annict認証UseCase") {
-        val repository = mockk<AnnictRepository>()
-        val useCase = AnnictAuthUseCase(repository)
+    private lateinit var repository: AnnictRepository
+    private lateinit var useCase: AnnictAuthUseCase
 
-        `when`("Repositoryが認証済みを返す") {
-            then("認証済みとして返される") {
-                coEvery { repository.isAuthenticated() } returns true
-                useCase.isAuthenticated() shouldBe true
-            }
+    @BeforeEach
+    fun setup() {
+        repository = mockk()
+        useCase = AnnictAuthUseCase(repository)
+    }
+
+    @Nested
+    @DisplayName("認証状態の確認")
+    inner class IsAuthenticated {
+
+        @Test
+        @DisplayName("Repository認証済みの場合trueを返す")
+        fun whenAuthenticated() = kotlinx.coroutines.test.runTest {
+            // Given
+            coEvery { repository.isAuthenticated() } returns true
+
+            // When
+            val result = useCase.isAuthenticated()
+
+            // Then
+            assertEquals(true, result)
         }
 
-        `when`("Repositoryが未認証を返す") {
-            then("未認証として返される") {
-                coEvery { repository.isAuthenticated() } returns false
-                useCase.isAuthenticated() shouldBe false
-            }
-        }
+        @Test
+        @DisplayName("Repository未認証の場合falseを返す")
+        fun whenNotAuthenticated() = kotlinx.coroutines.test.runTest {
+            // Given
+            coEvery { repository.isAuthenticated() } returns false
 
-        `when`("認証URLが要求される") {
-            then("正しいURLが返される") {
-                val authUrl = "https://example.com/auth"
-                coEvery { repository.getAuthUrl() } returns authUrl
-                useCase.getAuthUrl() shouldBe authUrl
-            }
-        }
+            // When
+            val result = useCase.isAuthenticated()
 
-        `when`("有効なコードで認証コールバックを処理する") {
-            then("成功として返される") {
-                val code = "valid_code"
-                coEvery { repository.handleAuthCallback(code) } returns true
-                useCase.handleAuthCallback(code) shouldBe true
-            }
-        }
-
-        `when`("nullコードで認証コールバックを処理する") {
-            then("失敗として返される") {
-                useCase.handleAuthCallback(null) shouldBe false
-            }
-        }
-
-        `when`("無効なコードで認証コールバックを処理する") {
-            then("失敗として返される") {
-                val code = "invalid_code"
-                coEvery { repository.handleAuthCallback(code) } returns false
-                useCase.handleAuthCallback(code) shouldBe false
-            }
+            // Then
+            assertEquals(false, result)
         }
     }
-})
+
+    @Nested
+    @DisplayName("認証URL取得")
+    inner class GetAuthUrl {
+
+        @Test
+        @DisplayName("正しいURLが返される")
+        fun returnsUrl() = kotlinx.coroutines.test.runTest {
+            // Given
+            val authUrl = "https://example.com/auth"
+            coEvery { repository.getAuthUrl() } returns authUrl
+
+            // When
+            val result = useCase.getAuthUrl()
+
+            // Then
+            assertEquals(authUrl, result)
+        }
+    }
+
+    @Nested
+    @DisplayName("認証コールバック処理")
+    inner class HandleAuthCallback {
+
+        @Test
+        @DisplayName("有効なコードで成功する")
+        fun withValidCode() = kotlinx.coroutines.test.runTest {
+            // Given
+            val code = "valid_code"
+            coEvery { repository.handleAuthCallback(code) } returns true
+
+            // When
+            val result = useCase.handleAuthCallback(code)
+
+            // Then
+            assertEquals(true, result)
+        }
+
+        @Test
+        @DisplayName("nullコードで失敗する")
+        fun withNullCode() = kotlinx.coroutines.test.runTest {
+            // When
+            val result = useCase.handleAuthCallback(null)
+
+            // Then
+            assertEquals(false, result)
+        }
+
+        @Test
+        @DisplayName("無効なコードで失敗する")
+        fun withInvalidCode() = kotlinx.coroutines.test.runTest {
+            // Given
+            val code = "invalid_code"
+            coEvery { repository.handleAuthCallback(code) } returns false
+
+            // When
+            val result = useCase.handleAuthCallback(code)
+
+            // Then
+            assertEquals(false, result)
+        }
+    }
+}

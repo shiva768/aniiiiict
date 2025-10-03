@@ -1,30 +1,55 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
-class DeleteRecordUseCaseTest : BehaviorSpec({
-    val repository = mockk<AnnictRepository>()
-    val useCase = DeleteRecordUseCase(repository)
+@DisplayName("DeleteRecordUseCase")
+class DeleteRecordUseCaseTest {
 
-    given("レコード削除") {
-        `when`("repositoryがtrueを返す場合") {
-            then("trueが返る") {
-                coEvery { repository.deleteRecord("record1") } returns true
-                val result = runBlocking { useCase("record1") }
-                result shouldBe true
-            }
+    private lateinit var repository: AnnictRepository
+    private lateinit var useCase: DeleteRecordUseCase
+
+    @BeforeEach
+    fun setup() {
+        repository = mockk()
+        useCase = DeleteRecordUseCase(repository)
+    }
+
+    @Nested
+    @DisplayName("レコード削除")
+    inner class DeleteRecord {
+
+        @Test
+        @DisplayName("成功時にtrueを返す")
+        fun onSuccess() = runTest {
+            // Given
+            coEvery { repository.deleteRecord("record1") } returns true
+
+            // When
+            val result = useCase("record1")
+
+            // Then
+            assertEquals(true, result)
         }
-        `when`("repositoryがfalseを返す場合") {
-            then("falseが返る") {
-                coEvery { repository.deleteRecord("record2") } returns false
-                val result = runBlocking { useCase("record2") }
-                result shouldBe false
-            }
+
+        @Test
+        @DisplayName("失敗時にfalseを返す")
+        fun onFailure() = runTest {
+            // Given
+            coEvery { repository.deleteRecord("record2") } returns false
+
+            // When
+            val result = useCase("record2")
+
+            // Then
+            assertEquals(false, result)
         }
     }
-})
+}

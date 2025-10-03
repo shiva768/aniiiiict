@@ -9,121 +9,142 @@ import com.zelretch.aniiiiict.domain.usecase.FinaleState
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 /**
  * Integration test to verify bulk recording with finale judgment works end-to-end
  */
-class BulkRecordingFinaleJudgmentIntegrationTest : BehaviorSpec({
+@DisplayName("バルク記録でのフィナーレ判定統合テスト")
+class BulkRecordingFinaleJudgmentIntegrationTest {
 
-    given("バルク記録でのフィナーレ判定統合テスト") {
-        val annictRepository = mockk<AnnictRepository>()
-        val malRepository = mockk<MyAnimeListRepository>()
-        val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
+    private lateinit var annictRepository: AnnictRepository
+    private lateinit var malRepository: MyAnimeListRepository
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
+    private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var bulkRecordUseCase: BulkRecordEpisodesUseCase
 
-        val judgeFinaleUseCase = JudgeFinaleUseCase(malRepository)
-        val watchEpisodeUseCase = WatchEpisodeUseCase(annictRepository, updateViewStateUseCase)
-        val bulkRecordUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase, judgeFinaleUseCase)
+    @BeforeEach
+    fun setup() {
+        annictRepository = mockk()
+        malRepository = mockk()
+        updateViewStateUseCase = mockk()
 
-        `when`("最終話を含むエピソードをバルク記録する") {
-            then("フィナーレ判定が実行され、結果が返される") {
-                // Arrange
-                val episodeIds = listOf("ep11", "ep12")
-                val workId = "work1"
-                val malAnimeId = 123
-                val lastEpisodeNumber = 12
-                val media = MyAnimeListResponse(
-                    id = malAnimeId,
-                    mediaType = "tv",
-                    numEpisodes = 12,
-                    status = "finished_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
+        judgeFinaleUseCase = JudgeFinaleUseCase(malRepository)
+        watchEpisodeUseCase = WatchEpisodeUseCase(annictRepository, updateViewStateUseCase)
+        bulkRecordUseCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase, judgeFinaleUseCase)
+    }
 
-                coEvery { annictRepository.createRecord(any(), any()) } returns true
-                coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
-                coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
+    @Nested
+    @DisplayName("フィナーレ判定")
+    inner class FinaleJudgment {
 
-                // Act
-                val result = bulkRecordUseCase(
-                    episodeIds = episodeIds,
-                    workId = workId,
-                    currentStatus = StatusState.WATCHING,
-                    malAnimeId = malAnimeId,
-                    lastEpisodeNumber = lastEpisodeNumber
-                )
+        @Test
+        @DisplayName("最終話を含むエピソードをバルク記録するとフィナーレ判定が実行される")
+        fun withFinaleEpisode() = runTest {
+            // Arrange
+            val episodeIds = listOf("ep11", "ep12")
+            val workId = "work1"
+            val malAnimeId = 123
+            val lastEpisodeNumber = 12
+            val media = MyAnimeListResponse(
+                id = malAnimeId,
+                mediaType = "tv",
+                numEpisodes = 12,
+                status = "finished_airing",
+                broadcast = null,
+                mainPicture = null
+            )
 
-                // Assert
-                result.isSuccess shouldBe true
-                val bulkResult = result.getOrNull()!!
-                bulkResult.finaleResult?.state shouldBe FinaleState.FINALE_CONFIRMED
-                bulkResult.finaleResult?.isFinale shouldBe true
-            }
+            coEvery { annictRepository.createRecord(any(), any()) } returns true
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
+            coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
+
+            // Act
+            val result = bulkRecordUseCase(
+                episodeIds = episodeIds,
+                workId = workId,
+                currentStatus = StatusState.WATCHING,
+                malAnimeId = malAnimeId,
+                lastEpisodeNumber = lastEpisodeNumber
+            )
+
+            // Assert
+            assertTrue(result.isSuccess)
+            val bulkResult = result.getOrNull()!!
+            assertEquals(FinaleState.FINALE_CONFIRMED, bulkResult.finaleResult?.state)
+            assertTrue(bulkResult.finaleResult?.isFinale == true)
         }
 
-        `when`("最終話ではないエピソードをバルク記録する") {
-            then("フィナーレ判定が実行され、非最終話として判定される") {
-                // Arrange
-                val episodeIds = listOf("ep8", "ep9")
-                val workId = "work1"
-                val malAnimeId = 123
-                val lastEpisodeNumber = 9
-                val media = MyAnimeListResponse(
-                    id = malAnimeId,
-                    mediaType = "tv",
-                    numEpisodes = 12,
-                    status = "currently_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
+        @Test
+        @DisplayName("最終話でないエピソードをバルク記録すると非最終話として判定される")
+        fun withNonFinaleEpisode() = runTest {
+            // Arrange
+            val episodeIds = listOf("ep8", "ep9")
+            val workId = "work1"
+            val malAnimeId = 123
+            val lastEpisodeNumber = 9
+            val media = MyAnimeListResponse(
+                id = malAnimeId,
+                mediaType = "tv",
+                numEpisodes = 12,
+                status = "currently_airing",
+                broadcast = null,
+                mainPicture = null
+            )
 
-                coEvery { annictRepository.createRecord(any(), any()) } returns true
-                coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
-                coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
+            coEvery { annictRepository.createRecord(any(), any()) } returns true
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
+            coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
-                // Act
-                val result = bulkRecordUseCase(
-                    episodeIds = episodeIds,
-                    workId = workId,
-                    currentStatus = StatusState.WATCHING,
-                    malAnimeId = malAnimeId,
-                    lastEpisodeNumber = lastEpisodeNumber
-                )
+            // Act
+            val result = bulkRecordUseCase(
+                episodeIds = episodeIds,
+                workId = workId,
+                currentStatus = StatusState.WATCHING,
+                malAnimeId = malAnimeId,
+                lastEpisodeNumber = lastEpisodeNumber
+            )
 
-                // Assert
-                result.isSuccess shouldBe true
-                val bulkResult = result.getOrNull()!!
-                bulkResult.finaleResult?.state shouldBe FinaleState.NOT_FINALE
-                bulkResult.finaleResult?.isFinale shouldBe false
-            }
+            // Assert
+            assertTrue(result.isSuccess)
+            val bulkResult = result.getOrNull()!!
+            assertEquals(FinaleState.NOT_FINALE, bulkResult.finaleResult?.state)
+            assertFalse(bulkResult.finaleResult?.isFinale == true)
         }
 
-        `when`("MAL IDがない場合") {
-            then("フィナーレ判定は実行されず、nullが返される") {
-                // Arrange
-                val episodeIds = listOf("ep1", "ep2")
-                val workId = "work1"
+        @Test
+        @DisplayName("MAL IDがない場合フィナーレ判定は実行されない")
+        fun MAL_IDがない場合フィナーレ判定は実行されない() = runTest {
+            // Arrange
+            val episodeIds = listOf("ep1", "ep2")
+            val workId = "work1"
 
-                coEvery { annictRepository.createRecord(any(), any()) } returns true
-                coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
+            coEvery { annictRepository.createRecord(any(), any()) } returns true
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
 
-                // Act
-                val result = bulkRecordUseCase(
-                    episodeIds = episodeIds,
-                    workId = workId,
-                    currentStatus = StatusState.WATCHING
-                    // malAnimeId and lastEpisodeNumber are null
-                )
+            // Act
+            val result = bulkRecordUseCase(
+                episodeIds = episodeIds,
+                workId = workId,
+                currentStatus = StatusState.WATCHING
+                // malAnimeId and lastEpisodeNumber are null
+            )
 
-                // Assert
-                result.isSuccess shouldBe true
-                val bulkResult = result.getOrNull()!!
-                bulkResult.finaleResult shouldBe null
-            }
+            // Assert
+            assertTrue(result.isSuccess)
+            val bulkResult = result.getOrNull()!!
+            assertNull(bulkResult.finaleResult)
         }
     }
-})
+}

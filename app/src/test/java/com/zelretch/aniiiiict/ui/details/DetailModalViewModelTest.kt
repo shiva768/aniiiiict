@@ -11,8 +11,6 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -22,18 +20,34 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DetailModalViewModelTest : BehaviorSpec({
-    val bulkRecordEpisodesUseCase = mockk<BulkRecordEpisodesUseCase>()
-    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
-    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
-    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
-    val dispatcher = UnconfinedTestDispatcher()
-    lateinit var viewModel: DetailModalViewModel
+@DisplayName("DetailModalViewModel")
+class DetailModalViewModelTest {
 
-    beforeTest {
+    private lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
+    private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private val dispatcher = UnconfinedTestDispatcher()
+    private lateinit var viewModel: DetailModalViewModel
+
+    @BeforeEach
+    fun setup() {
         Dispatchers.setMain(dispatcher)
+        bulkRecordEpisodesUseCase = mockk()
+        watchEpisodeUseCase = mockk()
+        updateViewStateUseCase = mockk()
+        judgeFinaleUseCase = mockk()
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
@@ -42,146 +56,146 @@ class DetailModalViewModelTest : BehaviorSpec({
         )
     }
 
-    afterTest {
+    @AfterEach
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
-    Given("initialize呼び出し") {
-        When("ProgramWithWorkを渡すとstateが更新される") {
-            Then("stateが正しく更新される") {
-                val program = mockk<Program>()
-                val work = mockk<Work> {
-                    every { viewerStatusState } returns StatusState.WATCHING
-                    every { id } returns "work-id"
-                    every { malAnimeId } returns "123"
-                }
-                val programWithWork = ProgramWithWork(
-                    programs = listOf(program),
-                    firstProgram = program,
-                    work = work
-                )
-                runTest(dispatcher) {
-                    viewModel.state.test {
-                        awaitItem()
-                        viewModel.initialize(programWithWork)
-                        val updated = awaitItem()
-                        updated.programs shouldBe listOf(program)
-                        updated.selectedStatus shouldBe StatusState.WATCHING
-                        updated.workId shouldBe "work-id"
-                        updated.malAnimeId shouldBe "123"
-                    }
-                }
+    @Nested
+    @DisplayName("初期化")
+    inner class Initialize {
+
+        @Test
+        @DisplayName("ProgramWithWorkを渡すとstateが正しく更新される")
+        fun ProgramWithWorkを渡すとstateが正しく更新される() = runTest(dispatcher) {
+            // Given
+            val program = mockk<Program>()
+            val work = mockk<Work> {
+                every { viewerStatusState } returns StatusState.WATCHING
+                every { id } returns "work-id"
+                every { malAnimeId } returns "123"
+            }
+            val programWithWork = ProgramWithWork(
+                programs = listOf(program),
+                firstProgram = program,
+                work = work
+            )
+
+            // When & Then
+            viewModel.state.test {
+                awaitItem()
+                viewModel.initialize(programWithWork)
+                val updated = awaitItem()
+                assertEquals(listOf(program), updated.programs)
+                assertEquals(StatusState.WATCHING, updated.selectedStatus)
+                assertEquals("work-id", updated.workId)
+                assertEquals("123", updated.malAnimeId)
             }
         }
     }
 
-    Given("showConfirmDialog呼び出し") {
-        When("indexを渡すとダイアログが表示状態になる") {
-            Then("ダイアログのstateが正しく更新される") {
-                runTest(dispatcher) {
-                    viewModel.state.test {
-                        awaitItem() // 初期値
-                        viewModel.showConfirmDialog(2)
-                        val updated = awaitItem()
-                        updated.showConfirmDialog shouldBe true
-                        updated.selectedEpisodeIndex shouldBe 2
-                    }
-                }
+    @Nested
+    @DisplayName("確認ダイアログ表示")
+    inner class ShowConfirmDialog {
+
+        @Test
+        @DisplayName("indexを渡すとダイアログが表示状態になる")
+        fun indexを渡すとダイアログが表示状態になる() = runTest(dispatcher) {
+            // When & Then
+            viewModel.state.test {
+                awaitItem() // 初期値
+                viewModel.showConfirmDialog(2)
+                val updated = awaitItem()
+                assertTrue(updated.showConfirmDialog)
+                assertEquals(2, updated.selectedEpisodeIndex)
             }
         }
     }
 
-    Given("単一エピソード記録でのフィナーレ判定") {
-        When("最終話を記録した場合") {
-            Then("フィナーレ確認ダイアログが表示される") {
-                // Arrange
-                val work = mockk<Work> {
-                    every { viewerStatusState } returns StatusState.WATCHING
-                    every { id } returns "work-finale"
-                    every { malAnimeId } returns "123"
-                }
-                val episode = mockk<com.zelretch.aniiiiict.data.model.Episode> {
-                    every { id } returns "ep-12"
-                    every { number } returns 12
-                    every { title } returns "最終話"
-                }
-                val program = mockk<Program> {
-                    every { this@mockk.episode } returns episode
-                    every { id } returns "prog-12"
-                }
-                val programWithWork = ProgramWithWork(
-                    programs = listOf(program),
-                    firstProgram = program,
-                    work = work
-                )
+    @Nested
+    @DisplayName("単一エピソード記録でのフィナーレ判定")
+    inner class SingleEpisodeFinaleJudgment {
 
-                // WatchEpisodeUseCaseのモック設定
-                coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
-
-                // JudgeFinaleUseCaseのモック設定（最終話判定）
-                coEvery {
-                    judgeFinaleUseCase(12, 123)
-                } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
-
-                runTest(dispatcher) {
-                    viewModel.initialize(programWithWork)
-
-                    // エピソード記録実行
-                    viewModel.recordEpisode("ep-12", StatusState.WATCHING)
-
-                    // 状態確認
-                    val state = viewModel.state.value
-                    state.showSingleEpisodeFinaleConfirmation shouldBe true
-                    state.singleEpisodeFinaleNumber shouldBe 12
-                    state.singleEpisodeFinaleWorkId shouldBe "work-finale"
-                }
+        @Test
+        @DisplayName("最終話を記録した場合フィナーレ確認ダイアログが表示される")
+        fun onFinaleEpisode() = runTest(dispatcher) {
+            // Given
+            val work = mockk<Work> {
+                every { viewerStatusState } returns StatusState.WATCHING
+                every { id } returns "work-finale"
+                every { malAnimeId } returns "123"
             }
+            val episode = mockk<com.zelretch.aniiiiict.data.model.Episode> {
+                every { id } returns "ep-12"
+                every { number } returns 12
+                every { title } returns "最終話"
+            }
+            val program = mockk<Program> {
+                every { this@mockk.episode } returns episode
+                every { id } returns "prog-12"
+            }
+            val programWithWork = ProgramWithWork(
+                programs = listOf(program),
+                firstProgram = program,
+                work = work
+            )
+
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery {
+                judgeFinaleUseCase(12, 123)
+            } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
+
+            viewModel.initialize(programWithWork)
+
+            // When
+            viewModel.recordEpisode("ep-12", StatusState.WATCHING)
+
+            // Then
+            val state = viewModel.state.value
+            assertTrue(state.showSingleEpisodeFinaleConfirmation)
+            assertEquals(12, state.singleEpisodeFinaleNumber)
+            assertEquals("work-finale", state.singleEpisodeFinaleWorkId)
         }
 
-        When("最終話ではないエピソードを記録した場合") {
-            Then("フィナーレ確認ダイアログは表示されない") {
-                // Arrange
-                val work = mockk<Work> {
-                    every { viewerStatusState } returns StatusState.WATCHING
-                    every { id } returns "work-normal"
-                    every { malAnimeId } returns "123"
-                }
-                val episode = mockk<com.zelretch.aniiiiict.data.model.Episode> {
-                    every { id } returns "ep-10"
-                    every { number } returns 10
-                    every { title } returns "第10話"
-                }
-                val program = mockk<Program> {
-                    every { this@mockk.episode } returns episode
-                    every { id } returns "prog-10"
-                }
-                val programWithWork = ProgramWithWork(
-                    programs = listOf(program),
-                    firstProgram = program,
-                    work = work
-                )
-
-                // WatchEpisodeUseCaseのモック設定
-                coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
-
-                // JudgeFinaleUseCaseのモック設定（非最終話判定）
-                coEvery {
-                    judgeFinaleUseCase(10, 123)
-                } returns JudgeFinaleResult(FinaleState.NOT_FINALE)
-
-                runTest(dispatcher) {
-                    viewModel.initialize(programWithWork)
-
-                    // エピソード記録実行
-                    viewModel.recordEpisode("ep-10", StatusState.WATCHING)
-
-                    // 状態確認
-                    val state = viewModel.state.value
-                    state.showSingleEpisodeFinaleConfirmation shouldBe false
-                    state.singleEpisodeFinaleNumber shouldBe null
-                    state.singleEpisodeFinaleWorkId shouldBe null
-                }
+        @Test
+        @DisplayName("最終話ではないエピソードを記録した場合フィナーレ確認ダイアログは表示されない")
+        fun onRegularEpisode() = runTest(dispatcher) {
+            // Given
+            val work = mockk<Work> {
+                every { viewerStatusState } returns StatusState.WATCHING
+                every { id } returns "work-normal"
+                every { malAnimeId } returns "123"
             }
+            val episode = mockk<com.zelretch.aniiiiict.data.model.Episode> {
+                every { id } returns "ep-10"
+                every { number } returns 10
+                every { title } returns "第10話"
+            }
+            val program = mockk<Program> {
+                every { this@mockk.episode } returns episode
+                every { id } returns "prog-10"
+            }
+            val programWithWork = ProgramWithWork(
+                programs = listOf(program),
+                firstProgram = program,
+                work = work
+            )
+
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery {
+                judgeFinaleUseCase(10, 123)
+            } returns JudgeFinaleResult(FinaleState.NOT_FINALE)
+
+            viewModel.initialize(programWithWork)
+
+            // When
+            viewModel.recordEpisode("ep-10", StatusState.WATCHING)
+
+            // Then
+            val state = viewModel.state.value
+            assertFalse(state.showSingleEpisodeFinaleConfirmation)
+            assertNull(state.singleEpisodeFinaleNumber)
+            assertNull(state.singleEpisodeFinaleWorkId)
         }
     }
-})
+}

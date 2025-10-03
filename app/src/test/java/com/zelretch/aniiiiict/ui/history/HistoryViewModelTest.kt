@@ -6,8 +6,6 @@ import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiict.domain.usecase.RecordsResult
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -18,194 +16,240 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-open class HistoryViewModelTest : BehaviorSpec({
-    val loadRecordsUseCase = mockk<LoadRecordsUseCase>()
-    val searchRecordsUseCase = mockk<SearchRecordsUseCase>()
-    val deleteRecordUseCase = mockk<DeleteRecordUseCase>()
-    val dispatcher = UnconfinedTestDispatcher()
+@DisplayName("HistoryViewModel")
+open class HistoryViewModelTest {
 
-    beforeSpec {
+    private lateinit var loadRecordsUseCase: LoadRecordsUseCase
+    private lateinit var searchRecordsUseCase: SearchRecordsUseCase
+    private lateinit var deleteRecordUseCase: DeleteRecordUseCase
+    private val dispatcher = UnconfinedTestDispatcher()
+
+    @BeforeEach
+    fun setup() {
         Dispatchers.setMain(dispatcher)
+        loadRecordsUseCase = mockk()
+        searchRecordsUseCase = mockk()
+        deleteRecordUseCase = mockk()
     }
-    afterSpec {
+
+    @AfterEach
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
-    Given("初期化時") {
-        When("loadRecordsが呼ばれる") {
-            Then("UIステートが初期値で更新される") {
-                runTest(dispatcher) {
-                    coEvery { loadRecordsUseCase(null) } returns RecordsResult(emptyList(), false, null)
-                    every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
+    @Nested
+    @DisplayName("初期化")
+    inner class Initialization {
 
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase
-                    )
-                    val state = viewModel.uiState.first { !it.isLoading }
-                    state.records shouldBe emptyList()
-                    state.isLoading shouldBe false
-                    state.error shouldBe null
-                }
-            }
+        @Test
+        @DisplayName("loadRecordsが呼ばれUIステートが初期値で更新される")
+        fun loadRecordsが呼ばれUIステートが初期値で更新される() = runTest(dispatcher) {
+            // Given
+            coEvery { loadRecordsUseCase(null) } returns RecordsResult(emptyList(), false, null)
+            every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
+
+            // When
+            val viewModel = HistoryViewModel(
+                loadRecordsUseCase,
+                searchRecordsUseCase,
+                deleteRecordUseCase
+            )
+            val state = viewModel.uiState.first { !it.isLoading }
+
+            // Then
+            assertEquals(emptyList<Record>(), state.records)
+            assertFalse(state.isLoading)
+            assertNull(state.error)
         }
     }
 
-    Given("updateSearchQuery呼び出し") {
-        When("クエリを渡す") {
-            Then("searchQueryとrecordsが更新される") {
-                runTest(dispatcher) {
-                    val dummyRecords = listOf(
-                        mockk<Record> {
-                            every { work } returns mockk<Work> { every { title } returns "dummy" }
-                        }
-                    )
-                    coEvery { loadRecordsUseCase(null) } returns RecordsResult(dummyRecords, false, null)
-                    every { searchRecordsUseCase(dummyRecords, "foo") } returns dummyRecords
-                    every { searchRecordsUseCase(dummyRecords, "") } returns dummyRecords
+    @Nested
+    @DisplayName("検索クエリ更新")
+    inner class UpdateSearchQuery {
 
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase
-                    )
-                    viewModel.uiState.first { !it.isLoading }
-                    viewModel.updateSearchQuery("foo")
-                    val state = viewModel.uiState.value
-                    state.searchQuery shouldBe "foo"
-                    state.records shouldBe dummyRecords
+        @Test
+        @DisplayName("クエリを渡すとsearchQueryとrecordsが更新される")
+        fun withQuery() = runTest(dispatcher) {
+            // Given
+            val dummyRecords = listOf(
+                mockk<Record> {
+                    every { work } returns mockk<Work> { every { title } returns "dummy" }
                 }
-            }
+            )
+            coEvery { loadRecordsUseCase(null) } returns RecordsResult(dummyRecords, false, null)
+            every { searchRecordsUseCase(dummyRecords, "foo") } returns dummyRecords
+            every { searchRecordsUseCase(dummyRecords, "") } returns dummyRecords
+
+            val viewModel = HistoryViewModel(
+                loadRecordsUseCase,
+                searchRecordsUseCase,
+                deleteRecordUseCase
+            )
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.updateSearchQuery("foo")
+            val state = viewModel.uiState.value
+
+            // Then
+            assertEquals("foo", state.searchQuery)
+            assertEquals(dummyRecords, state.records)
         }
     }
 
-    Given("deleteRecord呼び出し") {
-        When("レコードIDを渡す") {
-            Then("recordsとallRecordsから削除される") {
-                runTest(dispatcher) {
-                    val record = mockk<Record> {
-                        every { id } returns "id1"
-                        every { work } returns mockk<Work> { every { title } returns "dummy" }
-                    }
-                    coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record), false, null)
-                    every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
-                    every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
-                    coEvery { deleteRecordUseCase("id1") } returns true
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase
-                    )
-                    viewModel.uiState.first { !it.isLoading }
-                    viewModel.deleteRecord("id1")
-                    val state = viewModel.uiState.first {
-                        !it.isLoading && it.allRecords.isEmpty()
-                    }
-                    state.allRecords shouldBe emptyList()
-                    state.records shouldBe emptyList()
-                }
+    @Nested
+    @DisplayName("レコード削除")
+    inner class DeleteRecord {
+
+        @Test
+        @DisplayName("レコードIDを渡すとrecordsとallRecordsから削除される")
+        fun byId() = runTest(dispatcher) {
+            // Given
+            val record = mockk<Record> {
+                every { id } returns "id1"
+                every { work } returns mockk<Work> { every { title } returns "dummy" }
             }
-        }
-        When("レコードIDを渡し、検索クエリが有効") {
-            Then("recordsとallRecordsから削除され、フィルタリングが適用される") {
-                runTest(dispatcher) {
-                    val record1 = mockk<Record> {
-                        every { id } returns "id1"
-                        every { work.title } returns "Anime A"
-                    }
-                    val record2 = mockk<Record> {
-                        every { id } returns "id2"
-                        every { work.title } returns "Anime B"
-                    }
-                    coEvery { loadRecordsUseCase(null) } returns RecordsResult(
-                        listOf(record1, record2),
-                        false,
-                        null
-                    )
-                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
-                    every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns listOf(record1, record2)
-                    every { searchRecordsUseCase(listOf(record2), "Anime") } returns listOf(record2)
-                    coEvery { deleteRecordUseCase("id1") } returns true
+            coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record), false, null)
+            every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
+            every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
+            coEvery { deleteRecordUseCase("id1") } returns true
 
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase
-                    )
-                    viewModel.uiState.first { !it.isLoading }
-                    viewModel.updateSearchQuery("Anime")
-                    viewModel.deleteRecord("id1")
+            val viewModel = HistoryViewModel(
+                loadRecordsUseCase,
+                searchRecordsUseCase,
+                deleteRecordUseCase
+            )
+            viewModel.uiState.first { !it.isLoading }
 
-                    val state = viewModel.uiState.first {
-                        !it.isLoading && it.allRecords.size == 1
-                    }
-                    state.allRecords shouldBe listOf(record2)
-                    state.records shouldBe listOf(record2)
-                }
+            // When
+            viewModel.deleteRecord("id1")
+            val state = viewModel.uiState.first {
+                !it.isLoading && it.allRecords.isEmpty()
             }
-        }
-    }
 
-    Given("loadNextPage呼び出し") {
-        When("hasNextPage=true, endCursorあり") {
-            Then("追加レコードがallRecords/recordsに加わる") {
-                runTest(dispatcher) {
-                    val record1 = mockk<Record> {
-                        every { id } returns "id1"
-                        every { work } returns mockk<Work> { every { title } returns "dummy1" }
-                    }
-                    val record2 = mockk<Record> {
-                        every { id } returns "id2"
-                        every { work } returns mockk<Work> { every { title } returns "dummy2" }
-                    }
-                    coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record1), true, "cursor")
-                    coEvery { loadRecordsUseCase("cursor") } returns RecordsResult(listOf(record2), false, null)
-                    every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
-                    every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
-
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase
-                    )
-                    viewModel.uiState.first { !it.isLoading }
-                    viewModel.loadNextPage()
-                    val state = viewModel.uiState.first {
-                        !it.isLoading && it.allRecords.size == 2
-                    }
-                    state.allRecords shouldBe listOf(record1, record2)
-                    state.records shouldBe listOf(record1, record2)
-                    state.hasNextPage shouldBe false
-                }
-            }
+            // Then
+            assertEquals(emptyList<Record>(), state.allRecords)
+            assertEquals(emptyList<Record>(), state.records)
         }
 
-        When("hasNextPage=false") {
-            Then("loadRecordsUseCaseが呼ばれない") {
-                runTest(dispatcher) {
-                    val record1 = mockk<Record> {
-                        every { id } returns "id1"
-                        every { work } returns mockk<Work> { every { title } returns "dummy1" }
-                    }
-                    coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record1), false, "cursor")
-                    every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
-
-                    val viewModel = HistoryViewModel(
-                        loadRecordsUseCase,
-                        searchRecordsUseCase,
-                        deleteRecordUseCase
-                    )
-                    val initialState = viewModel.uiState.first { !it.isLoading }
-
-                    viewModel.loadNextPage()
-
-                    val finalState = viewModel.uiState.value
-                    finalState.allRecords shouldBe initialState.allRecords
-                }
+        @Test
+        @DisplayName("検索クエリ有効時にレコード削除するとフィルタリングが適用される")
+        fun withActiveSearch() = runTest(dispatcher) {
+            // Given
+            val record1 = mockk<Record> {
+                every { id } returns "id1"
+                every { work.title } returns "Anime A"
             }
+            val record2 = mockk<Record> {
+                every { id } returns "id2"
+                every { work.title } returns "Anime B"
+            }
+            coEvery { loadRecordsUseCase(null) } returns RecordsResult(
+                listOf(record1, record2),
+                false,
+                null
+            )
+            every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
+            every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns listOf(record1, record2)
+            every { searchRecordsUseCase(listOf(record2), "Anime") } returns listOf(record2)
+            coEvery { deleteRecordUseCase("id1") } returns true
+
+            val viewModel = HistoryViewModel(
+                loadRecordsUseCase,
+                searchRecordsUseCase,
+                deleteRecordUseCase
+            )
+            viewModel.uiState.first { !it.isLoading }
+            viewModel.updateSearchQuery("Anime")
+
+            // When
+            viewModel.deleteRecord("id1")
+
+            val state = viewModel.uiState.first {
+                !it.isLoading && it.allRecords.size == 1
+            }
+
+            // Then
+            assertEquals(listOf(record2), state.allRecords)
+            assertEquals(listOf(record2), state.records)
         }
     }
-})
+
+    @Nested
+    @DisplayName("次ページロード")
+    inner class LoadNextPage {
+
+        @Test
+        @DisplayName("hasNextPageがtrueで追加レコードが加わる")
+        fun hasNextPageがtrueで追加レコードが加わる() = runTest(dispatcher) {
+            // Given
+            val record1 = mockk<Record> {
+                every { id } returns "id1"
+                every { work } returns mockk<Work> { every { title } returns "dummy1" }
+            }
+            val record2 = mockk<Record> {
+                every { id } returns "id2"
+                every { work } returns mockk<Work> { every { title } returns "dummy2" }
+            }
+            coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record1), true, "cursor")
+            coEvery { loadRecordsUseCase("cursor") } returns RecordsResult(listOf(record2), false, null)
+            every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
+            every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
+
+            val viewModel = HistoryViewModel(
+                loadRecordsUseCase,
+                searchRecordsUseCase,
+                deleteRecordUseCase
+            )
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.loadNextPage()
+            val state = viewModel.uiState.first {
+                !it.isLoading && it.allRecords.size == 2
+            }
+
+            // Then
+            assertEquals(listOf(record1, record2), state.allRecords)
+            assertEquals(listOf(record1, record2), state.records)
+            assertFalse(state.hasNextPage)
+        }
+
+        @Test
+        @DisplayName("hasNextPageがfalseの場合loadRecordsUseCaseが呼ばれない")
+        fun hasNextPageがfalseの場合loadRecordsUseCaseが呼ばれない() = runTest(dispatcher) {
+            // Given
+            val record1 = mockk<Record> {
+                every { id } returns "id1"
+                every { work } returns mockk<Work> { every { title } returns "dummy1" }
+            }
+            coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record1), false, "cursor")
+            every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
+
+            val viewModel = HistoryViewModel(
+                loadRecordsUseCase,
+                searchRecordsUseCase,
+                deleteRecordUseCase
+            )
+            val initialState = viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.loadNextPage()
+
+            val finalState = viewModel.uiState.value
+
+            // Then
+            assertEquals(initialState.allRecords, finalState.allRecords)
+        }
+    }
+}

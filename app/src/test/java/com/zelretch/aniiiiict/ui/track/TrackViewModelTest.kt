@@ -19,8 +19,6 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,26 +32,45 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrackViewModelTest : BehaviorSpec({
-    val dispatcher = UnconfinedTestDispatcher()
-    val filterStateFlow = MutableStateFlow(FilterState())
-    val filterPreferences = mockk<FilterPreferences> {
-        every { filterState } returns filterStateFlow
-    }
-    val loadProgramsUseCase = mockk<LoadProgramsUseCase>()
-    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
-    mockk<BulkRecordEpisodesUseCase>()
-    val updateViewStateUseCase = mockk<UpdateViewStateUseCase>()
-    val filterProgramsUseCase = mockk<FilterProgramsUseCase>()
-    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
-    mockk<Context>(relaxed = true)
-    lateinit var viewModel: TrackViewModel
+@DisplayName("TrackViewModel")
+class TrackViewModelTest {
 
-    beforeTest {
+    private val dispatcher = UnconfinedTestDispatcher()
+    private val filterStateFlow = MutableStateFlow(FilterState())
+    private lateinit var filterPreferences: FilterPreferences
+    private lateinit var loadProgramsUseCase: LoadProgramsUseCase
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
+    private lateinit var filterProgramsUseCase: FilterProgramsUseCase
+    private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var viewModel: TrackViewModel
+
+    @BeforeEach
+    fun setup() {
         Dispatchers.setMain(dispatcher)
+
+        filterPreferences = mockk {
+            every { filterState } returns filterStateFlow
+        }
+        loadProgramsUseCase = mockk()
+        watchEpisodeUseCase = mockk()
+        mockk<BulkRecordEpisodesUseCase>()
+        updateViewStateUseCase = mockk()
+        filterProgramsUseCase = mockk()
+        judgeFinaleUseCase = mockk()
+        mockk<Context>(relaxed = true)
+
         // デフォルトで空リストを返すflow
         coEvery { loadProgramsUseCase.invoke() } returns flowOf(emptyList())
         every { filterProgramsUseCase.invoke(any(), any()) } answers { firstArg() }
@@ -63,6 +80,7 @@ class TrackViewModelTest : BehaviorSpec({
             emptyList(),
             emptyList()
         )
+
         viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
@@ -71,173 +89,170 @@ class TrackViewModelTest : BehaviorSpec({
             filterPreferences,
             judgeFinaleUseCase
         )
-        dispatcher.scheduler.advanceUntilIdle() // ViewModelのinitコルーチンを確実に進める
+        dispatcher.scheduler.advanceUntilIdle()
     }
 
-    afterTest {
+    @AfterEach
+    fun tearDown() {
         Dispatchers.resetMain()
     }
 
-    given("プログラム一覧ロード") {
-        `when`("正常にロードできる場合") {
-            then("UIStateにプログラムがセットされる") {
-                runTest {
-                    val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
-                    coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
-                    every { filterProgramsUseCase.invoke(any(), any()) } returns fakePrograms
-                    every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
-                        emptyList(),
-                        emptyList(),
-                        emptyList(),
-                        emptyList()
-                    )
-                    runTest(dispatcher) {
-                        viewModel.uiState.test {
-                            awaitItem() // 初期値を必ず受け取る
-                            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
-                            dispatcher.scheduler.advanceUntilIdle() // emitを確実に進める
-                            awaitItem() // 状態遷移1: ローディングやfilter反映（isLoading=true）
-                            awaitItem() // 状態遷移2: データ反映・ローディング完了（isLoading=false）
-                            val updated = awaitItem() // 状態遷移3（必要なら）
-                            updated.programs shouldBe fakePrograms
-                            updated.isLoading shouldBe false
-                            updated.error shouldBe null
-                        }
-                    }
-                }
-            }
-        }
-        `when`("例外が発生する場合") {
-            then("UIStateにエラーがセットされる") {
-                runTest(dispatcher) {
-                    coEvery { loadProgramsUseCase.invoke() } returns flow {
-                        throw LoadProgramsException("error")
-                    }
-                    runTest(dispatcher) {
-                        viewModel.uiState.test {
-                            awaitItem() // 初期値を必ず受け取る
-                            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
-                            dispatcher.scheduler.advanceUntilIdle() // emitを確実に進める
-                            awaitItem() // 状態遷移1: ローディングやfilter反映
-                            val errorState = awaitItem() // 状態遷移2: error反映
-                            errorState.error shouldBe "処理中にエラーが発生しました"
-                            errorState.isLoading shouldBe false
-                        }
-                    }
-                }
-            }
-        }
-    }
+    @Nested
+    @DisplayName("プログラム一覧ロード")
+    inner class LoadPrograms {
 
-    given("フィナーレ判定ロジック") {
-        `when`("最終話を記録し、確認ダイアログで『いいえ』を選択") {
-            then("ステータスは更新されず、ダイアログが閉じる") {
-                runTest {
-                    // Arrange
-                    val workId = "work-finale-no"
-                    val episodeId = "ep-final-12-no"
-                    val fakePrograms = createTestProgram(workId, episodeId)
-                    coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
-                    coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
-                    coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
-                        com.zelretch.aniiiiict.domain.usecase.FinaleState.FINALE_CONFIRMED
-                    )
+        @Test
+        @DisplayName("正常にロードできる場合UIStateにプログラムがセットされる")
+        fun onSuccess() = runTest {
+            // Given
+            val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
+            coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
+            every { filterProgramsUseCase.invoke(any(), any()) } returns fakePrograms
+            every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                emptyList()
+            )
 
-                    // Act & Assert
-                    viewModel.uiState.test {
-                        skipItems(1) // 初期状態をスキップ
-                        viewModel.refresh()
-
-                        viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
-
-                        skipItems(1)
-                        val finaleConfirmationState = awaitItem()
-                        finaleConfirmationState.showFinaleConfirmationForWorkId shouldBe workId
-
-                        // 「いいえ」を選択
-                        viewModel.dismissFinaleConfirmation()
-
-                        val finalState = awaitItem()
-                        finalState.showFinaleConfirmationForWorkId shouldBe null
-
-                        coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
-                    }
+            // When & Then
+            runTest(dispatcher) {
+                viewModel.uiState.test {
+                    awaitItem() // 初期値を必ず受け取る
+                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
+                    dispatcher.scheduler.advanceUntilIdle()
+                    awaitItem() // 状態遷移1
+                    awaitItem() // 状態遷移2
+                    val updated = awaitItem() // 状態遷移3
+                    assertEquals(fakePrograms, updated.programs)
+                    assertFalse(updated.isLoading)
+                    assertNull(updated.error)
                 }
             }
         }
 
-        `when`("フィナーレ判定に失敗した場合(総話数不明)") {
-            then("フィナーレ確認は表示されず、ステータス更新もされない") {
-                runTest {
-                    // Arrange
-                    val workId = "work-unk-ep"
-                    val episodeId = "ep5"
-                    val fakePrograms = createTestProgram(workId, episodeId)
-
-                    coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
-                    coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
-                    coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
-                        com.zelretch.aniiiiict.domain.usecase.FinaleState.UNKNOWN
-                    )
-
-                    // Act & Assert
-                    viewModel.uiState.test {
-                        skipItems(1) // 初期状態をスキップ
-                        viewModel.refresh()
-                        viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
-
-                        skipItems(1)
-                        // recordEpisode内のisLoading=true, falseの遷移を待つ
-                        awaitItem().isLoading shouldBe true
-                        val finalState = awaitItem()
-                        finalState.isLoading shouldBe false
-
-                        // フィナーレ確認が表示されていないことを確認
-                        finalState.showFinaleConfirmationForWorkId shouldBe null
-
-                        coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
-                    }
-                }
+        @Test
+        @DisplayName("例外が発生する場合UIStateにエラーがセットされる")
+        fun onException() = runTest(dispatcher) {
+            // Given
+            coEvery { loadProgramsUseCase.invoke() } returns flow {
+                throw LoadProgramsException("error")
             }
-        }
 
-        `when`("フィナーレ判定に失敗した場合") {
-            then("フィナーレ確認は表示されず、ステータス更新もされない") {
-                runTest {
-                    // Arrange
-                    val workId = "work1"
-                    val episodeId = "ep1"
-                    val fakePrograms = createTestProgram(workId, episodeId)
-
-                    coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
-                    coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
-                    coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
-                        com.zelretch.aniiiiict.domain.usecase.FinaleState.UNKNOWN
-                    )
-
-                    // Act & Assert
-                    viewModel.uiState.test {
-                        skipItems(1) // 初期状態をスキップ
-                        viewModel.refresh()
-
-                        viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
-
-                        // recordEpisode内のisLoading=true, falseの遷移を待つ
-                        skipItems(1)
-                        awaitItem().isLoading shouldBe true
-                        val finalState = awaitItem()
-                        finalState.isLoading shouldBe false
-
-                        // フィナーレ確認が表示されていないことを確認
-                        finalState.showFinaleConfirmationForWorkId shouldBe null
-
-                        coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
-                    }
+            // When & Then
+            runTest(dispatcher) {
+                viewModel.uiState.test {
+                    awaitItem() // 初期値を必ず受け取る
+                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+                    dispatcher.scheduler.advanceUntilIdle()
+                    awaitItem() // 状態遷移1
+                    val errorState = awaitItem() // 状態遷移2
+                    assertEquals("処理中にエラーが発生しました", errorState.error)
+                    assertFalse(errorState.isLoading)
                 }
             }
         }
     }
-})
+
+    @Nested
+    @DisplayName("フィナーレ判定ロジック")
+    inner class FinaleJudgment {
+
+        @Test
+        @DisplayName("最終話を記録し確認ダイアログでいいえを選択するとステータスは更新されずダイアログが閉じる")
+        fun finaleDialogNo() = runTest {
+            // Given
+            val workId = "work-finale-no"
+            val episodeId = "ep-final-12-no"
+            val fakePrograms = createTestProgram(workId, episodeId)
+            coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
+            coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
+                com.zelretch.aniiiiict.domain.usecase.FinaleState.FINALE_CONFIRMED
+            )
+
+            // When & Then
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.refresh()
+
+                viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
+
+                skipItems(1)
+                val finaleConfirmationState = awaitItem()
+                assertEquals(workId, finaleConfirmationState.showFinaleConfirmationForWorkId)
+
+                viewModel.dismissFinaleConfirmation()
+
+                val finalState = awaitItem()
+                assertNull(finalState.showFinaleConfirmationForWorkId)
+
+                coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
+            }
+        }
+
+        @Test
+        @DisplayName("フィナーレ判定に失敗した場合フィナーレ確認は表示されずステータス更新もされない")
+        fun finaleJudgmentFailure() = runTest {
+            // Given
+            val workId = "work-unk-ep"
+            val episodeId = "ep5"
+            val fakePrograms = createTestProgram(workId, episodeId)
+
+            coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
+            coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
+                com.zelretch.aniiiiict.domain.usecase.FinaleState.UNKNOWN
+            )
+
+            // When & Then
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.refresh()
+                viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
+
+                skipItems(1)
+                awaitItem() // isLoading=true
+                val finalState = awaitItem() // isLoading=false
+                assertFalse(finalState.isLoading)
+                assertNull(finalState.showFinaleConfirmationForWorkId)
+
+                coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
+            }
+        }
+
+        @Test
+        @DisplayName("フィナーレ判定UNKNOWNの場合ステータス更新されない")
+        fun finaleUnknown() = runTest {
+            // Given
+            val workId = "work1"
+            val episodeId = "ep1"
+            val fakePrograms = createTestProgram(workId, episodeId)
+
+            coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
+            coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
+                com.zelretch.aniiiiict.domain.usecase.FinaleState.UNKNOWN
+            )
+
+            // When & Then
+            viewModel.uiState.test {
+                skipItems(1)
+                viewModel.refresh()
+
+                viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
+
+                skipItems(1)
+                awaitItem() // isLoading=true
+                val finalState = awaitItem() // isLoading=false
+                assertFalse(finalState.isLoading)
+                assertNull(finalState.showFinaleConfirmationForWorkId)
+
+                coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
+            }
+        }
+    }
+}
 
 private fun createTestProgram(workId: String, episodeId: String): ProgramWithWork {
     val work = Work(

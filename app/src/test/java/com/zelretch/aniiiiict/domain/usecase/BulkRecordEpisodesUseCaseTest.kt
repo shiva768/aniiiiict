@@ -1,78 +1,105 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
-class BulkRecordEpisodesUseCaseTest : BehaviorSpec({
-    val watchEpisodeUseCase = mockk<WatchEpisodeUseCase>()
-    val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>()
-    val useCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase, judgeFinaleUseCase)
+@DisplayName("BulkRecordEpisodesUseCase")
+class BulkRecordEpisodesUseCaseTest {
 
-    given("複数エピソードの一括記録") {
-        `when`("全て成功し、フィナーレ情報なしの場合") {
-            then("Result.successになり、finaleResultはnull") {
-                val episodeIds = listOf("ep1", "ep2")
-                val workId = "w1"
-                val status = StatusState.WANNA_WATCH
-                coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var useCase: BulkRecordEpisodesUseCase
 
-                val result = runBlocking { useCase(episodeIds, workId, status) }
+    @BeforeEach
+    fun setup() {
+        watchEpisodeUseCase = mockk()
+        judgeFinaleUseCase = mockk()
+        useCase = BulkRecordEpisodesUseCase(watchEpisodeUseCase, judgeFinaleUseCase)
+    }
 
-                result.isSuccess shouldBe true
-                result.getOrNull()?.finaleResult shouldBe null
-            }
+    @Nested
+    @DisplayName("複数エピソードの一括記録")
+    inner class BulkRecord {
+
+        @Test
+        @DisplayName("全て成功しフィナーレ情報なしの場合Result.successでfinaleResultはnull")
+        fun withoutFinale() = runTest {
+            // Given
+            val episodeIds = listOf("ep1", "ep2")
+            val workId = "w1"
+            val status = StatusState.WANNA_WATCH
+            coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+
+            // When
+            val result = useCase(episodeIds, workId, status)
+
+            // Then
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrNull()?.finaleResult)
         }
 
-        `when`("全て成功し、フィナーレ判定ありの場合") {
-            then("Result.successになり、finaleResultが含まれる") {
-                val episodeIds = listOf("ep1", "ep2")
-                val workId = "w1"
-                val status = StatusState.WANNA_WATCH
-                val malAnimeId = 123
-                val lastEpisodeNumber = 12
-                val finaleResult = JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
+        @Test
+        @DisplayName("全て成功しフィナーレ判定ありの場合Result.successでfinaleResultが含まれる")
+        fun withFinale() = runTest {
+            // Given
+            val episodeIds = listOf("ep1", "ep2")
+            val workId = "w1"
+            val status = StatusState.WANNA_WATCH
+            val malAnimeId = 123
+            val lastEpisodeNumber = 12
+            val finaleResult = JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
 
-                coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
-                coEvery { judgeFinaleUseCase(lastEpisodeNumber, malAnimeId) } returns finaleResult
+            coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase(lastEpisodeNumber, malAnimeId) } returns finaleResult
 
-                val result = runBlocking {
-                    useCase(episodeIds, workId, status, malAnimeId, lastEpisodeNumber)
-                }
+            // When
+            val result = useCase(episodeIds, workId, status, malAnimeId, lastEpisodeNumber)
 
-                result.isSuccess shouldBe true
-                result.getOrNull()?.finaleResult shouldBe finaleResult
-            }
+            // Then
+            assertTrue(result.isSuccess)
+            assertEquals(finaleResult, result.getOrNull()?.finaleResult)
         }
 
-        `when`("途中で失敗する場合") {
-            then("Result.failureになる") {
-                val episodeIds = listOf("ep1", "ep2")
-                val workId = "w1"
-                val status = StatusState.WANNA_WATCH
-                coEvery { watchEpisodeUseCase("ep1", workId, status, true) } returns Result.success(Unit)
-                coEvery { watchEpisodeUseCase("ep2", workId, status, false) } returns Result.failure(Exception("fail"))
+        @Test
+        @DisplayName("途中で失敗する場合Result.failureを返す")
+        fun onFailure() = runTest {
+            // Given
+            val episodeIds = listOf("ep1", "ep2")
+            val workId = "w1"
+            val status = StatusState.WANNA_WATCH
+            coEvery { watchEpisodeUseCase("ep1", workId, status, true) } returns Result.success(Unit)
+            coEvery { watchEpisodeUseCase("ep2", workId, status, false) } returns Result.failure(Exception("fail"))
 
-                val result = runBlocking { useCase(episodeIds, workId, status) }
+            // When
+            val result = useCase(episodeIds, workId, status)
 
-                result.isFailure shouldBe true
-            }
+            // Then
+            assertTrue(result.isFailure)
         }
 
-        `when`("空のエピソードリストの場合") {
-            then("空のResultが返される") {
-                val episodeIds = emptyList<String>()
-                val workId = "w1"
-                val status = StatusState.WANNA_WATCH
+        @Test
+        @DisplayName("空のエピソードリストの場合空のResultが返される")
+        fun withEmptyList() = runTest {
+            // Given
+            val episodeIds = emptyList<String>()
+            val workId = "w1"
+            val status = StatusState.WANNA_WATCH
 
-                val result = runBlocking { useCase(episodeIds, workId, status) }
+            // When
+            val result = useCase(episodeIds, workId, status)
 
-                result.isSuccess shouldBe true
-                result.getOrNull()?.finaleResult shouldBe null
-            }
+            // Then
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrNull()?.finaleResult)
         }
     }
-})
+}
