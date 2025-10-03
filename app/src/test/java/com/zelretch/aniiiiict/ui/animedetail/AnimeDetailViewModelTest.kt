@@ -12,72 +12,106 @@ import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
+@OptIn(ExperimentalCoroutinesApi::class)
+@DisplayName("AnimeDetailViewModel")
 class AnimeDetailViewModelTest {
 
+    private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var getAnimeDetailUseCase: GetAnimeDetailUseCase
     private lateinit var viewModel: AnimeDetailViewModel
 
-    @Before
+    @BeforeEach
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         getAnimeDetailUseCase = mockk()
         viewModel = AnimeDetailViewModel(getAnimeDetailUseCase)
     }
 
-    @Test
-    fun `loadAnimeDetail should update state with loading then success`() = runTest {
-        // Given
-        val programWithWork = createSampleProgramWithWork()
-        val animeDetailInfo = createSampleAnimeDetailInfo()
-
-        coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
-
-        // When
-        viewModel.loadAnimeDetail(programWithWork)
-
-        // Then
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertNotNull(state.animeDetailInfo)
-        assertEquals("テストアニメ", state.animeDetailInfo?.work?.title)
-        assertEquals(null, state.error)
+    @AfterEach
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
-    @Test
-    fun `loadAnimeDetail should update state with loading then error`() = runTest {
-        // Given
-        val programWithWork = createSampleProgramWithWork()
-        val errorMessage = "API Error"
+    @Nested
+    @DisplayName("初期状態")
+    inner class InitialState {
 
-        coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.failure(Exception(errorMessage))
+        @Test
+        @DisplayName("ローディング状態で初期化される")
+        fun ローディング状態で初期化される() {
+            // When
+            val initialState = viewModel.state.value
 
-        // When
-        viewModel.loadAnimeDetail(programWithWork)
-
-        // Then
-        val state = viewModel.state.value
-        assertFalse(state.isLoading)
-        assertEquals(null, state.animeDetailInfo)
-        assertTrue(state.error?.contains(errorMessage) == true)
+            // Then
+            assertTrue(initialState.isLoading)
+            assertNull(initialState.animeDetailInfo)
+            assertNull(initialState.error)
+        }
     }
 
-    @Test
-    fun `initial state should be loading`() {
-        // When
-        val initialState = viewModel.state.value
+    @Nested
+    @DisplayName("アニメ詳細の読み込み")
+    inner class LoadAnimeDetail {
 
-        // Then
-        assertTrue(initialState.isLoading)
-        assertEquals(null, initialState.animeDetailInfo)
-        assertEquals(null, initialState.error)
+        @Test
+        @DisplayName("成功時にUIStateが更新される")
+        fun 成功時にUIStateが更新される() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val animeDetailInfo = createSampleAnimeDetailInfo()
+
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
+
+            // When
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertNotNull(state.animeDetailInfo)
+            assertEquals("テストアニメ", state.animeDetailInfo?.work?.title)
+            assertNull(state.error)
+        }
+
+        @Test
+        @DisplayName("失敗時にエラーメッセージが表示される")
+        fun 失敗時にエラーメッセージが表示される() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.failure(Exception("API Error"))
+
+            // When
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertNull(state.animeDetailInfo)
+            // BaseViewModelのErrorHandler経由でメッセージが変換される
+            assertNotNull(state.error)
+            assertTrue(state.error?.contains("処理中にエラーが発生しました") == true)
+        }
     }
 
     private fun createSampleProgramWithWork(): ProgramWithWork {

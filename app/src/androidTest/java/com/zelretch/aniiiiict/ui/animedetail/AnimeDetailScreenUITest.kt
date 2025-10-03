@@ -40,7 +40,7 @@ class AnimeDetailScreenUITest {
     fun 初期状態でローディング表示される() {
         // Given: ローディング中のUIState
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(isLoading = true)
+            state = AnimeDetailUiState(isLoading = true)
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -67,7 +67,7 @@ class AnimeDetailScreenUITest {
             imageUrl = "https://example.com/image.jpg"
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(
+            state = AnimeDetailUiState(
                 isLoading = false,
                 animeDetailInfo = animeDetailInfo
             )
@@ -95,7 +95,7 @@ class AnimeDetailScreenUITest {
         // Given: エラー状態のUIState
         val errorMessage = "アニメ詳細情報の取得に失敗しました"
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(
+            state = AnimeDetailUiState(
                 isLoading = false,
                 error = errorMessage
             )
@@ -132,7 +132,7 @@ class AnimeDetailScreenUITest {
             malInfo = malInfo
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(
+            state = AnimeDetailUiState(
                 isLoading = false,
                 animeDetailInfo = animeDetailInfo
             )
@@ -165,7 +165,7 @@ class AnimeDetailScreenUITest {
             wikipediaUrl = "https://ja.wikipedia.org/wiki/テストアニメ"
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(
+            state = AnimeDetailUiState(
                 isLoading = false,
                 animeDetailInfo = animeDetailInfo
             )
@@ -205,7 +205,7 @@ class AnimeDetailScreenUITest {
             programs = listOf(mockProgram)
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(
+            state = AnimeDetailUiState(
                 isLoading = false,
                 animeDetailInfo = animeDetailInfo
             )
@@ -252,7 +252,7 @@ class AnimeDetailScreenUITest {
             seriesList = listOf(mockSeries)
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailState(
+            state = AnimeDetailUiState(
                 isLoading = false,
                 animeDetailInfo = animeDetailInfo
             )
@@ -279,7 +279,7 @@ class AnimeDetailScreenUITest {
 
     // Helper functions
 
-    private fun createMockViewModel(state: AnimeDetailState): AnimeDetailViewModel = mockk<AnimeDetailViewModel> {
+    private fun createMockViewModel(state: AnimeDetailUiState): AnimeDetailViewModel = mockk<AnimeDetailViewModel> {
         coEvery { this@mockk.state } returns MutableStateFlow(state)
         coEvery { loadAnimeDetail(any()) } returns Unit
     }

@@ -16,11 +16,14 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 /**
@@ -32,123 +35,138 @@ import java.time.LocalDateTime
  * - Do NOT mock domain UseCases
  * - Prefer verifying outcomes rather than internal method calls
  */
+@DisplayName("アニメ詳細機能の統合テスト")
 class AnimeDetailIntegrationTest {
 
     private lateinit var annictRepository: AnnictRepository
     private lateinit var myAnimeListRepository: MyAnimeListRepository
     private lateinit var getAnimeDetailUseCase: GetAnimeDetailUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         annictRepository = mockk()
         myAnimeListRepository = mockk()
         getAnimeDetailUseCase = GetAnimeDetailUseCase(annictRepository, myAnimeListRepository)
     }
 
-    @Test
-    fun `should successfully integrate Annict and MyAnimeList data`() = runTest {
-        // Given
-        val workId = "test-work-id"
-        val malAnimeId = "12345"
-        val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
+    @Nested
+    @DisplayName("データ統合")
+    inner class DataIntegration {
 
-        val mockAnnictDetail = createMockAnnictDetail(workId)
-        val mockMalInfo = createMockMalInfo(malAnimeId.toInt())
+        @Test
+        @DisplayName("AnnictとMyAnimeListのデータを統合して取得できる")
+        fun AnnictとMyAnimeListのデータを統合して取得できる() = runTest {
+            // Given
+            val workId = "test-work-id"
+            val malAnimeId = "12345"
+            val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
 
-        coEvery { annictRepository.getWorkDetail(workId) } returns Result.success(mockAnnictDetail)
-        coEvery { myAnimeListRepository.getAnimeDetail(malAnimeId.toInt()) } returns Result.success(mockMalInfo)
+            val mockAnnictDetail = createMockAnnictDetail(workId)
+            val mockMalInfo = createMockMalInfo(malAnimeId.toInt())
 
-        // When
-        val result = getAnimeDetailUseCase(programWithWork)
+            coEvery { annictRepository.getWorkDetail(workId) } returns Result.success(mockAnnictDetail)
+            coEvery { myAnimeListRepository.getAnimeDetail(malAnimeId.toInt()) } returns Result.success(mockMalInfo)
 
-        // Then
-        assertTrue(result.isSuccess)
-        val animeDetailInfo = result.getOrThrow()
+            // When
+            val result = getAnimeDetailUseCase(programWithWork)
 
-        // Verify integrated data
-        assertEquals(workId, animeDetailInfo.work.id)
-        assertEquals("テストアニメ", animeDetailInfo.work.title)
-        assertEquals(24, animeDetailInfo.episodeCount) // MyAnimeList優先
-        assertEquals("https://example.com/image.jpg", animeDetailInfo.imageUrl)
-        assertEquals("https://example.com/official", animeDetailInfo.officialSiteUrl)
-        assertEquals("https://ja.wikipedia.org/wiki/テストアニメ", animeDetailInfo.wikipediaUrl)
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrThrow()
 
-        // Verify MyAnimeList data integration
-        assertNotNull(animeDetailInfo.malInfo)
-        assertEquals(24, animeDetailInfo.malInfo?.numEpisodes)
-        assertEquals("currently_airing", animeDetailInfo.malInfo?.status)
+            // Verify integrated data
+            assertEquals(workId, animeDetailInfo.work.id)
+            assertEquals("テストアニメ", animeDetailInfo.work.title)
+            assertEquals(24, animeDetailInfo.episodeCount) // MyAnimeList優先
+            assertEquals("https://example.com/image.jpg", animeDetailInfo.imageUrl)
+            assertEquals("https://example.com/official", animeDetailInfo.officialSiteUrl)
+            assertEquals("https://ja.wikipedia.org/wiki/テストアニメ", animeDetailInfo.wikipediaUrl)
 
-        // Verify Annict-specific data
-        assertNotNull(animeDetailInfo.programs)
-        assertNotNull(animeDetailInfo.seriesList)
+            // Verify MyAnimeList data integration
+            assertNotNull(animeDetailInfo.malInfo)
+            assertEquals(24, animeDetailInfo.malInfo?.numEpisodes)
+            assertEquals("currently_airing", animeDetailInfo.malInfo?.status)
+
+            // Verify Annict-specific data
+            assertNotNull(animeDetailInfo.programs)
+            assertNotNull(animeDetailInfo.seriesList)
+        }
     }
 
-    @Test
-    fun `should handle MyAnimeList API failure gracefully`() = runTest {
-        // Given
-        val workId = "test-work-id"
-        val malAnimeId = "12345"
-        val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
+    @Nested
+    @DisplayName("エラーハンドリング")
+    inner class ErrorHandling {
 
-        val mockAnnictDetail = createMockAnnictDetail(workId)
+        @Test
+        @DisplayName("MyAnimeList APIの失敗を適切に処理できる")
+        fun MyAnimeList_APIの失敗を適切に処理できる() = runTest {
+            // Given
+            val workId = "test-work-id"
+            val malAnimeId = "12345"
+            val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
 
-        coEvery { annictRepository.getWorkDetail(workId) } returns Result.success(mockAnnictDetail)
-        coEvery { myAnimeListRepository.getAnimeDetail(malAnimeId.toInt()) } returns
-            Result.failure(Exception("MAL API Error"))
+            val mockAnnictDetail = createMockAnnictDetail(workId)
 
-        // When
-        val result = getAnimeDetailUseCase(programWithWork)
+            coEvery { annictRepository.getWorkDetail(workId) } returns Result.success(mockAnnictDetail)
+            coEvery { myAnimeListRepository.getAnimeDetail(malAnimeId.toInt()) } returns
+                Result.failure(Exception("MAL API Error"))
 
-        // Then
-        assertTrue(result.isSuccess)
-        val animeDetailInfo = result.getOrThrow()
+            // When
+            val result = getAnimeDetailUseCase(programWithWork)
 
-        // Should fallback to Annict data
-        assertEquals(workId, animeDetailInfo.work.id)
-        assertEquals(12, animeDetailInfo.episodeCount) // Annictの値を使用
-        assertEquals("https://example.com/image.jpg", animeDetailInfo.imageUrl)
-        assertEquals(null, animeDetailInfo.malInfo) // MAL情報は取得失敗
-    }
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrThrow()
 
-    @Test
-    fun `should handle Annict API failure gracefully`() = runTest {
-        // Given
-        val workId = "test-work-id"
-        val malAnimeId = "12345"
-        val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
+            // Should fallback to Annict data
+            assertEquals(workId, animeDetailInfo.work.id)
+            assertEquals(12, animeDetailInfo.episodeCount) // Annictの値を使用
+            assertEquals("https://example.com/image.jpg", animeDetailInfo.imageUrl)
+            assertNull(animeDetailInfo.malInfo) // MAL情報は取得失敗
+        }
 
-        val mockMalInfo = createMockMalInfo(malAnimeId.toInt())
+        @Test
+        @DisplayName("Annict APIの失敗時はエラーを返す")
+        fun Annict_APIの失敗時はエラーを返す() = runTest {
+            // Given
+            val workId = "test-work-id"
+            val malAnimeId = "12345"
+            val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
 
-        coEvery { annictRepository.getWorkDetail(workId) } returns Result.failure(Exception("Annict API Error"))
-        coEvery { myAnimeListRepository.getAnimeDetail(malAnimeId.toInt()) } returns Result.success(mockMalInfo)
+            val mockMalInfo = createMockMalInfo(malAnimeId.toInt())
 
-        // When
-        val result = getAnimeDetailUseCase(programWithWork)
+            coEvery { annictRepository.getWorkDetail(workId) } returns Result.failure(Exception("Annict API Error"))
+            coEvery { myAnimeListRepository.getAnimeDetail(malAnimeId.toInt()) } returns Result.success(mockMalInfo)
 
-        // Then
-        assertTrue(result.isFailure) // Annict APIは必須なので失敗
-    }
+            // When
+            val result = getAnimeDetailUseCase(programWithWork)
 
-    @Test
-    fun `should handle missing malAnimeId gracefully`() = runTest {
-        // Given
-        val workId = "test-work-id"
-        val programWithWork = createSampleProgramWithWork(workId, null) // malAnimeIdなし
+            // Then
+            assertTrue(result.isFailure) // Annict APIは必須なので失敗
+        }
 
-        val mockAnnictDetail = createMockAnnictDetail(workId)
+        @Test
+        @DisplayName("malAnimeIdがnullの場合も正常に処理できる")
+        fun malAnimeIdがnullの場合も正常に処理できる() = runTest {
+            // Given
+            val workId = "test-work-id"
+            val programWithWork = createSampleProgramWithWork(workId, null) // malAnimeIdなし
 
-        coEvery { annictRepository.getWorkDetail(workId) } returns Result.success(mockAnnictDetail)
+            val mockAnnictDetail = createMockAnnictDetail(workId)
 
-        // When
-        val result = getAnimeDetailUseCase(programWithWork)
+            coEvery { annictRepository.getWorkDetail(workId) } returns Result.success(mockAnnictDetail)
 
-        // Then
-        assertTrue(result.isSuccess)
-        val animeDetailInfo = result.getOrThrow()
+            // When
+            val result = getAnimeDetailUseCase(programWithWork)
 
-        assertEquals(workId, animeDetailInfo.work.id)
-        assertEquals(12, animeDetailInfo.episodeCount) // Annictの値
-        assertEquals(null, animeDetailInfo.malInfo) // MAL情報は取得しない
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrThrow()
+
+            assertEquals(workId, animeDetailInfo.work.id)
+            assertEquals(12, animeDetailInfo.episodeCount) // Annictの値
+            assertNull(animeDetailInfo.malInfo) // MAL情報は取得しない
+        }
     }
 
     private fun createSampleProgramWithWork(workId: String, malAnimeId: String?): ProgramWithWork {

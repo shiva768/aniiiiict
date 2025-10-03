@@ -44,10 +44,8 @@ import com.annict.WorkDetailQuery
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 
-private const val IMAGE_SIZE_DP = 120
-private const val CARD_ELEVATION_DP = 2
-private const val IMAGE_WEIGHT = 0.4f
-private const val INFO_WEIGHT = 0.6f
+private const val IMAGE_SIZE = 120
+private const val CARD_ELEVATION = 2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,15 +152,13 @@ private fun AnimeDetailHeader(animeDetailInfo: AnimeDetailInfo, modifier: Modifi
         AsyncImage(
             model = animeDetailInfo.imageUrl,
             contentDescription = animeDetailInfo.work.title,
-            modifier = Modifier
-                .size(IMAGE_SIZE_DP.dp)
-                .weight(IMAGE_WEIGHT),
+            modifier = Modifier.size(IMAGE_SIZE.dp),
             contentScale = ContentScale.Crop
         )
 
         // 基本情報
         Column(
-            modifier = Modifier.weight(INFO_WEIGHT),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
@@ -192,7 +188,7 @@ private fun AnimeDetailHeader(animeDetailInfo: AnimeDetailInfo, modifier: Modifi
 private fun AnimeDetailBasicInfo(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION_DP.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -240,7 +236,7 @@ private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier:
     if (links.isNotEmpty()) {
         Card(
             modifier = modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION_DP.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -293,7 +289,7 @@ private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION_DP.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -324,7 +320,7 @@ private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier
 private fun AnimeDetailRelatedWorks(seriesList: List<WorkDetailQuery.Node2?>, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION_DP.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
