@@ -3,7 +3,7 @@ package com.zelretch.aniiiiict.data.repository
 import com.zelretch.aniiiiict.BuildConfig
 import com.zelretch.aniiiiict.data.api.MyAnimeListApi
 import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
+import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,7 +28,7 @@ class MyAnimeListRepositoryImpl @Inject constructor(
         } else {
             throw IOException("API request failed: ${response.code()} ${response.message()}")
         }
-    }.onFailure { e ->
-        ErrorHandler.handleError(e, "MyAnimeListRepositoryImpl", "getAnimeDetail")
+        }.onFailure { e ->
+        Timber.e(e, "MyAnimeListRepositoryImpl.getAnimeDetail failed")
     }
 }
