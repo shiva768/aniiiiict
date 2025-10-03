@@ -193,9 +193,9 @@ class AnimeDetailScreenIntegrationTest {
             !viewModel.state.value.isLoading
         }
 
-        // Assert: エラーメッセージが表示される（部分一致）
+        // Assert: エラーメッセージが表示される（BaseViewModelのErrorHandler経由）
         testRule.composeTestRule.onNodeWithText(
-            "アニメ詳細情報の取得に失敗しました",
+            "処理中にエラーが発生しました",
             substring = true
         ).assertIsDisplayed()
     }
