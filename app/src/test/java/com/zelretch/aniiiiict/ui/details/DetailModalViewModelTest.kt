@@ -11,6 +11,7 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -38,6 +39,7 @@ class DetailModalViewModelTest {
     private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var viewModel: DetailModalViewModel
 
@@ -48,11 +50,13 @@ class DetailModalViewModelTest {
         watchEpisodeUseCase = mockk()
         updateViewStateUseCase = mockk()
         judgeFinaleUseCase = mockk()
+        errorMapper = mockk(relaxed = true)
         viewModel = DetailModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
     }
 

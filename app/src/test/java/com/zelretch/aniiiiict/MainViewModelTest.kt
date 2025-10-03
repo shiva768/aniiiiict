@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.browser.customtabs.CustomTabsIntent
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -34,6 +35,7 @@ class MainViewModelTest {
     private lateinit var context: Context
     private lateinit var customTabsIntent: CustomTabsIntent
     private lateinit var customTabsIntentFactory: CustomTabsIntentFactory
+    private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: MainViewModel
 
     @BeforeEach
@@ -44,12 +46,13 @@ class MainViewModelTest {
         context = mockk()
         customTabsIntent = mockk(relaxUnitFun = true)
         customTabsIntentFactory = mockk()
+        errorMapper = mockk(relaxed = true)
         every { customTabsIntentFactory.create() } returns customTabsIntent
         every { customTabsIntent.launchUrl(any(), any()) } just Runs
 
         coEvery { authUseCase.isAuthenticated() } returns false
 
-        viewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
+        viewModel = MainViewModel(authUseCase, customTabsIntentFactory, errorMapper, context)
     }
 
     @AfterEach
@@ -81,7 +84,7 @@ class MainViewModelTest {
             coEvery { authUseCase.isAuthenticated() } returns true
 
             // When
-            val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, context)
+            val newViewModel = MainViewModel(authUseCase, customTabsIntentFactory, errorMapper, context)
             testDispatcher.scheduler.advanceUntilIdle()
 
             // Then
@@ -212,40 +215,6 @@ class MainViewModelTest {
             assertFalse(viewModel.uiState.value.isLoading) // After completion, loading should be false
             assertTrue(viewModel.uiState.value.isAuthenticated)
             coVerify { authUseCase.isAuthenticated() }
-        }
-    }
-
-    @Nested
-    @DisplayName("エラー処理")
-    inner class ErrorHandling {
-
-        @Test
-        @DisplayName("エラーをクリアできる")
-        fun clearError() {
-            // Given
-            viewModel.updateErrorState("テストエラー")
-            assertNotNull(viewModel.uiState.value.error)
-
-            // When
-            viewModel.clearError()
-
-            // Then
-            assertNull(viewModel.uiState.value.error)
-        }
-    }
-
-    @Nested
-    @DisplayName("ローディング状態")
-    inner class LoadingState {
-
-        @Test
-        @DisplayName("ローディング状態を更新できる")
-        fun updateLoading() {
-            // When
-            viewModel.updateLoadingState(true)
-
-            // Then
-            assertTrue(viewModel.uiState.value.isLoading)
         }
     }
 

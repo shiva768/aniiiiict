@@ -10,7 +10,10 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
+import com.zelretch.aniiiiict.ui.base.UiState
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,9 +23,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -36,13 +37,15 @@ class AnimeDetailViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var getAnimeDetailUseCase: GetAnimeDetailUseCase
+    private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: AnimeDetailViewModel
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         getAnimeDetailUseCase = mockk()
-        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase)
+        errorMapper = mockk(relaxed = true)
+        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase, errorMapper)
     }
 
     @AfterEach
@@ -58,12 +61,10 @@ class AnimeDetailViewModelTest {
         @DisplayName("ローディング状態で初期化される")
         fun initialLoading() {
             // When
-            val initialState = viewModel.state.value
+            val initialState = viewModel.uiState.value
 
             // Then
-            assertTrue(initialState.isLoading)
-            assertNull(initialState.animeDetailInfo)
-            assertNull(initialState.error)
+            assertTrue(initialState is UiState.Loading)
         }
     }
 
@@ -77,6 +78,7 @@ class AnimeDetailViewModelTest {
             // Given
             val programWithWork = createSampleProgramWithWork()
             val animeDetailInfo = createSampleAnimeDetailInfo()
+            every { errorMapper.toUserMessage(any(), any()) } returns "エラーメッセージ"
 
             coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
 
@@ -85,11 +87,10 @@ class AnimeDetailViewModelTest {
             testScheduler.advanceUntilIdle()
 
             // Then
-            val state = viewModel.state.value
-            assertFalse(state.isLoading)
-            assertNotNull(state.animeDetailInfo)
-            assertEquals("テストアニメ", state.animeDetailInfo?.work?.title)
-            assertNull(state.error)
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertNotNull((state as UiState.Success).data.animeDetailInfo)
+            assertEquals("テストアニメ", state.data.animeDetailInfo.work.title)
         }
 
         @Test
@@ -97,6 +98,7 @@ class AnimeDetailViewModelTest {
         fun onError() = runTest {
             // Given
             val programWithWork = createSampleProgramWithWork()
+            every { errorMapper.toUserMessage(any(), any()) } returns "エラーが発生しました"
 
             coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.failure(Exception("API Error"))
 
@@ -105,12 +107,9 @@ class AnimeDetailViewModelTest {
             testScheduler.advanceUntilIdle()
 
             // Then
-            val state = viewModel.state.value
-            assertFalse(state.isLoading)
-            assertNull(state.animeDetailInfo)
-            // BaseViewModelのErrorHandler経由でメッセージが変換される
-            assertNotNull(state.error)
-            assertTrue(state.error?.contains("処理中にエラーが発生しました") == true)
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Error)
+            assertEquals("エラーが発生しました", (state as UiState.Error).message)
         }
     }
 

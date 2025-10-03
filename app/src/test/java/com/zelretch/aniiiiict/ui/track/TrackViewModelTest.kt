@@ -19,6 +19,7 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -54,6 +55,7 @@ class TrackViewModelTest {
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var filterProgramsUseCase: FilterProgramsUseCase
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: TrackViewModel
 
     @BeforeEach
@@ -69,6 +71,7 @@ class TrackViewModelTest {
         updateViewStateUseCase = mockk()
         filterProgramsUseCase = mockk()
         judgeFinaleUseCase = mockk()
+        errorMapper = mockk(relaxed = true)
         mockk<Context>(relaxed = true)
 
         // デフォルトで空リストを返すflow
@@ -87,7 +90,8 @@ class TrackViewModelTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             filterPreferences,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
         dispatcher.scheduler.advanceUntilIdle()
     }
@@ -103,7 +107,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("正常にロードできる場合UIStateにプログラムがセットされる")
-        fun onSuccess() = runTest {
+        fun onSuccess() = runTest(dispatcher) {
             // Given
             val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
             coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
@@ -115,42 +119,34 @@ class TrackViewModelTest {
                 emptyList()
             )
 
-            // When & Then
-            runTest(dispatcher) {
-                viewModel.uiState.test {
-                    awaitItem() // 初期値を必ず受け取る
-                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
-                    dispatcher.scheduler.advanceUntilIdle()
-                    awaitItem() // 状態遷移1
-                    awaitItem() // 状態遷移2
-                    val updated = awaitItem() // 状態遷移3
-                    assertEquals(fakePrograms, updated.programs)
-                    assertFalse(updated.isLoading)
-                    assertNull(updated.error)
-                }
-            }
+            // When
+            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val updated = viewModel.uiState.value
+            assertEquals(fakePrograms, updated.programs)
+            assertFalse(updated.isLoading)
+            assertNull(updated.error)
         }
 
         @Test
         @DisplayName("例外が発生する場合UIStateにエラーがセットされる")
         fun onException() = runTest(dispatcher) {
             // Given
+            every { errorMapper.toUserMessage(any(), any()) } returns "処理中にエラーが発生しました"
             coEvery { loadProgramsUseCase.invoke() } returns flow {
                 throw LoadProgramsException("error")
             }
 
-            // When & Then
-            runTest(dispatcher) {
-                viewModel.uiState.test {
-                    awaitItem() // 初期値を必ず受け取る
-                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
-                    dispatcher.scheduler.advanceUntilIdle()
-                    awaitItem() // 状態遷移1
-                    val errorState = awaitItem() // 状態遷移2
-                    assertEquals("処理中にエラーが発生しました", errorState.error)
-                    assertFalse(errorState.isLoading)
-                }
-            }
+            // When
+            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val errorState = viewModel.uiState.value
+            assertFalse(errorState.isLoading)
+            assertEquals("処理中にエラーが発生しました", errorState.error)
         }
     }
 

@@ -21,6 +21,7 @@ import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -94,6 +95,10 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
+    val errorMapper: ErrorMapper = mockk<ErrorMapper>(relaxed = true)
+
+    @BindValue
+    @JvmField
     val customTabsIntentFactory: CustomTabsIntentFactory = mockk<CustomTabsIntentFactory>().apply {
         every { create() } returns mockk(relaxed = true)
     }
@@ -106,7 +111,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                errorMapper
             )
 
         // 2エピソードのProgramWithWork（WATCHING）
@@ -155,7 +161,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                errorMapper
             )
 
         val work = Work(
@@ -200,7 +207,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                errorMapper
             )
 
         val work = Work(
@@ -244,7 +252,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                errorMapper
             )
 
         val work = Work(
@@ -290,7 +299,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                errorMapper
             )
 
         val work = Work(
@@ -339,7 +349,8 @@ class DetailModalIntegrationTest {
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
-                judgeFinaleUseCase
+                judgeFinaleUseCase,
+                errorMapper
             )
 
         // MAL 側で finished_airing を返すようにモック

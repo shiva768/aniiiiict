@@ -4,7 +4,6 @@ import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.coroutineScope
 import timber.log.Timber
 import javax.inject.Inject
@@ -61,7 +60,6 @@ class GetAnimeDetailUseCase @Inject constructor(
             )
         }
     }.onFailure { e ->
-        Timber.e(e, "アニメ詳細情報の取得に失敗しました")
-        ErrorHandler.handleError(e, "GetAnimeDetailUseCase", "invoke")
+        Timber.e(e, "GetAnimeDetailUseCase.invoke failed")
     }
 }

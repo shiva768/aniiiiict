@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(ls)",
+      "Shell(git)",
+      "Shell(./gradlew)",
+      "Shell(awk)",
+      "Shell(tail)",
+      "Shell(head)",
+      "Read(src/**/*.ts)",
+      "Write(package.json)"
+    ],
+    "deny": ["Shell(rm)", "Read(.env*)", "Write(**/*.key)"]
+  }
+}

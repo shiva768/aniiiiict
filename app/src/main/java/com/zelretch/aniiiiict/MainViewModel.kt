@@ -2,13 +2,12 @@ package com.zelretch.aniiiiict
 
 import android.content.Context
 import androidx.core.net.toUri
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiict.ui.MainViewModelContract
-import com.zelretch.aniiiiict.ui.base.BaseUiState
-import com.zelretch.aniiiiict.ui.base.BaseViewModel
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -21,19 +20,32 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * メイン画面のUI状態
+ */
 data class MainUiState(
-    override val isLoading: Boolean = false,
-    override val error: String? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
     val isAuthenticating: Boolean = false,
     val isAuthenticated: Boolean = false
-) : BaseUiState(isLoading, error)
+)
 
+/**
+ * メイン画面のViewModel
+ *
+ * Now in Android パターンへの移行:
+ * - BaseViewModelを削除し、明示的なエラーハンドリング
+ * - ErrorMapperによるユーザー向けメッセージ変換
+ *
+ * Note: 認証フローの複雑さから、現時点では従来のUiStateパターンを維持。
+ */
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val annictAuthUseCase: AnnictAuthUseCase,
     private val customTabsIntentFactory: CustomTabsIntentFactory,
+    private val errorMapper: ErrorMapper,
     @param:ApplicationContext private val context: Context
-) : BaseViewModel(), MainViewModelContract {
+) : ViewModel(), MainViewModelContract {
 
     companion object {
         private const val AUTH_URL_FETCH_DELAY_MS = 200L
@@ -50,14 +62,6 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             checkAuthState()
         }
-    }
-
-    override fun updateLoadingState(isLoading: Boolean) {
-        internalUiState.update { it.copy(isLoading = isLoading) }
-    }
-
-    override fun updateErrorState(error: String?) {
-        internalUiState.update { it.copy(error = error) }
     }
 
     // 認証状態の確認（内部メソッド）
@@ -83,13 +87,14 @@ class MainViewModel @Inject constructor(
                     // 自動認証は行わず、ユーザーが明示的に認証を開始するのを待つ
                 }
             } catch (e: Exception) {
-                val msg = ErrorHandler.handleError(e, "MainViewModel", "checkAuthState")
+                val msg = errorMapper.toUserMessage(e, "MainViewModel.checkAuthState")
                 internalUiState.update {
                     it.copy(
                         error = msg,
                         isLoading = false
                     )
                 }
+                Timber.e(e, "認証状態確認に失敗: $msg")
             }
         }
     }
@@ -111,7 +116,7 @@ class MainViewModel @Inject constructor(
                 val customTabsIntent = customTabsIntentFactory.create()
                 customTabsIntent.launchUrl(context, authUrl.toUri())
             } catch (e: Exception) {
-                val msg = ErrorHandler.handleError(e, "MainViewModel", "startAuth")
+                val msg = errorMapper.toUserMessage(e, "MainViewModel.startAuth")
                 internalUiState.update {
                     it.copy(
                         error = msg,
@@ -119,6 +124,7 @@ class MainViewModel @Inject constructor(
                         isAuthenticating = false
                     )
                 }
+                Timber.e(e, "認証開始に失敗: $msg")
             }
         }
     }
@@ -165,7 +171,7 @@ class MainViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                val msg = ErrorHandler.handleError(e, "MainViewModel", "handleAuthCallback")
+                val msg = errorMapper.toUserMessage(e, "MainViewModel.handleAuthCallback")
                 delay(AUTH_CALLBACK_DELAY_MS)
                 internalUiState.update {
                     it.copy(
@@ -174,6 +180,7 @@ class MainViewModel @Inject constructor(
                         isAuthenticating = false
                     )
                 }
+                Timber.e(e, "認証コールバック処理に失敗: $msg")
             }
         }
     }

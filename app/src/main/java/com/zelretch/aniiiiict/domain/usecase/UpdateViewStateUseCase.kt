@@ -2,7 +2,6 @@ package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -17,8 +16,8 @@ class UpdateViewStateUseCase @Inject constructor(
     }.fold(
         onSuccess = { Result.success(Unit) },
         onFailure = { e ->
-            val msg = ErrorHandler.handleError(e, "UpdateViewStateUseCase", "invoke")
-            Result.failure(Exception(msg))
+            Timber.e(e, "UpdateViewStateUseCase.invoke failed")
+            Result.failure(e)
         }
     )
 }

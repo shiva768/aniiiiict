@@ -9,9 +9,9 @@ import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.model.WorkImage as WorkImageModel
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -37,7 +37,7 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
                 // Convert to LocalDateTime
                 jstDateTime.toLocalDateTime()
             } catch (e: Exception) {
-                ErrorHandler.handleError(e, "LoadProgramsUseCase", "processProgramsResponse")
+                Timber.e(e, "LoadProgramsUseCase: Failed to parse startedAt time")
                 LocalDateTime.now() // パースに失敗した場合は現在時刻を使用
             }
 

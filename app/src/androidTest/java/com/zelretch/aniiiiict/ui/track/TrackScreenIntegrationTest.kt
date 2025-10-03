@@ -26,6 +26,7 @@ import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -89,6 +90,10 @@ class TrackScreenIntegrationTest {
     @JvmField
     val mockCustomTabsIntentFactory: CustomTabsIntentFactory = mockk(relaxed = true)
 
+    @BindValue
+    @JvmField
+    val errorMapper: ErrorMapper = mockk(relaxed = true)
+
     // --- Injected UseCases ---
     @Inject
     lateinit var loadProgramsUseCase: LoadProgramsUseCase
@@ -124,7 +129,8 @@ class TrackScreenIntegrationTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             mockFilterPreferences,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
 
         // テスト用のデータを作成
@@ -179,7 +185,8 @@ class TrackScreenIntegrationTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             mockFilterPreferences,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
 
         val initialState = TrackUiState()
@@ -220,7 +227,8 @@ class TrackScreenIntegrationTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             mockFilterPreferences,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
 
         // テスト用のデータを作成
@@ -330,7 +338,8 @@ class TrackScreenIntegrationTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             mockFilterPreferences,
-            finaleUseCase
+            finaleUseCase,
+            errorMapper
         )
 
         val initialState = TrackUiState(
@@ -435,7 +444,8 @@ class TrackScreenIntegrationTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             mockFilterPreferences,
-            notFinaleUseCase
+            notFinaleUseCase,
+            errorMapper
         )
 
         val initialState = TrackUiState(programs = listOf(pw), allPrograms = listOf(pw))
@@ -475,7 +485,8 @@ class TrackScreenIntegrationTest {
             updateViewStateUseCase,
             filterProgramsUseCase,
             mockFilterPreferences,
-            judgeFinaleUseCase
+            judgeFinaleUseCase,
+            errorMapper
         )
         val errorState = TrackUiState(error = "ネットワークエラー")
 
