@@ -1,12 +1,10 @@
 package com.zelretch.aniiiiict.ui.history
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
-import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.ui.base.launchWithMinLoadingTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,14 +41,13 @@ data class HistoryUiState(
  * - launchWithMinLoadingTimeで最小ローディング時間を保証
  * - ErrorMapperによるユーザー向けメッセージ変換
  *
- * TODO: 将来的にUiState<T>パターンへの完全移行を検討
+ * Note: 将来的にUiState<T>パターンへの完全移行を検討 (see #176)
  */
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val loadRecordsUseCase: LoadRecordsUseCase,
     private val searchRecordsUseCase: SearchRecordsUseCase,
-    private val deleteRecordUseCase: DeleteRecordUseCase,
-    private val errorMapper: ErrorMapper
+    private val deleteRecordUseCase: DeleteRecordUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()

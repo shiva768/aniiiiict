@@ -16,6 +16,14 @@ import javax.inject.Singleton
 @Singleton
 class ErrorMapper @Inject constructor() {
 
+    companion object {
+        private const val HTTP_BAD_REQUEST = 400
+        private const val HTTP_UNAUTHORIZED = 401
+        private const val HTTP_FORBIDDEN = 403
+        private const val HTTP_NOT_FOUND = 404
+        private const val HTTP_TOO_MANY_REQUESTS = 429
+    }
+
     /**
      * エラーをユーザー向けメッセージに変換する
      *
@@ -43,11 +51,11 @@ class ErrorMapper @Inject constructor() {
                 "サーバーで問題が発生しています。しばらく時間をおいてからお試しください"
 
             is DomainError.ApiError.ClientError -> when (error.statusCode) {
-                400 -> "リクエストが無効です"
-                401 -> "認証に失敗しました。再度ログインしてください"
-                403 -> "アクセスが拒否されました"
-                404 -> "データが見つかりませんでした"
-                429 -> "リクエストが多すぎます。しばらく時間をおいてからお試しください"
+                HTTP_BAD_REQUEST -> "リクエストが無効です"
+                HTTP_UNAUTHORIZED -> "認証に失敗しました。再度ログインしてください"
+                HTTP_FORBIDDEN -> "アクセスが拒否されました"
+                HTTP_NOT_FOUND -> "データが見つかりませんでした"
+                HTTP_TOO_MANY_REQUESTS -> "リクエストが多すぎます。しばらく時間をおいてからお試しください"
                 else -> "APIエラーが発生しました (HTTP ${error.statusCode})"
             }
 

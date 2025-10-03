@@ -6,7 +6,6 @@ import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiict.domain.usecase.RecordsResult
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
-import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -33,7 +32,6 @@ open class HistoryViewModelTest {
     private lateinit var loadRecordsUseCase: LoadRecordsUseCase
     private lateinit var searchRecordsUseCase: SearchRecordsUseCase
     private lateinit var deleteRecordUseCase: DeleteRecordUseCase
-    private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
     @BeforeEach
@@ -42,7 +40,6 @@ open class HistoryViewModelTest {
         loadRecordsUseCase = mockk()
         searchRecordsUseCase = mockk()
         deleteRecordUseCase = mockk()
-        errorMapper = mockk(relaxed = true)
     }
 
     @AfterEach
@@ -65,8 +62,7 @@ open class HistoryViewModelTest {
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase,
-                errorMapper
+                deleteRecordUseCase
             )
             val state = viewModel.uiState.first { !it.isLoading }
 
@@ -97,8 +93,7 @@ open class HistoryViewModelTest {
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase,
-                errorMapper
+                deleteRecordUseCase
             )
             viewModel.uiState.first { !it.isLoading }
 
@@ -132,8 +127,7 @@ open class HistoryViewModelTest {
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase,
-                errorMapper
+                deleteRecordUseCase
             )
             viewModel.uiState.first { !it.isLoading }
 
@@ -173,8 +167,7 @@ open class HistoryViewModelTest {
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase,
-                errorMapper
+                deleteRecordUseCase
             )
             viewModel.uiState.first { !it.isLoading }
             viewModel.updateSearchQuery("Anime")
@@ -216,8 +209,7 @@ open class HistoryViewModelTest {
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase,
-                errorMapper
+                deleteRecordUseCase
             )
             viewModel.uiState.first { !it.isLoading }
 
@@ -247,8 +239,7 @@ open class HistoryViewModelTest {
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase,
-                errorMapper
+                deleteRecordUseCase
             )
             val initialState = viewModel.uiState.first { !it.isLoading }
 

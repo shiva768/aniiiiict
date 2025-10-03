@@ -28,7 +28,7 @@ class MyAnimeListRepositoryImpl @Inject constructor(
         } else {
             throw IOException("API request failed: ${response.code()} ${response.message()}")
         }
-        }.onFailure { e ->
+    }.onFailure { e ->
         Timber.e(e, "MyAnimeListRepositoryImpl.getAnimeDetail failed")
     }
 }
