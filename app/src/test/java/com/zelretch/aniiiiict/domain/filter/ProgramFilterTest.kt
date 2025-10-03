@@ -7,8 +7,12 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 // テストヘルパー関数はトップレベルに移動
@@ -42,340 +46,550 @@ fun createProgramWithWork(
     return ProgramWithWork(listOf(program), program, work)
 }
 
-class ProgramFilterTest : BehaviorSpec({
-    val programFilter = ProgramFilter()
+@DisplayName("ProgramFilter")
+class ProgramFilterTest {
 
-    given("複数のProgramWithWorkがあるとき") {
-        `when`("extractAvailableFiltersを呼び出した場合") {
-            then("シーズンの並び順が正しい") {
-                val programs = listOf(
-                    createProgramWithWork(seasonName = SeasonName.SUMMER),
-                    createProgramWithWork(seasonName = SeasonName.WINTER),
-                    createProgramWithWork(seasonName = SeasonName.AUTUMN),
-                    createProgramWithWork(seasonName = SeasonName.SPRING)
-                )
-                val result = programFilter.extractAvailableFilters(programs)
-                result.seasons shouldBe listOf(
-                    SeasonName.WINTER,
-                    SeasonName.SPRING,
-                    SeasonName.SUMMER,
-                    SeasonName.AUTUMN
-                )
-            }
-        }
-        `when`("applyFiltersでシーズンフィルターを適用した場合") {
-            then("シーズンフィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(seasonName = SeasonName.WINTER),
-                    createProgramWithWork(seasonName = SeasonName.SPRING),
-                    createProgramWithWork(seasonName = SeasonName.SUMMER)
-                )
-                val filterState = FilterState(selectedSeason = setOf(SeasonName.WINTER, SeasonName.SUMMER))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-                result.map { it.work.seasonName }.toSet() shouldBe setOf(SeasonName.WINTER, SeasonName.SUMMER)
-            }
-            then("シーズンフィルターが空の場合は全てのプログラムを返す") {
-                val programs = listOf(
-                    createProgramWithWork(seasonName = SeasonName.WINTER),
-                    createProgramWithWork(seasonName = SeasonName.SPRING)
-                )
-                val filterState = FilterState(selectedSeason = emptySet())
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersでシーズンがnullのプログラムがある場合") {
-            then("シーズンがnullのプログラムはフィルターされない") {
-                val programs = listOf(
-                    createProgramWithWork(seasonName = null),
-                    createProgramWithWork(seasonName = SeasonName.WINTER)
-                )
-                val filterState = FilterState(selectedSeason = setOf(SeasonName.WINTER))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 1
-                result[0].work.seasonName shouldBe SeasonName.WINTER
-            }
-        }
-        `when`("applyFiltersでメディアフィルターを適用した場合") {
-            then("メディアフィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(media = "TV"),
-                    createProgramWithWork(media = "MOVIE"),
-                    createProgramWithWork(media = "OVA")
-                )
-                val filterState = FilterState(selectedMedia = setOf("TV", "OVA"))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-                result.map { it.work.media }.toSet() shouldBe setOf("TV", "OVA")
-            }
-            then("メディアフィルターが空の場合は全てのプログラムを返す") {
-                val programs = listOf(
-                    createProgramWithWork(media = "TV"),
-                    createProgramWithWork(media = "MOVIE")
-                )
-                val filterState = FilterState(selectedMedia = emptySet())
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersで年フィルターを適用した場合") {
-            then("年フィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(seasonYear = 2023),
-                    createProgramWithWork(seasonYear = 2024),
-                    createProgramWithWork(seasonYear = 2025)
-                )
-                val filterState = FilterState(selectedYear = setOf(2023, 2025))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-                result.map { it.work.seasonYear }.toSet() shouldBe setOf(2023, 2025)
-            }
-            then("年フィルターが空の場合は全てのプログラムを返す") {
-                val programs = listOf(
-                    createProgramWithWork(seasonYear = 2023),
-                    createProgramWithWork(seasonYear = 2024)
-                )
-                val filterState = FilterState(selectedYear = emptySet())
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersで年フィルターの境界値をテストする場合") {
-            then("年フィルターの境界値が正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(seasonYear = 2023),
-                    createProgramWithWork(seasonYear = 2024),
-                    createProgramWithWork(seasonYear = 2025)
-                )
-                val filterState = FilterState(selectedYear = setOf(2024))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 1
-                result[0].work.seasonYear shouldBe 2024
-            }
-        }
-        `when`("applyFiltersでチャンネルフィルターを適用した場合") {
-            then("チャンネルフィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(channelName = "TOKYO MX"),
-                    createProgramWithWork(channelName = "BS11"),
-                    createProgramWithWork(channelName = "AT-X")
-                )
-                val filterState = FilterState(selectedChannel = setOf("TOKYO MX", "AT-X"))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-                result.map { it.firstProgram.channel.name }.toSet() shouldBe setOf("TOKYO MX", "AT-X")
-            }
-            then("チャンネルフィルターが空の場合は全てのプログラムを返す") {
-                val programs = listOf(
-                    createProgramWithWork(channelName = "TOKYO MX"),
-                    createProgramWithWork(channelName = "BS11")
-                )
-                val filterState = FilterState(selectedChannel = emptySet())
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersでステータスフィルターを適用した場合") {
-            then("ステータスフィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(status = StatusState.WATCHING),
-                    createProgramWithWork(status = StatusState.WANNA_WATCH),
-                    createProgramWithWork(status = StatusState.NO_STATE)
-                )
-                val filterState = FilterState(selectedStatus = setOf(StatusState.WATCHING))
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 1
-                result[0].work.viewerStatusState shouldBe StatusState.WATCHING
-            }
-            then("ステータスフィルターが空の場合は全てのプログラムを返す") {
-                val programs = listOf(
-                    createProgramWithWork(status = StatusState.WATCHING),
-                    createProgramWithWork(status = StatusState.WANNA_WATCH)
-                )
-                val filterState = FilterState(selectedStatus = emptySet())
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersで検索フィルターを適用した場合") {
-            then("検索フィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(title = "テスト作品1"),
-                    createProgramWithWork(title = "作品2"),
-                    createProgramWithWork(title = "テスト作品3")
-                )
-                val filterState = FilterState(searchQuery = "テスト")
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-                result.map { it.work.title }.toSet() shouldBe setOf("テスト作品1", "テスト作品3")
-            }
-            then("検索フィルターが空の場合は全てのプログラムを返す") {
-                val programs = listOf(
-                    createProgramWithWork(title = "テスト作品1"),
-                    createProgramWithWork(title = "作品2")
-                )
-                val filterState = FilterState(searchQuery = "")
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersで検索フィルターが大文字小文字を区別しない場合") {
-            then("検索フィルターが大文字小文字を区別しない") {
-                val programs = listOf(
-                    createProgramWithWork(title = "テスト作品A"),
-                    createProgramWithWork(title = "テスト作品a"),
-                    createProgramWithWork(title = "作品")
-                )
-                val filterState = FilterState(searchQuery = "A")
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-                result.all { it.work.title.contains("テスト") } shouldBe true
-            }
-        }
-        `when`("applyFiltersで放送済みフィルターを適用した場合") {
-            then("放送済みフィルターが正しく機能する") {
-                val now = LocalDateTime.now()
-                val programs = listOf(
-                    createProgramWithWork(startedAt = now.minusHours(1)), // 放送済み
-                    createProgramWithWork(startedAt = now.plusHours(1)) // 未放送
-                )
-                val filterState = FilterState(showOnlyAired = true)
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 1
-                result[0].firstProgram.startedAt shouldBe now.minusHours(1)
-            }
-            then("放送済みフィルターが無効の場合は全てのプログラムを返す") {
-                val now = LocalDateTime.now()
-                val programs = listOf(
-                    createProgramWithWork(startedAt = now.minusHours(1)),
-                    createProgramWithWork(startedAt = now.plusHours(1))
-                )
-                val filterState = FilterState(showOnlyAired = false)
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 2
-            }
-        }
-        `when`("applyFiltersで放送開始時間の昇順ソートを適用した場合") {
-            then("放送開始時間の昇順ソートが正しく機能する") {
-                val now = LocalDateTime.now()
-                val programs = listOf(
-                    createProgramWithWork(startedAt = now.plusHours(2)),
-                    createProgramWithWork(startedAt = now),
-                    createProgramWithWork(startedAt = now.plusHours(1))
-                )
-                val filterState = FilterState(sortOrder = SortOrder.START_TIME_ASC, showOnlyAired = false)
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 3
-                result[0].firstProgram.startedAt shouldBe now
-                result[1].firstProgram.startedAt shouldBe now.plusHours(1)
-                result[2].firstProgram.startedAt shouldBe now.plusHours(2)
-            }
-        }
-        `when`("applyFiltersで放送開始時間の降順ソートを適用した場合") {
-            then("放送開始時間の降順ソートが正しく機能する") {
-                val now = LocalDateTime.now()
-                val programs = listOf(
-                    createProgramWithWork(startedAt = now),
-                    createProgramWithWork(startedAt = now.plusHours(2)),
-                    createProgramWithWork(startedAt = now.plusHours(1))
-                )
-                val filterState = FilterState(sortOrder = SortOrder.START_TIME_DESC, showOnlyAired = false)
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 3
-                result[0].firstProgram.startedAt shouldBe now.plusHours(2)
-                result[1].firstProgram.startedAt shouldBe now.plusHours(1)
-                result[2].firstProgram.startedAt shouldBe now
-            }
-        }
-        `when`("applyFiltersで複数のフィルターを組み合わせた場合") {
-            then("複数のフィルターが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(
-                        seasonName = SeasonName.WINTER,
-                        media = "TV",
-                        channelName = "TOKYO MX",
-                        status = StatusState.WATCHING
-                    ),
-                    createProgramWithWork(
-                        seasonName = SeasonName.WINTER,
-                        media = "TV",
-                        channelName = "BS11",
-                        status = StatusState.WANNA_WATCH
-                    ),
-                    createProgramWithWork(
-                        seasonName = SeasonName.SUMMER,
-                        media = "OVA",
-                        channelName = "AT-X",
-                        status = StatusState.WATCHING
-                    )
-                )
-                val filterState = FilterState(
-                    selectedSeason = setOf(SeasonName.WINTER),
-                    selectedMedia = setOf("TV"),
-                    selectedChannel = setOf("TOKYO MX"),
-                    selectedStatus = setOf(StatusState.WATCHING)
-                )
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 1
-                result[0].work.seasonName shouldBe SeasonName.WINTER
-                result[0].work.media shouldBe "TV"
-                result[0].firstProgram.channel.name shouldBe "TOKYO MX"
-                result[0].work.viewerStatusState shouldBe StatusState.WATCHING
-            }
-        }
-        `when`("applyFiltersで空のリストを渡した場合") {
-            then("空のリストを返す") {
-                val programs = emptyList<ProgramWithWork>()
-                val filterState = FilterState(
-                    selectedSeason = setOf(SeasonName.WINTER),
-                    selectedMedia = setOf("TV")
-                )
-                val result = programFilter.applyFilters(programs, filterState)
-                result shouldBe emptyList()
-            }
-        }
-        `when`("applyFiltersでフィルターの順序が結果に影響を与えない場合") {
-            then("フィルターの順序が結果に影響を与えない") {
-                val programs = listOf(
-                    createProgramWithWork(
-                        seasonName = SeasonName.WINTER,
-                        media = "TV",
-                        channelName = "TOKYO MX"
-                    ),
-                    createProgramWithWork(
-                        seasonName = SeasonName.SUMMER,
-                        media = "OVA",
-                        channelName = "AT-X"
-                    )
-                )
-                val filterState1 = FilterState(
-                    selectedSeason = setOf(SeasonName.WINTER),
-                    selectedMedia = setOf("TV")
-                )
-                val filterState2 = FilterState(
-                    selectedMedia = setOf("TV"),
-                    selectedSeason = setOf(SeasonName.WINTER)
-                )
-                val result1 = programFilter.applyFilters(programs, filterState1)
-                val result2 = programFilter.applyFilters(programs, filterState2)
-                result1.size shouldBe result2.size
-                result1.map { it.work.seasonName } shouldBe result2.map { it.work.seasonName }
-                result1.map { it.work.media } shouldBe result2.map { it.work.media }
-            }
-        }
-        `when`("applyFiltersで特殊文字を含む検索クエリを渡した場合") {
-            then("特殊文字を含む検索クエリが正しく機能する") {
-                val programs = listOf(
-                    createProgramWithWork(title = "テスト作品!"),
-                    createProgramWithWork(title = "テスト作品？"),
-                    createProgramWithWork(title = "テスト作品")
-                )
-                val filterState = FilterState(searchQuery = "テスト作品!")
-                val result = programFilter.applyFilters(programs, filterState)
-                result.size shouldBe 1
-                result[0].work.title shouldBe "テスト作品!"
-            }
+    private lateinit var programFilter: ProgramFilter
+
+    @BeforeEach
+    fun setup() {
+        programFilter = ProgramFilter()
+    }
+
+    @Nested
+    @DisplayName("利用可能フィルターの抽出")
+    inner class ExtractAvailableFilters {
+
+        @Test
+        @DisplayName("シーズンの並び順が正しい")
+        fun シーズンの並び順が正しい() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonName = SeasonName.SUMMER),
+                createProgramWithWork(seasonName = SeasonName.WINTER),
+                createProgramWithWork(seasonName = SeasonName.AUTUMN),
+                createProgramWithWork(seasonName = SeasonName.SPRING)
+            )
+
+            // When
+            val result = programFilter.extractAvailableFilters(programs)
+
+            // Then
+            assertEquals(
+                listOf(SeasonName.WINTER, SeasonName.SPRING, SeasonName.SUMMER, SeasonName.AUTUMN),
+                result.seasons
+            )
         }
     }
-})
+
+    @Nested
+    @DisplayName("シーズンフィルター")
+    inner class SeasonFilter {
+
+        @Test
+        @DisplayName("指定したシーズンのみ返る")
+        fun 指定したシーズンのみ返る() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonName = SeasonName.WINTER),
+                createProgramWithWork(seasonName = SeasonName.SPRING),
+                createProgramWithWork(seasonName = SeasonName.SUMMER)
+            )
+            val filterState = FilterState(selectedSeason = setOf(SeasonName.WINTER, SeasonName.SUMMER))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals(setOf(SeasonName.WINTER, SeasonName.SUMMER), result.map { it.work.seasonName }.toSet())
+        }
+
+        @Test
+        @DisplayName("フィルターが空の場合は全てのプログラムを返す")
+        fun フィルターが空の場合は全てのプログラムを返す() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonName = SeasonName.WINTER),
+                createProgramWithWork(seasonName = SeasonName.SPRING)
+            )
+            val filterState = FilterState(selectedSeason = emptySet())
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+
+        @Test
+        @DisplayName("シーズンがnullのプログラムはフィルターされる")
+        fun シーズンがnullのプログラムはフィルターされる() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonName = null),
+                createProgramWithWork(seasonName = SeasonName.WINTER)
+            )
+            val filterState = FilterState(selectedSeason = setOf(SeasonName.WINTER))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals(SeasonName.WINTER, result[0].work.seasonName)
+        }
+    }
+
+    @Nested
+    @DisplayName("メディアフィルター")
+    inner class MediaFilter {
+
+        @Test
+        @DisplayName("指定したメディアのみ返る")
+        fun 指定したメディアのみ返る() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(media = "TV"),
+                createProgramWithWork(media = "MOVIE"),
+                createProgramWithWork(media = "OVA")
+            )
+            val filterState = FilterState(selectedMedia = setOf("TV", "OVA"))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals(setOf("TV", "OVA"), result.map { it.work.media }.toSet())
+        }
+
+        @Test
+        @DisplayName("フィルターが空の場合は全てのプログラムを返す")
+        fun フィルターが空の場合は全てのプログラムを返す() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(media = "TV"),
+                createProgramWithWork(media = "MOVIE")
+            )
+            val filterState = FilterState(selectedMedia = emptySet())
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+    }
+
+    @Nested
+    @DisplayName("年フィルター")
+    inner class YearFilter {
+
+        @Test
+        @DisplayName("指定した年のみ返る")
+        fun 指定した年のみ返る() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonYear = 2023),
+                createProgramWithWork(seasonYear = 2024),
+                createProgramWithWork(seasonYear = 2025)
+            )
+            val filterState = FilterState(selectedYear = setOf(2023, 2025))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals(setOf(2023, 2025), result.map { it.work.seasonYear }.toSet())
+        }
+
+        @Test
+        @DisplayName("フィルターが空の場合は全てのプログラムを返す")
+        fun フィルターが空の場合は全てのプログラムを返す() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonYear = 2023),
+                createProgramWithWork(seasonYear = 2024)
+            )
+            val filterState = FilterState(selectedYear = emptySet())
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+
+        @Test
+        @DisplayName("境界値が正しく機能する")
+        fun 境界値が正しく機能する() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(seasonYear = 2023),
+                createProgramWithWork(seasonYear = 2024),
+                createProgramWithWork(seasonYear = 2025)
+            )
+            val filterState = FilterState(selectedYear = setOf(2024))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals(2024, result[0].work.seasonYear)
+        }
+    }
+
+    @Nested
+    @DisplayName("チャンネルフィルター")
+    inner class ChannelFilter {
+
+        @Test
+        @DisplayName("指定したチャンネルのみ返る")
+        fun 指定したチャンネルのみ返る() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(channelName = "TOKYO MX"),
+                createProgramWithWork(channelName = "BS11"),
+                createProgramWithWork(channelName = "AT-X")
+            )
+            val filterState = FilterState(selectedChannel = setOf("TOKYO MX", "AT-X"))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals(setOf("TOKYO MX", "AT-X"), result.map { it.firstProgram.channel.name }.toSet())
+        }
+
+        @Test
+        @DisplayName("フィルターが空の場合は全てのプログラムを返す")
+        fun フィルターが空の場合は全てのプログラムを返す() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(channelName = "TOKYO MX"),
+                createProgramWithWork(channelName = "BS11")
+            )
+            val filterState = FilterState(selectedChannel = emptySet())
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+    }
+
+    @Nested
+    @DisplayName("ステータスフィルター")
+    inner class StatusFilter {
+
+        @Test
+        @DisplayName("指定したステータスのみ返る")
+        fun 指定したステータスのみ返る() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(status = StatusState.WATCHING),
+                createProgramWithWork(status = StatusState.WANNA_WATCH),
+                createProgramWithWork(status = StatusState.NO_STATE)
+            )
+            val filterState = FilterState(selectedStatus = setOf(StatusState.WATCHING))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals(StatusState.WATCHING, result[0].work.viewerStatusState)
+        }
+
+        @Test
+        @DisplayName("フィルターが空の場合は全てのプログラムを返す")
+        fun フィルターが空の場合は全てのプログラムを返す() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(status = StatusState.WATCHING),
+                createProgramWithWork(status = StatusState.WANNA_WATCH)
+            )
+            val filterState = FilterState(selectedStatus = emptySet())
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+    }
+
+    @Nested
+    @DisplayName("検索フィルター")
+    inner class SearchFilter {
+
+        @Test
+        @DisplayName("タイトルで検索できる")
+        fun タイトルで検索できる() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(title = "テスト作品1"),
+                createProgramWithWork(title = "作品2"),
+                createProgramWithWork(title = "テスト作品3")
+            )
+            val filterState = FilterState(searchQuery = "テスト")
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals(setOf("テスト作品1", "テスト作品3"), result.map { it.work.title }.toSet())
+        }
+
+        @Test
+        @DisplayName("検索クエリが空の場合は全てのプログラムを返す")
+        fun 検索クエリが空の場合は全てのプログラムを返す() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(title = "テスト作品1"),
+                createProgramWithWork(title = "作品2")
+            )
+            val filterState = FilterState(searchQuery = "")
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+
+        @Test
+        @DisplayName("大文字小文字を区別しない")
+        fun 大文字小文字を区別しない() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(title = "テスト作品A"),
+                createProgramWithWork(title = "テスト作品a"),
+                createProgramWithWork(title = "作品")
+            )
+            val filterState = FilterState(searchQuery = "A")
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+            assertTrue(result.all { it.work.title.contains("テスト") })
+        }
+
+        @Test
+        @DisplayName("特殊文字を含む検索クエリが正しく機能する")
+        fun 特殊文字を含む検索クエリが正しく機能する() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(title = "テスト作品!"),
+                createProgramWithWork(title = "テスト作品？"),
+                createProgramWithWork(title = "テスト作品")
+            )
+            val filterState = FilterState(searchQuery = "テスト作品!")
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals("テスト作品!", result[0].work.title)
+        }
+    }
+
+    @Nested
+    @DisplayName("放送済みフィルター")
+    inner class AiredFilter {
+
+        @Test
+        @DisplayName("放送済みのみ返る")
+        fun 放送済みのみ返る() {
+            // Given
+            val now = LocalDateTime.now()
+            val programs = listOf(
+                createProgramWithWork(startedAt = now.minusHours(1)), // 放送済み
+                createProgramWithWork(startedAt = now.plusHours(1)) // 未放送
+            )
+            val filterState = FilterState(showOnlyAired = true)
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals(now.minusHours(1), result[0].firstProgram.startedAt)
+        }
+
+        @Test
+        @DisplayName("無効の場合は全てのプログラムを返す")
+        fun 無効の場合は全てのプログラムを返す() {
+            // Given
+            val now = LocalDateTime.now()
+            val programs = listOf(
+                createProgramWithWork(startedAt = now.minusHours(1)),
+                createProgramWithWork(startedAt = now.plusHours(1))
+            )
+            val filterState = FilterState(showOnlyAired = false)
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(2, result.size)
+        }
+    }
+
+    @Nested
+    @DisplayName("ソート")
+    inner class Sort {
+
+        @Test
+        @DisplayName("放送開始時間の昇順ソートが正しく機能する")
+        fun 放送開始時間の昇順ソートが正しく機能する() {
+            // Given
+            val now = LocalDateTime.now()
+            val programs = listOf(
+                createProgramWithWork(startedAt = now.plusHours(2)),
+                createProgramWithWork(startedAt = now),
+                createProgramWithWork(startedAt = now.plusHours(1))
+            )
+            val filterState = FilterState(sortOrder = SortOrder.START_TIME_ASC, showOnlyAired = false)
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(3, result.size)
+            assertEquals(now, result[0].firstProgram.startedAt)
+            assertEquals(now.plusHours(1), result[1].firstProgram.startedAt)
+            assertEquals(now.plusHours(2), result[2].firstProgram.startedAt)
+        }
+
+        @Test
+        @DisplayName("放送開始時間の降順ソートが正しく機能する")
+        fun 放送開始時間の降順ソートが正しく機能する() {
+            // Given
+            val now = LocalDateTime.now()
+            val programs = listOf(
+                createProgramWithWork(startedAt = now),
+                createProgramWithWork(startedAt = now.plusHours(2)),
+                createProgramWithWork(startedAt = now.plusHours(1))
+            )
+            val filterState = FilterState(sortOrder = SortOrder.START_TIME_DESC, showOnlyAired = false)
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(3, result.size)
+            assertEquals(now.plusHours(2), result[0].firstProgram.startedAt)
+            assertEquals(now.plusHours(1), result[1].firstProgram.startedAt)
+            assertEquals(now, result[2].firstProgram.startedAt)
+        }
+    }
+
+    @Nested
+    @DisplayName("複合フィルター")
+    inner class CombinedFilters {
+
+        @Test
+        @DisplayName("複数のフィルターを組み合わせて正しく機能する")
+        fun 複数のフィルターを組み合わせて正しく機能する() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(
+                    seasonName = SeasonName.WINTER,
+                    media = "TV",
+                    channelName = "TOKYO MX",
+                    status = StatusState.WATCHING
+                ),
+                createProgramWithWork(
+                    seasonName = SeasonName.WINTER,
+                    media = "TV",
+                    channelName = "BS11",
+                    status = StatusState.WANNA_WATCH
+                ),
+                createProgramWithWork(
+                    seasonName = SeasonName.SUMMER,
+                    media = "OVA",
+                    channelName = "AT-X",
+                    status = StatusState.WATCHING
+                )
+            )
+            val filterState = FilterState(
+                selectedSeason = setOf(SeasonName.WINTER),
+                selectedMedia = setOf("TV"),
+                selectedChannel = setOf("TOKYO MX"),
+                selectedStatus = setOf(StatusState.WATCHING)
+            )
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals(SeasonName.WINTER, result[0].work.seasonName)
+            assertEquals("TV", result[0].work.media)
+            assertEquals("TOKYO MX", result[0].firstProgram.channel.name)
+            assertEquals(StatusState.WATCHING, result[0].work.viewerStatusState)
+        }
+
+        @Test
+        @DisplayName("空のリストを渡すと空のリストを返す")
+        fun 空のリストを渡すと空のリストを返す() {
+            // Given
+            val programs = emptyList<ProgramWithWork>()
+            val filterState = FilterState(
+                selectedSeason = setOf(SeasonName.WINTER),
+                selectedMedia = setOf("TV")
+            )
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then
+            assertEquals(emptyList<ProgramWithWork>(), result)
+        }
+
+        @Test
+        @DisplayName("フィルターの順序が結果に影響を与えない")
+        fun フィルターの順序が結果に影響を与えない() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(
+                    seasonName = SeasonName.WINTER,
+                    media = "TV",
+                    channelName = "TOKYO MX"
+                ),
+                createProgramWithWork(
+                    seasonName = SeasonName.SUMMER,
+                    media = "OVA",
+                    channelName = "AT-X"
+                )
+            )
+            val filterState1 = FilterState(
+                selectedSeason = setOf(SeasonName.WINTER),
+                selectedMedia = setOf("TV")
+            )
+            val filterState2 = FilterState(
+                selectedMedia = setOf("TV"),
+                selectedSeason = setOf(SeasonName.WINTER)
+            )
+
+            // When
+            val result1 = programFilter.applyFilters(programs, filterState1)
+            val result2 = programFilter.applyFilters(programs, filterState2)
+
+            // Then
+            assertEquals(result1.size, result2.size)
+            assertEquals(result1.map { it.work.seasonName }, result2.map { it.work.seasonName })
+            assertEquals(result1.map { it.work.media }, result2.map { it.work.media })
+        }
+    }
+}
