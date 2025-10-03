@@ -107,7 +107,7 @@ class TrackViewModelTest {
 
         @Test
         @DisplayName("正常にロードできる場合UIStateにプログラムがセットされる")
-        fun onSuccess() = runTest {
+        fun onSuccess() = runTest(dispatcher) {
             // Given
             val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
             coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
@@ -119,20 +119,15 @@ class TrackViewModelTest {
                 emptyList()
             )
 
-            // When & Then
-            runTest(dispatcher) {
-                viewModel.uiState.test {
-                    awaitItem() // 初期値を必ず受け取る
-                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
-                    dispatcher.scheduler.advanceUntilIdle()
-                    awaitItem() // 状態遷移1
-                    awaitItem() // 状態遷移2
-                    val updated = awaitItem() // 状態遷移3
-                    assertEquals(fakePrograms, updated.programs)
-                    assertFalse(updated.isLoading)
-                    assertNull(updated.error)
-                }
-            }
+            // When
+            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy"))
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val updated = viewModel.uiState.value
+            assertEquals(fakePrograms, updated.programs)
+            assertFalse(updated.isLoading)
+            assertNull(updated.error)
         }
 
         @Test
@@ -144,19 +139,14 @@ class TrackViewModelTest {
                 throw LoadProgramsException("error")
             }
 
-            // When & Then
-            runTest(dispatcher) {
-                viewModel.uiState.test {
-                    awaitItem() // 初期値を必ず受け取る
-                    filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
-                    dispatcher.scheduler.advanceUntilIdle()
-                    awaitItem() // 状態遷移1
-                    val errorState = awaitItem() // 状態遷移2
-                    assertFalse(errorState.isLoading)
-                    // Note: launchWithMinLoadingTimeはエラーを吐き出さずに例外を処理してしまう可能性がある
-                    // TrackViewModelのloadingProgramsではcollect内で例外が発生するため、エラーは設定されない
-                }
-            }
+            // When
+            filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            val errorState = viewModel.uiState.value
+            assertFalse(errorState.isLoading)
+            assertEquals("処理中にエラーが発生しました", errorState.error)
         }
     }
 
