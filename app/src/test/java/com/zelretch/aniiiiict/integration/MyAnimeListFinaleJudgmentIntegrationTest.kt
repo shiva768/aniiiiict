@@ -4,75 +4,100 @@ import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.domain.usecase.FinaleState
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
-import io.kotest.core.spec.style.BehaviorSpec
-import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 
 /**
  * Integration test to verify the MyAnimeList finale judgment works end-to-end
  */
-class MyAnimeListFinaleJudgmentIntegrationTest : BehaviorSpec({
+@DisplayName("MyAnimeList最終話判定統合テスト")
+class MyAnimeListFinaleJudgmentIntegrationTest {
 
-    given("MyAnimeList最終話判定統合テスト") {
-        val repository = mockk<MyAnimeListRepository>()
-        val useCase = JudgeFinaleUseCase(repository)
+    private lateinit var repository: MyAnimeListRepository
+    private lateinit var useCase: JudgeFinaleUseCase
 
-        `when`("アニメが放送終了している") {
-            then("最終話として確認される") {
-                val media = MyAnimeListResponse(
-                    id = 1,
-                    mediaType = "tv",
-                    numEpisodes = 12,
-                    status = "finished_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
-                coEvery { repository.getAnimeDetail(1) } returns Result.success(media)
+    @BeforeEach
+    fun setup() {
+        repository = mockk()
+        useCase = JudgeFinaleUseCase(repository)
+    }
 
-                val result = useCase(12, 1)
+    @Nested
+    @DisplayName("最終話判定")
+    inner class FinaleJudgment {
 
-                result.state shouldBe FinaleState.FINALE_CONFIRMED
-                result.isFinale shouldBe true
-            }
+        @Test
+        @DisplayName("放送終了アニメは最終話として確認される")
+        fun 放送終了アニメは最終話として確認される() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 1,
+                mediaType = "tv",
+                numEpisodes = 12,
+                status = "finished_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { repository.getAnimeDetail(1) } returns Result.success(media)
+
+            // When
+            val result = useCase(12, 1)
+
+            // Then
+            assertEquals(FinaleState.FINALE_CONFIRMED, result.state)
+            assertTrue(result.isFinale)
         }
 
-        `when`("現在のエピソード数が全エピソード数に等しい") {
-            then("最終話として確認される") {
-                val media = MyAnimeListResponse(
-                    id = 2,
-                    mediaType = "tv",
-                    numEpisodes = 24,
-                    status = "currently_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
-                coEvery { repository.getAnimeDetail(2) } returns Result.success(media)
+        @Test
+        @DisplayName("現在のエピソード数が全エピソード数に等しい場合最終話として確認される")
+        fun 現在のエピソード数が全エピソード数に等しい場合最終話として確認される() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 2,
+                mediaType = "tv",
+                numEpisodes = 24,
+                status = "currently_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { repository.getAnimeDetail(2) } returns Result.success(media)
 
-                val result = useCase(24, 2)
+            // When
+            val result = useCase(24, 2)
 
-                result.state shouldBe FinaleState.FINALE_CONFIRMED
-                result.isFinale shouldBe true
-            }
+            // Then
+            assertEquals(FinaleState.FINALE_CONFIRMED, result.state)
+            assertTrue(result.isFinale)
         }
 
-        `when`("アニメが現在放送中だが最終話ではない") {
-            then("最終話ではない") {
-                val media = MyAnimeListResponse(
-                    id = 3,
-                    mediaType = "tv",
-                    numEpisodes = 12,
-                    status = "currently_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
-                coEvery { repository.getAnimeDetail(3) } returns Result.success(media)
+        @Test
+        @DisplayName("現在放送中で最終話でない場合最終話ではないと判定される")
+        fun 現在放送中で最終話でない場合最終話ではないと判定される() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 3,
+                mediaType = "tv",
+                numEpisodes = 12,
+                status = "currently_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { repository.getAnimeDetail(3) } returns Result.success(media)
 
-                val result = useCase(8, 3)
+            // When
+            val result = useCase(8, 3)
 
-                result.state shouldBe FinaleState.NOT_FINALE
-                result.isFinale shouldBe false
-            }
+            // Then
+            assertEquals(FinaleState.NOT_FINALE, result.state)
+            assertFalse(result.isFinale)
         }
     }
-})
+}
