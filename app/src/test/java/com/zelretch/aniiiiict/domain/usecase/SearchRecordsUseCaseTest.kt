@@ -27,7 +27,7 @@ class SearchRecordsUseCaseTest {
 
         @Test
         @DisplayName("タイトルで検索すると該当するRecordだけ返る")
-        fun タイトルで検索すると該当するRecordだけ返る() {
+        fun byTitle() {
             // Given
             val records = listOf(
                 Record(

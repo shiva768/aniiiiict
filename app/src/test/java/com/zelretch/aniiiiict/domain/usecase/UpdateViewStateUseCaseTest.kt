@@ -29,7 +29,7 @@ class UpdateViewStateUseCaseTest {
 
         @Test
         @DisplayName("Repository成功時にResult.successを返す")
-        fun Repository成功時にResultSuccessを返す() = runTest {
+        fun onRepositorySuccess() = runTest {
             // Given
             coEvery { repository.updateWorkViewStatus(any(), any()) } returns true
 
@@ -42,7 +42,7 @@ class UpdateViewStateUseCaseTest {
 
         @Test
         @DisplayName("Repository失敗時でもResult.successを返す（警告ログ出力）")
-        fun Repository失敗時でもResultSuccessを返す() = runTest {
+        fun onRepositoryFailure() = runTest {
             // Given
             coEvery { repository.updateWorkViewStatus(any(), any()) } returns false
 

@@ -34,14 +34,14 @@ class TokenManagerTest {
 
         @Test
         @DisplayName("getAccessTokenはnullを返す")
-        fun getAccessTokenはnullを返す() {
+        fun getAccessToken() {
             // Then
             assertNull(tokenManager.getAccessToken())
         }
 
         @Test
         @DisplayName("hasValidTokenはfalseを返す")
-        fun hasValidTokenはfalseを返す() {
+        fun hasValidToken() {
             // Then
             assertFalse(tokenManager.hasValidToken())
         }
@@ -53,7 +53,7 @@ class TokenManagerTest {
 
         @Test
         @DisplayName("有効なトークンを保存して取得できる")
-        fun 有効なトークンを保存して取得できる() {
+        fun withValidToken() {
             // When
             tokenManager.saveAccessToken("abc1234567890")
 
@@ -64,7 +64,7 @@ class TokenManagerTest {
 
         @Test
         @DisplayName("空文字や空白のみのトークンは保存されない")
-        fun 空文字や空白のみのトークンは保存されない() {
+        fun withEmptyOrBlankToken() {
             // Given: 先に有効なトークンを保存
             tokenManager.saveAccessToken("valid_token")
 

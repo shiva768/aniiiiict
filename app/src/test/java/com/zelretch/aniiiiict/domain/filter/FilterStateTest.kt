@@ -17,7 +17,7 @@ class FilterStateTest {
 
         @Test
         @DisplayName("デフォルト値が正しく設定される")
-        fun デフォルト値が正しく設定される() {
+        fun withDefaultValues() {
             // When
             val filterState = FilterState()
 
@@ -39,7 +39,7 @@ class FilterStateTest {
 
         @Test
         @DisplayName("一部のプロパティが変更される")
-        fun 一部のプロパティが変更される() {
+        fun withPartialChanges() {
             // Given
             val original = FilterState()
 
@@ -59,7 +59,7 @@ class FilterStateTest {
 
         @Test
         @DisplayName("プロパティを変更せずにコピーすると元と等しい")
-        fun プロパティを変更せずにコピーすると元と等しい() {
+        fun withoutChanges() {
             // Given
             val original = FilterState(
                 selectedMedia = setOf("TV"),
@@ -86,7 +86,7 @@ class FilterStateTest {
 
         @Test
         @DisplayName("2つの空の状態は等しい")
-        fun 空の状態同士は等しい() {
+        fun emptyStates() {
             // Given
             val state1 = FilterState()
             val state2 = FilterState()
@@ -97,7 +97,7 @@ class FilterStateTest {
 
         @Test
         @DisplayName("異なる状態は等しくない")
-        fun 異なる状態は等しくない() {
+        fun differentStates() {
             // Given
             val state1 = FilterState()
             val state3 = FilterState(selectedMedia = setOf("TV"))
@@ -113,7 +113,7 @@ class FilterStateTest {
 
         @Test
         @DisplayName("プロパティ変更時に元の状態とは等しくない")
-        fun プロパティ変更時に元の状態とは等しくない() {
+        fun afterModification() {
             // Given
             val original = FilterState(
                 selectedMedia = setOf("TV"),

@@ -28,7 +28,7 @@ class DeleteRecordUseCaseTest {
 
         @Test
         @DisplayName("成功時にtrueを返す")
-        fun 成功時にtrueを返す() = runTest {
+        fun onSuccess() = runTest {
             // Given
             coEvery { repository.deleteRecord("record1") } returns true
 
@@ -41,7 +41,7 @@ class DeleteRecordUseCaseTest {
 
         @Test
         @DisplayName("失敗時にfalseを返す")
-        fun 失敗時にfalseを返す() = runTest {
+        fun onFailure() = runTest {
             // Given
             coEvery { repository.deleteRecord("record2") } returns false
 

@@ -15,7 +15,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("IOExceptionはネットワークエラーとして分類される")
-        fun IOExceptionはネットワークエラーとして分類される() {
+        fun withIOException() {
             // Given
             val exception = IOException("Network connection failed")
 
@@ -30,7 +30,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("タイムアウトエラーは適切なユーザーメッセージが設定される")
-        fun タイムアウトエラーは適切なユーザーメッセージが設定される() {
+        fun withTimeoutError() {
             // Given
             val exception = IOException("Connection timeout")
 
@@ -44,7 +44,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("401エラーは認証エラーとして処理される")
-        fun 認証エラーは認証エラーとして処理される() {
+        fun with401Error() {
             // Given
             val authException = RuntimeException("401 Unauthorized")
 
@@ -61,7 +61,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("認証関連エラーは認証エラーとして分類される")
-        fun 認証関連エラーは認証エラーとして分類される() {
+        fun withAuthRelatedError() {
             // Given
             val exception = RuntimeException("Token expired")
 
@@ -75,7 +75,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("記録作成失敗はビジネスロジックエラーとして分類される")
-        fun 記録作成失敗はビジネスロジックエラーとして分類される() {
+        fun withRecordCreationFailure() {
             // Given
             val exception = Exception("Record creation failed")
 
@@ -89,7 +89,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("TokenManagerコンテキストは認証エラーとして分類される")
-        fun TokenManagerコンテキストは認証エラーとして分類される() {
+        fun withTokenManagerContext() {
             // Given
             val exception = RuntimeException("Save failed")
 
@@ -103,7 +103,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("不明な例外はUNKNOWNエラーとして分類される")
-        fun 不明な例外はUNKNOWNエラーとして分類される() {
+        fun withUnknownException() {
             // Given
             val exception = RuntimeException("Unknown error")
 
@@ -123,7 +123,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("カスタムメッセージがある場合それを返す")
-        fun カスタムメッセージがある場合それを返す() {
+        fun withCustomMessage() {
             // Given
             val networkErrorWithCustom = ErrorHandler.ErrorInfo(
                 ErrorHandler.ErrorType.NETWORK,
@@ -141,7 +141,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("カスタムメッセージがない場合デフォルトメッセージを返す")
-        fun カスタムメッセージがない場合デフォルトメッセージを返す() {
+        fun withoutCustomMessage() {
             // Given
             val networkErrorWithoutCustom = ErrorHandler.ErrorInfo(
                 ErrorHandler.ErrorType.NETWORK,
@@ -166,7 +166,7 @@ class ErrorHandlerTest {
 
         @Test
         @DisplayName("各種エラーで適切なメッセージが返される")
-        fun 各種エラーで適切なメッセージが返される() {
+        fun returnsAppropriateMessages() {
             // Given
             val ioException = IOException("Network error")
             val authException = RuntimeException("Token error")

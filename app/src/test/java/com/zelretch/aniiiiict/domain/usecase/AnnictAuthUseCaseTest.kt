@@ -27,7 +27,7 @@ class AnnictAuthUseCaseTest {
 
         @Test
         @DisplayName("Repository認証済みの場合trueを返す")
-        fun Repository認証済みの場合trueを返す() = kotlinx.coroutines.test.runTest {
+        fun whenAuthenticated() = kotlinx.coroutines.test.runTest {
             // Given
             coEvery { repository.isAuthenticated() } returns true
 
@@ -40,7 +40,7 @@ class AnnictAuthUseCaseTest {
 
         @Test
         @DisplayName("Repository未認証の場合falseを返す")
-        fun Repository未認証の場合falseを返す() = kotlinx.coroutines.test.runTest {
+        fun whenNotAuthenticated() = kotlinx.coroutines.test.runTest {
             // Given
             coEvery { repository.isAuthenticated() } returns false
 
@@ -58,7 +58,7 @@ class AnnictAuthUseCaseTest {
 
         @Test
         @DisplayName("正しいURLが返される")
-        fun 正しいURLが返される() = kotlinx.coroutines.test.runTest {
+        fun returnsUrl() = kotlinx.coroutines.test.runTest {
             // Given
             val authUrl = "https://example.com/auth"
             coEvery { repository.getAuthUrl() } returns authUrl
@@ -77,7 +77,7 @@ class AnnictAuthUseCaseTest {
 
         @Test
         @DisplayName("有効なコードで成功する")
-        fun 有効なコードで成功する() = kotlinx.coroutines.test.runTest {
+        fun withValidCode() = kotlinx.coroutines.test.runTest {
             // Given
             val code = "valid_code"
             coEvery { repository.handleAuthCallback(code) } returns true
@@ -91,7 +91,7 @@ class AnnictAuthUseCaseTest {
 
         @Test
         @DisplayName("nullコードで失敗する")
-        fun nullコードで失敗する() = kotlinx.coroutines.test.runTest {
+        fun withNullCode() = kotlinx.coroutines.test.runTest {
             // When
             val result = useCase.handleAuthCallback(null)
 
@@ -101,7 +101,7 @@ class AnnictAuthUseCaseTest {
 
         @Test
         @DisplayName("無効なコードで失敗する")
-        fun 無効なコードで失敗する() = kotlinx.coroutines.test.runTest {
+        fun withInvalidCode() = kotlinx.coroutines.test.runTest {
             // Given
             val code = "invalid_code"
             coEvery { repository.handleAuthCallback(code) } returns false
