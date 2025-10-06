@@ -1,19 +1,20 @@
 package com.zelretch.aniiiiict.ui.track
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiict.ui.base.BaseUiState
-import com.zelretch.aniiiiict.ui.base.BaseViewModel
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
+import com.zelretch.aniiiiict.ui.base.launchWithMinLoadingTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +25,14 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * 放送スケジュール画面のUI状態
+ */
 data class TrackUiState(
     val programs: List<ProgramWithWork> = emptyList(),
     val records: List<Record> = emptyList(),
-    override val isLoading: Boolean = false,
-    override val error: String? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
     val isRecording: Boolean = false,
     val recordingSuccess: String? = null,
     val filterState: FilterState = FilterState(),
@@ -43,8 +47,19 @@ data class TrackUiState(
     val isLoadingDetail: Boolean = false,
     val showFinaleConfirmationForWorkId: String? = null,
     val showFinaleConfirmationForEpisodeNumber: Int? = null
-) : BaseUiState(isLoading, error)
+)
 
+/**
+ * 放送スケジュール画面のViewModel
+ *
+ * Now in Android パターンへの移行:
+ * - BaseViewModelを削除し、明示的なエラーハンドリング
+ * - launchWithMinLoadingTimeで最小ローディング時間を保証
+ * - ErrorMapperによるユーザー向けメッセージ変換
+ *
+ * Note: 複雑な状態管理（フィルタ、モーダル、フィナーレ判定など）があるため、
+ * 現時点では従来のUiStateパターンを維持。
+ */
 @Suppress("TooManyFunctions")
 @HiltViewModel
 class TrackViewModel @Inject constructor(
@@ -53,8 +68,9 @@ class TrackViewModel @Inject constructor(
     private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val filterProgramsUseCase: FilterProgramsUseCase,
     private val filterPreferences: FilterPreferences,
-    private val judgeFinaleUseCase: JudgeFinaleUseCase
-) : BaseViewModel(), TrackViewModelContract {
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
+    private val errorMapper: ErrorMapper
+) : ViewModel(), TrackViewModelContract {
 
     companion object {
         private const val RECORDING_SUCCESS_MESSAGE_DURATION_MS = 2000L
@@ -81,34 +97,35 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    // region BaseViewModel
-    override fun updateLoadingState(isLoading: Boolean) {
-        _uiState.update { it.copy(isLoading = isLoading) }
-    }
-
-    override fun updateErrorState(error: String?) {
-        _uiState.update { it.copy(error = error) }
-    }
-
     override fun clearError() {
         _uiState.update { it.copy(error = null) }
     }
-    // endregion
 
-    private fun loadingPrograms() = executeWithLoading {
-        loadProgramsUseCase().collect { programs ->
-            _uiState.update { currentState ->
-                val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
-                val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
-                currentState.copy(
-                    programs = filteredPrograms,
-                    availableMedia = availableFilters.media,
-                    availableSeasons = availableFilters.seasons,
-                    availableYears = availableFilters.years,
-                    availableChannels = availableFilters.channels,
-                    allPrograms = programs,
-                    error = null
-                )
+    private fun loadingPrograms() {
+        launchWithMinLoadingTime {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            try {
+                loadProgramsUseCase().collect { programs ->
+                    _uiState.update { currentState ->
+                        val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
+                        val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
+                        currentState.copy(
+                            programs = filteredPrograms,
+                            availableMedia = availableFilters.media,
+                            availableSeasons = availableFilters.seasons,
+                            availableYears = availableFilters.years,
+                            availableChannels = availableFilters.channels,
+                            allPrograms = programs,
+                            isLoading = false,
+                            error = null
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                val msg = errorMapper.toUserMessage(e, "TrackViewModel.loadingPrograms")
+                _uiState.update { it.copy(isLoading = false, error = msg) }
+                Timber.e(e, "プログラム一覧の読み込みに失敗: $msg")
             }
         }
     }
@@ -116,16 +133,16 @@ class TrackViewModel @Inject constructor(
     fun recordEpisode(episodeId: String, workId: String, currentStatus: StatusState) {
         viewModelScope.launch {
             _uiState.update { it.copy(isRecording = true) }
-            runCatching {
-                watchEpisodeUseCase(episodeId, workId, currentStatus).getOrThrow()
-            }.onSuccess {
-                onRecordSuccess(episodeId, workId)
-            }.onFailure { e ->
-                val msg = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "TrackViewModel.recordEpisode")
-                )
-                _uiState.update { it.copy(error = msg, isRecording = false) }
-            }
+
+            watchEpisodeUseCase(episodeId, workId, currentStatus)
+                .onSuccess {
+                    onRecordSuccess(episodeId, workId)
+                }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "TrackViewModel.recordEpisode")
+                    _uiState.update { it.copy(error = msg, isRecording = false) }
+                    Timber.e(e, "エピソード記録に失敗: $msg")
+                }
         }
     }
 
@@ -173,23 +190,22 @@ class TrackViewModel @Inject constructor(
     fun confirmWatchedStatus() {
         _uiState.value.showFinaleConfirmationForWorkId?.let { workId ->
             viewModelScope.launch {
-                runCatching {
-                    updateViewStateUseCase(workId, StatusState.WATCHED)
-                }.onSuccess {
-                    _uiState.update {
-                        it.copy(
-                            showFinaleConfirmationForWorkId = null,
-                            showFinaleConfirmationForEpisodeNumber = null
-                        )
+                updateViewStateUseCase(workId, StatusState.WATCHED)
+                    .onSuccess {
+                        _uiState.update {
+                            it.copy(
+                                showFinaleConfirmationForWorkId = null,
+                                showFinaleConfirmationForEpisodeNumber = null
+                            )
+                        }
+                        // Refresh the programs list to show the updated status
+                        refresh()
                     }
-                    // Refresh the programs list to show the updated status
-                    refresh()
-                }.onFailure { e ->
-                    val msg = e.message ?: ErrorHandler.getUserMessage(
-                        ErrorHandler.analyzeError(e, "TrackViewModel.confirmWatchedStatus")
-                    )
-                    _uiState.update { it.copy(error = msg) }
-                }
+                    .onFailure { e ->
+                        val msg = errorMapper.toUserMessage(e, "TrackViewModel.confirmWatchedStatus")
+                        _uiState.update { it.copy(error = msg) }
+                        Timber.e(e, "ステータス更新に失敗: $msg")
+                    }
             }
         }
     }

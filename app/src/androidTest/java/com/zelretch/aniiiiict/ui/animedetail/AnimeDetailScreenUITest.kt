@@ -14,6 +14,7 @@ import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.ui.base.UiState
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import io.mockk.coEvery
 import io.mockk.every
@@ -40,7 +41,7 @@ class AnimeDetailScreenUITest {
     fun 初期状態でローディング表示される() {
         // Given: ローディング中のUIState
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(isLoading = true)
+            state = UiState.Loading
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -67,10 +68,7 @@ class AnimeDetailScreenUITest {
             imageUrl = "https://example.com/image.jpg"
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(
-                isLoading = false,
-                animeDetailInfo = animeDetailInfo
-            )
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -95,10 +93,7 @@ class AnimeDetailScreenUITest {
         // Given: エラー状態のUIState
         val errorMessage = "アニメ詳細情報の取得に失敗しました"
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(
-                isLoading = false,
-                error = errorMessage
-            )
+            state = UiState.Error(errorMessage)
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -132,10 +127,7 @@ class AnimeDetailScreenUITest {
             malInfo = malInfo
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(
-                isLoading = false,
-                animeDetailInfo = animeDetailInfo
-            )
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -165,10 +157,7 @@ class AnimeDetailScreenUITest {
             wikipediaUrl = "https://ja.wikipedia.org/wiki/テストアニメ"
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(
-                isLoading = false,
-                animeDetailInfo = animeDetailInfo
-            )
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -205,10 +194,7 @@ class AnimeDetailScreenUITest {
             programs = listOf(mockProgram)
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(
-                isLoading = false,
-                animeDetailInfo = animeDetailInfo
-            )
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -252,10 +238,7 @@ class AnimeDetailScreenUITest {
             seriesList = listOf(mockSeries)
         )
         val mockViewModel = createMockViewModel(
-            state = AnimeDetailUiState(
-                isLoading = false,
-                animeDetailInfo = animeDetailInfo
-            )
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
         )
         val programWithWork = createSampleProgramWithWork()
 
@@ -279,10 +262,11 @@ class AnimeDetailScreenUITest {
 
     // Helper functions
 
-    private fun createMockViewModel(state: AnimeDetailUiState): AnimeDetailViewModel = mockk<AnimeDetailViewModel> {
-        coEvery { this@mockk.state } returns MutableStateFlow(state)
-        coEvery { loadAnimeDetail(any()) } returns Unit
-    }
+    private fun createMockViewModel(state: UiState<AnimeDetailData>): AnimeDetailViewModel =
+        mockk<AnimeDetailViewModel> {
+            coEvery { this@mockk.uiState } returns MutableStateFlow(state)
+            coEvery { loadAnimeDetail(any()) } returns Unit
+        }
 
     private fun createSampleProgramWithWork(): ProgramWithWork {
         val work = Work(

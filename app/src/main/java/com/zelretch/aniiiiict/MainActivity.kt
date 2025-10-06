@@ -47,7 +47,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -257,7 +257,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
             }
             composable("track") {
-                val trackViewModel: TrackViewModel = hiltViewModel()
+                val trackViewModel: TrackViewModel = hiltViewModel<TrackViewModel>()
                 val trackUiState by trackViewModel.uiState.collectAsState()
                 TrackScreen(
                     viewModel = trackViewModel,
@@ -281,7 +281,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 )
             }
             composable("history") {
-                val historyViewModel: HistoryViewModel = hiltViewModel()
+                val historyViewModel: HistoryViewModel = hiltViewModel<HistoryViewModel>()
                 val historyUiState by historyViewModel.uiState.collectAsState()
                 val actions = HistoryScreenActions(
                     onNavigateBack = { navController.navigateUp() },

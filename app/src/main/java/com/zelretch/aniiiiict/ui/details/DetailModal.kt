@@ -30,7 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.details.components.ConfirmDialog
@@ -43,7 +43,7 @@ fun DetailModal(
     programWithWork: ProgramWithWork,
     isLoading: Boolean,
     onDismiss: () -> Unit,
-    viewModel: DetailModalViewModel = hiltViewModel(),
+    viewModel: DetailModalViewModel = hiltViewModel<DetailModalViewModel>(),
     onRefresh: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()

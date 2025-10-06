@@ -14,6 +14,7 @@ import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -66,11 +67,15 @@ class AuthScreenIntegrationTest {
         every { create() } returns mockk(relaxed = true)
     }
 
+    @BindValue
+    @JvmField
+    val errorMapper: ErrorMapper = mockk<ErrorMapper>(relaxed = true)
+
     @Test
     fun authScreen_ログインボタンクリック_getAuthUrlが呼ばれる() {
         // Arrange
         val context: Context = ApplicationProvider.getApplicationContext()
-        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
+        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
         val uiState = MainUiState(isAuthenticating = false, isAuthenticated = false)
 
         // Act
@@ -95,7 +100,7 @@ class AuthScreenIntegrationTest {
     fun authScreen_コールバック処理_handleAuthCallbackが呼ばれる() {
         // Arrange
         val context: Context = ApplicationProvider.getApplicationContext()
-        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
+        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
 
         // Act - handleAuthCallback を直接呼び出し
         viewModel.handleAuthCallback("CODE123")
@@ -115,7 +120,7 @@ class AuthScreenIntegrationTest {
     fun authScreen_認証状態確認_isAuthenticatedが呼ばれる() {
         // Arrange
         val context: Context = ApplicationProvider.getApplicationContext()
-        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
+        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
 
         // Act - 認証状態確認を実行
         viewModel.checkAuthentication()
@@ -137,7 +142,7 @@ class AuthScreenIntegrationTest {
         coEvery { annictRepository.getAuthUrl() } throws RuntimeException("認証エラー")
 
         val context: Context = ApplicationProvider.getApplicationContext()
-        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
+        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
         val uiState = MainUiState(isAuthenticating = false, isAuthenticated = false)
 
         // Act
@@ -164,7 +169,7 @@ class AuthScreenIntegrationTest {
         coEvery { annictRepository.handleAuthCallback("INVALID") } returns false
 
         val context: Context = ApplicationProvider.getApplicationContext()
-        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
+        val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
 
         // Act - 無効なコールバックコードで処理
         viewModel.handleAuthCallback("INVALID")
@@ -184,7 +189,7 @@ class AuthScreenIntegrationTest {
     fun authScreen_初期化時認証確認_自動的にisAuthenticatedが呼ばれる() {
         // Arrange & Act - ViewModelの初期化（init{}ブロックで認証確認が実行される）
         val context: Context = ApplicationProvider.getApplicationContext()
-        MainViewModel(annictAuthUseCase, customTabsIntentFactory, context)
+        MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
 
         // Assert - Wait for coroutine to run and mock to be called
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {

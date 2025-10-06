@@ -19,6 +19,7 @@ import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -112,9 +113,12 @@ class AnimeDetailScreenIntegrationTest {
             override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> = Result.success(mockMalInfo)
         }
 
+        // Mock ErrorMapper
+        val testErrorMapper = mockk<ErrorMapper>(relaxed = true)
+
         // 実際のUseCaseを使用してViewModelを生成
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val viewModel = AnimeDetailViewModel(useCase)
+        val viewModel = AnimeDetailViewModel(useCase, testErrorMapper)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -132,7 +136,7 @@ class AnimeDetailScreenIntegrationTest {
 
         // Wait for loading to complete
         testRule.composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            !viewModel.state.value.isLoading
+            viewModel.uiState.value is com.zelretch.aniiiiict.ui.base.UiState.Success
         }
 
         // Assert: アニメ詳細が正常に表示される
@@ -170,9 +174,13 @@ class AnimeDetailScreenIntegrationTest {
                 Result.success(createMockMalInfo(malAnimeId.toInt()))
         }
 
+        // Mock ErrorMapper
+        val testErrorMapper = mockk<ErrorMapper>()
+        every { testErrorMapper.toUserMessage(any(), any()) } returns "処理中にエラーが発生しました"
+
         // 実際のUseCaseを使用してViewModelを生成
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val viewModel = AnimeDetailViewModel(useCase)
+        val viewModel = AnimeDetailViewModel(useCase, testErrorMapper)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -188,12 +196,12 @@ class AnimeDetailScreenIntegrationTest {
         // LaunchedEffectが実行されるのを待つ
         testRule.composeTestRule.waitForIdle()
 
-        // Wait for loading to complete
+        // Wait for error state
         testRule.composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            !viewModel.state.value.isLoading
+            viewModel.uiState.value is com.zelretch.aniiiiict.ui.base.UiState.Error
         }
 
-        // Assert: エラーメッセージが表示される（BaseViewModelのErrorHandler経由）
+        // Assert: エラーメッセージが表示される（ErrorMapper経由）
         testRule.composeTestRule.onNodeWithText(
             "処理中にエラーが発生しました",
             substring = true

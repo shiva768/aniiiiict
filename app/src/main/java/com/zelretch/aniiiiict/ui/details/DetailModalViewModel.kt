@@ -9,7 +9,7 @@ import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiict.ui.base.ErrorHandler
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 data class DetailModalState(
@@ -47,12 +48,23 @@ sealed interface DetailModalEvent {
     object FinaleConfirmationShown : DetailModalEvent
 }
 
+/**
+ * EpisodeRecordModal画面のViewModel
+ *
+ * Now in Android パターンへの移行:
+ * - ErrorMapperによるユーザー向けメッセージ変換
+ * - 明示的なResult handling
+ *
+ * Note: イベント駆動型の複雑なUI状態管理があるため、
+ * 現時点では従来のStateパターンを維持。
+ */
 @HiltViewModel
 class DetailModalViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
-    private val judgeFinaleUseCase: JudgeFinaleUseCase
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
+    private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DetailModalState())
@@ -101,23 +113,22 @@ class DetailModalViewModel @Inject constructor(
         // Optimistically update UI so tests can immediately see the new value
         _state.update { it.copy(isStatusChanging = true, statusChangeError = null, selectedStatus = status) }
         viewModelScope.launch {
-            runCatching {
-                updateViewStateUseCase(workId, status).getOrThrow()
-            }.onSuccess {
-                // Keep the selected status (already set) and notify
-                _events.emit(DetailModalEvent.StatusChanged)
-            }.onFailure { e ->
-                val errorMessage = e.message ?: ErrorHandler.getUserMessage(
-                    ErrorHandler.analyzeError(e, "DetailModalViewModel.changeStatus")
-                )
-                // Roll back to previous status and show error
-                _state.update {
-                    it.copy(
-                        statusChangeError = errorMessage,
-                        selectedStatus = previous
-                    )
+            updateViewStateUseCase(workId, status)
+                .onSuccess {
+                    // Keep the selected status (already set) and notify
+                    _events.emit(DetailModalEvent.StatusChanged)
                 }
-            }
+                .onFailure { e ->
+                    val errorMessage = errorMapper.toUserMessage(e, "DetailModalViewModel.changeStatus")
+                    // Roll back to previous status and show error
+                    _state.update {
+                        it.copy(
+                            statusChangeError = errorMessage,
+                            selectedStatus = previous
+                        )
+                    }
+                    Timber.e(e, "ステータス変更に失敗: $errorMessage")
+                }
             _state.update { it.copy(isStatusChanging = false) }
         }
     }
@@ -126,40 +137,38 @@ class DetailModalViewModel @Inject constructor(
         val workId = _state.value.workId
         // エピソード情報をフィナーレ判定用に事前に取得
         val currentEpisode = _state.value.programs.find { it.episode.id == episodeId }
-        timber.log.Timber.d(
+        Timber.d(
             "DetailModal: recordEpisode - episodeId=$episodeId, workId=$workId, " +
                 "currentEpisode=${currentEpisode?.episode?.number}, malAnimeId=${_state.value.malAnimeId}"
         )
         viewModelScope.launch {
-            runCatching {
-                watchEpisodeUseCase(episodeId, workId, status).getOrThrow()
-            }.onSuccess {
-                timber.log.Timber.d(
-                    "DetailModal: recordEpisode - watchEpisodeUseCase succeeded, " +
-                        "calling handleSingleEpisodeFinaleJudgement"
-                )
-                // フィナーレ判定を実行（エピソードを削除する前に）
-                handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
-
-                // 記録したエピソードのプログラムを表示から消す
-                _state.update {
-                    it.copy(
-                        programs = _state.value.programs.filter { it.episode.id != episodeId }
+            watchEpisodeUseCase(episodeId, workId, status)
+                .onSuccess {
+                    Timber.d(
+                        "DetailModal: recordEpisode - watchEpisodeUseCase succeeded, " +
+                            "calling handleSingleEpisodeFinaleJudgement"
                     )
+                    // フィナーレ判定を実行（エピソードを削除する前に）
+                    handleSingleEpisodeFinaleJudgement(currentEpisode, workId)
+
+                    // 記録したエピソードのプログラムを表示から消す
+                    _state.update {
+                        it.copy(
+                            programs = _state.value.programs.filter { it.episode.id != episodeId }
+                        )
+                    }
+                    _events.emit(DetailModalEvent.EpisodesRecorded)
                 }
-                _events.emit(DetailModalEvent.EpisodesRecorded)
-            }.onFailure { e ->
-                timber.log.Timber.e(e, "DetailModal: recordEpisode - watchEpisodeUseCase failed")
-                // 表示は親で処理する設計のため、ここではユーザ向け文言を整形してログ化のみ
-                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.recordEpisode")
-                ErrorHandler.logError("DetailModalViewModel", "recordEpisode", info)
-            }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.recordEpisode")
+                    Timber.e(e, "DetailModal: エピソード記録に失敗 - $msg")
+                }
         }
     }
 
     private suspend fun handleSingleEpisodeFinaleJudgement(currentEpisode: Program?, workId: String) {
         if (currentEpisode?.episode?.number == null) {
-            timber.log.Timber.d(
+            Timber.d(
                 "DetailModal: handleSingleEpisodeFinaleJudgement - " +
                     "currentEpisode is null or episode number is null"
             )
@@ -168,13 +177,13 @@ class DetailModalViewModel @Inject constructor(
 
         val episodeNumber = currentEpisode.episode.number
         val malAnimeIdString = _state.value.malAnimeId
-        timber.log.Timber.d(
+        Timber.d(
             "DetailModal: handleSingleEpisodeFinaleJudgement - " +
                 "episodeNumber=$episodeNumber, malAnimeIdString=$malAnimeIdString"
         )
 
         if (malAnimeIdString.isNullOrEmpty()) {
-            timber.log.Timber.d(
+            Timber.d(
                 "DetailModal: handleSingleEpisodeFinaleJudgement - malAnimeIdString is null or empty"
             )
             return
@@ -182,24 +191,24 @@ class DetailModalViewModel @Inject constructor(
 
         val malAnimeId = malAnimeIdString.toIntOrNull()
         if (malAnimeId == null) {
-            timber.log.Timber.d(
+            Timber.d(
                 "DetailModal: handleSingleEpisodeFinaleJudgement - malAnimeId could not be parsed as int"
             )
             return
         }
 
-        timber.log.Timber.d(
+        Timber.d(
             "DetailModal: handleSingleEpisodeFinaleJudgement - calling judgeFinaleUseCase " +
                 "with episodeNumber=$episodeNumber, malAnimeId=$malAnimeId"
         )
         val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
-        timber.log.Timber.d(
+        Timber.d(
             "DetailModal: handleSingleEpisodeFinaleJudgement - " +
                 "judgeResult.isFinale=${judgeResult.isFinale}, judgeResult.state=${judgeResult.state}"
         )
 
         if (judgeResult.isFinale) {
-            timber.log.Timber.d(
+            Timber.d(
                 "DetailModal: handleSingleEpisodeFinaleJudgement - finale detected, updating state"
             )
             _state.update {
@@ -211,7 +220,7 @@ class DetailModalViewModel @Inject constructor(
             }
             _events.emit(DetailModalEvent.FinaleConfirmationShown)
         } else {
-            timber.log.Timber.d(
+            Timber.d(
                 "DetailModal: handleSingleEpisodeFinaleJudgement - not a finale"
             )
         }
@@ -273,8 +282,8 @@ class DetailModalViewModel @Inject constructor(
                     _events.emit(DetailModalEvent.BulkEpisodesRecorded)
                 }
             }.onFailure { e ->
-                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.bulkRecordEpisodes")
-                ErrorHandler.logError("DetailModalViewModel", "bulkRecordEpisodes", info)
+                val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.bulkRecordEpisodes")
+                Timber.e(e, "DetailModal: 一括記録に失敗 - $msg")
                 _state.update {
                     it.copy(
                         isBulkRecording = false,
@@ -289,20 +298,20 @@ class DetailModalViewModel @Inject constructor(
     fun confirmFinaleWatched() {
         val workId = _state.value.workId
         viewModelScope.launch {
-            runCatching {
-                updateViewStateUseCase(workId, StatusState.WATCHED)
-            }.onSuccess {
-                _state.update {
-                    it.copy(
-                        showFinaleConfirmation = false,
-                        finaleEpisodeNumber = null
-                    )
+            updateViewStateUseCase(workId, StatusState.WATCHED)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            showFinaleConfirmation = false,
+                            finaleEpisodeNumber = null
+                        )
+                    }
+                    _events.emit(DetailModalEvent.BulkEpisodesRecorded)
                 }
-                _events.emit(DetailModalEvent.BulkEpisodesRecorded)
-            }.onFailure { e ->
-                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.confirmFinaleWatched")
-                ErrorHandler.logError("DetailModalViewModel", "confirmFinaleWatched", info)
-            }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.confirmFinaleWatched")
+                    Timber.e(e, "DetailModal: フィナーレ確認に失敗 - $msg")
+                }
         }
     }
 
@@ -321,21 +330,21 @@ class DetailModalViewModel @Inject constructor(
     fun confirmSingleEpisodeFinaleWatched() {
         val workId = _state.value.singleEpisodeFinaleWorkId ?: return
         viewModelScope.launch {
-            runCatching {
-                updateViewStateUseCase(workId, StatusState.WATCHED)
-            }.onSuccess {
-                _state.update {
-                    it.copy(
-                        showSingleEpisodeFinaleConfirmation = false,
-                        singleEpisodeFinaleNumber = null,
-                        singleEpisodeFinaleWorkId = null
-                    )
+            updateViewStateUseCase(workId, StatusState.WATCHED)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            showSingleEpisodeFinaleConfirmation = false,
+                            singleEpisodeFinaleNumber = null,
+                            singleEpisodeFinaleWorkId = null
+                        )
+                    }
+                    _events.emit(DetailModalEvent.EpisodesRecorded)
                 }
-                _events.emit(DetailModalEvent.EpisodesRecorded)
-            }.onFailure { e ->
-                val info = ErrorHandler.analyzeError(e, "DetailModalViewModel.confirmSingleEpisodeFinaleWatched")
-                ErrorHandler.logError("DetailModalViewModel", "confirmSingleEpisodeFinaleWatched", info)
-            }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.confirmSingleEpisodeFinaleWatched")
+                    Timber.e(e, "DetailModal: 単一エピソードフィナーレ確認に失敗 - $msg")
+                }
         }
     }
 
