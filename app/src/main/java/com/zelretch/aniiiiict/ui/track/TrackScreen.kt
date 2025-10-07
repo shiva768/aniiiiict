@@ -81,7 +81,7 @@ private fun TrackTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, 
     TopAppBar(
         title = {
             Text(
-                text = "視聴記録",
+                text = "放送スケジュール",
                 style = MaterialTheme.typography.headlineSmall
             )
         },
