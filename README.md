@@ -79,13 +79,19 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 
 ## アーキテクチャ
 
-- Clean Architecture + MVVMパターンを採用
+- **Clean Architecture + MVVM**パターンを採用
+- **「Now in Android」**パターンによる型安全なエラーハンドリング
+- **UiState<T>**による統一的なUI状態管理（Loading/Success/Error）
+- **DomainError**による明示的なエラー型定義
+- **ErrorMapper**によるユーザー向けエラーメッセージ変換
 - ドメインロジックをUseCaseに集約
 - Repository パターンによるデータアクセスの抽象化
 - Composableによる宣言的UI
 - DataStoreによるデータ永続化
 - GraphQLによる効率的なデータ取得
 - 依存関係のバージョン管理はlibs.versions.tomlで一元化
+
+詳細は[PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md)を参照してください。
 
 ## テスト
 

@@ -41,7 +41,7 @@
 
 ## 3. アーキテクチャ (Architecture)
 
-プロジェクトの基盤として、**Clean Architecture**と**MVVM (Model-View-ViewModel)**を組み合わせたパターンを採用しています。これにより、関心事の分離、テストの容易性、保守性の向上を実現しています。
+プロジェクトの基盤として、**Clean Architecture**と**MVVM (Model-View-ViewModel)**を組み合わせたパターンを採用しています。さらに、Android公式の**「Now in Android」**アーキテクチャパターンを導入し、型安全なエラーハンドリングと統一的なUI状態管理を実現しています。これにより、関心事の分離、テストの容易性、保守性の向上を実現しています。
 
 ### レイヤー構造
 
@@ -51,11 +51,14 @@
     -   **役割:** 画面表示とユーザーインタラクションの処理。
     -   **構成要素:** `Activity`, `Composable Screen`, `ViewModel`。
     -   **詳細:** Jetpack Composeを用いてUIを宣言的に構築します。`ViewModel`がUIの状態(`StateFlow`)を保持し、ユーザーからのイベントを処理します。UIは`ViewModel`から公開される状態を観測し、画面を更新します。
+    -   **UI状態管理:** `UiState<T>`という統一的な状態パターンを採用しており、`Loading`、`Success<T>`、`Error`の3状態で画面の状態を型安全に表現します。
+    -   **エラーハンドリング:** `ErrorMapper`を使用して、ドメイン層の`DomainError`をユーザー向けの分かりやすいメッセージに変換します。
 
 2.  **Domain Layer:**
     -   **役割:** アプリケーション固有のビジネスロジック（ビジネスルール）のカプセル化。
-    -   **構成要素:** `UseCase`。
+    -   **構成要素:** `UseCase`, `DomainError`。
     -   **詳細:** このレイヤーは、特定のフレームワーク（Android SDKなど）から完全に独立した、Pure Kotlinモジュールです。`UseCase`は、単一の機能（例: 番組一覧の読み込み、エピソードの記録）を担当し、Dataレイヤーの`Repository`を介してデータを操作します。
+    -   **エラー型:** `DomainError`という型安全なエラー階層を定義し、6種類のエラー分類（Network, Auth, Api.ClientError, Api.ServerError, Business, Unknown, Unexpected）でエラーを明示的に表現します。
 
 3.  **Data Layer:**
     -   **役割:** アプリケーションのデータに関するすべての処理。データの取得、保存、管理を担当します。
@@ -96,6 +99,93 @@ graph TD
 4.  `Repository`は、APIや`DataStore`からデータを取得し、`UseCase`に返します。
 5.  `UseCase`は取得したデータを加工し、`ViewModel`に返します。
 6.  `ViewModel`は受け取ったデータでUIの状態(`StateFlow`)を更新し、UIがリアクティブに再描画されます。
+
+### Now in Androidパターンの実装
+
+本プロジェクトでは、Android公式の「Now in Android」アーキテクチャパターンを採用し、以下の要素を実装しています。
+
+#### 1. UiState<T>パターン
+
+すべての画面状態を統一的に管理するため、`UiState<T>`という型安全なsealed interfaceを導入しています。
+
+```kotlin
+sealed interface UiState<out T> {
+    data object Loading : UiState<Nothing>
+    data class Success<T>(val data: T) : UiState<T>
+    data class Error(val message: String) : UiState<Nothing>
+}
+```
+
+これにより、画面の状態を明示的に表現でき、exhaustive when式で安全に処理できます。
+
+#### 2. DomainError階層
+
+ドメイン層でのエラーを型安全に表現するため、`DomainError`というsealed classを定義しています。
+
+```kotlin
+sealed class DomainError : Exception() {
+    data class Network(val cause: Throwable) : DomainError()
+    data class Auth(val message: String) : DomainError()
+    sealed class Api : DomainError() {
+        data class ClientError(val statusCode: Int) : Api()
+        data class ServerError(val statusCode: Int) : Api()
+    }
+    data class Business(val message: String) : DomainError()
+    data class Unknown(val cause: Throwable) : DomainError()
+    data object Unexpected : DomainError()
+}
+```
+
+#### 3. ErrorMapper
+
+`ErrorMapper`は、ドメイン層の`DomainError`をユーザー向けのメッセージに変換する責務を持ちます。34種類の異なるエラーケースに対応し、ユーザーに分かりやすいエラーメッセージを提供します。
+
+```kotlin
+@Singleton
+class ErrorMapper @Inject constructor() {
+    fun toUserMessage(error: Throwable, context: String): String {
+        // DomainErrorやその他の例外を、ユーザー向けのメッセージに変換
+        ...
+    }
+}
+```
+
+#### 4. ViewModelExtensions
+
+共通のViewModel処理（最小ローディング時間の確保など）を拡張関数として実装し、コードの重複を削減しています。
+
+```kotlin
+fun ViewModel.launchWithMinLoadingTime(
+    minLoadingTimeMillis: Long = 1000,
+    block: suspend CoroutineScope.() -> Unit
+) {
+    // 最低1秒のローディング表示を保証
+    ...
+}
+```
+
+#### 5. 明示的なエラーハンドリング
+
+すべてのViewModelで、`Result<T>`型を使用した明示的なエラーハンドリングを実装しています。
+
+```kotlin
+@HiltViewModel
+class ExampleViewModel @Inject constructor(
+    private val useCase: ExampleUseCase,
+    private val errorMapper: ErrorMapper
+) : ViewModel() {
+    fun load() = launchWithMinLoadingTime {
+        useCase().onSuccess { data ->
+            _uiState.value = UiState.Success(data)
+        }.onFailure { e ->
+            val msg = errorMapper.toUserMessage(e, "ExampleViewModel.load")
+            _uiState.value = UiState.Error(msg)
+        }
+    }
+}
+```
+
+このアプローチにより、エラーハンドリングが明示的になり、各ViewModelで一貫した方法でエラーを処理できます。
 
 ## 4. 主要機能の実装詳細 (Implementation Details of Key Features)
 
@@ -146,10 +236,24 @@ graph TD
 ```kotlin
 // in app/src/main
 @HiltViewModel
-class TrackViewModel @Inject constructor(...) : BaseViewModel(), TrackViewModelContract {
+class TrackViewModel @Inject constructor(
+    private val loadProgramsUseCase: LoadProgramsUseCase,
+    private val errorMapper: ErrorMapper,
+    ...
+) : ViewModel(), TrackViewModelContract {
     private val _uiState = MutableStateFlow(TrackUiState())
     override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
-    // ビジネスロジックのみ
+    
+    // ビジネスロジックのみ。エラーハンドリングも明示的
+    fun loadPrograms() = launchWithMinLoadingTime {
+        loadProgramsUseCase().onSuccess { programs ->
+            _uiState.value = TrackUiState(programs = programs)
+        }.onFailure { e ->
+            _uiState.value = TrackUiState(
+                error = errorMapper.toUserMessage(e, "TrackViewModel.loadPrograms")
+            )
+        }
+    }
 }
 ```
 
