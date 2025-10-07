@@ -33,11 +33,7 @@ import com.zelretch.aniiiiict.data.model.LibraryEntry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WatchingScreen(
-    viewModel: WatchingViewModel,
-    uiState: WatchingUiState,
-    onNavigateBack: () -> Unit
-) {
+fun WatchingScreen(viewModel: WatchingViewModel, uiState: WatchingUiState, onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             WatchingTopAppBar(
@@ -57,11 +53,7 @@ fun WatchingScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WatchingTopAppBar(
-    isFilterVisible: Boolean,
-    onFilterClick: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
+private fun WatchingTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onNavigateBack: () -> Unit) {
     TopAppBar(
         title = {
             Text(
@@ -151,10 +143,7 @@ private fun WatchingScreenContent(
 }
 
 @Composable
-private fun PastWorksFilterBar(
-    showOnlyPastWorks: Boolean,
-    onFilterChange: () -> Unit
-) {
+private fun PastWorksFilterBar(showOnlyPastWorks: Boolean, onFilterChange: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -201,7 +190,7 @@ private fun LibraryEntryCard(entry: LibraryEntry) {
             val seasonInfo = buildString {
                 entry.work.seasonYear?.let { append("${it}年") }
                 entry.work.seasonName?.let { append(it.rawValue) }
-                entry.work.media?.let { 
+                entry.work.media?.let {
                     if (isNotEmpty()) append(" ")
                     append(it)
                 }
@@ -218,9 +207,9 @@ private fun LibraryEntryCard(entry: LibraryEntry) {
                 val episodeText = buildString {
                     append("次：")
                     episode.numberText?.let { append(it) } ?: episode.number?.let { append("第${it}話") }
-                    episode.title?.let { 
+                    episode.title?.let {
                         if (isNotEmpty()) append(" ")
-                        append("「${it}」")
+                        append("「$it」")
                     }
                 }
                 Text(

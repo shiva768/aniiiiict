@@ -16,5 +16,8 @@ interface AnnictRepository {
     suspend fun deleteRecord(recordId: String): Boolean
     suspend fun updateWorkViewStatus(workId: String, state: StatusState): Boolean
     suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?>
-    suspend fun getLibraryEntries(states: List<StatusState>, after: String? = null): Flow<List<com.zelretch.aniiiiict.data.model.LibraryEntry>>
+    suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        after: String? = null
+    ): Flow<List<com.zelretch.aniiiiict.data.model.LibraryEntry>>
 }
