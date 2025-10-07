@@ -87,6 +87,10 @@ Integration tests verify the collaboration between multiple components (e.g., Us
 
 - Mock the `ViewModel`.
 - Verify the consistency between the `UIState` and the screen's state.
+- For screens using `UiState<T>` pattern, verify all three states:
+  - `UiState.Loading`: Loading indicator is displayed
+  - `UiState.Success<T>`: Data is correctly displayed
+  - `UiState.Error`: Error message is displayed
 
 ### Test Roles Overview
 
@@ -105,6 +109,47 @@ Integration tests verify the collaboration between multiple components (e.g., Us
   - Focus on end-user visible behavior and UI consistency.
   - Do not verify internal method calls.
   - Mock the ViewModel and ensure that the UI state matches the screen’s state and that user interactions produce the correct results.
+  - For `UiState<T>` pattern, verify all three states (Loading, Success, Error) are correctly rendered.
+
+## Architecture Patterns
+
+This project follows the **"Now in Android"** architecture pattern, which includes:
+
+### UiState<T> Pattern
+
+All ViewModels use a unified `UiState<T>` sealed interface for state management:
+
+```kotlin
+sealed interface UiState<out T> {
+    data object Loading : UiState<Nothing>
+    data class Success<T>(val data: T) : UiState<T>
+    data class Error(val message: String) : UiState<Nothing>
+}
+```
+
+When implementing ViewModels:
+- Use `UiState<T>` for screens with data loading
+- Use custom data classes (e.g., `TrackUiState`) for screens with complex state
+- Always handle all three states in UI layer
+
+### Error Handling
+
+The project uses explicit error handling with:
+
+1. **DomainError**: Type-safe error hierarchy in domain layer (6 error types)
+2. **ErrorMapper**: Converts `DomainError` to user-friendly messages (34 error cases)
+3. **Result<T>**: Kotlin's Result type for explicit error propagation
+
+When implementing error handling:
+- Inject `ErrorMapper` into ViewModels
+- Use `Result.onSuccess` and `Result.onFailure` for explicit error handling
+- Map errors to user-friendly messages using `errorMapper.toUserMessage()`
+
+### ViewModel Extensions
+
+Common ViewModel patterns are implemented as extension functions:
+
+- `launchWithMinLoadingTime()`: Ensures minimum 1-second loading display
 
 ## Building the Application
 
