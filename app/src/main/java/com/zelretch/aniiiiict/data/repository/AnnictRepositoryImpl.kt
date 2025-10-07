@@ -350,7 +350,8 @@ class AnnictRepositoryImpl @Inject constructor(
             }
 
             val nodes = response.data?.viewer?.libraryEntries?.nodes?.filterNotNull() ?: emptyList()
-            val entries = nodes.map { node ->
+            val entries = nodes.mapNotNull { node ->
+                val viewerStatus = node.work.viewerStatusState ?: return@mapNotNull null
                 com.zelretch.aniiiiict.data.model.LibraryEntry(
                     id = node.id,
                     work = Work(
@@ -360,7 +361,7 @@ class AnnictRepositoryImpl @Inject constructor(
                         seasonYear = node.work.seasonYear,
                         media = node.work.media.rawValue,
                         malAnimeId = node.work.malAnimeId,
-                        viewerStatusState = node.work.viewerStatusState,
+                        viewerStatusState = viewerStatus,
                         image = node.work.image?.let { image ->
                             com.zelretch.aniiiiict.data.model.WorkImage(
                                 recommendedImageUrl = image.recommendedImageUrl,

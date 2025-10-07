@@ -9,7 +9,7 @@ import javax.inject.Inject
 class LoadLibraryEntriesUseCase @Inject constructor(
     private val repository: AnnictRepository
 ) {
-    operator fun invoke(states: List<StatusState> = listOf(StatusState.WATCHING)): Flow<List<LibraryEntry>> {
+    suspend operator fun invoke(states: List<StatusState> = listOf(StatusState.WATCHING)): Flow<List<LibraryEntry>> {
         return repository.getLibraryEntries(states)
     }
 }
