@@ -28,7 +28,9 @@ data class WatchingUiState(
     val error: String? = null,
     val showOnlyPastWorks: Boolean = true, // デフォルトは過去作のみ
     val filterState: FilterState = FilterState(),
-    val isFilterVisible: Boolean = false
+    val isFilterVisible: Boolean = false,
+    val selectedEntry: LibraryEntry? = null,
+    val isDetailModalVisible: Boolean = false
 )
 
 /**
@@ -114,6 +116,26 @@ class WatchingViewModel @Inject constructor(
 
     fun toggleFilterVisibility() {
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
+    }
+
+    fun showDetail(entry: LibraryEntry) {
+        Timber.i("DetailModalを表示: ${entry.work.title}")
+        _uiState.update {
+            it.copy(
+                selectedEntry = entry,
+                isDetailModalVisible = true
+            )
+        }
+    }
+
+    fun hideDetail() {
+        Timber.i("DetailModalを非表示")
+        _uiState.update {
+            it.copy(
+                selectedEntry = null,
+                isDetailModalVisible = false
+            )
+        }
     }
 
     private fun applyFilters(entries: List<LibraryEntry>, showOnlyPastWorks: Boolean): List<LibraryEntry> =

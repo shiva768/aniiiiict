@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiict.ui.watching
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.ui.details.DetailModal
+import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,10 +138,28 @@ private fun WatchingScreenContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.entries) { entry ->
-                        LibraryEntryCard(entry = entry)
+                        LibraryEntryCard(
+                            entry = entry,
+                            onClick = { viewModel.showDetail(entry) }
+                        )
                     }
                 }
             }
+        }
+    }
+
+    // DetailModalを表示
+    if (uiState.isDetailModalVisible) {
+        val detailModalViewModel = hiltViewModel<DetailModalViewModel>()
+        uiState.selectedEntry?.let { entry ->
+            val programWithWork = LibraryEntryConverter.toProgramWithWork(entry)
+            DetailModal(
+                programWithWork = programWithWork,
+                isLoading = false,
+                onDismiss = { viewModel.hideDetail() },
+                detailModalViewModel,
+                onRefresh = { viewModel.refresh() }
+            )
         }
     }
 }
@@ -169,11 +191,12 @@ private fun PastWorksFilterBar(showOnlyPastWorks: Boolean, onFilterChange: () ->
 }
 
 @Composable
-private fun LibraryEntryCard(entry: LibraryEntry) {
+private fun LibraryEntryCard(entry: LibraryEntry, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onClick)
     ) {
         Column(
             modifier = Modifier
