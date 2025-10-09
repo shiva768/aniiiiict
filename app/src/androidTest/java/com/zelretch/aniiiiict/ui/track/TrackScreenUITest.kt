@@ -54,7 +54,7 @@ class TrackScreenUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("視聴記録").assertIsDisplayed()
+        composeTestRule.onNodeWithText("放送スケジュール").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
     }
@@ -384,7 +384,7 @@ class TrackScreenUITest {
 
         // Assert
         // ローディング状態でもUIが適切に表示されることを確認
-        composeTestRule.onNodeWithText("視聴記録").assertIsDisplayed()
+        composeTestRule.onNodeWithText("放送スケジュール").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
     }
