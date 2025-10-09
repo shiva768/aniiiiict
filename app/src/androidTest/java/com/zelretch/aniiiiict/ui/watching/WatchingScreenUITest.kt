@@ -36,6 +36,7 @@ class WatchingScreenUITest {
         val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
         val initialState = WatchingUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
+        every { mockViewModel.toggleFilterVisibility() } returns Unit
 
         // Act
         composeTestRule.setContent {

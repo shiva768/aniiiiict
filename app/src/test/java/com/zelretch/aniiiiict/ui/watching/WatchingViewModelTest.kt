@@ -4,6 +4,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
+import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.every
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test
 class WatchingViewModelTest {
 
     private lateinit var loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase
+    private lateinit var loadProgramsUseCase: LoadProgramsUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -38,6 +40,7 @@ class WatchingViewModelTest {
     fun setup() {
         Dispatchers.setMain(dispatcher)
         loadLibraryEntriesUseCase = mockk()
+        loadProgramsUseCase = mockk()
         errorMapper = mockk()
     }
 
@@ -54,10 +57,11 @@ class WatchingViewModelTest {
         @DisplayName("loadLibraryEntriesが呼ばれUIステートが初期値で更新される")
         fun loadLibraryEntriesが呼ばれUIステートが初期値で更新される() = runTest(dispatcher) {
             // Given
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
 
             // When
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, errorMapper)
+            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
@@ -86,10 +90,11 @@ class WatchingViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
 
             // When
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, errorMapper)
+            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
@@ -125,12 +130,13 @@ class WatchingViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returnsMany listOf(
                 flowOf(initialEntries),
                 flowOf(refreshedEntries)
             )
 
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, errorMapper)
+            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -160,9 +166,10 @@ class WatchingViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
 
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, errorMapper)
+            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -178,9 +185,10 @@ class WatchingViewModelTest {
         @DisplayName("フィルター表示が切り替わる")
         fun toggleFilterVisibility() = runTest(dispatcher) {
             // Given
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
 
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, errorMapper)
+            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -202,13 +210,14 @@ class WatchingViewModelTest {
         fun showsErrorMessage() = runTest(dispatcher) {
             // Given
             val exception = RuntimeException("Network error")
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns kotlinx.coroutines.flow.flow {
                 throw exception
             }
             every { errorMapper.toUserMessage(exception) } returns "ネットワークエラーが発生しました"
 
             // When
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, errorMapper)
+            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then

@@ -6,6 +6,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
+import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,43 +37,69 @@ data class WatchingUiState(
 @HiltViewModel
 class WatchingViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
+    private val loadProgramsUseCase: LoadProgramsUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WatchingUiState())
     val uiState: StateFlow<WatchingUiState> = _uiState.asStateFlow()
 
+    // 放送中の作品IDを保持
+    private var currentlyAiringWorkIds: Set<String> = emptySet()
+
     init {
-        loadLibraryEntries()
+        loadData()
     }
 
-    fun loadLibraryEntries() {
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            loadLibraryEntriesUseCase(listOf(StatusState.WATCHING))
-                .catch { e ->
-                    Timber.e(e, "ライブラリエントリーの読み込みに失敗")
-                    val errorMessage = errorMapper.toUserMessage(e)
-                    _uiState.update { it.copy(isLoading = false, error = errorMessage) }
-                }
-                .collect { entries ->
-                    Timber.i("ライブラリエントリーを取得: ${entries.size}件")
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            allEntries = entries,
-                            entries = applyFilters(entries, currentState.showOnlyPastWorks),
-                            isLoading = false,
-                            error = null
-                        )
+            try {
+                // 先に放送中の番組データを読み込む
+                loadProgramsUseCase()
+                    .catch { e ->
+                        Timber.e(e, "番組データの読み込みに失敗")
+                        // 番組データの読み込みに失敗してもライブラリエントリーは表示する
                     }
-                }
+                    .collect { programs ->
+                        currentlyAiringWorkIds = programs.map { it.work.id }.toSet()
+                        Timber.i("放送中の作品を取得: ${currentlyAiringWorkIds.size}件")
+                    }
+
+                // ライブラリエントリーを読み込む
+                loadLibraryEntriesUseCase(listOf(StatusState.WATCHING))
+                    .catch { e ->
+                        Timber.e(e, "ライブラリエントリーの読み込みに失敗")
+                        val errorMessage = errorMapper.toUserMessage(e)
+                        _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+                    }
+                    .collect { entries ->
+                        Timber.i("ライブラリエントリーを取得: ${entries.size}件")
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                allEntries = entries,
+                                entries = applyFilters(entries, currentState.showOnlyPastWorks),
+                                isLoading = false,
+                                error = null
+                            )
+                        }
+                    }
+            } catch (e: Exception) {
+                Timber.e(e, "データの読み込みに失敗")
+                val errorMessage = errorMapper.toUserMessage(e)
+                _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+            }
         }
     }
 
+    fun loadLibraryEntries() {
+        loadData()
+    }
+
     fun refresh() {
-        Timber.i("ライブラリエントリーを再読み込み")
-        loadLibraryEntries()
+        Timber.i("データを再読み込み")
+        loadData()
     }
 
     fun togglePastWorksFilter() {
@@ -89,9 +116,14 @@ class WatchingViewModel @Inject constructor(
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
     }
 
-    private fun applyFilters(entries: List<LibraryEntry>, showOnlyPastWorks: Boolean): List<LibraryEntry> {
-        // TODO: 過去作のみフィルターを実装する際に、viewer.programs との照合が必要
-        // 現時点では全作品を返す
-        return entries
-    }
+    private fun applyFilters(entries: List<LibraryEntry>, showOnlyPastWorks: Boolean): List<LibraryEntry> =
+        if (showOnlyPastWorks) {
+            // 過去作のみ: 放送中の番組リストに存在しない作品
+            entries.filter { entry ->
+                entry.work.id !in currentlyAiringWorkIds
+            }
+        } else {
+            // 全作品
+            entries
+        }
 }
