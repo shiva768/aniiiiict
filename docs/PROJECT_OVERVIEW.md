@@ -279,7 +279,6 @@ fun withSuccessfulLoad() = runTest {
 
 ### 詳細ガイド
 
--   [**Compose UIテストガイド**](./docs/COMPOSE_UI_TESTS.md): Jetpack Composeで作成されたUIのテストケース一覧と、その実行方法に関する実践的なガイドです。
 -   [**テスト戦略の詳細**](./AGENTS.md#test-strategy): IntegrationTest、UITestの方針とベストプラクティス。
 
 ## 7. 開発ワークフロー (Development Workflow)
