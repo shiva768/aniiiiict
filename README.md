@@ -91,7 +91,7 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 - GraphQLによる効率的なデータ取得
 - 依存関係のバージョン管理はlibs.versions.tomlで一元化
 
-詳細は[PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md)を参照してください。
+詳細は[PROJECT_OVERVIEW.md](./docs/PROJECT_OVERVIEW.md)を参照してください。
 
 ## テスト
 
