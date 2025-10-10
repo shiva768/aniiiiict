@@ -31,8 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiict.ui.details.DetailModal
-import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 import com.zelretch.aniiiiict.ui.track.components.FilterBar
 import com.zelretch.aniiiiict.ui.track.components.FilterOptions
 import com.zelretch.aniiiiict.ui.track.components.ProgramCard
@@ -221,13 +219,13 @@ private fun TrackScreenContent(
     }
 
     if (uiState.isDetailModalVisible) {
-        val detailModalViewModel = hiltViewModel<DetailModalViewModel>()
+        val broadcastEpisodeModalViewModel = hiltViewModel<BroadcastEpisodeModalViewModel>()
         uiState.selectedProgram?.let { program ->
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = program,
                 isLoading = uiState.isLoadingDetail,
                 onDismiss = { viewModel.hideDetail() },
-                detailModalViewModel,
+                broadcastEpisodeModalViewModel,
                 onRefresh = onRefresh
             )
         }

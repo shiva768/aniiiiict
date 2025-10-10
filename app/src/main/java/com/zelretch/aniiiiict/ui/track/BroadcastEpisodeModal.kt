@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,53 +8,46 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiict.ui.details.components.ConfirmDialog
-import com.zelretch.aniiiiict.ui.details.components.FinaleConfirmDialog
-import com.zelretch.aniiiiict.ui.details.components.UnwatchedEpisodesContent
+import com.zelretch.aniiiiict.ui.common.components.StatusDropdown
+import com.zelretch.aniiiiict.ui.common.components.episode.ConfirmDialog
+import com.zelretch.aniiiiict.ui.common.components.episode.FinaleConfirmDialog
+import com.zelretch.aniiiiict.ui.common.components.episode.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun DetailModal(
+fun BroadcastEpisodeModal(
     programWithWork: ProgramWithWork,
     isLoading: Boolean,
     onDismiss: () -> Unit,
-    viewModel: DetailModalViewModel = hiltViewModel<DetailModalViewModel>(),
+    viewModel: BroadcastEpisodeModalViewModel = hiltViewModel<BroadcastEpisodeModalViewModel>(),
     onRefresh: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
-    DetailModalLaunchedEffects(viewModel, programWithWork, onRefresh)
+    BroadcastEpisodeModalLaunchedEffects(viewModel, programWithWork, onRefresh)
 
-    DetailModalDialogs(viewModel, state, programWithWork)
+    BroadcastEpisodeModalDialogs(viewModel, state, programWithWork)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { DetailModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus) },
+        title = {
+            BroadcastEpisodeModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus)
+        },
         text = {
             UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
                 viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
@@ -67,8 +60,8 @@ fun DetailModal(
 }
 
 @Composable
-private fun DetailModalLaunchedEffects(
-    viewModel: DetailModalViewModel,
+private fun BroadcastEpisodeModalLaunchedEffects(
+    viewModel: BroadcastEpisodeModalViewModel,
     programWithWork: ProgramWithWork,
     onRefresh: () -> Unit
 ) {
@@ -79,11 +72,11 @@ private fun DetailModalLaunchedEffects(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is DetailModalEvent.StatusChanged,
-                is DetailModalEvent.EpisodesRecorded,
-                is DetailModalEvent.BulkEpisodesRecorded
+                is BroadcastEpisodeModalEvent.StatusChanged,
+                is BroadcastEpisodeModalEvent.EpisodesRecorded,
+                is BroadcastEpisodeModalEvent.BulkEpisodesRecorded
                 -> onRefresh()
-                is DetailModalEvent.FinaleConfirmationShown
+                is BroadcastEpisodeModalEvent.FinaleConfirmationShown
                 -> { /* UI already handles this via state */ }
             }
         }
@@ -91,9 +84,9 @@ private fun DetailModalLaunchedEffects(
 }
 
 @Composable
-private fun DetailModalDialogs(
-    viewModel: DetailModalViewModel,
-    state: DetailModalState,
+private fun BroadcastEpisodeModalDialogs(
+    viewModel: BroadcastEpisodeModalViewModel,
+    state: BroadcastEpisodeModalState,
     programWithWork: ProgramWithWork
 ) {
     if (state.showConfirmDialog && state.selectedEpisodeIndex != null) {
@@ -158,11 +151,12 @@ private fun DetailModalDialogs(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onStatusChange: (StatusState) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
+private fun BroadcastEpisodeModalTitle(
+    state: BroadcastEpisodeModalState,
+    onDismiss: () -> Unit,
+    onStatusChange: (StatusState) -> Unit
+) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -178,10 +172,9 @@ private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onS
             }
         }
 
-        StatusDropdownMenu(
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            state = state,
+        StatusDropdown(
+            selectedStatus = state.selectedStatus,
+            isChanging = state.isStatusChanging,
             onStatusChange = onStatusChange
         )
 
@@ -192,50 +185,6 @@ private fun DetailModalTitle(state: DetailModalState, onDismiss: () -> Unit, onS
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 4.dp)
             )
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun StatusDropdownMenu(
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    state: DetailModalState,
-    onStatusChange: (StatusState) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ExposedDropdownMenuBox(expanded = expanded && !state.isStatusChanging, onExpandedChange = {
-            onExpandedChange(!expanded)
-        }) {
-            TextField(
-                value = state.selectedStatus?.name ?: "",
-                onValueChange = {},
-                readOnly = true,
-                enabled = !state.isStatusChanging,
-                trailingIcon = {
-                    if (state.isStatusChanging) {
-                        CircularProgressIndicator(modifier = Modifier.padding(8.dp), strokeWidth = 2.dp)
-                    } else {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    }
-                },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-            )
-            ExposedDropdownMenu(expanded = expanded && !state.isStatusChanging, onDismissRequest = {
-                onExpandedChange(false)
-            }) {
-                StatusState.entries.forEach { status ->
-                    DropdownMenuItem(text = { Text(status.name) }, onClick = {
-                        onExpandedChange(false)
-                        onStatusChange(status)
-                    })
-                }
-            }
         }
     }
 }

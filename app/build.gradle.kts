@@ -286,8 +286,7 @@ tasks.register("printFailedAndroidTests") {
                 if (failures.isNotEmpty()) {
                     totalFailures++
                     val failureText = failures[0].text()
-                    val reasonLine =
-                        failureText.lineSequence().find { it.startsWith("Reason:") } ?: "<Reason not found>"
+                    val reasonLine = failureText.lineSequence().first()
                     val className = tc.attribute("classname")?.toString() ?: ""
                     val simpleClassName = className.substringAfterLast('.')
                     val codeLine = failureText.lineSequence()

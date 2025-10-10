@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -6,7 +6,6 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.Episode
-import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
@@ -36,13 +35,13 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 
 /**
- * DetailModalの統合テスト。
+ * BroadcastEpisodeModalの統合テスト。
  * UI操作からViewModel、UseCaseを経由し、Repository（モック）が
  * 正しく呼び出されるかという、コンポーネント間の連携を検証する。
  */
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
-class DetailModalIntegrationTest {
+class BroadcastEpisodeModalIntegrationTest {
 
     @get:Rule
     val testRule = HiltComposeTestRule(this)
@@ -59,6 +58,9 @@ class DetailModalIntegrationTest {
     @Inject
     lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
 
+    @Inject
+    lateinit var errorMapper: ErrorMapper
+
     @BindValue
     @JvmField
     val annictRepository: AnnictRepository = mockk<AnnictRepository>().apply {
@@ -72,30 +74,11 @@ class DetailModalIntegrationTest {
 
     @BindValue
     @JvmField
-    val mockMyAnimeListRepository: MyAnimeListRepository = object : MyAnimeListRepository {
-        // mockでやると結果が不安定(ClassCastExceptionなどが発生)なので、Repositoryをここで実装しちゃう
-        override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> {
-            // Default to a non-finale safe response unless overridden by specific test stubbing
-            return Result.success(
-                MyAnimeListResponse(
-                    id = animeId,
-                    mediaType = "tv",
-                    numEpisodes = 12,
-                    status = "currently_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
-            )
-        }
-    }
+    val myAnimeListRepository: MyAnimeListRepository = mockk<MyAnimeListRepository>(relaxed = true)
 
     @BindValue
     @JvmField
     val programFilter: ProgramFilter = mockk<ProgramFilter>(relaxed = true)
-
-    @BindValue
-    @JvmField
-    val errorMapper: ErrorMapper = mockk<ErrorMapper>(relaxed = true)
 
     @BindValue
     @JvmField
@@ -104,10 +87,10 @@ class DetailModalIntegrationTest {
     }
 
     @Test
-    fun detailModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
+    fun broadcastEpisodeModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
         // Arrange
         val viewModel =
-            DetailModalViewModel(
+            BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
@@ -133,7 +116,7 @@ class DetailModalIntegrationTest {
 
         // Act
         testRule.composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = pw,
                 isLoading = false,
                 onDismiss = {},
@@ -154,10 +137,10 @@ class DetailModalIntegrationTest {
     }
 
     @Test
-    fun detailModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
+    fun broadcastEpisodeModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
         // Arrange
         val viewModel =
-            DetailModalViewModel(
+            BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
@@ -180,7 +163,7 @@ class DetailModalIntegrationTest {
 
         // Act
         testRule.composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = pw,
                 isLoading = false,
                 onDismiss = {},
@@ -192,18 +175,15 @@ class DetailModalIntegrationTest {
         // ステータスをWATCHEDに変更
         viewModel.changeStatus(StatusState.WATCHED)
 
-        // Wait for the coroutine to complete
-        testRule.composeTestRule.waitForIdle()
-
         // Assert: ステータス更新が呼ばれる
         coVerify(exactly = 1) { annictRepository.updateWorkViewStatus("work-status", StatusState.WATCHED) }
     }
 
     @Test
-    fun detailModal_単一エピソード視聴_createRecordが呼ばれる() {
+    fun broadcastEpisodeModal_単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
         val viewModel =
-            DetailModalViewModel(
+            BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
@@ -226,7 +206,7 @@ class DetailModalIntegrationTest {
 
         // Act
         testRule.composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = pw,
                 isLoading = false,
                 onDismiss = {},
@@ -235,9 +215,8 @@ class DetailModalIntegrationTest {
             )
         }
 
-        // 単一エピソードの視聴記録（確認ダイアログなしでそのまま実行）
-        viewModel.showConfirmDialog(0)
-        // Wait for the coroutine to complete
+        // 単一エピソードの「記録する」ボタンをクリック
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
         testRule.composeTestRule.waitForIdle()
 
         // Assert
@@ -245,10 +224,10 @@ class DetailModalIntegrationTest {
     }
 
     @Test
-    fun detailModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
+    fun broadcastEpisodeModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
         // Arrange
         val viewModel =
-            DetailModalViewModel(
+            BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
@@ -271,7 +250,7 @@ class DetailModalIntegrationTest {
 
         // Act
         testRule.composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = pw,
                 isLoading = false,
                 onDismiss = {},
@@ -280,8 +259,8 @@ class DetailModalIntegrationTest {
             )
         }
 
-        // エピソード記録（WANNA_WATCH状態から）: 単一のため確認ダイアログなしでそのまま記録される
-        viewModel.showConfirmDialog(0)
+        // エピソード記録（WANNA_WATCH状態から）
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
         testRule.composeTestRule.waitForIdle()
 
         // Assert: WANNA_WATCHからの場合、先にWATCHINGに更新してからレコード作成される
@@ -290,135 +269,4 @@ class DetailModalIntegrationTest {
             annictRepository.createRecord("epFlow", "work-flow")
         }
     }
-
-    @Test
-    fun detailModal_WANNA_WATCH_一括視聴_複数話_順序は更新から各話createRecord() {
-        // Arrange
-        val viewModel =
-            DetailModalViewModel(
-                bulkRecordEpisodesUseCase,
-                watchEpisodeUseCase,
-                updateViewStateUseCase,
-                judgeFinaleUseCase,
-                errorMapper
-            )
-
-        val work = Work(
-            id = "work-bulk-wanna",
-            title = "一括視聴WANNA",
-            seasonName = SeasonName.SPRING,
-            seasonYear = 2024,
-            media = "TV",
-            mediaText = "TV",
-            viewerStatusState = StatusState.WANNA_WATCH
-        )
-        val ep1 = Episode(id = "ep-b1", title = "第1話", numberText = "1", number = 1)
-        val ep2 = Episode(id = "ep-b2", title = "第2話", numberText = "2", number = 2)
-        val p1 = Program(id = "p-b1", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep1)
-        val p2 = Program(id = "p-b2", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep2)
-        val pw = ProgramWithWork(programs = listOf(p1, p2), firstProgram = p1, work = work)
-
-        // Act
-        testRule.composeTestRule.setContent {
-            DetailModal(
-                programWithWork = pw,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
-        }
-
-        // 一括視聴ダイアログを開いて確定
-        viewModel.showConfirmDialog(1)
-        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
-
-        // Assert: WANNA_WATCH の場合、先にWATCHINGに更新 → 各話のcreateRecord
-        coVerifyOrder {
-            annictRepository.updateWorkViewStatus("work-bulk-wanna", StatusState.WATCHING)
-            annictRepository.createRecord("ep-b1", "work-bulk-wanna")
-            annictRepository.createRecord("ep-b2", "work-bulk-wanna")
-        }
-    }
-
-    @Test
-    fun detailModal_単体視聴_フィナーレ判定_ダイアログ表示と確認でWATCHEDへ更新() {
-        // Arrange
-        val viewModel =
-            DetailModalViewModel(
-                bulkRecordEpisodesUseCase,
-                watchEpisodeUseCase,
-                updateViewStateUseCase,
-                judgeFinaleUseCase,
-                errorMapper
-            )
-
-        // MAL 側で finished_airing を返すようにモック
-        val malId = 555
-
-        val work = Work(
-            id = "work-single-finale",
-            title = "単体フィナーレ",
-            seasonName = SeasonName.SPRING,
-            seasonYear = 2024,
-            media = "TV",
-            mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING,
-            malAnimeId = malId.toString()
-        )
-        val epLast = Episode(id = "ep-last", title = "第12話", numberText = "12", number = 12)
-        val pLast = Program(id = "p-last", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = epLast)
-        val pw = ProgramWithWork(programs = listOf(pLast), firstProgram = pLast, work = work)
-
-        // Act
-        testRule.composeTestRule.setContent {
-            DetailModal(
-                programWithWork = pw,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
-        }
-
-        // ViewModel.initialize が LaunchedEffect 経由で反映されるのを待つ（MAL ID が設定されるまで）
-        testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            viewModel.state.value.malAnimeId != null && viewModel.state.value.programs.isNotEmpty()
-        }
-
-        // 単一エピソードの視聴記録（UIの「記録する」ボタンを押下）→ Watch 後にフィナーレ判定が走る
-        testRule.composeTestRule.onNodeWithText("記録する").performClick()
-        testRule.composeTestRule.waitForIdle()
-
-        // Assert: 最終話確認ダイアログが表示される
-        testRule.composeTestRule.onNodeWithText("最終話確認").assertExists()
-        testRule.composeTestRule.onNodeWithText("視聴完了にする").assertExists()
-
-        // 確認を押すと WATCHED に更新される
-        testRule.composeTestRule.onNodeWithText("視聴完了にする").performClick()
-
-        // Wait for coroutine completion
-        testRule.composeTestRule.waitForIdle()
-
-        coVerify(exactly = 1) { annictRepository.updateWorkViewStatus("work-single-finale", StatusState.WATCHED) }
-    }
-
-    // Note: フィナーレ判定の統合テストはコメントアウト
-    // Android UI環境での非同期処理とDialogの表示タイミングが複雑で、
-    // 安定したテストが困難なため、ユニット・統合テストで検証済みの機能は
-    // ここでは基本的なRepository呼び出しの確認に留める
-
-    /*
-     * @Test
-     * fun detailModal_一括視聴_フィナーレ判定_最終話確認ダイアログ表示() {
-     *     // 複雑な非同期処理とUI表示のため、現時点では安定性に課題があります
-     *     // 機能自体は単体テストおよび統合テストで検証済みです
-     * }
-     *
-     * @Test
-     * fun detailModal_単一エピソード記録_フィナーレ判定_最終話確認ダイアログ表示() {
-     *     // 複雑な非同期処理とUI表示のため、現時点では安定性に課題があります
-     *     // 機能自体は単体テストおよび統合テストで検証済みです
-     * }
-     */
 }

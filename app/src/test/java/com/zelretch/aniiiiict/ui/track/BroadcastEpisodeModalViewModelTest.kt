@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import app.cash.turbine.test
 import com.annict.type.StatusState
@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@DisplayName("DetailModalViewModel")
-class DetailModalViewModelTest {
+@DisplayName("BroadcastEpisodeModalViewModel")
+class BroadcastEpisodeModalViewModelTest {
 
     private lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase
     private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
@@ -41,7 +41,7 @@ class DetailModalViewModelTest {
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
-    private lateinit var viewModel: DetailModalViewModel
+    private lateinit var viewModel: BroadcastEpisodeModalViewModel
 
     @BeforeEach
     fun setup() {
@@ -51,7 +51,7 @@ class DetailModalViewModelTest {
         updateViewStateUseCase = mockk()
         judgeFinaleUseCase = mockk()
         errorMapper = mockk(relaxed = true)
-        viewModel = DetailModalViewModel(
+        viewModel = BroadcastEpisodeModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,

@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-data class DetailModalState(
+data class BroadcastEpisodeModalState(
     val programs: List<Program> = emptyList(),
     val showConfirmDialog: Boolean = false,
     val selectedEpisodeIndex: Int? = null,
@@ -41,15 +41,16 @@ data class DetailModalState(
     val singleEpisodeFinaleWorkId: String? = null
 )
 
-sealed interface DetailModalEvent {
-    object StatusChanged : DetailModalEvent
-    object EpisodesRecorded : DetailModalEvent
-    object BulkEpisodesRecorded : DetailModalEvent
-    object FinaleConfirmationShown : DetailModalEvent
+sealed interface BroadcastEpisodeModalEvent {
+    object StatusChanged : BroadcastEpisodeModalEvent
+    object EpisodesRecorded : BroadcastEpisodeModalEvent
+    object BulkEpisodesRecorded : BroadcastEpisodeModalEvent
+    object FinaleConfirmationShown : BroadcastEpisodeModalEvent
 }
 
 /**
- * EpisodeRecordModal画面のViewModel
+ * BroadcastEpisodeModal画面のViewModel
+ * Track画面で放送スケジュールからエピソードを記録するために使用
  *
  * Now in Android パターンへの移行:
  * - ErrorMapperによるユーザー向けメッセージ変換
@@ -59,7 +60,7 @@ sealed interface DetailModalEvent {
  * 現時点では従来のStateパターンを維持。
  */
 @HiltViewModel
-class DetailModalViewModel @Inject constructor(
+class BroadcastEpisodeModalViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
@@ -67,11 +68,11 @@ class DetailModalViewModel @Inject constructor(
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(DetailModalState())
-    val state: StateFlow<DetailModalState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(BroadcastEpisodeModalState())
+    val state: StateFlow<BroadcastEpisodeModalState> = _state.asStateFlow()
 
-    private val _events = MutableSharedFlow<DetailModalEvent>()
-    val events: SharedFlow<DetailModalEvent> = _events.asSharedFlow()
+    private val _events = MutableSharedFlow<BroadcastEpisodeModalEvent>()
+    val events: SharedFlow<BroadcastEpisodeModalEvent> = _events.asSharedFlow()
 
     fun initialize(programWithWork: ProgramWithWork) {
         _state.update {
@@ -116,10 +117,10 @@ class DetailModalViewModel @Inject constructor(
             updateViewStateUseCase(workId, status)
                 .onSuccess {
                     // Keep the selected status (already set) and notify
-                    _events.emit(DetailModalEvent.StatusChanged)
+                    _events.emit(BroadcastEpisodeModalEvent.StatusChanged)
                 }
                 .onFailure { e ->
-                    val errorMessage = errorMapper.toUserMessage(e, "DetailModalViewModel.changeStatus")
+                    val errorMessage = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.changeStatus")
                     // Roll back to previous status and show error
                     _state.update {
                         it.copy(
@@ -157,10 +158,10 @@ class DetailModalViewModel @Inject constructor(
                             programs = _state.value.programs.filter { it.episode.id != episodeId }
                         )
                     }
-                    _events.emit(DetailModalEvent.EpisodesRecorded)
+                    _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
                 }
                 .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.recordEpisode")
+                    val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.recordEpisode")
                     Timber.e(e, "DetailModal: エピソード記録に失敗 - $msg")
                 }
         }
@@ -218,7 +219,7 @@ class DetailModalViewModel @Inject constructor(
                     singleEpisodeFinaleWorkId = workId
                 )
             }
-            _events.emit(DetailModalEvent.FinaleConfirmationShown)
+            _events.emit(BroadcastEpisodeModalEvent.FinaleConfirmationShown)
         } else {
             Timber.d(
                 "DetailModal: handleSingleEpisodeFinaleJudgement - not a finale"
@@ -277,12 +278,12 @@ class DetailModalViewModel @Inject constructor(
                 }
 
                 if (shouldShowFinaleConfirmation) {
-                    _events.emit(DetailModalEvent.FinaleConfirmationShown)
+                    _events.emit(BroadcastEpisodeModalEvent.FinaleConfirmationShown)
                 } else {
-                    _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+                    _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
                 }
             }.onFailure { e ->
-                val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.bulkRecordEpisodes")
+                val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.bulkRecordEpisodes")
                 Timber.e(e, "DetailModal: 一括記録に失敗 - $msg")
                 _state.update {
                     it.copy(
@@ -306,10 +307,10 @@ class DetailModalViewModel @Inject constructor(
                             finaleEpisodeNumber = null
                         )
                     }
-                    _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+                    _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
                 }
                 .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.confirmFinaleWatched")
+                    val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.confirmFinaleWatched")
                     Timber.e(e, "DetailModal: フィナーレ確認に失敗 - $msg")
                 }
         }
@@ -323,7 +324,7 @@ class DetailModalViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            _events.emit(DetailModalEvent.BulkEpisodesRecorded)
+            _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
         }
     }
 
@@ -339,10 +340,13 @@ class DetailModalViewModel @Inject constructor(
                             singleEpisodeFinaleWorkId = null
                         )
                     }
-                    _events.emit(DetailModalEvent.EpisodesRecorded)
+                    _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
                 }
                 .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(e, "DetailModalViewModel.confirmSingleEpisodeFinaleWatched")
+                    val msg = errorMapper.toUserMessage(
+                        e,
+                        "BroadcastEpisodeModalViewModel.confirmSingleEpisodeFinaleWatched"
+                    )
                     Timber.e(e, "DetailModal: 単一エピソードフィナーレ確認に失敗 - $msg")
                 }
         }
@@ -357,7 +361,7 @@ class DetailModalViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            _events.emit(DetailModalEvent.EpisodesRecorded)
+            _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
         }
     }
 }

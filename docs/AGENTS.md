@@ -20,11 +20,13 @@ The app allows users to:
 app/src/main/java/com/zelretch/aniiiiict/
 ├── ui/                      # UI Layer (Compose)
 │   ├── track/              # 放送スケジュール画面 (Broadcast Schedule)
+│   ├── library/            # ライブラリ画面 (Library - WATCHING/WANNA_WATCH)
 │   ├── history/            # 記録履歴画面 (Viewing History)
 │   ├── animedetail/        # アニメ詳細画面 (Anime Detail)
-│   ├── details/            # DetailModal (Episode Recording)
 │   ├── auth/               # 認証画面 (Authentication)
 │   ├── settings/           # 設定画面 (Settings)
+│   ├── common/             # 共通コンポーネント (Shared components)
+│   │   └── components/     # 再利用可能なUIコンポーネント
 │   ├── base/               # Base UI components (UiState, ErrorMapper)
 │   └── theme/              # Material3 theme
 ├── domain/                  # Domain Layer
@@ -264,6 +266,60 @@ fun initialStateShowsLoading() {
 # Detekt
 ./gradlew detekt
 ```
+
+**IMPORTANT:** Always run `./gradlew check` before committing changes. This ensures:
+- All unit tests pass
+- Code style (ktlint) is correct
+- Static analysis (detekt) passes
+- No compilation errors
+
+### Component Placement Guidelines
+
+Follow these principles when deciding where to place UI components:
+
+#### Principle: Colocation
+- Components should be placed near where they are used
+- Screen-specific components → place in screen's directory
+- Shared components → place in `ui/common/components/`
+
+#### Principle: Feature-Based Organization
+- Group related components by feature or domain
+- Use subdirectories to organize complex features
+- Avoid generic names like "details" or "utils"
+
+#### When to Move Components
+Consider refactoring component placement when:
+- A component is used by multiple screens
+- Component naming doesn't match its location
+- A directory accumulates unrelated components
+
+### Refactoring Workflow
+
+When refactoring code, follow this workflow to maintain quality:
+
+1. **Use `git mv` for file moves/renames**
+   - Preserves git history
+   - Makes code review easier
+
+2. **Update tests immediately**
+   - Tests should be updated in the same PR as the refactoring
+   - Ensure all test types are covered (Unit, UI, Integration)
+
+3. **Always run quality checks before committing**
+   ```bash
+   ./gradlew ktlintFormat  # Auto-fix style issues
+   ./gradlew check         # Run all checks (REQUIRED)
+   ```
+
+4. **Commit incrementally**
+   - Separate logical changes into multiple commits
+   - Each commit should build and pass tests
+   - Use clear, descriptive commit messages
+
+5. **DO NOT commit:**
+   - Environment-specific settings (e.g., `gradle.properties` with local paths)
+   - Dump files (*.trc, *.dmp, javacore.*, etc.)
+   - Generated files
 
 ## Secrets Management
 

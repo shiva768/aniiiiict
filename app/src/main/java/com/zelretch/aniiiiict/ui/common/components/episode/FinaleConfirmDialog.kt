@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details.components
+package com.zelretch.aniiiiict.ui.common.components.episode
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text

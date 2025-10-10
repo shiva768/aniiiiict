@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details.components
+package com.zelretch.aniiiiict.ui.common.components.episode
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
