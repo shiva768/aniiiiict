@@ -24,20 +24,20 @@ import org.junit.runner.RunWith
 import java.time.LocalDateTime
 
 /**
- * DetailModalの純粋なCompose UIテスト。
+ * BroadcastEpisodeModalの純粋なCompose UIテスト。
  * ViewModelをモック化し、特定のUI状態が与えられた際の
  * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class DetailModalUITest {
+class BroadcastEpisodeModalUITest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun createMockViewModel(programWithWork: ProgramWithWork): DetailModalViewModel =
-        mockk<DetailModalViewModel>(relaxed = true).apply {
+    private fun createMockViewModel(programWithWork: ProgramWithWork): BroadcastEpisodeModalViewModel =
+        mockk<BroadcastEpisodeModalViewModel>(relaxed = true).apply {
             every { state } returns MutableStateFlow(
-                DetailModalState(
+                BroadcastEpisodeModalState(
                     programs = programWithWork.programs,
                     selectedStatus = programWithWork.work.viewerStatusState,
                     workId = programWithWork.work.id
@@ -75,7 +75,7 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_基本要素_タイトルと閉じるボタンが表示される() {
+    fun broadcastEpisodeModal_基本要素_タイトルと閉じるボタンが表示される() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = createMockViewModel(programWithWork)
@@ -83,7 +83,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = mockOnDismiss,
@@ -98,7 +98,7 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_閉じるボタンクリック_onDismissが呼ばれる() {
+    fun broadcastEpisodeModal_閉じるボタンクリック_onDismissが呼ばれる() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = createMockViewModel(programWithWork)
@@ -106,7 +106,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = mockOnDismiss,
@@ -122,12 +122,12 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_ステータスドロップダウン_展開して選択できる() {
+    fun broadcastEpisodeModal_ステータスドロップダウン_展開して選択できる() {
         // Arrange
         val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
-        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+        val viewModel = mockk<BroadcastEpisodeModalViewModel>(relaxed = true).apply {
             every { state } returns MutableStateFlow(
-                DetailModalState(
+                BroadcastEpisodeModalState(
                     programs = programWithWork.programs,
                     selectedStatus = StatusState.WATCHING,
                     workId = programWithWork.work.id
@@ -137,7 +137,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = {},
@@ -172,7 +172,7 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_一括視聴確認ダイアログ_表示内容が正しい() {
+    fun broadcastEpisodeModal_一括視聴確認ダイアログ_表示内容が正しい() {
         // Arrange
         // 2エピソードのProgramWithWorkを用意
         val work = Work(
@@ -204,9 +204,9 @@ class DetailModalUITest {
             work = work
         )
 
-        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+        val viewModel = mockk<BroadcastEpisodeModalViewModel>(relaxed = true).apply {
             every { state } returns MutableStateFlow(
-                DetailModalState(
+                BroadcastEpisodeModalState(
                     programs = programWithWork.programs,
                     selectedStatus = programWithWork.work.viewerStatusState,
                     workId = programWithWork.work.id,
@@ -218,7 +218,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = {},
@@ -235,12 +235,12 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_一括視聴確認ダイアログ_キャンセルボタンクリック() {
+    fun broadcastEpisodeModal_一括視聴確認ダイアログ_キャンセルボタンクリック() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
-        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+        val viewModel = mockk<BroadcastEpisodeModalViewModel>(relaxed = true).apply {
             every { state } returns MutableStateFlow(
-                DetailModalState(
+                BroadcastEpisodeModalState(
                     programs = programWithWork.programs,
                     selectedStatus = programWithWork.work.viewerStatusState,
                     workId = programWithWork.work.id,
@@ -252,7 +252,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = {},
@@ -268,13 +268,13 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_一括視聴確認ダイアログ_確定ボタンクリック() {
+    fun broadcastEpisodeModal_一括視聴確認ダイアログ_確定ボタンクリック() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val mockOnRefresh = mockk<() -> Unit>(relaxed = true)
-        val viewModel = mockk<DetailModalViewModel>(relaxed = true).apply {
+        val viewModel = mockk<BroadcastEpisodeModalViewModel>(relaxed = true).apply {
             every { state } returns MutableStateFlow(
-                DetailModalState(
+                BroadcastEpisodeModalState(
                     programs = programWithWork.programs,
                     selectedStatus = programWithWork.work.viewerStatusState,
                     workId = programWithWork.work.id,
@@ -286,7 +286,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = {},
@@ -302,14 +302,14 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_ローディング状態_プログレスインジケータが表示される() {
+    fun broadcastEpisodeModal_ローディング状態_プログレスインジケータが表示される() {
         // Arrange
         val programWithWork = sampleProgramWithWork()
         val viewModel = createMockViewModel(programWithWork)
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = true, // ローディング状態
                 onDismiss = {},
@@ -324,7 +324,7 @@ class DetailModalUITest {
     }
 
     @Test
-    fun detailModal_複数エピソード_正しい件数が表示される() {
+    fun broadcastEpisodeModal_複数エピソード_正しい件数が表示される() {
         // Arrange
         // 3エピソードのProgramWithWorkを用意
         val work = Work(
@@ -356,7 +356,7 @@ class DetailModalUITest {
 
         // Act
         composeTestRule.setContent {
-            DetailModal(
+            BroadcastEpisodeModal(
                 programWithWork = programWithWork,
                 isLoading = false,
                 onDismiss = {},

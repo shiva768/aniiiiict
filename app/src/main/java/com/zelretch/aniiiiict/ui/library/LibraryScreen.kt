@@ -30,10 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.zelretch.aniiiiict.data.model.LibraryEntry
-import com.zelretch.aniiiiict.ui.details.DetailModal
-import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -144,16 +142,14 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
         }
     }
 
-    // DetailModalを表示
+    // WatchingEpisodeModalを表示
     if (uiState.isDetailModalVisible) {
-        val detailModalViewModel = hiltViewModel<DetailModalViewModel>()
+        val watchingEpisodeModalViewModel = hiltViewModel<WatchingEpisodeModalViewModel>()
         uiState.selectedEntry?.let { entry ->
-            val programWithWork = LibraryEntryConverter.toProgramWithWork(entry)
-            DetailModal(
-                programWithWork = programWithWork,
-                isLoading = false,
+            WatchingEpisodeModal(
+                entry = entry,
                 onDismiss = { viewModel.hideDetail() },
-                detailModalViewModel,
+                watchingEpisodeModalViewModel,
                 onRefresh = { viewModel.refresh() }
             )
         }
