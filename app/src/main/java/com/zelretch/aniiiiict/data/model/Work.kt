@@ -13,5 +13,6 @@ data class Work(
     val malAnimeId: String? = null,
     val viewerStatusState: StatusState,
     val seasonNameText: String? = null,
-    val image: WorkImage? = null
+    val image: WorkImage? = null,
+    val noEpisodes: Boolean = false
 )

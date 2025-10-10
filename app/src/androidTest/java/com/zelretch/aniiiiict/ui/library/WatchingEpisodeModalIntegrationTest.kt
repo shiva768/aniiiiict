@@ -86,7 +86,8 @@ class WatchingEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING
+            viewerStatusState = StatusState.WATCHING,
+            noEpisodes = false
         )
         val episode = Episode(id = "ep-test", title = "第1話", numberText = "1", number = 1)
         val entry =
@@ -122,7 +123,8 @@ class WatchingEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING
+            viewerStatusState = StatusState.WATCHING,
+            noEpisodes = false
         )
         val episode = Episode(id = "ep-status", title = "第1話", numberText = "1", number = 1)
         val entry =
@@ -160,7 +162,8 @@ class WatchingEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING
+            viewerStatusState = StatusState.WATCHING,
+            noEpisodes = false
         )
         val entry =
             LibraryEntry(id = "lib-entry-int3", work = work, statusState = StatusState.WATCHING, nextEpisode = null)
@@ -178,5 +181,47 @@ class WatchingEpisodeModalIntegrationTest {
         // Assert
         testRule.composeTestRule.onNodeWithText("次のエピソード情報がありません").assertExists()
         testRule.composeTestRule.onNodeWithText("視聴済みにする").assertDoesNotExist()
+    }
+
+    @Test
+    fun watchingEpisodeModal_noEpisodesがtrue_エピソード記録UIが非表示でステータス変更のみ可能() {
+        // Arrange
+        val viewModel = WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, errorMapper)
+
+        val work = Work(
+            id = "work-no-episodes",
+            title = "エピソード情報なし作品",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING,
+            noEpisodes = true
+        )
+        val entry =
+            LibraryEntry(
+                id = "lib-entry-no-episodes",
+                work = work,
+                statusState = StatusState.WATCHING,
+                nextEpisode = null
+            )
+
+        // Act
+        testRule.composeTestRule.setContent {
+            WatchingEpisodeModal(
+                entry = entry,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        testRule.composeTestRule.onNodeWithText("この作品にはエピソード情報がありません。ステータスの変更のみ可能です。").assertExists()
+        testRule.composeTestRule.onNodeWithText("視聴済みにする").assertDoesNotExist()
+        testRule.composeTestRule.onNodeWithText("次のエピソード").assertDoesNotExist()
+
+        // Verify status change is still possible
+        testRule.composeTestRule.onNodeWithText("WATCHING").assertExists()
     }
 }

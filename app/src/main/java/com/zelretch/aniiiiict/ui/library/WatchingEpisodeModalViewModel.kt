@@ -26,7 +26,8 @@ data class WatchingEpisodeModalState(
     val isStatusChanging: Boolean = false,
     val statusChangeError: String? = null,
     val workId: String = "",
-    val workTitle: String = ""
+    val workTitle: String = "",
+    val noEpisodes: Boolean = false
 )
 
 sealed interface WatchingEpisodeModalEvent {
@@ -60,7 +61,8 @@ class WatchingEpisodeModalViewModel @Inject constructor(
                 episode = entry.nextEpisode,
                 selectedStatus = entry.work.viewerStatusState,
                 workId = entry.work.id,
-                workTitle = entry.work.title
+                workTitle = entry.work.title,
+                noEpisodes = entry.work.noEpisodes
             )
         }
     }

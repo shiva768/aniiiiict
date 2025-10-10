@@ -24,6 +24,7 @@ query ViewerLibraryEntries($after: String, $states: [StatusState!]) {
           malAnimeId
           viewerStatusState
           episodesCount
+          noEpisodes
           image {
             recommendedImageUrl
             facebookOgImageUrl

@@ -362,6 +362,7 @@ class AnnictRepositoryImpl @Inject constructor(
                         media = node.work.media.rawValue,
                         malAnimeId = node.work.malAnimeId,
                         viewerStatusState = viewerStatus,
+                        noEpisodes = node.work.noEpisodes,
                         image = node.work.image?.let { image ->
                             com.zelretch.aniiiiict.data.model.WorkImage(
                                 recommendedImageUrl = image.recommendedImageUrl,
