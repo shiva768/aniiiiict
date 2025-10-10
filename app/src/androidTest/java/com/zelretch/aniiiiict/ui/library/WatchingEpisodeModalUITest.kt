@@ -38,12 +38,16 @@ class WatchingEpisodeModalUITest {
                     episode = entry.nextEpisode,
                     selectedStatus = entry.work.viewerStatusState,
                     workId = entry.work.id,
-                    workTitle = entry.work.title
+                    workTitle = entry.work.title,
+                    noEpisodes = entry.work.noEpisodes
                 )
             )
         }
 
-    private fun sampleLibraryEntry(status: StatusState = StatusState.WATCHING): LibraryEntry {
+    private fun sampleLibraryEntry(
+        status: StatusState = StatusState.WATCHING,
+        noEpisodes: Boolean = false
+    ): LibraryEntry {
         val work = Work(
             id = "work-1",
             title = "テストアニメ",
@@ -51,14 +55,19 @@ class WatchingEpisodeModalUITest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = status
+            viewerStatusState = status,
+            noEpisodes = noEpisodes
         )
-        val episode = Episode(
-            id = "ep1",
-            title = "第1話",
-            numberText = "1",
-            number = 1
-        )
+        val episode = if (noEpisodes) {
+            null
+        } else {
+            Episode(
+                id = "ep1",
+                title = "第1話",
+                numberText = "1",
+                number = 1
+            )
+        }
         return LibraryEntry(
             id = "lib-entry-1",
             work = work,
@@ -238,5 +247,27 @@ class WatchingEpisodeModalUITest {
 
         // ViewModelのchangeStatusが呼ばれたことを確認
         verify { viewModel.changeStatus(StatusState.WATCHED) }
+    }
+
+    @Test
+    fun watchingEpisodeModal_noEpisodesがtrue_エピソード記録UIが非表示になる() {
+        // Arrange
+        val entry = sampleLibraryEntry(noEpisodes = true)
+        val viewModel = createMockViewModel(entry)
+
+        // Act
+        composeTestRule.setContent {
+            WatchingEpisodeModal(
+                entry = entry,
+                onDismiss = {},
+                viewModel = viewModel,
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("この作品にはエピソード情報がありません。ステータスの変更のみ可能です。").assertIsDisplayed()
+        composeTestRule.onNodeWithText("次のエピソード").assertDoesNotExist()
+        composeTestRule.onNodeWithText("視聴済みにする").assertDoesNotExist()
     }
 }

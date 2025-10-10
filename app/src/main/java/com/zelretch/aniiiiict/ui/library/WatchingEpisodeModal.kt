@@ -124,40 +124,48 @@ private fun WatchingEpisodeModalContent(state: WatchingEpisodeModalState, onReco
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        state.episode?.let { episode ->
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "次のエピソード",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = episode.formattedNumber,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                episode.title?.let { title ->
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Button(
-                onClick = onRecordEpisode,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("視聴済みにする")
-            }
-        } ?: run {
+        if (state.noEpisodes) {
             Text(
-                text = "次のエピソード情報がありません",
+                text = "この作品にはエピソード情報がありません。ステータスの変更のみ可能です。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        } else {
+            state.episode?.let { episode ->
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "次のエピソード",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = episode.formattedNumber,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    episode.title?.let { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = onRecordEpisode,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("視聴済みにする")
+                }
+            } ?: run {
+                Text(
+                    text = "次のエピソード情報がありません",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

@@ -106,7 +106,8 @@ class BroadcastEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING
+            viewerStatusState = StatusState.WATCHING,
+            noEpisodes = false
         )
         val ep1 = Episode(id = "epA", title = "第1話", numberText = "1", number = 1)
         val ep2 = Episode(id = "epB", title = "第2話", numberText = "2", number = 2)
@@ -155,7 +156,8 @@ class BroadcastEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WANNA_WATCH
+            viewerStatusState = StatusState.WANNA_WATCH,
+            noEpisodes = false
         )
         val ep1 = Episode(id = "epStatus", title = "第1話", numberText = "1", number = 1)
         val p1 = Program(id = "pStatus", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep1)
@@ -198,7 +200,8 @@ class BroadcastEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WATCHING
+            viewerStatusState = StatusState.WATCHING,
+            noEpisodes = false
         )
         val ep1 = Episode(id = "epSingle", title = "第1話", numberText = "1", number = 1)
         val p1 = Program(id = "pSingle", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep1)
@@ -242,7 +245,8 @@ class BroadcastEpisodeModalIntegrationTest {
             seasonYear = 2024,
             media = "TV",
             mediaText = "TV",
-            viewerStatusState = StatusState.WANNA_WATCH
+            viewerStatusState = StatusState.WANNA_WATCH,
+            noEpisodes = false
         )
         val ep1 = Episode(id = "epFlow", title = "第1話", numberText = "1", number = 1)
         val p1 = Program(id = "pFlow", startedAt = LocalDateTime.now(), channel = Channel("ch"), episode = ep1)

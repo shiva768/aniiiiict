@@ -74,6 +74,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns episode
@@ -102,6 +103,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -118,6 +120,33 @@ class WatchingEpisodeModalViewModelTest {
                 assertEquals("テスト作品", updated.workTitle)
             }
         }
+
+        @Test
+        @DisplayName("noEpisodesがtrueの作品を初期化すると正しくstateに反映される")
+        fun noEpisodesがtrueの作品を初期化すると正しくstateに反映される() = runTest(dispatcher) {
+            // Given
+            val work = mockk<Work> {
+                every { id } returns "work-id"
+                every { title } returns "エピソード情報なし作品"
+                every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns true
+            }
+            val entry = mockk<LibraryEntry> {
+                every { nextEpisode } returns null
+                every { this@mockk.work } returns work
+            }
+
+            // When & Then
+            viewModel.state.test {
+                awaitItem()
+                viewModel.initialize(entry)
+                val updated = awaitItem()
+                assertNull(updated.episode)
+                assertEquals("work-id", updated.workId)
+                assertEquals("エピソード情報なし作品", updated.workTitle)
+                assertTrue(updated.noEpisodes)
+            }
+        }
     }
 
     @Nested
@@ -132,6 +161,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -163,6 +193,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -201,6 +232,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns episode
@@ -232,6 +264,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns episode
@@ -259,6 +292,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { id } returns "work-id"
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
+                every { noEpisodes } returns false
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
