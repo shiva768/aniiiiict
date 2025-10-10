@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -58,6 +59,8 @@ import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
 import com.zelretch.aniiiiict.ui.history.HistoryViewModel
+import com.zelretch.aniiiiict.ui.library.LibraryScreen
+import com.zelretch.aniiiiict.ui.library.LibraryViewModel
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
@@ -161,7 +164,8 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Track : Screen("track", "視聴記録", Icons.AutoMirrored.Filled.List)
+    object Track : Screen("track", "放送スケジュール", Icons.AutoMirrored.Filled.List)
+    object Library : Screen("library", "ライブラリ", Icons.Default.PlayCircleOutline)
     object History : Screen("history", "記録履歴", Icons.Default.History)
     object Settings : Screen("settings", "設定", Icons.Default.Settings)
 }
@@ -175,7 +179,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val mainUiState by mainViewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val items = listOf(Screen.History, Screen.Settings)
+    val items = listOf(Screen.Library, Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
     // Track drawer state for potential future implementation
@@ -294,6 +298,15 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                     onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
                 )
                 HistoryScreen(uiState = historyUiState, actions = actions)
+            }
+            composable("library") {
+                val libraryViewModel: LibraryViewModel = hiltViewModel<LibraryViewModel>()
+                val libraryUiState by libraryViewModel.uiState.collectAsState()
+                LibraryScreen(
+                    viewModel = libraryViewModel,
+                    uiState = libraryUiState,
+                    onNavigateBack = { navController.navigateUp() }
+                )
             }
             composable("anime_detail/{workId}") { backStackEntry ->
                 val workId = backStackEntry.arguments?.getString("workId") ?: ""

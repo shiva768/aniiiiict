@@ -1,0 +1,44 @@
+query ViewerLibraryEntries($after: String, $states: [StatusState!]) {
+  viewer {
+    libraryEntries(
+      first: 50
+      after: $after
+      states: $states
+      orderBy: {
+        field: LAST_TRACKED_AT
+        direction: DESC
+      }
+    ) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      nodes {
+        id
+        work {
+          id
+          title
+          seasonName
+          seasonYear
+          media
+          malAnimeId
+          viewerStatusState
+          episodesCount
+          image {
+            recommendedImageUrl
+            facebookOgImageUrl
+          }
+        }
+        nextEpisode {
+          id
+          number
+          numberText
+          title
+        }
+        status {
+          state
+        }
+      }
+    }
+  }
+}

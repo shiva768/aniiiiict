@@ -106,6 +106,8 @@ class AnimeDetailScreenIntegrationTest {
                 com.zelretch.aniiiiict.data.model.PaginatedRecords(emptyList(), false, null)
             override suspend fun deleteRecord(recordId: String): Boolean = true
             override suspend fun updateWorkViewStatus(workId: String, status: StatusState): Boolean = true
+            override suspend fun getLibraryEntries(states: List<StatusState>, after: String?) =
+                kotlinx.coroutines.flow.flowOf(emptyList<com.zelretch.aniiiiict.data.model.LibraryEntry>())
         }
 
         // Fake MyAnimeList Repository
@@ -166,6 +168,8 @@ class AnimeDetailScreenIntegrationTest {
                 com.zelretch.aniiiiict.data.model.PaginatedRecords(emptyList(), false, null)
             override suspend fun deleteRecord(recordId: String): Boolean = true
             override suspend fun updateWorkViewStatus(workId: String, status: StatusState): Boolean = true
+            override suspend fun getLibraryEntries(states: List<StatusState>, after: String?) =
+                kotlinx.coroutines.flow.flowOf(emptyList<com.zelretch.aniiiiict.data.model.LibraryEntry>())
         }
 
         // Fake MyAnimeList Repository

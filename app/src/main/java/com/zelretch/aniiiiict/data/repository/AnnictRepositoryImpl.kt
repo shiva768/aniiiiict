@@ -16,6 +16,7 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkImage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -308,6 +309,92 @@ class AnnictRepositoryImpl @Inject constructor(
         } else {
             Timber.e("GraphQLエラー: ${response.errors}")
             Result.failure(IOException("GraphQL error: ${response.errors}"))
+        }
+    }
+
+    override suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        after: String?
+    ): Flow<List<com.zelretch.aniiiiict.data.model.LibraryEntry>> = flow {
+        try {
+            Timber.i("ライブラリエントリー一覧の取得を開始: states=$states")
+
+            if (!currentCoroutineContext().isActive) {
+                Timber.i("処理がキャンセルされたため、実行をスキップします")
+                emit(emptyList())
+                return@flow
+            }
+
+            val token = tokenManager.getAccessToken()
+            if (token.isNullOrEmpty()) {
+                Timber.e("アクセストークンがありません")
+                emit(emptyList())
+                return@flow
+            }
+
+            val query = com.annict.ViewerLibraryEntriesQuery(
+                states = Optional.present(states),
+                after = Optional.presentIfNotNull(after)
+            )
+            val response = annictApolloClient.executeQuery(
+                operation = query,
+                context = "AnnictRepositoryImpl.getLibraryEntries"
+            )
+
+            Timber.i("GraphQLのレスポンス: ${response.data != null}")
+
+            if (response.hasErrors()) {
+                Timber.e("GraphQLエラー: ${response.errors}")
+                emit(emptyList())
+                return@flow
+            }
+
+            val nodes = response.data?.viewer?.libraryEntries?.nodes?.filterNotNull() ?: emptyList()
+            val entries = nodes.mapNotNull { node ->
+                val viewerStatus = node.work.viewerStatusState ?: return@mapNotNull null
+                com.zelretch.aniiiiict.data.model.LibraryEntry(
+                    id = node.id,
+                    work = Work(
+                        id = node.work.id,
+                        title = node.work.title,
+                        seasonName = node.work.seasonName,
+                        seasonYear = node.work.seasonYear,
+                        media = node.work.media.rawValue,
+                        malAnimeId = node.work.malAnimeId,
+                        viewerStatusState = viewerStatus,
+                        image = node.work.image?.let { image ->
+                            com.zelretch.aniiiiict.data.model.WorkImage(
+                                recommendedImageUrl = image.recommendedImageUrl,
+                                facebookOgImageUrl = image.facebookOgImageUrl
+                            )
+                        }
+                    ),
+                    nextEpisode = node.nextEpisode?.let { episode ->
+                        Episode(
+                            id = episode.id,
+                            number = episode.number,
+                            numberText = episode.numberText,
+                            title = episode.title
+                        )
+                    },
+                    statusState = node.status?.state
+                )
+            }
+
+            Timber.i("ライブラリエントリー一覧を取得しました: ${entries.size}件")
+            emit(entries)
+        } catch (e: ApolloException) {
+            Timber.e(e, "Apollo APIエラー")
+            emit(emptyList())
+        } catch (e: IOException) {
+            Timber.e(e, "ネットワークIOエラー")
+            emit(emptyList())
+        } catch (e: CancellationException) {
+            Timber.w("処理がキャンセルされました")
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "予期しないエラー")
+            emit(emptyList())
         }
     }
 
