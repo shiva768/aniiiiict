@@ -119,10 +119,7 @@ private fun WatchingEpisodeModalTitle(
 }
 
 @Composable
-private fun WatchingEpisodeModalContent(
-    state: WatchingEpisodeModalState,
-    onRecordEpisode: () -> Unit
-) {
+private fun WatchingEpisodeModalContent(state: WatchingEpisodeModalState, onRecordEpisode: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)

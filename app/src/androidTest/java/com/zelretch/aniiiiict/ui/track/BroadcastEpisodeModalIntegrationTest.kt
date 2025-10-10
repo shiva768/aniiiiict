@@ -18,9 +18,9 @@ import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
-import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -89,7 +89,14 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
         // Arrange
-        val viewModel = BroadcastEpisodeModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
+        val viewModel =
+            BroadcastEpisodeModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase,
+                errorMapper
+            )
 
         // 2エピソードのProgramWithWork（WATCHING）
         val work = Work(
@@ -132,7 +139,14 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
         // Arrange
-        val viewModel = BroadcastEpisodeModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
+        val viewModel =
+            BroadcastEpisodeModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase,
+                errorMapper
+            )
 
         val work = Work(
             id = "work-status",
@@ -168,7 +182,14 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
-        val viewModel = BroadcastEpisodeModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
+        val viewModel =
+            BroadcastEpisodeModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase,
+                errorMapper
+            )
 
         val work = Work(
             id = "work-single",
@@ -205,7 +226,14 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
         // Arrange
-        val viewModel = BroadcastEpisodeModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
+        val viewModel =
+            BroadcastEpisodeModalViewModel(
+                bulkRecordEpisodesUseCase,
+                watchEpisodeUseCase,
+                updateViewStateUseCase,
+                judgeFinaleUseCase,
+                errorMapper
+            )
 
         val work = Work(
             id = "work-flow",

@@ -89,7 +89,8 @@ class WatchingEpisodeModalIntegrationTest {
             viewerStatusState = StatusState.WATCHING
         )
         val episode = Episode(id = "ep-test", title = "第1話", numberText = "1", number = 1)
-        val entry = LibraryEntry(id = "lib-entry-int1", work = work, statusState = StatusState.WATCHING, nextEpisode = episode)
+        val entry =
+            LibraryEntry(id = "lib-entry-int1", work = work, statusState = StatusState.WATCHING, nextEpisode = episode)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -124,7 +125,8 @@ class WatchingEpisodeModalIntegrationTest {
             viewerStatusState = StatusState.WATCHING
         )
         val episode = Episode(id = "ep-status", title = "第1話", numberText = "1", number = 1)
-        val entry = LibraryEntry(id = "lib-entry-int2", work = work, statusState = StatusState.WATCHING, nextEpisode = episode)
+        val entry =
+            LibraryEntry(id = "lib-entry-int2", work = work, statusState = StatusState.WATCHING, nextEpisode = episode)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -160,7 +162,8 @@ class WatchingEpisodeModalIntegrationTest {
             mediaText = "TV",
             viewerStatusState = StatusState.WATCHING
         )
-        val entry = LibraryEntry(id = "lib-entry-int3", work = work, statusState = StatusState.WATCHING, nextEpisode = null)
+        val entry =
+            LibraryEntry(id = "lib-entry-int3", work = work, statusState = StatusState.WATCHING, nextEpisode = null)
 
         // Act
         testRule.composeTestRule.setContent {

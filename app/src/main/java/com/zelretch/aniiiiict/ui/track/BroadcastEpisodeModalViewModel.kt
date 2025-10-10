@@ -343,7 +343,10 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
                     _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
                 }
                 .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.confirmSingleEpisodeFinaleWatched")
+                    val msg = errorMapper.toUserMessage(
+                        e,
+                        "BroadcastEpisodeModalViewModel.confirmSingleEpisodeFinaleWatched"
+                    )
                     Timber.e(e, "DetailModal: 単一エピソードフィナーレ確認に失敗 - $msg")
                 }
         }

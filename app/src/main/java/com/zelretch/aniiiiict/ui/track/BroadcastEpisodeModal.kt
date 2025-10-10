@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -46,7 +45,9 @@ fun BroadcastEpisodeModal(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { BroadcastEpisodeModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus) },
+        title = {
+            BroadcastEpisodeModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus)
+        },
         text = {
             UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
                 viewModel.recordEpisode(episodeId, programWithWork.work.viewerStatusState)
@@ -151,7 +152,11 @@ private fun BroadcastEpisodeModalDialogs(
 }
 
 @Composable
-private fun BroadcastEpisodeModalTitle(state: BroadcastEpisodeModalState, onDismiss: () -> Unit, onStatusChange: (StatusState) -> Unit) {
+private fun BroadcastEpisodeModalTitle(
+    state: BroadcastEpisodeModalState,
+    onDismiss: () -> Unit,
+    onStatusChange: (StatusState) -> Unit
+) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
