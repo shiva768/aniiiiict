@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

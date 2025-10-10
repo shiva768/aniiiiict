@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick

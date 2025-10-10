@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.details
+package com.zelretch.aniiiiict.ui.track
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
