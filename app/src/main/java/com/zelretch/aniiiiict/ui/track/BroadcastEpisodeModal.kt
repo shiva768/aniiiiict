@@ -25,9 +25,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.common.components.StatusDropdown
-import com.zelretch.aniiiiict.ui.details.components.ConfirmDialog
-import com.zelretch.aniiiiict.ui.details.components.FinaleConfirmDialog
-import com.zelretch.aniiiiict.ui.details.components.UnwatchedEpisodesContent
+import com.zelretch.aniiiiict.ui.common.components.episode.ConfirmDialog
+import com.zelretch.aniiiiict.ui.common.components.episode.FinaleConfirmDialog
+import com.zelretch.aniiiiict.ui.common.components.episode.UnwatchedEpisodesContent
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
