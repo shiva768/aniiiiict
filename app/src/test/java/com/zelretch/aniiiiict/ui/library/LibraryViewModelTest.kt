@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.watching
+package com.zelretch.aniiiiict.ui.library
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
@@ -28,8 +28,8 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@DisplayName("WatchingViewModel")
-class WatchingViewModelTest {
+@DisplayName("LibraryViewModel")
+class LibraryViewModelTest {
 
     private lateinit var loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase
     private lateinit var loadProgramsUseCase: LoadProgramsUseCase
@@ -61,7 +61,7 @@ class WatchingViewModelTest {
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
 
             // When
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
@@ -94,7 +94,7 @@ class WatchingViewModelTest {
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
 
             // When
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
@@ -136,7 +136,7 @@ class WatchingViewModelTest {
                 flowOf(refreshedEntries)
             )
 
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -169,7 +169,7 @@ class WatchingViewModelTest {
             coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
 
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -188,7 +188,7 @@ class WatchingViewModelTest {
             coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
 
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -217,7 +217,7 @@ class WatchingViewModelTest {
             every { errorMapper.toUserMessage(exception) } returns "ネットワークエラーが発生しました"
 
             // When
-            val viewModel = WatchingViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then

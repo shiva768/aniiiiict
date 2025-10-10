@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.watching
+package com.zelretch.aniiiiict.ui.library
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,17 +37,17 @@ import com.zelretch.aniiiiict.ui.details.DetailModalViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WatchingScreen(viewModel: WatchingViewModel, uiState: WatchingUiState, onNavigateBack: () -> Unit) {
+fun LibraryScreen(viewModel: LibraryViewModel, uiState: LibraryUiState, onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
-            WatchingTopAppBar(
+            LibraryTopAppBar(
                 isFilterVisible = uiState.isFilterVisible,
                 onFilterClick = { viewModel.toggleFilterVisibility() },
                 onNavigateBack = onNavigateBack
             )
         }
     ) { paddingValues ->
-        WatchingScreenContent(
+        LibraryScreenContent(
             modifier = Modifier.padding(paddingValues),
             uiState = uiState,
             viewModel = viewModel
@@ -57,11 +57,11 @@ fun WatchingScreen(viewModel: WatchingViewModel, uiState: WatchingUiState, onNav
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WatchingTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onNavigateBack: () -> Unit) {
+private fun LibraryTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onNavigateBack: () -> Unit) {
     TopAppBar(
         title = {
             Text(
-                text = "視聴中作品",
+                text = "ライブラリ",
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -91,11 +91,7 @@ private fun WatchingTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Uni
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WatchingScreenContent(
-    modifier: Modifier = Modifier,
-    uiState: WatchingUiState,
-    viewModel: WatchingViewModel
-) {
+private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: LibraryUiState, viewModel: LibraryViewModel) {
     val isRefreshing = uiState.isLoading && uiState.entries.isNotEmpty()
 
     PullToRefreshBox(

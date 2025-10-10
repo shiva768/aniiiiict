@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.watching
+package com.zelretch.aniiiiict.ui.library
 
 import com.zelretch.aniiiiict.data.model.Channel
 import com.zelretch.aniiiiict.data.model.LibraryEntry
@@ -8,14 +8,14 @@ import java.time.LocalDateTime
 
 /**
  * LibraryEntryをProgramWithWorkに変換するユーティリティ
- * DetailModalはProgramWithWorkを要求するため、視聴中作品から呼び出す際に変換が必要
+ * DetailModalはProgramWithWorkを要求するため、ライブラリから呼び出す際に変換が必要
  */
 object LibraryEntryConverter {
 
     /**
      * LibraryEntryをProgramWithWorkに変換する
      *
-     * 注意: 視聴中作品には放送スケジュール情報がないため、
+     * 注意: ライブラリには放送スケジュール情報がないため、
      * ダミーのProgramデータを作成する
      */
     fun toProgramWithWork(entry: LibraryEntry): ProgramWithWork {
@@ -28,9 +28,9 @@ object LibraryEntryConverter {
             viewerDidTrack = null
         )
 
-        // ダミーのチャンネル情報（視聴中作品には放送情報がない）
+        // ダミーのチャンネル情報（ライブラリには放送情報がない）
         val dummyChannel = Channel(
-            name = "視聴中"
+            name = "ライブラリ"
         )
 
         // ダミーのProgramを作成

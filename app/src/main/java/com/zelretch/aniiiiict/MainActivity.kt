@@ -59,11 +59,11 @@ import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
 import com.zelretch.aniiiiict.ui.history.HistoryViewModel
+import com.zelretch.aniiiiict.ui.library.LibraryScreen
+import com.zelretch.aniiiiict.ui.library.LibraryViewModel
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
-import com.zelretch.aniiiiict.ui.watching.WatchingScreen
-import com.zelretch.aniiiiict.ui.watching.WatchingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -165,7 +165,7 @@ class MainActivity : ComponentActivity() {
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Track : Screen("track", "放送スケジュール", Icons.AutoMirrored.Filled.List)
-    object Watching : Screen("watching", "視聴中作品", Icons.Default.PlayCircleOutline)
+    object Library : Screen("library", "ライブラリ", Icons.Default.PlayCircleOutline)
     object History : Screen("history", "記録履歴", Icons.Default.History)
     object Settings : Screen("settings", "設定", Icons.Default.Settings)
 }
@@ -179,7 +179,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
     val mainUiState by mainViewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val items = listOf(Screen.Watching, Screen.History, Screen.Settings)
+    val items = listOf(Screen.Library, Screen.History, Screen.Settings)
     val selectedItem = navController.currentBackStackEntryAsState().value?.destination?.route
 
     // Track drawer state for potential future implementation
@@ -299,12 +299,12 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 )
                 HistoryScreen(uiState = historyUiState, actions = actions)
             }
-            composable("watching") {
-                val watchingViewModel: WatchingViewModel = hiltViewModel<WatchingViewModel>()
-                val watchingUiState by watchingViewModel.uiState.collectAsState()
-                WatchingScreen(
-                    viewModel = watchingViewModel,
-                    uiState = watchingUiState,
+            composable("library") {
+                val libraryViewModel: LibraryViewModel = hiltViewModel<LibraryViewModel>()
+                val libraryUiState by libraryViewModel.uiState.collectAsState()
+                LibraryScreen(
+                    viewModel = libraryViewModel,
+                    uiState = libraryUiState,
                     onNavigateBack = { navController.navigateUp() }
                 )
             }

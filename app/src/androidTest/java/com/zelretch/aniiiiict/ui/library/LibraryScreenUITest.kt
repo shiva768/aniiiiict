@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.watching
+package com.zelretch.aniiiiict.ui.library
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -20,27 +20,27 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * WatchingScreenの純粋なCompose UIテスト。
+ * LibraryScreenの純粋なCompose UIテスト。
  * ViewModelをモック化し、特定のUI状態が与えられた際の
  * UIの描画とインタラクションを検証する。
  */
 @RunWith(AndroidJUnit4::class)
-class WatchingScreenUITest {
+class LibraryScreenUITest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun watchingScreen_初期状態_基本要素が表示される() {
+    fun libraryScreen_初期状態_基本要素が表示される() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
-        val initialState = WatchingUiState()
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
         every { mockViewModel.toggleFilterVisibility() } returns Unit
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = initialState,
                 onNavigateBack = {}
@@ -48,21 +48,21 @@ class WatchingScreenUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("視聴中作品").assertIsDisplayed()
+        composeTestRule.onNodeWithText("ライブラリ").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("戻る").assertIsDisplayed()
     }
 
     @Test
-    fun watchingScreen_エラー状態_エラーメッセージが表示される() {
+    fun libraryScreen_エラー状態_エラーメッセージが表示される() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
-        val errorState = WatchingUiState(error = "ネットワークエラーが発生しました")
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val errorState = LibraryUiState(error = "ネットワークエラーが発生しました")
         every { mockViewModel.uiState } returns MutableStateFlow(errorState)
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = errorState,
                 onNavigateBack = {}
@@ -74,15 +74,15 @@ class WatchingScreenUITest {
     }
 
     @Test
-    fun watchingScreen_ローディング状態_ローディング表示が表示される() {
+    fun libraryScreen_ローディング状態_ローディング表示が表示される() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
-        val loadingState = WatchingUiState(isLoading = true)
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val loadingState = LibraryUiState(isLoading = true)
         every { mockViewModel.uiState } returns MutableStateFlow(loadingState)
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = loadingState,
                 onNavigateBack = {}
@@ -94,9 +94,9 @@ class WatchingScreenUITest {
     }
 
     @Test
-    fun watchingScreen_エントリーが存在する_カードが表示される() {
+    fun libraryScreen_エントリーが存在する_カードが表示される() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
         val entries = listOf(
             LibraryEntry(
                 id = "entry1",
@@ -119,12 +119,12 @@ class WatchingScreenUITest {
                 statusState = StatusState.WATCHING
             )
         )
-        val stateWithEntries = WatchingUiState(entries = entries, allEntries = entries)
+        val stateWithEntries = LibraryUiState(entries = entries, allEntries = entries)
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithEntries)
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = stateWithEntries,
                 onNavigateBack = {}
@@ -138,15 +138,15 @@ class WatchingScreenUITest {
     }
 
     @Test
-    fun watchingScreen_フィルターが表示されている_ラジオボタンが表示される() {
+    fun libraryScreen_フィルターが表示されている_ラジオボタンが表示される() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
-        val stateWithFilter = WatchingUiState(isFilterVisible = true)
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val stateWithFilter = LibraryUiState(isFilterVisible = true)
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithFilter)
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = stateWithFilter,
                 onNavigateBack = {}
@@ -159,15 +159,15 @@ class WatchingScreenUITest {
     }
 
     @Test
-    fun watchingScreen_フィルターボタンクリック_ViewModelメソッドが呼ばれる() {
+    fun libraryScreen_フィルターボタンクリック_ViewModelメソッドが呼ばれる() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
-        val initialState = WatchingUiState()
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = initialState,
                 onNavigateBack = {}
@@ -180,16 +180,16 @@ class WatchingScreenUITest {
     }
 
     @Test
-    fun watchingScreen_戻るボタンクリック_コールバックが呼ばれる() {
+    fun libraryScreen_戻るボタンクリック_コールバックが呼ばれる() {
         // Arrange
-        val mockViewModel = mockk<WatchingViewModel>(relaxed = true)
-        val initialState = WatchingUiState()
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
         var backPressed = false
 
         // Act
         composeTestRule.setContent {
-            WatchingScreen(
+            LibraryScreen(
                 viewModel = mockViewModel,
                 uiState = initialState,
                 onNavigateBack = { backPressed = true }

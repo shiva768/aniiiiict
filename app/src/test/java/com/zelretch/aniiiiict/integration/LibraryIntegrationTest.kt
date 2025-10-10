@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test
 /**
  * Integration test to verify LoadLibraryEntriesUseCase works with AnnictRepository
  */
-@DisplayName("視聴中作品ロード統合テスト")
-class WatchingIntegrationTest {
+@DisplayName("ライブラリロード統合テスト")
+class LibraryIntegrationTest {
 
     private lateinit var repository: AnnictRepository
     private lateinit var useCase: LoadLibraryEntriesUseCase
@@ -36,8 +36,8 @@ class WatchingIntegrationTest {
     inner class LoadLibraryEntries {
 
         @Test
-        @DisplayName("リポジトリから視聴中作品を正しく取得できる")
-        fun loadsWatchingEntriesFromRepository() = runTest {
+        @DisplayName("リポジトリからライブラリを正しく取得できる")
+        fun loadsLibraryEntriesFromRepository() = runTest {
             // Given
             val entries = listOf(
                 createLibraryEntry("entry1", "work1", "天国大魔境"),

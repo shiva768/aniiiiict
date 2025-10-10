@@ -1,4 +1,4 @@
-package com.zelretch.aniiiiict.ui.watching
+package com.zelretch.aniiiiict.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,9 +19,9 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * 視聴中作品画面のUI状態
+ * ライブラリ画面のUI状態
  */
-data class WatchingUiState(
+data class LibraryUiState(
     val entries: List<LibraryEntry> = emptyList(),
     val allEntries: List<LibraryEntry> = emptyList(),
     val isLoading: Boolean = false,
@@ -34,17 +34,17 @@ data class WatchingUiState(
 )
 
 /**
- * 視聴中作品画面のViewModel
+ * ライブラリ画面のViewModel
  */
 @HiltViewModel
-class WatchingViewModel @Inject constructor(
+class LibraryViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(WatchingUiState())
-    val uiState: StateFlow<WatchingUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(LibraryUiState())
+    val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     // 放送中の作品IDを保持
     private var currentlyAiringWorkIds: Set<String> = emptySet()
