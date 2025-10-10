@@ -33,10 +33,9 @@
 - **ナビゲーション:** [Navigation Compose](https://developer.android.com/jetpack/compose/navigation) 2.9.0
 - **ロギング:** [Timber](https://github.com/JakeWharton/timber) 5.0.1
 - **テスト:**
-  - [JUnit4](https://junit.org/junit4/) 4.13.2
-  - [Mockito](https://site.mockito.org/) 5.10.0 & [MockK](https://mockk.io/) 1.13.10
-  - [Kotest](https://kotest.io/) 5.8.1 - アサーションライブラリ
-  - [Robolectric](http://robolectric.org/) 4.10.3
+  - [JUnit5](https://junit.org/junit5/) 5.11.4 - テストフレームワーク
+  - [MockK](https://mockk.io/) 1.13.10 - Kotlin向けモックライブラリ
+  - [Turbine](https://github.com/cashapp/turbine) 1.0.0 - Flowテスト用ライブラリ
   - [Compose UI Tests](https://developer.android.com/jetpack/compose/testing)
 
 ## 3. アーキテクチャ (Architecture)
@@ -222,29 +221,32 @@ class ExampleViewModel @Inject constructor(
 
 ## 6. テスト戦略 (Testing Strategy)
 
-本プロジェクトは、**プロダクションコードを汚染しない拡張ベースのテストアプローチ**というユニークなテスト戦略を採用しています。
+本プロジェクトは、**3種類のテスト**で品質を担保しています。
+
+### テストの種類
+
+-   **UnitTest** (`app/src/test`): UseCase、ViewModel等の単体テスト。MockKを使用。
+-   **IntegrationTest** (`app/src/androidTest`): UI操作からViewModel、UseCaseを経由してRepository（モック）までの統合テスト。
+-   **UITest** (`app/src/androidTest`): ViewModelをモックし、UI層のみをテスト。
 
 ### 基本原則
 
--   **プロダクションコードの純粋性:** `ViewModel`などのプロダクションコードには、テスト専用のコード（状態を強制的に変更するセッターなど）を一切含めません。
--   **テストコードの分離:** テスト用のユーティリティはすべて`app/src/test`ソースセット内に実装します。
--   **安全性:** テスト専用のメソッドがプロダクションビルドに含まれたり、誤って呼び出されたりするリスクを完全に排除します。
+-   **プロダクションコードの純粋性:** `ViewModel`などのプロダクションコードには、テスト専用のコードを一切含めません。
+-   **明示的なエラーハンドリング:** `Result<T>`と`ErrorMapper`を使用した型安全なエラー処理により、テストが容易。
+-   **JUnit5 + @Nested + @DisplayName**: テストの構造化と可読性の向上。
 
-### 実装例
+### ViewModelテストの例
 
-**プロダクションViewModel (純粋):**
 ```kotlin
-// in app/src/main
 @HiltViewModel
 class TrackViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val errorMapper: ErrorMapper,
     ...
-) : ViewModel(), TrackViewModelContract {
+) : ViewModel() {
     private val _uiState = MutableStateFlow(TrackUiState())
-    override val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<TrackUiState> = _uiState.asStateFlow()
     
-    // ビジネスロジックのみ。エラーハンドリングも明示的
     fun loadPrograms() = launchWithMinLoadingTime {
         loadProgramsUseCase().onSuccess { programs ->
             _uiState.value = TrackUiState(programs = programs)
@@ -257,43 +259,28 @@ class TrackViewModel @Inject constructor(
 }
 ```
 
-**テスト専用拡張 (テストコード内):**
 ```kotlin
-// in app/src/test
-interface TestableTrackViewModel {
-    fun setUiStateForTest(state: TrackUiState)
-}
-
-// 拡張関数でViewModelをテスト可能に
-fun TrackViewModel.asTestable(): TestableTrackViewModel {
-    // リフレクション等を使い、テストからのみ状態を操作するラッパーを返す
-    ...
-}
-```
-
-**テストコードでの使用:**
-```kotlin
+// テストコード（app/src/test）
 @Test
-fun `some test case`() {
-    val viewModel = TrackViewModel(...)
-    val testable = viewModel.asTestable() // テスト専用インターフェースを取得
-
-    // テストのために特定の状態を強制的に設定
-    testable.setUiStateForTest(TrackUiState(isLoading = true))
-
-    // 状態が正しく設定されたかを検証
-    assertEquals(true, viewModel.uiState.value.isLoading)
+@DisplayName("プログラム読み込みが成功した場合、UI状態が更新される")
+fun withSuccessfulLoad() = runTest {
+    // Given
+    val mockPrograms = listOf(...)
+    coEvery { loadProgramsUseCase() } returns Result.success(mockPrograms)
+    
+    // When
+    viewModel.loadPrograms()
+    advanceUntilIdle()
+    
+    // Then
+    assertEquals(mockPrograms, viewModel.uiState.value.programs)
 }
 ```
 
-このアプローチにより、プロダクションコードの品質と安全性を維持しつつ、高いテスト容易性を両立しています。
+### 詳細ガイド
 
-### 詳細ガイド (Detailed Guides)
-
-より詳細なテスト戦略や具体的なテストの実行方法については、以下のドキュメントを参照してください。
-
--   [**ViewModelのテストアプローチ**](./docs/CLEAN_TESTING_APPROACH.md): プロダクションコードを汚染しない、本プロジェクト独自のViewModelテストアーキテクチャに関する詳細な解説です。
 -   [**Compose UIテストガイド**](./docs/COMPOSE_UI_TESTS.md): Jetpack Composeで作成されたUIのテストケース一覧と、その実行方法に関する実践的なガイドです。
+-   [**テスト戦略の詳細**](./AGENTS.md#test-strategy): IntegrationTest、UITestの方針とベストプラクティス。
 
 ## 7. 開発ワークフロー (Development Workflow)
 
@@ -305,4 +292,3 @@ fun `some test case`() {
 -   **静的解析:** Detektを利用してコード品質を維持しています。
 
 ---
-*このドキュメントは、現在のコードベースを基に自動生成されました。*
