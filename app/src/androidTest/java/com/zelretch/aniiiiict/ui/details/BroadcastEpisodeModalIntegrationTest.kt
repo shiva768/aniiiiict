@@ -165,8 +165,7 @@ class BroadcastEpisodeModalIntegrationTest {
         coVerify(exactly = 1) { annictRepository.updateWorkViewStatus("work-status", StatusState.WATCHED) }
     }
 
-    // TODO: 単一エピソード記録のテストは実装方法を見直す必要がある
-    // @Test
+    @Test
     fun broadcastEpisodeModal_単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
         val viewModel = BroadcastEpisodeModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
@@ -195,16 +194,15 @@ class BroadcastEpisodeModalIntegrationTest {
             )
         }
 
-        // 単一エピソードの視聴記録
-        viewModel.showConfirmDialog(0)
-        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+        // 単一エピソードの「記録する」ボタンをクリック
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
 
         // Assert
         coVerify(exactly = 1) { annictRepository.createRecord("epSingle", "work-single") }
     }
 
-    // TODO: ステータス変更フローのテストは実装方法を見直す必要がある
-    // @Test
+    @Test
     fun broadcastEpisodeModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
         // Arrange
         val viewModel = BroadcastEpisodeModalViewModel(bulkRecordEpisodesUseCase, watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
@@ -234,8 +232,8 @@ class BroadcastEpisodeModalIntegrationTest {
         }
 
         // エピソード記録（WANNA_WATCH状態から）
-        viewModel.showConfirmDialog(0)
-        testRule.composeTestRule.onNodeWithText("視聴済みにする").performClick()
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
+        testRule.composeTestRule.waitForIdle()
 
         // Assert: WANNA_WATCHからの場合、先にWATCHINGに更新してからレコード作成される
         coVerifyOrder {
