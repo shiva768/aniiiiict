@@ -349,7 +349,7 @@ fun RecordDetailModal(record: Record, onDismiss: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "EP${record.episode.numberText ?: "?"}",
+                    text = record.episode.formattedNumber,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
