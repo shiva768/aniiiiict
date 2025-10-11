@@ -123,12 +123,12 @@ class TrackScreenIntegrationTest {
         coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
 
         // Hiltから注入されたUseCaseと手動モックでViewModelを生成
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
         val viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            mockFilterPreferences,
+            programFilterManager,
             judgeFinaleUseCase,
             errorMapper
         )
@@ -179,12 +179,12 @@ class TrackScreenIntegrationTest {
 
         coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
 
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
         val viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            mockFilterPreferences,
+            programFilterManager,
             judgeFinaleUseCase,
             errorMapper
         )
@@ -221,12 +221,12 @@ class TrackScreenIntegrationTest {
 
         coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
 
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
         val viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            mockFilterPreferences,
+            programFilterManager,
             judgeFinaleUseCase,
             errorMapper
         )
@@ -333,12 +333,12 @@ class TrackScreenIntegrationTest {
         coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
 
         // Hiltから注入されたUseCaseを用いて ViewModel を生成
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
         val viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            mockFilterPreferences,
+            programFilterManager,
             finaleUseCase,
             errorMapper
         )
@@ -442,12 +442,12 @@ class TrackScreenIntegrationTest {
         every { node.work } returns workNode
         coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(listOf(node))
 
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
         val viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            mockFilterPreferences,
+            programFilterManager,
             notFinaleUseCase,
             errorMapper
         )
@@ -483,12 +483,12 @@ class TrackScreenIntegrationTest {
                 MutableStateFlow(FilterState())
         }
         coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
         val viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            mockFilterPreferences,
+            programFilterManager,
             judgeFinaleUseCase,
             errorMapper
         )

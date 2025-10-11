@@ -1,8 +1,10 @@
 {
   "permissions": {
     "allow": [
+      "Shell(cd)",
       "Shell(ls)",
       "Shell(git)",
+      "Shell(grep)",
       "Shell(./gradlew)",
       "Shell(awk)",
       "Shell(tail)",

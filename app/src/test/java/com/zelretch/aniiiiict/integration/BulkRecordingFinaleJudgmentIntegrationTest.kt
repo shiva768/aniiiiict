@@ -5,6 +5,7 @@ import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
 import com.zelretch.aniiiiict.domain.usecase.FinaleState
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
@@ -71,12 +72,16 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
             coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
             // Act
+            val finaleInfo = FinaleJudgmentInfo(
+                malAnimeId = malAnimeId,
+                lastEpisodeNumber = lastEpisodeNumber,
+                lastEpisodeHasNext = null
+            )
             val result = bulkRecordUseCase(
                 episodeIds = episodeIds,
                 workId = workId,
                 currentStatus = StatusState.WATCHING,
-                malAnimeId = malAnimeId,
-                lastEpisodeNumber = lastEpisodeNumber
+                finaleInfo = finaleInfo
             )
 
             // Assert
@@ -108,12 +113,16 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
             coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
             // Act
+            val finaleInfo = FinaleJudgmentInfo(
+                malAnimeId = malAnimeId,
+                lastEpisodeNumber = lastEpisodeNumber,
+                lastEpisodeHasNext = null
+            )
             val result = bulkRecordUseCase(
                 episodeIds = episodeIds,
                 workId = workId,
                 currentStatus = StatusState.WATCHING,
-                malAnimeId = malAnimeId,
-                lastEpisodeNumber = lastEpisodeNumber
+                finaleInfo = finaleInfo
             )
 
             // Assert

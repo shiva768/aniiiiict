@@ -350,37 +350,7 @@ class AnnictRepositoryImpl @Inject constructor(
             }
 
             val nodes = response.data?.viewer?.libraryEntries?.nodes?.filterNotNull() ?: emptyList()
-            val entries = nodes.mapNotNull { node ->
-                val viewerStatus = node.work.viewerStatusState ?: return@mapNotNull null
-                com.zelretch.aniiiiict.data.model.LibraryEntry(
-                    id = node.id,
-                    work = Work(
-                        id = node.work.id,
-                        title = node.work.title,
-                        seasonName = node.work.seasonName,
-                        seasonYear = node.work.seasonYear,
-                        media = node.work.media.rawValue,
-                        malAnimeId = node.work.malAnimeId,
-                        viewerStatusState = viewerStatus,
-                        noEpisodes = node.work.noEpisodes,
-                        image = node.work.image?.let { image ->
-                            com.zelretch.aniiiiict.data.model.WorkImage(
-                                recommendedImageUrl = image.recommendedImageUrl,
-                                facebookOgImageUrl = image.facebookOgImageUrl
-                            )
-                        }
-                    ),
-                    nextEpisode = node.nextEpisode?.let { episode ->
-                        Episode(
-                            id = episode.id,
-                            number = episode.number,
-                            numberText = episode.numberText,
-                            title = episode.title
-                        )
-                    },
-                    statusState = node.status?.state
-                )
-            }
+            val entries = nodes.mapNotNull { node -> mapToLibraryEntry(node) }
 
             Timber.i("ライブラリエントリー一覧を取得しました: ${entries.size}件")
             emit(entries)
@@ -397,6 +367,40 @@ class AnnictRepositoryImpl @Inject constructor(
             Timber.e(e, "予期しないエラー")
             emit(emptyList())
         }
+    }
+
+    private fun mapToLibraryEntry(
+        node: com.annict.ViewerLibraryEntriesQuery.Node
+    ): com.zelretch.aniiiiict.data.model.LibraryEntry? {
+        val viewerStatus = node.work.viewerStatusState ?: return null
+        return com.zelretch.aniiiiict.data.model.LibraryEntry(
+            id = node.id,
+            work = Work(
+                id = node.work.id,
+                title = node.work.title,
+                seasonName = node.work.seasonName,
+                seasonYear = node.work.seasonYear,
+                media = node.work.media.rawValue,
+                malAnimeId = node.work.malAnimeId,
+                viewerStatusState = viewerStatus,
+                noEpisodes = node.work.noEpisodes,
+                image = node.work.image?.let { image ->
+                    com.zelretch.aniiiiict.data.model.WorkImage(
+                        recommendedImageUrl = image.recommendedImageUrl,
+                        facebookOgImageUrl = image.facebookOgImageUrl
+                    )
+                }
+            ),
+            nextEpisode = node.nextEpisode?.let { episode ->
+                Episode(
+                    id = episode.id,
+                    number = episode.number,
+                    numberText = episode.numberText,
+                    title = episode.title
+                )
+            },
+            statusState = node.status?.state
+        )
     }
 
     // 共通のAPIリクエスト処理を行うヘルパーメソッド

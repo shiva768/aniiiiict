@@ -51,12 +51,14 @@ class BroadcastEpisodeModalViewModelTest {
         updateViewStateUseCase = mockk()
         judgeFinaleUseCase = mockk()
         errorMapper = mockk(relaxed = true)
+        val finaleConfirmationHandler = mockk<FinaleConfirmationHandler>(relaxed = true)
         viewModel = BroadcastEpisodeModalViewModel(
             bulkRecordEpisodesUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
             judgeFinaleUseCase,
-            errorMapper
+            errorMapper,
+            finaleConfirmationHandler
         )
     }
 

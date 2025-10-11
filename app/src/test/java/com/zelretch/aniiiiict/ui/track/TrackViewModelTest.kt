@@ -84,12 +84,21 @@ class TrackViewModelTest {
             emptyList()
         )
 
+        val programFilterManager = mockk<ProgramFilterManager>(relaxed = true) {
+            every { filterState } returns filterPreferences.filterState
+            every { filterPrograms(any(), any()) } answers { firstArg() }
+            every { extractAvailableFilters(any()) } returns AvailableFilters(
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                emptyList()
+            )
+        }
         viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
             updateViewStateUseCase,
-            filterProgramsUseCase,
-            filterPreferences,
+            programFilterManager,
             judgeFinaleUseCase,
             errorMapper
         )

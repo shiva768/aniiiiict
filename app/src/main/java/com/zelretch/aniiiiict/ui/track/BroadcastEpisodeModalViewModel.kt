@@ -6,6 +6,8 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
+import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -65,7 +67,8 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
-    private val errorMapper: ErrorMapper
+    private val errorMapper: ErrorMapper,
+    private val finaleConfirmationHandler: FinaleConfirmationHandler
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BroadcastEpisodeModalState())
@@ -229,14 +232,10 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
     }
 
     fun bulkRecordEpisodes(episodeIds: List<String>, status: StatusState) {
-        val workId = _state.value.workId
         val currentState = _state.value
-        val malAnimeId = currentState.malAnimeId?.toIntOrNull()
         val lastEpisode = currentState.programs
             .find { it.episode.id == episodeIds.lastOrNull() }
             ?.episode
-        val lastEpisodeNumber = lastEpisode?.number
-        val lastEpisodeHasNext = lastEpisode?.hasNextEpisode
 
         viewModelScope.launch {
             _state.update {
@@ -248,124 +247,86 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
             }
 
             runCatching {
+                val finaleInfo = if (lastEpisode != null && currentState.malAnimeId != null) {
+                    FinaleJudgmentInfo(
+                        malAnimeId = currentState.malAnimeId.toIntOrNull(),
+                        lastEpisodeNumber = lastEpisode.number,
+                        lastEpisodeHasNext = lastEpisode.hasNextEpisode
+                    )
+                } else {
+                    null
+                }
                 bulkRecordEpisodesUseCase(
                     episodeIds = episodeIds,
-                    workId = workId,
+                    workId = currentState.workId,
                     currentStatus = status,
-                    malAnimeId = malAnimeId,
-                    lastEpisodeNumber = lastEpisodeNumber,
-                    lastEpisodeHasNext = lastEpisodeHasNext,
+                    finaleInfo = finaleInfo,
                     onProgress = { progress ->
                         _state.update { it.copy(bulkRecordingProgress = progress) }
                     }
                 ).getOrThrow()
             }.onSuccess { result ->
-                val currentPrograms = _state.value.programs
-                val targetPrograms = currentPrograms.filterIndexed { index, _ ->
-                    index <= (_state.value.selectedEpisodeIndex ?: return@launch)
-                }
-
-                // フィナーレ判定の結果をチェック
-                val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
-
-                _state.update {
-                    it.copy(
-                        programs = currentPrograms - targetPrograms.toSet(),
-                        showConfirmDialog = false,
-                        selectedEpisodeIndex = null,
-                        isBulkRecording = false,
-                        bulkRecordingProgress = 0,
-                        bulkRecordingTotal = 0,
-                        showFinaleConfirmation = shouldShowFinaleConfirmation,
-                        finaleEpisodeNumber = if (shouldShowFinaleConfirmation) lastEpisodeNumber else null
-                    )
-                }
-
-                if (shouldShowFinaleConfirmation) {
-                    _events.emit(BroadcastEpisodeModalEvent.FinaleConfirmationShown)
-                } else {
-                    _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
-                }
+                handleBulkRecordSuccess(result, lastEpisode?.number)
             }.onFailure { e ->
-                val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.bulkRecordEpisodes")
-                Timber.e(e, "DetailModal: 一括記録に失敗 - $msg")
-                _state.update {
-                    it.copy(
-                        isBulkRecording = false,
-                        bulkRecordingProgress = 0,
-                        bulkRecordingTotal = 0
-                    )
-                }
+                handleBulkRecordFailure(e)
             }
         }
     }
 
-    fun confirmFinaleWatched() {
-        val workId = _state.value.workId
-        viewModelScope.launch {
-            updateViewStateUseCase(workId, StatusState.WATCHED)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            showFinaleConfirmation = false,
-                            finaleEpisodeNumber = null
-                        )
-                    }
-                    _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
-                }
-                .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.confirmFinaleWatched")
-                    Timber.e(e, "DetailModal: フィナーレ確認に失敗 - $msg")
-                }
+    private suspend fun handleBulkRecordSuccess(result: BulkRecordResult, lastEpisodeNumber: Int?) {
+        val currentPrograms = _state.value.programs
+        val targetPrograms = currentPrograms.filterIndexed { index, _ ->
+            index <= (_state.value.selectedEpisodeIndex ?: return)
         }
-    }
 
-    fun hideFinaleConfirmation() {
+        val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
+
         _state.update {
             it.copy(
-                showFinaleConfirmation = false,
-                finaleEpisodeNumber = null
+                programs = currentPrograms - targetPrograms.toSet(),
+                showConfirmDialog = false,
+                selectedEpisodeIndex = null,
+                isBulkRecording = false,
+                bulkRecordingProgress = 0,
+                bulkRecordingTotal = 0,
+                showFinaleConfirmation = shouldShowFinaleConfirmation,
+                finaleEpisodeNumber = if (shouldShowFinaleConfirmation) lastEpisodeNumber else null
             )
         }
-        viewModelScope.launch {
-            _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
+
+        val event = if (shouldShowFinaleConfirmation) {
+            BroadcastEpisodeModalEvent.FinaleConfirmationShown
+        } else {
+            BroadcastEpisodeModalEvent.BulkEpisodesRecorded
         }
+        _events.emit(event)
     }
 
-    fun confirmSingleEpisodeFinaleWatched() {
-        val workId = _state.value.singleEpisodeFinaleWorkId ?: return
-        viewModelScope.launch {
-            updateViewStateUseCase(workId, StatusState.WATCHED)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            showSingleEpisodeFinaleConfirmation = false,
-                            singleEpisodeFinaleNumber = null,
-                            singleEpisodeFinaleWorkId = null
-                        )
-                    }
-                    _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
-                }
-                .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(
-                        e,
-                        "BroadcastEpisodeModalViewModel.confirmSingleEpisodeFinaleWatched"
-                    )
-                    Timber.e(e, "DetailModal: 単一エピソードフィナーレ確認に失敗 - $msg")
-                }
-        }
-    }
-
-    fun hideSingleEpisodeFinaleConfirmation() {
+    private fun handleBulkRecordFailure(e: Throwable) {
+        val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.bulkRecordEpisodes")
+        Timber.e(e, "DetailModal: 一括記録に失敗 - $msg")
         _state.update {
             it.copy(
-                showSingleEpisodeFinaleConfirmation = false,
-                singleEpisodeFinaleNumber = null,
-                singleEpisodeFinaleWorkId = null
+                isBulkRecording = false,
+                bulkRecordingProgress = 0,
+                bulkRecordingTotal = 0
             )
         }
-        viewModelScope.launch {
-            _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
+    }
+
+    fun confirmFinaleWatched(isSingleEpisode: Boolean = false) {
+        if (isSingleEpisode) {
+            finaleConfirmationHandler.confirmSingleFinaleWatched(_state, _events, viewModelScope)
+        } else {
+            finaleConfirmationHandler.confirmBulkFinaleWatched(_state, _events, viewModelScope)
+        }
+    }
+
+    fun hideFinaleConfirmation(isSingleEpisode: Boolean = false) {
+        if (isSingleEpisode) {
+            finaleConfirmationHandler.hideSingleFinaleConfirmation(_state, _events, viewModelScope)
+        } else {
+            finaleConfirmationHandler.hideBulkFinaleConfirmation(_state, _events, viewModelScope)
         }
     }
 }

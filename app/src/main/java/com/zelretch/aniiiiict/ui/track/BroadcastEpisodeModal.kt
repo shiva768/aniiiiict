@@ -145,8 +145,8 @@ private fun BroadcastEpisodeModalDialogs(
     if (state.showSingleEpisodeFinaleConfirmation && state.singleEpisodeFinaleNumber != null) {
         FinaleConfirmDialog(
             episodeNumber = state.singleEpisodeFinaleNumber,
-            onConfirm = viewModel::confirmSingleEpisodeFinaleWatched,
-            onDismiss = viewModel::hideSingleEpisodeFinaleConfirmation
+            onConfirm = { viewModel.confirmFinaleWatched(isSingleEpisode = true) },
+            onDismiss = { viewModel.hideFinaleConfirmation(isSingleEpisode = true) }
         )
     }
 }
