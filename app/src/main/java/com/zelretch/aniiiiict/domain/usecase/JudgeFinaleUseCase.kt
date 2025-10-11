@@ -39,15 +39,22 @@ class JudgeFinaleUseCase @Inject constructor(
                 // MyAnimeListには nextAiringEpisode 相当の情報がないため、
                 // status と num_episodes で判定する
 
-                // 2. num_episodes が数値 かつ currentEp >= num_episodes かつ nextEpisode != true → finale_confirmed
+                // 1. num_episodes が数値 かつ currentEp >= num_episodes かつ nextEpisode != true → finale_confirmed
                 // hasNextEpisode == true の場合は、次話があるので最終話ではない（1期・2期問題を回避）
                 media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes && hasNextEpisode != true -> {
                     Timber.i("現在のエピソードが総エピソード数に達し、nextEpisodeがtrueでないためFINALE_CONFIRMED")
                     JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
                 }
-                // 3. status == currently_airing かつ num_episodes が null → unknown
-                media.status == "currently_airing" && media.numEpisodes == null -> {
-                    Timber.i("現在放送中で総エピソード数が不明のためUNKNOWN")
+                // 2. num_episodes が null でも hasNextEpisode == true なら最終話ではない
+                // Annictから次のエピソードがあることが確認できれば、エピソード数不明でも最終話ではない
+                media.numEpisodes == null && hasNextEpisode == true -> {
+                    Timber.i("総エピソード数は不明だが、nextEpisodeがtrueのためNOT_FINALE")
+                    JudgeFinaleResult(FinaleState.NOT_FINALE)
+                }
+                // 3. num_episodes が null で hasNextEpisode != true → unknown
+                // nextEpisode がない理由は、最終話、情報未登録、放送休止など複数考えられるため判定不能
+                media.numEpisodes == null -> {
+                    Timber.i("総エピソード数が不明で次話情報もないためUNKNOWN")
                     JudgeFinaleResult(FinaleState.UNKNOWN)
                 }
                 // 4. status == currently_airing → not_finale

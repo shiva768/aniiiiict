@@ -12,6 +12,7 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
@@ -47,6 +48,9 @@ class WatchingEpisodeModalIntegrationTest {
     lateinit var updateViewStateUseCase: UpdateViewStateUseCase
 
     @Inject
+    lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+
+    @Inject
     lateinit var errorMapper: ErrorMapper
 
     @BindValue
@@ -77,7 +81,8 @@ class WatchingEpisodeModalIntegrationTest {
     @Test
     fun watchingEpisodeModal_視聴済みボタンクリック_Repository呼び出しをcoVerifyできる() {
         // Arrange
-        val viewModel = WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, errorMapper)
+        val viewModel =
+            WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
 
         val work = Work(
             id = "work-integration",
@@ -114,7 +119,8 @@ class WatchingEpisodeModalIntegrationTest {
     @Test
     fun watchingEpisodeModal_ステータス変更_Repository呼び出しをcoVerifyできる() {
         // Arrange
-        val viewModel = WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, errorMapper)
+        val viewModel =
+            WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
 
         val work = Work(
             id = "work-status",
@@ -153,7 +159,8 @@ class WatchingEpisodeModalIntegrationTest {
     @Test
     fun watchingEpisodeModal_エピソードなし_視聴済みボタンが表示されない() {
         // Arrange
-        val viewModel = WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, errorMapper)
+        val viewModel =
+            WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
 
         val work = Work(
             id = "work-no-ep",
@@ -186,7 +193,8 @@ class WatchingEpisodeModalIntegrationTest {
     @Test
     fun watchingEpisodeModal_noEpisodesがtrue_エピソード記録UIが非表示でステータス変更のみ可能() {
         // Arrange
-        val viewModel = WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, errorMapper)
+        val viewModel =
+            WatchingEpisodeModalViewModel(watchEpisodeUseCase, updateViewStateUseCase, judgeFinaleUseCase, errorMapper)
 
         val work = Work(
             id = "work-no-episodes",
