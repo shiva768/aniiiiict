@@ -7,6 +7,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
+import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -246,13 +247,20 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
             }
 
             runCatching {
+                val finaleInfo = if (lastEpisode != null && currentState.malAnimeId != null) {
+                    FinaleJudgmentInfo(
+                        malAnimeId = currentState.malAnimeId.toIntOrNull(),
+                        lastEpisodeNumber = lastEpisode.number,
+                        lastEpisodeHasNext = lastEpisode.hasNextEpisode
+                    )
+                } else {
+                    null
+                }
                 bulkRecordEpisodesUseCase(
                     episodeIds = episodeIds,
                     workId = currentState.workId,
                     currentStatus = status,
-                    malAnimeId = currentState.malAnimeId?.toIntOrNull(),
-                    lastEpisodeNumber = lastEpisode?.number,
-                    lastEpisodeHasNext = lastEpisode?.hasNextEpisode,
+                    finaleInfo = finaleInfo,
                     onProgress = { progress ->
                         _state.update { it.copy(bulkRecordingProgress = progress) }
                     }

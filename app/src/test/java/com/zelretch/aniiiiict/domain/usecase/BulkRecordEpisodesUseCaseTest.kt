@@ -62,7 +62,12 @@ class BulkRecordEpisodesUseCaseTest {
             coEvery { judgeFinaleUseCase(lastEpisodeNumber, malAnimeId) } returns finaleResult
 
             // When
-            val result = useCase(episodeIds, workId, status, malAnimeId, lastEpisodeNumber)
+            val finaleInfo = FinaleJudgmentInfo(
+                malAnimeId = malAnimeId,
+                lastEpisodeNumber = lastEpisodeNumber,
+                lastEpisodeHasNext = null
+            )
+            val result = useCase(episodeIds, workId, status, finaleInfo)
 
             // Then
             assertTrue(result.isSuccess)

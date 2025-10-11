@@ -7,6 +7,15 @@ data class BulkRecordResult(
     val finaleResult: JudgeFinaleResult? = null
 )
 
+/**
+ * フィナーレ判定に必要な情報
+ */
+data class FinaleJudgmentInfo(
+    val malAnimeId: Int?,
+    val lastEpisodeNumber: Int?,
+    val lastEpisodeHasNext: Boolean?
+)
+
 class BulkRecordEpisodesUseCase @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val judgeFinaleUseCase: JudgeFinaleUseCase
@@ -15,9 +24,7 @@ class BulkRecordEpisodesUseCase @Inject constructor(
         episodeIds: List<String>,
         workId: String,
         currentStatus: StatusState,
-        malAnimeId: Int? = null,
-        lastEpisodeNumber: Int? = null,
-        lastEpisodeHasNext: Boolean? = null,
+        finaleInfo: FinaleJudgmentInfo? = null,
         onProgress: (Int) -> Unit = {}
     ): Result<BulkRecordResult> {
         return runCatching {
@@ -35,8 +42,8 @@ class BulkRecordEpisodesUseCase @Inject constructor(
             }
 
             // 最後のエピソードでフィナーレ判定を実行
-            val finaleResult = if (malAnimeId != null && lastEpisodeNumber != null) {
-                judgeFinaleUseCase(lastEpisodeNumber, malAnimeId, lastEpisodeHasNext)
+            val finaleResult = if (finaleInfo?.malAnimeId != null && finaleInfo.lastEpisodeNumber != null) {
+                judgeFinaleUseCase(finaleInfo.lastEpisodeNumber, finaleInfo.malAnimeId, finaleInfo.lastEpisodeHasNext)
             } else {
                 null
             }
