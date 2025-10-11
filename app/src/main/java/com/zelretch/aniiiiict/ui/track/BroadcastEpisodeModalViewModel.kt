@@ -8,6 +8,7 @@ import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
 import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
+import com.zelretch.aniiiiict.domain.usecase.FinaleState
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -212,9 +213,10 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
                 "judgeResult.isFinale=${judgeResult.isFinale}, judgeResult.state=${judgeResult.state}"
         )
 
-        if (judgeResult.isFinale) {
+        // FINALE_CONFIRMED または UNKNOWN の場合、ユーザーに確認を求める
+        if (judgeResult.isFinale || judgeResult.state == FinaleState.UNKNOWN) {
             Timber.d(
-                "DetailModal: handleSingleEpisodeFinaleJudgement - finale detected, updating state"
+                "DetailModal: handleSingleEpisodeFinaleJudgement - finale or unknown detected, showing confirmation"
             )
             _state.update {
                 it.copy(
@@ -279,7 +281,9 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
             index <= (_state.value.selectedEpisodeIndex ?: return)
         }
 
-        val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
+        // FINALE_CONFIRMED または UNKNOWN の場合、ユーザーに確認を求める
+        val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true ||
+            result.finaleResult?.state == FinaleState.UNKNOWN
 
         _state.update {
             it.copy(

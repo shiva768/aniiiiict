@@ -6,6 +6,7 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.error.DomainError
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
@@ -43,12 +44,14 @@ class WatchingEpisodeModalViewModelTest {
         Dispatchers.setMain(dispatcher)
         watchEpisodeUseCase = mockk()
         updateViewStateUseCase = mockk()
+        val judgeFinaleUseCase = mockk<JudgeFinaleUseCase>(relaxed = true)
         errorMapper = mockk {
             every { toUserMessage(any(), any()) } returns "エラーが発生しました"
         }
         viewModel = WatchingEpisodeModalViewModel(
             watchEpisodeUseCase,
             updateViewStateUseCase,
+            judgeFinaleUseCase,
             errorMapper
         )
     }
@@ -75,6 +78,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns episode
@@ -104,6 +108,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -130,6 +135,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "エピソード情報なし作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns true
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -162,6 +168,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -194,6 +201,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null
@@ -233,6 +241,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns episode
@@ -265,6 +274,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns episode
@@ -293,6 +303,7 @@ class WatchingEpisodeModalViewModelTest {
                 every { title } returns "テスト作品"
                 every { viewerStatusState } returns StatusState.WATCHING
                 every { noEpisodes } returns false
+                every { malAnimeId } returns null
             }
             val entry = mockk<LibraryEntry> {
                 every { nextEpisode } returns null

@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,23 +38,32 @@ fun WatchingEpisodeModal(
 
     WatchingEpisodeModalLaunchedEffects(viewModel, entry, onRefresh, onDismiss)
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            WatchingEpisodeModalTitle(
-                state = state,
-                onDismiss = onDismiss,
-                onStatusChange = viewModel::changeStatus
-            )
-        },
-        text = {
-            WatchingEpisodeModalContent(
-                state = state,
-                onRecordEpisode = viewModel::recordEpisode
-            )
-        },
-        confirmButton = { }
-    )
+    // 最終話確認ダイアログ
+    if (state.showFinaleConfirmation) {
+        FinaleConfirmDialog(
+            episodeNumber = state.finaleEpisodeNumber,
+            onConfirm = viewModel::confirmFinale,
+            onDismiss = viewModel::hideFinaleConfirmation
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                WatchingEpisodeModalTitle(
+                    state = state,
+                    onDismiss = onDismiss,
+                    onStatusChange = viewModel::changeStatus
+                )
+            },
+            text = {
+                WatchingEpisodeModalContent(
+                    state = state,
+                    onRecordEpisode = viewModel::recordEpisode
+                )
+            },
+            confirmButton = { }
+        )
+    }
 }
 
 @Composable
@@ -70,10 +80,16 @@ private fun WatchingEpisodeModalLaunchedEffects(
     LaunchedEffect(Unit) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is WatchingEpisodeModalEvent.StatusChanged -> onRefresh()
-                is WatchingEpisodeModalEvent.EpisodeRecorded -> {
+                is WatchingEpisodeModalEvent.StatusChanged -> {
                     onRefresh()
                     onDismiss()
+                }
+                is WatchingEpisodeModalEvent.EpisodeRecorded -> {
+                    onRefresh()
+                    // 最終話確認が必要な場合はダイアログが表示されるので、ここでは閉じない
+                }
+                is WatchingEpisodeModalEvent.FinaleConfirmationShown -> {
+                    // ダイアログ表示は state で制御されるので、ここでは何もしない
                 }
             }
         }
@@ -168,4 +184,28 @@ private fun WatchingEpisodeModalContent(state: WatchingEpisodeModalState, onReco
             }
         }
     }
+}
+
+@Composable
+private fun FinaleConfirmDialog(episodeNumber: Int?, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("最終話の確認") },
+        text = {
+            Text(
+                text = episodeNumber?.let { "第${it}話が最終話の可能性があります。ステータスを「見た」に変更しますか？" }
+                    ?: "このエピソードが最終話の可能性があります。ステータスを「見た」に変更しますか？"
+            )
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                Text("変更する")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("キャンセル")
+            }
+        }
+    )
 }

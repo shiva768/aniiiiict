@@ -74,8 +74,8 @@ class JudgeFinaleUseCaseTest {
         }
 
         @Test
-        @DisplayName("currently_airing且つnumEpisodesがnullの場合はunknownを返す")
-        fun currently_airing且つnumEpisodesがnullの場合はunknownを返す() = runTest {
+        @DisplayName("currently_airing且つnumEpisodesがnullでhasNextEpisode=trueの場合はnot_finaleを返す")
+        fun currently_airing且つnumEpisodesがnullでhasNextEpisode_trueの場合はnot_finaleを返す() = runTest {
             // Given
             val media = MyAnimeListResponse(
                 id = 4,
@@ -88,7 +88,51 @@ class JudgeFinaleUseCaseTest {
             coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
 
             // When
-            val result = judgeFinaleUseCase(10, media.id)
+            val result = judgeFinaleUseCase(10, media.id, hasNextEpisode = true)
+
+            // Then
+            assertEquals(FinaleState.NOT_FINALE, result.state)
+            assertFalse(result.isFinale)
+        }
+
+        @Test
+        @DisplayName("currently_airing且つnumEpisodesがnullでhasNextEpisode=falseの場合はunknownを返す")
+        fun currently_airing且つnumEpisodesがnullでhasNextEpisode_falseの場合はunknownを返す() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 5,
+                mediaType = "tv",
+                numEpisodes = null,
+                status = "currently_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
+
+            // When
+            val result = judgeFinaleUseCase(10, media.id, hasNextEpisode = false)
+
+            // Then
+            assertEquals(FinaleState.UNKNOWN, result.state)
+            assertFalse(result.isFinale)
+        }
+
+        @Test
+        @DisplayName("currently_airing且つnumEpisodesがnullでhasNextEpisodeがnullの場合はunknownを返す")
+        fun currently_airing且つnumEpisodesがnullでhasNextEpisodeがnullの場合はunknownを返す() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 6,
+                mediaType = "tv",
+                numEpisodes = null,
+                status = "currently_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
+
+            // When
+            val result = judgeFinaleUseCase(10, media.id, hasNextEpisode = null)
 
             // Then
             assertEquals(FinaleState.UNKNOWN, result.state)
@@ -100,7 +144,7 @@ class JudgeFinaleUseCaseTest {
         fun otherwise() = runTest {
             // Given
             val media = MyAnimeListResponse(
-                id = 5,
+                id = 7,
                 mediaType = "tv",
                 numEpisodes = 12,
                 status = "not_yet_aired",

@@ -175,12 +175,10 @@ private fun AnimeDetailHeader(animeDetailInfo: AnimeDetailInfo, modifier: Modifi
                 )
             }
 
-            animeDetailInfo.episodeCount?.let { episodeCount ->
-                Text(
-                    text = "全${episodeCount}話",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+            Text(
+                text = animeDetailInfo.episodeCount?.let { "全${it}話" } ?: "全?話",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

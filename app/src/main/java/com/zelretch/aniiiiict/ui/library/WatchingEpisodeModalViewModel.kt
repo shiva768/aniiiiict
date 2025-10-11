@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.domain.usecase.FinaleState
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
@@ -27,12 +29,16 @@ data class WatchingEpisodeModalState(
     val statusChangeError: String? = null,
     val workId: String = "",
     val workTitle: String = "",
-    val noEpisodes: Boolean = false
+    val noEpisodes: Boolean = false,
+    val malAnimeId: String? = null,
+    val showFinaleConfirmation: Boolean = false,
+    val finaleEpisodeNumber: Int? = null
 )
 
 sealed interface WatchingEpisodeModalEvent {
     object StatusChanged : WatchingEpisodeModalEvent
     object EpisodeRecorded : WatchingEpisodeModalEvent
+    object FinaleConfirmationShown : WatchingEpisodeModalEvent
 }
 
 /**
@@ -46,6 +52,7 @@ sealed interface WatchingEpisodeModalEvent {
 class WatchingEpisodeModalViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -62,7 +69,8 @@ class WatchingEpisodeModalViewModel @Inject constructor(
                 selectedStatus = entry.work.viewerStatusState,
                 workId = entry.work.id,
                 workTitle = entry.work.title,
-                noEpisodes = entry.work.noEpisodes
+                noEpisodes = entry.work.noEpisodes,
+                malAnimeId = entry.work.malAnimeId
             )
         }
     }
@@ -100,6 +108,8 @@ class WatchingEpisodeModalViewModel @Inject constructor(
         viewModelScope.launch {
             watchEpisodeUseCase(episode.id, workId, status)
                 .onSuccess {
+                    // エピソード記録成功後、最終話判定を実行
+                    handleFinaleJudgement(episode, workId)
                     _events.emit(WatchingEpisodeModalEvent.EpisodeRecorded)
                 }
                 .onFailure { e ->
@@ -107,6 +117,78 @@ class WatchingEpisodeModalViewModel @Inject constructor(
                     Timber.e(e, "WatchingEpisodeModal: エピソード記録に失敗 - $msg")
                     _state.update { it.copy(statusChangeError = msg) }
                 }
+        }
+    }
+
+    private suspend fun handleFinaleJudgement(episode: Episode, workId: String) {
+        val episodeNumber = episode.number ?: return
+        val malAnimeIdString = _state.value.malAnimeId
+        if (malAnimeIdString.isNullOrEmpty()) {
+            Timber.d("WatchingEpisodeModal: malAnimeIdが設定されていないため最終話判定をスキップ")
+            return
+        }
+
+        val malAnimeId = malAnimeIdString.toIntOrNull()
+        if (malAnimeId == null) {
+            Timber.d("WatchingEpisodeModal: malAnimeIdをintに変換できないため最終話判定をスキップ")
+            return
+        }
+
+        val hasNextEpisode = episode.hasNextEpisode
+        Timber.d(
+            "WatchingEpisodeModal: handleFinaleJudgement - " +
+                "episodeNumber=$episodeNumber, malAnimeId=$malAnimeId, hasNextEpisode=$hasNextEpisode"
+        )
+
+        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId, hasNextEpisode)
+        Timber.d(
+            "WatchingEpisodeModal: handleFinaleJudgement - " +
+                "judgeResult.isFinale=${judgeResult.isFinale}, judgeResult.state=${judgeResult.state}"
+        )
+
+        // FINALE_CONFIRMED または UNKNOWN の場合、ユーザーに確認を求める
+        if (judgeResult.isFinale || judgeResult.state == FinaleState.UNKNOWN) {
+            Timber.d("WatchingEpisodeModal: finale or unknown detected, showing confirmation")
+            _state.update {
+                it.copy(
+                    showFinaleConfirmation = true,
+                    finaleEpisodeNumber = episodeNumber
+                )
+            }
+            _events.emit(WatchingEpisodeModalEvent.FinaleConfirmationShown)
+        } else {
+            Timber.d("WatchingEpisodeModal: not a finale")
+        }
+    }
+
+    fun confirmFinale() {
+        val workId = _state.value.workId
+        viewModelScope.launch {
+            updateViewStateUseCase(workId, StatusState.WATCHED)
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            showFinaleConfirmation = false,
+                            finaleEpisodeNumber = null,
+                            selectedStatus = StatusState.WATCHED
+                        )
+                    }
+                    _events.emit(WatchingEpisodeModalEvent.StatusChanged)
+                }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "WatchingEpisodeModalViewModel.confirmFinale")
+                    Timber.e(e, "WatchingEpisodeModal: ステータス変更に失敗 - $msg")
+                    _state.update { it.copy(statusChangeError = msg) }
+                }
+        }
+    }
+
+    fun hideFinaleConfirmation() {
+        _state.update {
+            it.copy(
+                showFinaleConfirmation = false,
+                finaleEpisodeNumber = null
+            )
         }
     }
 }
