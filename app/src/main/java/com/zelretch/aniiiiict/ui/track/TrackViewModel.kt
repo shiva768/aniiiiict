@@ -4,11 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.datastore.FilterPreferences
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.domain.filter.FilterState
-import com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
@@ -66,8 +64,7 @@ class TrackViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
-    private val filterProgramsUseCase: FilterProgramsUseCase,
-    private val filterPreferences: FilterPreferences,
+    private val programFilterManager: ProgramFilterManager,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel(), TrackViewModelContract {
@@ -81,7 +78,7 @@ class TrackViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            filterPreferences.filterState.collect { savedFilterState ->
+            programFilterManager.filterState.collect { savedFilterState ->
                 if (_uiState.value.allPrograms.isEmpty()) {
                     _uiState.update { it.copy(filterState = savedFilterState) }
                     loadingPrograms()
@@ -89,7 +86,7 @@ class TrackViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             filterState = savedFilterState,
-                            programs = filterProgramsUseCase(it.allPrograms, savedFilterState)
+                            programs = programFilterManager.filterPrograms(it.allPrograms, savedFilterState)
                         )
                     }
                 }
@@ -108,8 +105,8 @@ class TrackViewModel @Inject constructor(
             try {
                 loadProgramsUseCase().collect { programs ->
                     _uiState.update { currentState ->
-                        val availableFilters = filterProgramsUseCase.extractAvailableFilters(programs)
-                        val filteredPrograms = filterProgramsUseCase(programs, currentState.filterState)
+                        val availableFilters = programFilterManager.extractAvailableFilters(programs)
+                        val filteredPrograms = programFilterManager.filterPrograms(programs, currentState.filterState)
                         currentState.copy(
                             programs = filteredPrograms,
                             availableMedia = availableFilters.media,
@@ -228,11 +225,11 @@ class TrackViewModel @Inject constructor(
         _uiState.update { currentState ->
             currentState.copy(
                 filterState = newFilterState,
-                programs = filterProgramsUseCase(currentState.allPrograms, newFilterState)
+                programs = programFilterManager.filterPrograms(currentState.allPrograms, newFilterState)
             )
         }
         viewModelScope.launch {
-            filterPreferences.updateFilterState(newFilterState)
+            programFilterManager.updateFilterState(newFilterState)
         }
     }
 

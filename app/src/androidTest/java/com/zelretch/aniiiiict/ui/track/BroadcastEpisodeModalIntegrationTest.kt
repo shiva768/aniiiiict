@@ -89,13 +89,15 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_一括視聴確認_確認でRepository呼び出しをcoVerifyできる() {
         // Arrange
+        val finaleConfirmationHandler = FinaleConfirmationHandler(updateViewStateUseCase, errorMapper)
         val viewModel =
             BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
                 judgeFinaleUseCase,
-                errorMapper
+                errorMapper,
+                finaleConfirmationHandler
             )
 
         // 2エピソードのProgramWithWork（WATCHING）
@@ -140,13 +142,15 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_ステータス更新からWATCHED_正しい順序でRepositoryが呼ばれる() {
         // Arrange
+        val finaleConfirmationHandler = FinaleConfirmationHandler(updateViewStateUseCase, errorMapper)
         val viewModel =
             BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
                 judgeFinaleUseCase,
-                errorMapper
+                errorMapper,
+                finaleConfirmationHandler
             )
 
         val work = Work(
@@ -184,13 +188,15 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_単一エピソード視聴_createRecordが呼ばれる() {
         // Arrange
+        val finaleConfirmationHandler = FinaleConfirmationHandler(updateViewStateUseCase, errorMapper)
         val viewModel =
             BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
                 judgeFinaleUseCase,
-                errorMapper
+                errorMapper,
+                finaleConfirmationHandler
             )
 
         val work = Work(
@@ -229,13 +235,15 @@ class BroadcastEpisodeModalIntegrationTest {
     @Test
     fun broadcastEpisodeModal_WANNA_WATCHからWATCHING経由でのエピソード記録_正しい順序でRepository呼び出し() {
         // Arrange
+        val finaleConfirmationHandler = FinaleConfirmationHandler(updateViewStateUseCase, errorMapper)
         val viewModel =
             BroadcastEpisodeModalViewModel(
                 bulkRecordEpisodesUseCase,
                 watchEpisodeUseCase,
                 updateViewStateUseCase,
                 judgeFinaleUseCase,
-                errorMapper
+                errorMapper,
+                finaleConfirmationHandler
             )
 
         val work = Work(

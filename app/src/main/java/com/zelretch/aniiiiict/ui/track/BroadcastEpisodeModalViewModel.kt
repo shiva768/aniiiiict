@@ -66,7 +66,8 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
-    private val errorMapper: ErrorMapper
+    private val errorMapper: ErrorMapper,
+    private val finaleConfirmationHandler: FinaleConfirmationHandler
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BroadcastEpisodeModalState())
@@ -305,72 +306,19 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
         }
     }
 
-    fun confirmFinaleWatched() {
-        val workId = _state.value.workId
-        viewModelScope.launch {
-            updateViewStateUseCase(workId, StatusState.WATCHED)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            showFinaleConfirmation = false,
-                            finaleEpisodeNumber = null
-                        )
-                    }
-                    _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
-                }
-                .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.confirmFinaleWatched")
-                    Timber.e(e, "DetailModal: フィナーレ確認に失敗 - $msg")
-                }
+    fun confirmFinaleWatched(isSingleEpisode: Boolean = false) {
+        if (isSingleEpisode) {
+            finaleConfirmationHandler.confirmSingleFinaleWatched(_state, _events, viewModelScope)
+        } else {
+            finaleConfirmationHandler.confirmBulkFinaleWatched(_state, _events, viewModelScope)
         }
     }
 
-    fun hideFinaleConfirmation() {
-        _state.update {
-            it.copy(
-                showFinaleConfirmation = false,
-                finaleEpisodeNumber = null
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
-        }
-    }
-
-    fun confirmSingleEpisodeFinaleWatched() {
-        val workId = _state.value.singleEpisodeFinaleWorkId ?: return
-        viewModelScope.launch {
-            updateViewStateUseCase(workId, StatusState.WATCHED)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            showSingleEpisodeFinaleConfirmation = false,
-                            singleEpisodeFinaleNumber = null,
-                            singleEpisodeFinaleWorkId = null
-                        )
-                    }
-                    _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
-                }
-                .onFailure { e ->
-                    val msg = errorMapper.toUserMessage(
-                        e,
-                        "BroadcastEpisodeModalViewModel.confirmSingleEpisodeFinaleWatched"
-                    )
-                    Timber.e(e, "DetailModal: 単一エピソードフィナーレ確認に失敗 - $msg")
-                }
-        }
-    }
-
-    fun hideSingleEpisodeFinaleConfirmation() {
-        _state.update {
-            it.copy(
-                showSingleEpisodeFinaleConfirmation = false,
-                singleEpisodeFinaleNumber = null,
-                singleEpisodeFinaleWorkId = null
-            )
-        }
-        viewModelScope.launch {
-            _events.emit(BroadcastEpisodeModalEvent.EpisodesRecorded)
+    fun hideFinaleConfirmation(isSingleEpisode: Boolean = false) {
+        if (isSingleEpisode) {
+            finaleConfirmationHandler.hideSingleFinaleConfirmation(_state, _events, viewModelScope)
+        } else {
+            finaleConfirmationHandler.hideBulkFinaleConfirmation(_state, _events, viewModelScope)
         }
     }
 }
