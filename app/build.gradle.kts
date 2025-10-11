@@ -31,26 +31,29 @@ val isCheckOnly = gradle.startParameter.taskNames.any {
             it.contains("bundle", ignoreCase = true)
     }
 
-fun getPropertyValue(key: String): String {
-    val value = localProperties.getProperty(key)
-        ?: providers.gradleProperty(key).orNull
-        ?: providers.environmentVariable(key).orNull
+fun getPropertyValue(key: String): String = localProperties.getProperty(key)
+    ?: providers.gradleProperty(key).orNull
+    ?: providers.environmentVariable(key).orNull
+    ?: ""
 
-    // テスト/check実行のみの場合、値が空ならdummy値を使う
-    if (value.isNullOrEmpty() && isCheckOnly) {
-        return "dummy_$key"
-    }
-
-    return value ?: ""
+// check/testのみの場合はdummy値を使用、それ以外（assemble/bundle）では実際の値が必要
+val annictClientId = getPropertyValue("ANNICT_CLIENT_ID").ifEmpty {
+    if (isCheckOnly) "dummy_ANNICT_CLIENT_ID" else ""
+}
+val annictClientSecret = getPropertyValue("ANNICT_CLIENT_SECRET").ifEmpty {
+    if (isCheckOnly) "dummy_ANNICT_CLIENT_SECRET" else ""
+}
+val malClientId = getPropertyValue("MAL_CLIENT_ID").ifEmpty {
+    if (isCheckOnly) "dummy_MAL_CLIENT_ID" else ""
 }
 
-val annictClientId = getPropertyValue("ANNICT_CLIENT_ID")
-val annictClientSecret = getPropertyValue("ANNICT_CLIENT_SECRET")
-val malClientId = getPropertyValue("MAL_CLIENT_ID")
-
 // Configuration Cache対応のためにタスクを個別に設定
+// APK/AAB作成タスクのみをチェック（assembleDebug, assembleRelease, bundleDebug, bundleRelease）
 tasks.withType<Task>().matching {
-    it.name.startsWith("assemble") || it.name.startsWith("bundle")
+    it.name == "assembleDebug" ||
+        it.name == "assembleRelease" ||
+        it.name == "bundleDebug" ||
+        it.name == "bundleRelease"
 }.configureEach {
     val taskAnnictClientId = annictClientId
     val taskAnnictSecret = annictClientSecret
