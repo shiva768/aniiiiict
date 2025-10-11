@@ -148,6 +148,7 @@ android {
             excludes += "/META-INF/NOTICE.md"
             excludes += "/META-INF/NOTICE"
             excludes += "/META-INF/*.md"
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
     testOptions {
@@ -176,6 +177,9 @@ dependencies {
     // Compose
     // Align Kotlin libs to the plugin version
     implementation(platform(libs.compose.bom))
+    implementation(platform(libs.kotlin.bom))
+    implementation(platform(libs.okhttp.bom))
+    implementation(platform(libs.coroutines.bom))
     implementation(libs.bundles.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons)
