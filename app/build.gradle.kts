@@ -1,5 +1,3 @@
-import groovy.util.Node
-import groovy.xml.XmlParser
 import java.util.Properties
 
 plugins {
@@ -324,51 +322,4 @@ ktlint {
 
 detekt {
     ignoreFailures = true
-}
-
-// InstrumentationTestの結果xmlをパースしてログに表示する
-tasks.register("printFailedAndroidTests") {
-    doLast {
-        val reports = project.fileTree(
-            project.layout.buildDirectory.dir("outputs/androidTest-results/connected").get().asFile
-        ) {
-            include("**/TEST-*.xml")
-        }
-
-        var totalFailures = 0
-        val parser = XmlParser()
-
-        reports.forEach { report ->
-            val root = parser.parse(report)
-
-            @Suppress("UNCHECKED_CAST")
-            (root["testcase"] as List<Node>).forEach { tc ->
-                val failures = tc["failure"] as List<Node>
-                if (failures.isNotEmpty()) {
-                    totalFailures++
-                    val failureText = failures[0].text()
-                    val reasonLine = failureText.lineSequence().first()
-                    val className = tc.attribute("classname")?.toString() ?: ""
-                    val simpleClassName = className.substringAfterLast('.')
-                    val codeLine = failureText.lineSequence()
-                        .find { it.contains("$simpleClassName.kt:") }
-                        ?: failureText.lineSequence().find { it.contains(".kt:") }
-                        ?: "<No test line found>"
-
-                    println("${tc.attribute("classname")}.${tc.attribute("name")}")
-                    println("  $reasonLine")
-                    println("  $codeLine\n")
-                }
-            }
-        }
-
-        if (totalFailures > 0) {
-            println("=== Total $totalFailures test failures ===")
-        }
-    }
-}
-
-afterEvaluate {
-    tasks.findByName("connectedDebugAndroidTest")?.finalizedBy("printFailedAndroidTests")
-    tasks.findByName("connectedAndroidTest")?.finalizedBy("printFailedAndroidTests")
 }
