@@ -44,15 +44,43 @@ Annictのアプリケーションです。アニメの視聴記録を管理で�
 
 3. 認証情報の設定
 
-   - 環境変数にAnnict APIと、MyAnimeList API(client_idのみ)認証情報を設定：
+   認証情報は以下の3つの方法で設定できます（優先順位順）：
 
-    ```bash
-    export ANNICT_CLIENT_ID=your_client_id_here
-    export ANNICT_CLIENT_SECRET=your_client_secret_here
-    export MAL_CLIENT_ID=your_client_id_here
-    ```
+   **方法1: local.properties（推奨・ローカル開発用）**
+   
+   ```bash
+   # local.properties.templateをコピー
+   cp local.properties.template local.properties
+   
+   # local.propertiesを編集して以下を追加
+   ANNICT_CLIENT_ID=your_client_id_here
+   ANNICT_CLIENT_SECRET=your_client_secret_here
+   MAL_CLIENT_ID=your_mal_client_id_here
+   ```
+   
+   - `local.properties`はgitignoreされているため、秘密情報が誤ってコミットされる心配がありません
+   - テスト・チェック用には dummy 値でOK、Release buildでは実際の値が必要
 
-    または、IDEの実行設定で環境変数を設定してください。
+   **方法2: gradle.properties（非推奨）**
+   
+   gradle.propertiesに追加（ただし、gitignoreされていないため注意）
+
+   **方法3: 環境変数**
+   
+   ```bash
+   export ANNICT_CLIENT_ID=your_client_id_here
+   export ANNICT_CLIENT_SECRET=your_client_secret_here
+   export MAL_CLIENT_ID=your_mal_client_id_here
+   ```
+   
+   または、IDEの実行設定で環境変数を設定してください。
+   
+   **API認証情報の取得方法：**
+   
+   - Annict API: [開発者ページ](https://annict.com/oauth/applications)で新規アプリケーションを作成
+     - コールバックURL: `aniiiiict://oauth/callback`
+     - スコープ: `read write`
+   - MyAnimeList API: [APIコンフィグ](https://myanimelist.net/apiconfig)でClient IDを取得
 
 4. ビルドと実行
 
