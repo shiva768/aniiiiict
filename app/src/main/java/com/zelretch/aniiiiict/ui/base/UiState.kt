@@ -8,7 +8,9 @@ package com.zelretch.aniiiiict.ui.base
  *
  * @param T データ型（Success時に保持するデータの型）
  *
- * @see <a href="https://developer.android.com/topic/architecture/ui-layer/stateholders#ui-state">UI State documentation</a>
+ * @see <a href="https://developer.android.com/topic/architecture/ui-layer/stateholders#ui-state">
+ *   UI State documentation
+ * </a>
  * @see <a href="https://github.com/android/nowinandroid">Now in Android sample</a>
  */
 sealed interface UiState<out T> {

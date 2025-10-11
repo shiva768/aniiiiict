@@ -6,6 +6,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
@@ -229,14 +230,10 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
     }
 
     fun bulkRecordEpisodes(episodeIds: List<String>, status: StatusState) {
-        val workId = _state.value.workId
         val currentState = _state.value
-        val malAnimeId = currentState.malAnimeId?.toIntOrNull()
         val lastEpisode = currentState.programs
             .find { it.episode.id == episodeIds.lastOrNull() }
             ?.episode
-        val lastEpisodeNumber = lastEpisode?.number
-        val lastEpisodeHasNext = lastEpisode?.hasNextEpisode
 
         viewModelScope.launch {
             _state.update {
@@ -250,53 +247,61 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
             runCatching {
                 bulkRecordEpisodesUseCase(
                     episodeIds = episodeIds,
-                    workId = workId,
+                    workId = currentState.workId,
                     currentStatus = status,
-                    malAnimeId = malAnimeId,
-                    lastEpisodeNumber = lastEpisodeNumber,
-                    lastEpisodeHasNext = lastEpisodeHasNext,
+                    malAnimeId = currentState.malAnimeId?.toIntOrNull(),
+                    lastEpisodeNumber = lastEpisode?.number,
+                    lastEpisodeHasNext = lastEpisode?.hasNextEpisode,
                     onProgress = { progress ->
                         _state.update { it.copy(bulkRecordingProgress = progress) }
                     }
                 ).getOrThrow()
             }.onSuccess { result ->
-                val currentPrograms = _state.value.programs
-                val targetPrograms = currentPrograms.filterIndexed { index, _ ->
-                    index <= (_state.value.selectedEpisodeIndex ?: return@launch)
-                }
-
-                // フィナーレ判定の結果をチェック
-                val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
-
-                _state.update {
-                    it.copy(
-                        programs = currentPrograms - targetPrograms.toSet(),
-                        showConfirmDialog = false,
-                        selectedEpisodeIndex = null,
-                        isBulkRecording = false,
-                        bulkRecordingProgress = 0,
-                        bulkRecordingTotal = 0,
-                        showFinaleConfirmation = shouldShowFinaleConfirmation,
-                        finaleEpisodeNumber = if (shouldShowFinaleConfirmation) lastEpisodeNumber else null
-                    )
-                }
-
-                if (shouldShowFinaleConfirmation) {
-                    _events.emit(BroadcastEpisodeModalEvent.FinaleConfirmationShown)
-                } else {
-                    _events.emit(BroadcastEpisodeModalEvent.BulkEpisodesRecorded)
-                }
+                handleBulkRecordSuccess(result, lastEpisode?.number)
             }.onFailure { e ->
-                val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.bulkRecordEpisodes")
-                Timber.e(e, "DetailModal: 一括記録に失敗 - $msg")
-                _state.update {
-                    it.copy(
-                        isBulkRecording = false,
-                        bulkRecordingProgress = 0,
-                        bulkRecordingTotal = 0
-                    )
-                }
+                handleBulkRecordFailure(e)
             }
+        }
+    }
+
+    private suspend fun handleBulkRecordSuccess(result: BulkRecordResult, lastEpisodeNumber: Int?) {
+        val currentPrograms = _state.value.programs
+        val targetPrograms = currentPrograms.filterIndexed { index, _ ->
+            index <= (_state.value.selectedEpisodeIndex ?: return)
+        }
+
+        val shouldShowFinaleConfirmation = result.finaleResult?.isFinale == true
+
+        _state.update {
+            it.copy(
+                programs = currentPrograms - targetPrograms.toSet(),
+                showConfirmDialog = false,
+                selectedEpisodeIndex = null,
+                isBulkRecording = false,
+                bulkRecordingProgress = 0,
+                bulkRecordingTotal = 0,
+                showFinaleConfirmation = shouldShowFinaleConfirmation,
+                finaleEpisodeNumber = if (shouldShowFinaleConfirmation) lastEpisodeNumber else null
+            )
+        }
+
+        val event = if (shouldShowFinaleConfirmation) {
+            BroadcastEpisodeModalEvent.FinaleConfirmationShown
+        } else {
+            BroadcastEpisodeModalEvent.BulkEpisodesRecorded
+        }
+        _events.emit(event)
+    }
+
+    private fun handleBulkRecordFailure(e: Throwable) {
+        val msg = errorMapper.toUserMessage(e, "BroadcastEpisodeModalViewModel.bulkRecordEpisodes")
+        Timber.e(e, "DetailModal: 一括記録に失敗 - $msg")
+        _state.update {
+            it.copy(
+                isBulkRecording = false,
+                bulkRecordingProgress = 0,
+                bulkRecordingTotal = 0
+            )
         }
     }
 
