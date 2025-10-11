@@ -1,5 +1,4 @@
-import groovy.util.Node
-import groovy.xml.XmlParser
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -12,25 +11,47 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
-val annictClientId =
-    providers.gradleProperty("ANNICT_CLIENT_ID")
-        .orElse(providers.environmentVariable("ANNICT_CLIENT_ID"))
-val annictClientSecret =
-    providers.gradleProperty("ANNICT_CLIENT_SECRET")
-        .orElse(providers.environmentVariable("ANNICT_CLIENT_SECRET"))
-val malClientId =
-    providers.gradleProperty("MAL_CLIENT_ID")
-        .orElse(providers.environmentVariable("MAL_CLIENT_ID"))
+// local.propertiesから値を読み込む
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 val isCi = providers.environmentVariable("CI").isPresent
-val isCheckOnly = gradle.startParameter.taskNames.any { it.contains("check", ignoreCase = true) } &&
+val isCheckOnly = gradle.startParameter.taskNames.any {
+    it.contains("check", ignoreCase = true) ||
+        it.contains("test", ignoreCase = true)
+} &&
     gradle.startParameter.taskNames.none {
         it.contains("assemble", ignoreCase = true) ||
             it.contains("bundle", ignoreCase = true)
     }
 
+fun getPropertyValue(key: String): String = localProperties.getProperty(key)
+    ?: providers.gradleProperty(key).orNull
+    ?: providers.environmentVariable(key).orNull
+    ?: ""
+
+// check/testのみの場合はdummy値を使用、それ以外（assemble/bundle）では実際の値が必要
+val annictClientId = getPropertyValue("ANNICT_CLIENT_ID").ifEmpty {
+    if (isCheckOnly) "dummy_ANNICT_CLIENT_ID" else ""
+}
+val annictClientSecret = getPropertyValue("ANNICT_CLIENT_SECRET").ifEmpty {
+    if (isCheckOnly) "dummy_ANNICT_CLIENT_SECRET" else ""
+}
+val malClientId = getPropertyValue("MAL_CLIENT_ID").ifEmpty {
+    if (isCheckOnly) "dummy_MAL_CLIENT_ID" else ""
+}
+
 // Configuration Cache対応のためにタスクを個別に設定
+// APK/AAB作成タスクのみをチェック（assembleDebug, assembleRelease, bundleDebug, bundleRelease）
 tasks.withType<Task>().matching {
-    it.name.startsWith("assemble") || it.name.startsWith("bundle")
+    it.name == "assembleDebug" ||
+        it.name == "assembleRelease" ||
+        it.name == "bundleDebug" ||
+        it.name == "bundleRelease"
 }.configureEach {
     val taskAnnictClientId = annictClientId
     val taskAnnictSecret = annictClientSecret
@@ -41,15 +62,50 @@ tasks.withType<Task>().matching {
     doFirst {
         val isRelease = name.contains("Release", ignoreCase = true)
         val isDebug = name.contains("Debug", ignoreCase = true)
-        val requireSecret = !taskIsCheckOnly && (isRelease || (isDebug && taskIsCi))
-        val idValue = taskAnnictClientId.orNull
-        val secretValue = taskAnnictSecret.orNull
-        val malIdValue = taskMalClientId.orNull
+        val buildType = if (isRelease) "Release" else "Debug"
 
-        if (requireSecret && idValue.isNullOrEmpty() && secretValue.isNullOrEmpty() && malIdValue.isNullOrEmpty()) {
+        // assemble/bundle実行時は値が必須
+        if (taskAnnictClientId.isEmpty() || taskAnnictSecret.isEmpty() || taskMalClientId.isEmpty()) {
             throw GradleException(
-                "ANNICT_CLIENT_ID and ANNICT_CLIENT_SECRET and MAL_CLIENT_ID " +
-                    "environment variable is required for " + (if (isRelease) "Release" else "CI Debug") + " builds"
+                """
+                |ANNICT_CLIENT_ID, ANNICT_CLIENT_SECRET, and MAL_CLIENT_ID are required for $buildType APK builds.
+                |
+                |Please set REAL credentials in one of the following ways:
+                |  1. local.properties (recommended for local development)
+                |     ANNICT_CLIENT_ID=your_real_value
+                |     ANNICT_CLIENT_SECRET=your_real_secret
+                |     MAL_CLIENT_ID=your_real_value
+                |
+                |  2. Environment variables
+                |     export ANNICT_CLIENT_ID=your_real_value
+                |     export ANNICT_CLIENT_SECRET=your_real_secret
+                |     export MAL_CLIENT_ID=your_real_value
+                |
+                |Note: Dummy values are NOT allowed for APK builds.
+                |      Use './gradlew check' or './gradlew test' for testing with dummy values.
+                """.trimMargin()
+            )
+        }
+
+        // APK作成時はdummy値を絶対に拒否
+        if (taskAnnictClientId.startsWith("dummy_") ||
+            taskAnnictSecret.startsWith("dummy_") ||
+            taskMalClientId.startsWith("dummy_")
+        ) {
+            throw GradleException(
+                """
+                |Dummy values are NOT allowed for APK builds (both Debug and Release).
+                |Current values detected: 
+                |  ANNICT_CLIENT_ID: ${if (taskAnnictClientId.startsWith("dummy_")) "DUMMY" else "OK"}
+                |  ANNICT_CLIENT_SECRET: ${if (taskAnnictSecret.startsWith("dummy_")) "DUMMY" else "OK"}
+                |  MAL_CLIENT_ID: ${if (taskMalClientId.startsWith("dummy_")) "DUMMY" else "OK"}
+                |
+                |Please set REAL credentials in local.properties or environment variables.
+                |
+                |For testing without building APK, use:
+                |  ./gradlew check    (runs tests with dummy values automatically)
+                |  ./gradlew test     (runs unit tests with dummy values automatically)
+                """.trimMargin()
             )
         }
     }
@@ -82,7 +138,7 @@ android {
         buildConfigField(
             "String",
             "ANNICT_CLIENT_ID",
-            "\"${annictClientId.orElse("").get()}\""
+            "\"$annictClientId\""
         )
 
         buildConfigField(
@@ -94,14 +150,13 @@ android {
         buildConfigField(
             "String",
             "MAL_CLIENT_ID",
-            "\"${malClientId.orElse("").get()}\""
+            "\"$malClientId\""
         )
 
-        // ←ここで BuildConfig に渡す
         buildConfigField(
             "String",
             "ANNICT_CLIENT_SECRET",
-            "\"${annictClientSecret.orElse("").get()}\""
+            "\"$annictClientSecret\""
         )
 
         // DEBUGフラグを手動で設定
@@ -267,51 +322,4 @@ ktlint {
 
 detekt {
     ignoreFailures = true
-}
-
-// InstrumentationTestの結果xmlをパースしてログに表示する
-tasks.register("printFailedAndroidTests") {
-    doLast {
-        val reports = project.fileTree(
-            project.layout.buildDirectory.dir("outputs/androidTest-results/connected").get().asFile
-        ) {
-            include("**/TEST-*.xml")
-        }
-
-        var totalFailures = 0
-        val parser = XmlParser()
-
-        reports.forEach { report ->
-            val root = parser.parse(report)
-
-            @Suppress("UNCHECKED_CAST")
-            (root["testcase"] as List<Node>).forEach { tc ->
-                val failures = tc["failure"] as List<Node>
-                if (failures.isNotEmpty()) {
-                    totalFailures++
-                    val failureText = failures[0].text()
-                    val reasonLine = failureText.lineSequence().first()
-                    val className = tc.attribute("classname")?.toString() ?: ""
-                    val simpleClassName = className.substringAfterLast('.')
-                    val codeLine = failureText.lineSequence()
-                        .find { it.contains("$simpleClassName.kt:") }
-                        ?: failureText.lineSequence().find { it.contains(".kt:") }
-                        ?: "<No test line found>"
-
-                    println("${tc.attribute("classname")}.${tc.attribute("name")}")
-                    println("  $reasonLine")
-                    println("  $codeLine\n")
-                }
-            }
-        }
-
-        if (totalFailures > 0) {
-            println("=== Total $totalFailures test failures ===")
-        }
-    }
-}
-
-afterEvaluate {
-    tasks.findByName("connectedDebugAndroidTest")?.finalizedBy("printFailedAndroidTests")
-    tasks.findByName("connectedAndroidTest")?.finalizedBy("printFailedAndroidTests")
 }
