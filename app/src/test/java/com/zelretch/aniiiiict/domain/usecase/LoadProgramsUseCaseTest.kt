@@ -188,7 +188,8 @@ object TestHelper {
         episodeNumberText: String = "#1",
         episodeTitle: String = "エピソードタイトル",
         workId: String = "work-id",
-        workTitle: String = "作品タイトル"
+        workTitle: String = "作品タイトル",
+        hasNextEpisode: Boolean = true
     ): ViewerProgramsQuery.Node {
         val node = mockk<ViewerProgramsQuery.Node>()
 
@@ -204,6 +205,16 @@ object TestHelper {
         every { episode.number } returns episodeNumber
         every { episode.numberText } returns episodeNumberText
         every { episode.title } returns episodeTitle
+
+        // nextEpisodeのモック設定
+        if (hasNextEpisode) {
+            val nextEpisode = mockk<ViewerProgramsQuery.NextEpisode>()
+            every { nextEpisode.number } returns (episodeNumber ?: 0) + 1
+            every { episode.nextEpisode } returns nextEpisode
+        } else {
+            every { episode.nextEpisode } returns null
+        }
+
         every { node.episode } returns episode
 
         val work = mockk<ViewerProgramsQuery.Work>()

@@ -198,11 +198,12 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
             return
         }
 
+        val hasNextEpisode = currentEpisode.episode.hasNextEpisode
         Timber.d(
             "DetailModal: handleSingleEpisodeFinaleJudgement - calling judgeFinaleUseCase " +
-                "with episodeNumber=$episodeNumber, malAnimeId=$malAnimeId"
+                "with episodeNumber=$episodeNumber, malAnimeId=$malAnimeId, hasNextEpisode=$hasNextEpisode"
         )
-        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId)
+        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId, hasNextEpisode)
         Timber.d(
             "DetailModal: handleSingleEpisodeFinaleJudgement - " +
                 "judgeResult.isFinale=${judgeResult.isFinale}, judgeResult.state=${judgeResult.state}"
@@ -231,9 +232,11 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
         val workId = _state.value.workId
         val currentState = _state.value
         val malAnimeId = currentState.malAnimeId?.toIntOrNull()
-        val lastEpisodeNumber = currentState.programs
+        val lastEpisode = currentState.programs
             .find { it.episode.id == episodeIds.lastOrNull() }
-            ?.episode?.number
+            ?.episode
+        val lastEpisodeNumber = lastEpisode?.number
+        val lastEpisodeHasNext = lastEpisode?.hasNextEpisode
 
         viewModelScope.launch {
             _state.update {
@@ -251,6 +254,7 @@ class BroadcastEpisodeModalViewModel @Inject constructor(
                     currentStatus = status,
                     malAnimeId = malAnimeId,
                     lastEpisodeNumber = lastEpisodeNumber,
+                    lastEpisodeHasNext = lastEpisodeHasNext,
                     onProgress = { progress ->
                         _state.update { it.copy(bulkRecordingProgress = progress) }
                     }

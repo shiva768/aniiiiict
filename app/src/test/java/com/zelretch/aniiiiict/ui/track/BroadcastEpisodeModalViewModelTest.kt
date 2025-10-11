@@ -133,6 +133,7 @@ class BroadcastEpisodeModalViewModelTest {
                 every { id } returns "ep-12"
                 every { number } returns 12
                 every { title } returns "最終話"
+                every { hasNextEpisode } returns false
             }
             val program = mockk<Program> {
                 every { this@mockk.episode } returns episode
@@ -146,7 +147,7 @@ class BroadcastEpisodeModalViewModelTest {
 
             coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
             coEvery {
-                judgeFinaleUseCase(12, 123)
+                judgeFinaleUseCase(12, 123, false)
             } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
 
             viewModel.initialize(programWithWork)
@@ -174,6 +175,7 @@ class BroadcastEpisodeModalViewModelTest {
                 every { id } returns "ep-10"
                 every { number } returns 10
                 every { title } returns "第10話"
+                every { hasNextEpisode } returns true
             }
             val program = mockk<Program> {
                 every { this@mockk.episode } returns episode
@@ -187,7 +189,7 @@ class BroadcastEpisodeModalViewModelTest {
 
             coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
             coEvery {
-                judgeFinaleUseCase(10, 123)
+                judgeFinaleUseCase(10, 123, true)
             } returns JudgeFinaleResult(FinaleState.NOT_FINALE)
 
             viewModel.initialize(programWithWork)
