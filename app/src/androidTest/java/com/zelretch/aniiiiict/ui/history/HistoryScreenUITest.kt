@@ -537,4 +537,90 @@ class HistoryScreenUITest {
         // Assert
         verify { mockOnRecordClick(sampleRecord) }
     }
+
+    @Test
+    fun recordDetailModal_numberTextあり_numberTextが表示される() {
+        // Arrange
+        val sampleWork = Work(
+            id = "work1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHED
+        )
+
+        val sampleEpisode = Episode(
+            id = "episode1",
+            title = "始まりの物語",
+            numberText = "EP1",
+            number = 1
+        )
+
+        val sampleRecord = Record(
+            id = "record1",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = sampleEpisode,
+            work = sampleWork
+        )
+
+        val mockOnDismiss = mockk<() -> Unit>(relaxed = true)
+
+        // Act
+        composeTestRule.setContent {
+            RecordDetailModal(
+                record = sampleRecord,
+                onDismiss = mockOnDismiss
+            )
+        }
+
+        // Assert - numberTextが使用されている
+        composeTestRule.onNodeWithText("EP1").assertIsDisplayed()
+    }
+
+    @Test
+    fun recordDetailModal_numberTextなし_numberからフォーマットされた文字列が表示される() {
+        // Arrange
+        val sampleWork = Work(
+            id = "work1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHED
+        )
+
+        val sampleEpisode = Episode(
+            id = "episode1",
+            title = "始まりの物語",
+            numberText = null,
+            number = 3
+        )
+
+        val sampleRecord = Record(
+            id = "record1",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = sampleEpisode,
+            work = sampleWork
+        )
+
+        val mockOnDismiss = mockk<() -> Unit>(relaxed = true)
+
+        // Act
+        composeTestRule.setContent {
+            RecordDetailModal(
+                record = sampleRecord,
+                onDismiss = mockOnDismiss
+            )
+        }
+
+        // Assert - numberから生成されたフォーマット（第X話）が使用されている
+        composeTestRule.onNodeWithText("第3話").assertIsDisplayed()
+    }
 }
