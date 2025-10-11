@@ -49,7 +49,8 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
                 id = node.episode.id,
                 number = node.episode.number,
                 numberText = node.episode.numberText,
-                title = node.episode.title
+                title = node.episode.title,
+                hasNextEpisode = node.episode.nextEpisode != null
             )
 
             val workImage = node.work.image?.let { image ->

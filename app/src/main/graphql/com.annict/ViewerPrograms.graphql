@@ -22,6 +22,9 @@ query ViewerPrograms {
           number
           numberText
           title
+          nextEpisode {
+            number
+          }
         }
         work {
           id

@@ -17,6 +17,7 @@ class BulkRecordEpisodesUseCase @Inject constructor(
         currentStatus: StatusState,
         malAnimeId: Int? = null,
         lastEpisodeNumber: Int? = null,
+        lastEpisodeHasNext: Boolean? = null,
         onProgress: (Int) -> Unit = {}
     ): Result<BulkRecordResult> {
         return runCatching {
@@ -35,7 +36,7 @@ class BulkRecordEpisodesUseCase @Inject constructor(
 
             // 最後のエピソードでフィナーレ判定を実行
             val finaleResult = if (malAnimeId != null && lastEpisodeNumber != null) {
-                judgeFinaleUseCase(lastEpisodeNumber, malAnimeId)
+                judgeFinaleUseCase(lastEpisodeNumber, malAnimeId, lastEpisodeHasNext)
             } else {
                 null
             }

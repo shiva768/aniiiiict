@@ -18,9 +18,13 @@ data class JudgeFinaleResult(val state: FinaleState) {
 class JudgeFinaleUseCase @Inject constructor(
     private val myAnimeListRepository: MyAnimeListRepository
 ) {
-    suspend operator fun invoke(currentEpisodeNumber: Int, animeId: Int): JudgeFinaleResult {
+    suspend operator fun invoke(
+        currentEpisodeNumber: Int,
+        animeId: Int,
+        hasNextEpisode: Boolean? = null
+    ): JudgeFinaleResult {
         Timber.i(
-            "最終話判定を開始: currentEpisode=$currentEpisodeNumber, animeId=$animeId"
+            "最終話判定を開始: currentEpisode=$currentEpisodeNumber, animeId=$animeId, hasNextEpisode=$hasNextEpisode"
         )
 
         val result = myAnimeListRepository.getAnimeDetail(animeId)
@@ -35,9 +39,10 @@ class JudgeFinaleUseCase @Inject constructor(
                 // MyAnimeListには nextAiringEpisode 相当の情報がないため、
                 // status と num_episodes で判定する
 
-                // 2. num_episodes が数値 かつ currentEp >= num_episodes → finale_confirmed
-                media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes -> {
-                    Timber.i("現在のエピソードが総エピソード数に達したためFINALE_CONFIRMED")
+                // 2. num_episodes が数値 かつ currentEp >= num_episodes かつ nextEpisode != true → finale_confirmed
+                // hasNextEpisode == true の場合は、次話があるので最終話ではない（1期・2期問題を回避）
+                media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes && hasNextEpisode != true -> {
+                    Timber.i("現在のエピソードが総エピソード数に達し、nextEpisodeがtrueでないためFINALE_CONFIRMED")
                     JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
                 }
                 // 3. status == currently_airing かつ num_episodes が null → unknown

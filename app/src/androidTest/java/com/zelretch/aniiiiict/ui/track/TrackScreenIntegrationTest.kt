@@ -315,6 +315,7 @@ class TrackScreenIntegrationTest {
         every { episodeNode.number } returns episode.number
         every { episodeNode.numberText } returns episode.numberText
         every { episodeNode.title } returns episode.title
+        every { episodeNode.nextEpisode } returns null // 最終話なのでnextEpisodeはnull
         val workNode = mockk<ViewerProgramsQuery.Work>()
         every { workNode.id } returns work.id
         every { workNode.title } returns work.title
@@ -422,6 +423,9 @@ class TrackScreenIntegrationTest {
         every { episodeNode.number } returns episode.number
         every { episodeNode.numberText } returns episode.numberText
         every { episodeNode.title } returns episode.title
+        val nextEpisodeNode = mockk<ViewerProgramsQuery.NextEpisode>()
+        every { nextEpisodeNode.number } returns 9
+        every { episodeNode.nextEpisode } returns nextEpisodeNode // 最終話ではないので次話あり
         val workNode = mockk<ViewerProgramsQuery.Work>()
         every { workNode.id } returns work.id
         every { workNode.title } returns work.title
