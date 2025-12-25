@@ -74,6 +74,50 @@ class JudgeFinaleUseCaseTest {
         }
 
         @Test
+        @DisplayName("movie_numEpisodesに達した場合はfinale_confirmedを返す")
+        fun movie_numEpisodesに達した場合はfinale_confirmedを返す() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 3,
+                mediaType = "movie",
+                numEpisodes = 1,
+                status = "finished_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
+
+            // When
+            val result = judgeFinaleUseCase(1, media.id)
+
+            // Then
+            assertEquals(FinaleState.FINALE_CONFIRMED, result.state)
+            assertTrue(result.isFinale)
+        }
+
+        @Test
+        @DisplayName("ova_numEpisodesに達した場合はfinale_confirmedを返す")
+        fun ova_numEpisodesに達した場合はfinale_confirmedを返す() = runTest {
+            // Given
+            val media = MyAnimeListResponse(
+                id = 4,
+                mediaType = "ova",
+                numEpisodes = 6,
+                status = "finished_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+            coEvery { myAnimeListRepository.getAnimeDetail(media.id) } returns Result.success(media)
+
+            // When
+            val result = judgeFinaleUseCase(6, media.id)
+
+            // Then
+            assertEquals(FinaleState.FINALE_CONFIRMED, result.state)
+            assertTrue(result.isFinale)
+        }
+
+        @Test
         @DisplayName("currently_airing且つnumEpisodesがnullでhasNextEpisode=trueの場合はnot_finaleを返す")
         fun currently_airing且つnumEpisodesがnullでhasNextEpisode_trueの場合はnot_finaleを返す() = runTest {
             // Given

@@ -31,11 +31,6 @@ class JudgeFinaleUseCase @Inject constructor(
 
         return result.fold(onSuccess = { media ->
             when {
-                // media_type != tv の場合、最終話判定ロジックをスキップ
-                media.mediaType != null && media.mediaType != "tv" -> {
-                    Timber.i("フォーマットがTVではないため判定をスキップ: mediaType=${media.mediaType}")
-                    JudgeFinaleResult(FinaleState.UNKNOWN)
-                }
                 // MyAnimeListには nextAiringEpisode 相当の情報がないため、
                 // status と num_episodes で判定する
 
