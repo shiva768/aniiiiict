@@ -7,30 +7,43 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -41,6 +54,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.annict.WorkDetailQuery
+import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.base.UiState
@@ -67,6 +81,20 @@ fun AnimeDetailScreen(
                 title = programWithWork.work.title,
                 onNavigateBack = onNavigateBack
             )
+        },
+        floatingActionButton = {
+            val state = uiState
+            if (state is UiState.Success) {
+                FloatingActionButton(
+                    onClick = { viewModel.recordNextEpisode(programWithWork) },
+                    modifier = Modifier.testTag("record_fab")
+                ) {
+                    RecordIcon(
+                        isRecording = state.data.isRecording,
+                        recordingSuccess = state.data.recordingSuccess
+                    )
+                }
+            }
         }
     ) { paddingValues ->
         Box(
@@ -102,6 +130,8 @@ fun AnimeDetailScreen(
                 is UiState.Success -> {
                     AnimeDetailContent(
                         animeDetailInfo = state.data.animeDetailInfo,
+                        programWithWork = programWithWork,
+                        viewModel = viewModel,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -111,7 +141,36 @@ fun AnimeDetailScreen(
 }
 
 @Composable
-private fun AnimeDetailContent(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
+private fun RecordIcon(isRecording: Boolean, recordingSuccess: Boolean) {
+    when {
+        isRecording -> {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        recordingSuccess -> {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "記録済み"
+            )
+        }
+        else -> {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = "記録する"
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnimeDetailContent(
+    animeDetailInfo: AnimeDetailInfo,
+    programWithWork: ProgramWithWork,
+    viewModel: AnimeDetailViewModel,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -119,7 +178,11 @@ private fun AnimeDetailContent(animeDetailInfo: AnimeDetailInfo, modifier: Modif
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // ヘッダー情報
-        AnimeDetailHeader(animeDetailInfo = animeDetailInfo)
+        AnimeDetailHeader(
+            animeDetailInfo = animeDetailInfo,
+            programWithWork = programWithWork,
+            viewModel = viewModel
+        )
 
         // 基本情報
         AnimeDetailBasicInfo(animeDetailInfo = animeDetailInfo)
@@ -143,8 +206,14 @@ private fun AnimeDetailContent(animeDetailInfo: AnimeDetailInfo, modifier: Modif
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimeDetailHeader(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
+private fun AnimeDetailHeader(
+    animeDetailInfo: AnimeDetailInfo,
+    programWithWork: ProgramWithWork,
+    viewModel: AnimeDetailViewModel,
+    modifier: Modifier = Modifier
+) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -179,6 +248,39 @@ private fun AnimeDetailHeader(animeDetailInfo: AnimeDetailInfo, modifier: Modifi
                 text = animeDetailInfo.episodeCount?.let { "全${it}話" } ?: "全?話",
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            // Status dropdown
+            var isExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = isExpanded,
+                onExpandedChange = { isExpanded = it }
+            ) {
+                TextField(
+                    value = programWithWork.work.viewerStatusState.rawValue,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
+                    },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier.menuAnchor()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = isExpanded,
+                    onDismissRequest = { isExpanded = false }
+                ) {
+                    StatusState.values().forEach { status ->
+                        DropdownMenuItem(
+                            text = { Text(text = status.rawValue) },
+                            onClick = {
+                                viewModel.updateStatus(programWithWork, status)
+                                isExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }

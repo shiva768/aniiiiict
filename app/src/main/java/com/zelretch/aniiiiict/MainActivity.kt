@@ -305,7 +305,10 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 LibraryScreen(
                     viewModel = libraryViewModel,
                     uiState = libraryUiState,
-                    onNavigateBack = { navController.navigateUp() }
+                    onNavigateBack = { navController.navigateUp() },
+                    onShowAnimeDetail = { workId ->
+                        navController.navigate("anime_detail/$workId")
+                    }
                 )
             }
             composable("anime_detail/{workId}") { backStackEntry ->

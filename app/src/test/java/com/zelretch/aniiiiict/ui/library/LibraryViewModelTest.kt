@@ -5,6 +5,7 @@ import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
+import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.every
@@ -33,6 +34,7 @@ class LibraryViewModelTest {
 
     private lateinit var loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase
     private lateinit var loadProgramsUseCase: LoadProgramsUseCase
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -41,6 +43,7 @@ class LibraryViewModelTest {
         Dispatchers.setMain(dispatcher)
         loadLibraryEntriesUseCase = mockk()
         loadProgramsUseCase = mockk()
+        watchEpisodeUseCase = mockk()
         errorMapper = mockk()
     }
 
@@ -61,7 +64,8 @@ class LibraryViewModelTest {
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
 
             // When
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
@@ -94,7 +98,8 @@ class LibraryViewModelTest {
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
 
             // When
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
@@ -136,7 +141,8 @@ class LibraryViewModelTest {
                 flowOf(refreshedEntries)
             )
 
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
             viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -169,7 +175,8 @@ class LibraryViewModelTest {
             coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
 
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -188,7 +195,8 @@ class LibraryViewModelTest {
             coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
 
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
 
             // When
@@ -198,6 +206,40 @@ class LibraryViewModelTest {
             // Then
             assertFalse(initialState.isFilterVisible)
             assertTrue(toggledState.isFilterVisible)
+        }
+    }
+
+
+    @Nested
+    @DisplayName("エピソード記録")
+    inner class RecordEpisode {
+        @Test
+        @DisplayName("recordEpisodeが呼ばれた時正しく記録される")
+        fun recordEpisode() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Test Work"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.recordEpisode("episode1", "work1", StatusState.WATCHING)
+            val state = viewModel.uiState.first { it.recordingSuccess == "episode1" }
+
+            // Then
+            assertEquals("episode1", state.recordingSuccess)
+            assertFalse(state.isRecording)
         }
     }
 
@@ -217,7 +259,8 @@ class LibraryViewModelTest {
             every { errorMapper.toUserMessage(exception) } returns "ネットワークエラーが発生しました"
 
             // When
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, watchEpisodeUseCase, errorMapper)
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then

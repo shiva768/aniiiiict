@@ -7,6 +7,7 @@ import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
+import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,9 @@ data class LibraryUiState(
     val filterState: FilterState = FilterState(),
     val isFilterVisible: Boolean = false,
     val selectedEntry: LibraryEntry? = null,
-    val isDetailModalVisible: Boolean = false
+    val isDetailModalVisible: Boolean = false,
+    val isRecording: Boolean = false,
+    val recordingSuccess: String? = null
 )
 
 /**
@@ -40,6 +43,7 @@ data class LibraryUiState(
 class LibraryViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
     private val loadProgramsUseCase: LoadProgramsUseCase,
+    private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -118,23 +122,26 @@ class LibraryViewModel @Inject constructor(
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
     }
 
-    fun showDetail(entry: LibraryEntry) {
-        Timber.i("DetailModalを表示: ${entry.work.title}")
-        _uiState.update {
-            it.copy(
-                selectedEntry = entry,
-                isDetailModalVisible = true
-            )
-        }
-    }
-
-    fun hideDetail() {
-        Timber.i("DetailModalを非表示")
-        _uiState.update {
-            it.copy(
-                selectedEntry = null,
-                isDetailModalVisible = false
-            )
+    fun recordEpisode(episodeId: String, workId: String, status: StatusState) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRecording = true) }
+            watchEpisodeUseCase(episodeId, workId, status).onSuccess {
+                _uiState.update {
+                    it.copy(
+                        isRecording = false,
+                        recordingSuccess = episodeId
+                    )
+                }
+                refresh()
+            }.onFailure { e ->
+                Timber.e(e, "エピソードの記録に失敗")
+                _uiState.update {
+                    it.copy(
+                        isRecording = false,
+                        error = errorMapper.toUserMessage(e)
+                    )
+                }
+            }
         }
     }
 
