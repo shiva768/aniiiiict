@@ -10,6 +10,8 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
+import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.ui.base.UiState
 import io.mockk.coEvery
@@ -37,6 +39,8 @@ class AnimeDetailViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var getAnimeDetailUseCase: GetAnimeDetailUseCase
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: AnimeDetailViewModel
 
@@ -44,8 +48,10 @@ class AnimeDetailViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         getAnimeDetailUseCase = mockk()
+        watchEpisodeUseCase = mockk()
+        updateViewStateUseCase = mockk()
         errorMapper = mockk(relaxed = true)
-        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase, errorMapper)
+        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase, watchEpisodeUseCase, updateViewStateUseCase, errorMapper)
     }
 
     @AfterEach
@@ -65,6 +71,54 @@ class AnimeDetailViewModelTest {
 
             // Then
             assertTrue(initialState is UiState.Loading)
+        }
+    }
+
+    @Nested
+    @DisplayName("エピソードの記録")
+    inner class RecordEpisode {
+        @Test
+        @DisplayName("recordNextEpisodeが成功するとUIStateが更新される")
+        fun onSuccess() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val animeDetailInfo = createSampleAnimeDetailInfo()
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.recordNextEpisode(programWithWork)
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertTrue((state as UiState.Success).data.recordingSuccess)
+        }
+    }
+
+    @Nested
+    @DisplayName("ステータスの更新")
+    inner class UpdateStatus {
+        @Test
+        @DisplayName("updateStatusが成功するとUIStateが更新される")
+        fun onSuccess() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val animeDetailInfo = createSampleAnimeDetailInfo()
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.updateStatus(programWithWork, StatusState.WATCHED)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
         }
     }
 
