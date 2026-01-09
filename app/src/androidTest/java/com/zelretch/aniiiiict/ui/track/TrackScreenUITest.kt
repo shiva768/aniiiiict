@@ -166,7 +166,70 @@ class TrackScreenUITest {
     }
 
     @Test
-    fun trackScreen_プログラムカードクリック_詳細モーダルが開く() {
+    fun trackScreen_プログラムカードクリック_アニメ詳細へ遷移() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val onShowAnimeDetail = mockk<(ProgramWithWork) -> Unit>(relaxed = true)
+
+        // Create sample program data
+        val sampleWork = Work(
+            id = "1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+
+        val sampleEpisode = Episode(
+            id = "ep1",
+            title = "第1話",
+            numberText = "1",
+            number = 1
+        )
+
+        val sampleChannel = Channel(
+            name = "テストチャンネル"
+        )
+
+        val sampleProgram = Program(
+            id = "prog1",
+            startedAt = LocalDateTime.now(),
+            channel = sampleChannel,
+            episode = sampleEpisode
+        )
+
+        val programWithWork = ProgramWithWork(
+            programs = listOf(sampleProgram),
+            firstProgram = sampleProgram,
+            work = sampleWork
+        )
+
+        val stateWithPrograms = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithPrograms)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = stateWithPrograms,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {},
+                onShowAnimeDetail = onShowAnimeDetail
+            )
+        }
+
+        // プログラムカードをクリック
+        composeTestRule.onNodeWithTag("program_card_1").performClick()
+
+        // Assert - onShowAnimeDetailが呼ばれることを確認
+        verify { onShowAnimeDetail(programWithWork) }
+    }
+
+    @Test
+    fun trackScreen_エピソードボタンクリック_未視聴エピソードモーダル表示() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
 
@@ -219,8 +282,8 @@ class TrackScreenUITest {
             )
         }
 
-        // プログラムカードをクリック
-        composeTestRule.onNodeWithTag("program_card_1").performClick()
+        // エピソードボタンをクリック
+        composeTestRule.onNodeWithText("エピソード").performClick()
 
         // Assert - showUnwatchedEpisodesが呼ばれることを確認
         verify { mockViewModel.showUnwatchedEpisodes(programWithWork) }
@@ -355,8 +418,8 @@ class TrackScreenUITest {
             )
         }
 
-        // 記録ボタンを押下（ProgramCard内の contentDescription="記録する"）
-        composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        // 記録ボタンを押下（ProgramCard内の text="記録する"）
+        composeTestRule.onNodeWithText("記録する").performClick()
 
         // Assert
         verify {
