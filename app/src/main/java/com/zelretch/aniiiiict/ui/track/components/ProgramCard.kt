@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
@@ -246,12 +247,12 @@ private fun RecordButton(
         modifier = modifier.height(40.dp),
         enabled = !isRecording && !recordingSuccess,
         colors = if (recordingSuccess) {
-            androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+            ButtonDefaults.filledTonalButtonColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         } else {
-            androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
+            ButtonDefaults.filledTonalButtonColors()
         }
     ) {
         Icon(
