@@ -15,16 +15,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -57,7 +56,7 @@ fun ProgramCard(
     ElevatedCard(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
             .testTag("program_card_${programWithWork.work.id}")
-            .clickable { onShowUnwatchedEpisodes(programWithWork) },
+            .clickable { onShowAnimeDetail(programWithWork) },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
@@ -65,21 +64,21 @@ fun ProgramCard(
             modifier = Modifier.fillMaxWidth().padding(20.dp)
         ) {
             WorkInfoRow(
-                programWithWork = programWithWork,
-                onShowAnimeDetail = onShowAnimeDetail
+                programWithWork = programWithWork
             )
             Spacer(modifier = Modifier.height(12.dp))
             EpisodeInfoRow(
                 programWithWork = programWithWork,
                 uiState = uiState,
-                onRecordEpisode = onRecordEpisode
+                onRecordEpisode = onRecordEpisode,
+                onShowUnwatchedEpisodes = onShowUnwatchedEpisodes
             )
         }
     }
 }
 
 @Composable
-private fun WorkInfoRow(programWithWork: ProgramWithWork, onShowAnimeDetail: (ProgramWithWork) -> Unit) {
+private fun WorkInfoRow(programWithWork: ProgramWithWork) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
@@ -90,31 +89,15 @@ private fun WorkInfoRow(programWithWork: ProgramWithWork, onShowAnimeDetail: (Pr
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(
-                    text = programWithWork.work.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("work_title_${programWithWork.work.id}")
-                )
-                IconButton(
-                    onClick = { onShowAnimeDetail(programWithWork) },
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "詳細を見る",
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+            Text(
+                text = programWithWork.work.title,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("work_title_${programWithWork.work.id}")
+            )
             Spacer(modifier = Modifier.height(6.dp))
             WorkTags(programWithWork = programWithWork)
         }
@@ -195,42 +178,55 @@ private fun WorkTags(programWithWork: ProgramWithWork) {
 private fun EpisodeInfoRow(
     programWithWork: ProgramWithWork,
     uiState: TrackUiState,
-    onRecordEpisode: (String, String, StatusState) -> Unit
+    onRecordEpisode: (String, String, StatusState) -> Unit,
+    onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            val episodeText = buildString {
-                append(
-                    programWithWork.firstProgram.episode.formattedNumber
-                )
-                programWithWork.firstProgram.episode.title?.let {
-                    append(" ")
-                    append(it)
-                }
-            }
-            Text(
-                text = episodeText,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
+        // Episode information
+        val episodeText = buildString {
+            append(
+                programWithWork.firstProgram.episode.formattedNumber
             )
-            Text(
-                text = programWithWork.firstProgram.startedAt.format(
-                    DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            programWithWork.firstProgram.episode.title?.let {
+                append(" ")
+                append(it)
+            }
+        }
+        Text(
+            text = episodeText,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = programWithWork.firstProgram.startedAt.format(
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        
+        // Action buttons row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RecordButton(
+                episodeId = programWithWork.firstProgram.episode.id,
+                workId = programWithWork.work.id,
+                status = programWithWork.work.viewerStatusState,
+                uiState = uiState,
+                onRecordEpisode = onRecordEpisode,
+                modifier = Modifier.weight(1f)
+            )
+            UnwatchedEpisodesButton(
+                onShowUnwatchedEpisodes = { onShowUnwatchedEpisodes(programWithWork) },
+                modifier = Modifier.weight(1f)
             )
         }
-        RecordButton(
-            episodeId = programWithWork.firstProgram.episode.id,
-            workId = programWithWork.work.id,
-            status = programWithWork.work.viewerStatusState,
-            uiState = uiState,
-            onRecordEpisode = onRecordEpisode
-        )
     }
 }
 
@@ -240,36 +236,56 @@ private fun RecordButton(
     workId: String,
     status: StatusState,
     uiState: TrackUiState,
-    onRecordEpisode: (String, String, StatusState) -> Unit
+    onRecordEpisode: (String, String, StatusState) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val isRecording = uiState.isRecording
     val recordingSuccess = uiState.recordingSuccess == episodeId
-    FilledTonalIconButton(
+    FilledTonalButton(
         onClick = { onRecordEpisode(episodeId, workId, status) },
-        modifier = Modifier.size(40.dp),
+        modifier = modifier.height(40.dp),
         enabled = !isRecording && !recordingSuccess,
         colors = if (recordingSuccess) {
-            IconButtonDefaults.filledTonalIconButtonColors(
+            androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         } else {
-            IconButtonDefaults.filledTonalIconButtonColors()
+            androidx.compose.material3.ButtonDefaults.filledTonalButtonColors()
         }
     ) {
-        if (recordingSuccess) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "記録済み",
-                modifier = Modifier.size(20.dp)
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = "記録する",
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Icon(
+            imageVector = if (recordingSuccess) Icons.Default.Check else Icons.Default.CheckCircle,
+            contentDescription = if (recordingSuccess) "記録済み" else "記録する",
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = if (recordingSuccess) "記録済み" else "記録する",
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+@Composable
+private fun UnwatchedEpisodesButton(
+    onShowUnwatchedEpisodes: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onShowUnwatchedEpisodes,
+        modifier = modifier.height(40.dp)
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.List,
+            contentDescription = "エピソード",
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = "エピソード",
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
 
