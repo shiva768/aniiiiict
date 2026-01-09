@@ -160,7 +160,7 @@ class TrackScreenIntegrationTest {
         }
 
         // 記録ボタンをクリック
-        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
 
         // Assert
         // Repositoryのメソッドが期待通りに呼ばれたかを検証
@@ -245,6 +245,62 @@ class TrackScreenIntegrationTest {
         val program = Program("prog-card", LocalDateTime.now(), Channel("ch"), episode)
         val pw = ProgramWithWork(listOf(program), program, work)
         val initialState = TrackUiState(programs = listOf(pw))
+        
+        var showAnimeDetailCalled = false
+
+        // Act
+        testRule.composeTestRule.setContent {
+            TrackScreen(
+                viewModel = viewModel,
+                uiState = initialState,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {},
+                onShowAnimeDetail = { showAnimeDetailCalled = true }
+            )
+        }
+
+        // プログラムカードをクリック
+        testRule.composeTestRule.onNodeWithTag("program_card_work-card-click").performClick()
+
+        // Assert
+        testRule.composeTestRule.waitForIdle()
+        // onShowAnimeDetailが呼ばれることを確認
+        assert(showAnimeDetailCalled) { "Expected onShowAnimeDetail to be called when card is clicked" }
+    }
+
+    @Test
+    fun trackScreen_エピソードボタンクリック_詳細モーダルが開く() {
+        // Arrange
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+
+        coEvery { mockAnnictRepository.getRawProgramsData() } returns flowOf(emptyList())
+
+        val viewModel = TrackViewModel(
+            loadProgramsUseCase,
+            updateViewStateUseCase,
+            filterProgramsUseCase,
+            mockFilterPreferences,
+            judgeFinaleUseCase,
+            errorMapper
+        )
+
+        // テスト用のデータを作成
+        val work = Work(
+            id = "work-episodes-button",
+            title = "エピソードボタンテストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val episode = Episode(id = "ep-button", number = 1, numberText = "1", title = "第1話")
+        val program = Program("prog-button", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), program, work)
+        val initialState = TrackUiState(programs = listOf(pw))
 
         // Act
         testRule.composeTestRule.setContent {
@@ -257,13 +313,13 @@ class TrackScreenIntegrationTest {
             )
         }
 
-        // プログラムカードをクリック
-        testRule.composeTestRule.onNodeWithTag("program_card_work-card-click").performClick()
+        // エピソードボタンをクリック
+        testRule.composeTestRule.onNodeWithText("エピソード").performClick()
 
         // Assert
         testRule.composeTestRule.waitForIdle()
         // 詳細モーダルが表示される（ViewModelの状態変更は内部的に検証される）
-        // この統合テストでは、カードクリックからモーダル表示までの連携が正常に動作することを確認
+        // この統合テストでは、エピソードボタンクリックからモーダル表示までの連携が正常に動作することを確認
     }
 
     @Test
@@ -365,7 +421,7 @@ class TrackScreenIntegrationTest {
         }
 
         // 記録ボタンをクリック → 成功後にフィナーレ判定のため MAL が参照される
-        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
 
         // スナックバーの「はい」相当の操作: ViewModel へ確認処理を実行
         testRule.composeTestRule.runOnIdle {
@@ -467,7 +523,7 @@ class TrackScreenIntegrationTest {
         testRule.composeTestRule.waitUntil(timeoutMillis = 5_000) {
             viewModel.uiState.value.allPrograms.isNotEmpty()
         }
-        testRule.composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        testRule.composeTestRule.onNodeWithText("記録する").performClick()
 
         // Assert: finale snackbar not shown and no status update
         testRule.composeTestRule.waitForIdle()
