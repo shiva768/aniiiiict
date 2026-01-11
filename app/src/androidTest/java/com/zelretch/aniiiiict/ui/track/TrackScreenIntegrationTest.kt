@@ -245,7 +245,7 @@ class TrackScreenIntegrationTest {
         val program = Program("prog-card", LocalDateTime.now(), Channel("ch"), episode)
         val pw = ProgramWithWork(listOf(program), program, work)
         val initialState = TrackUiState(programs = listOf(pw))
-        
+
         var showAnimeDetailCalled = false
 
         // Act

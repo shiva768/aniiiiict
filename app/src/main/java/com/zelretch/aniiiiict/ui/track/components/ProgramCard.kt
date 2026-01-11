@@ -208,7 +208,7 @@ private fun EpisodeInfoRow(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        
+
         // Action buttons row
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -269,10 +269,7 @@ private fun RecordButton(
 }
 
 @Composable
-private fun UnwatchedEpisodesButton(
-    onShowUnwatchedEpisodes: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+private fun UnwatchedEpisodesButton(onShowUnwatchedEpisodes: () -> Unit, modifier: Modifier = Modifier) {
     Button(
         onClick = onShowUnwatchedEpisodes,
         modifier = modifier.height(40.dp)
