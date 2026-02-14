@@ -67,7 +67,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
                 mainPicture = null
             )
 
-            coEvery { annictRepository.createRecord(any(), any()) } returns true
+            coEvery { annictRepository.createRecord(any(), any()) } returns Result.success(Unit)
             coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
             coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
@@ -108,7 +108,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
                 mainPicture = null
             )
 
-            coEvery { annictRepository.createRecord(any(), any()) } returns true
+            coEvery { annictRepository.createRecord(any(), any()) } returns Result.success(Unit)
             coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
             coEvery { malRepository.getAnimeDetail(malAnimeId) } returns Result.success(media)
 
@@ -139,7 +139,7 @@ class BulkRecordingFinaleJudgmentIntegrationTest {
             val episodeIds = listOf("ep1", "ep2")
             val workId = "work1"
 
-            coEvery { annictRepository.createRecord(any(), any()) } returns true
+            coEvery { annictRepository.createRecord(any(), any()) } returns Result.success(Unit)
             coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
 
             // Act

@@ -1,3 +1,5 @@
 package com.zelretch.aniiiiict.data.model
 
-data class ProgramWithWork(var programs: List<Program>, val firstProgram: Program, val work: Work)
+data class ProgramWithWork(val programs: List<Program>, val work: Work) {
+    val firstProgram: Program get() = programs.first()
+}

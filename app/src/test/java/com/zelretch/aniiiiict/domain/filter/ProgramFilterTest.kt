@@ -43,7 +43,7 @@ fun createProgramWithWork(
         mediaText = media,
         viewerStatusState = status ?: StatusState.NO_STATE
     )
-    return ProgramWithWork(listOf(program), program, work)
+    return ProgramWithWork(listOf(program), work)
 }
 
 @DisplayName("ProgramFilter")

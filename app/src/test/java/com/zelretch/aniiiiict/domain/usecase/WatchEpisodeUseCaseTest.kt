@@ -33,7 +33,7 @@ class WatchEpisodeUseCaseTest {
         @DisplayName("記録成功時にResult.successを返す")
         fun onSuccess() = runTest {
             // Given
-            coEvery { repository.createRecord(any(), any()) } returns true
+            coEvery { repository.createRecord(any(), any()) } returns Result.success(Unit)
             coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
 
             // When
@@ -47,7 +47,7 @@ class WatchEpisodeUseCaseTest {
         @DisplayName("記録失敗時にResult.failureを返す")
         fun onFailure() = runTest {
             // Given
-            coEvery { repository.createRecord(any(), any()) } returns false
+            coEvery { repository.createRecord(any(), any()) } returns Result.failure(RuntimeException("error"))
 
             // When
             val result = useCase("ep1", "w1", StatusState.WANNA_WATCH, true)

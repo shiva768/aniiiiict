@@ -2,6 +2,7 @@ package com.zelretch.aniiiiict
 
 import android.content.Context
 import androidx.browser.customtabs.CustomTabsIntent
+import com.zelretch.aniiiiict.domain.error.DomainError
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
@@ -123,7 +124,7 @@ class MainViewModelTest {
         @DisplayName("有効なコードで認証が成功する")
         fun withValidCode() {
             // Given
-            coEvery { authUseCase.handleAuthCallback(any()) } returns true
+            coEvery { authUseCase.handleAuthCallback(any()) } returns Result.success(Unit)
 
             // When
             viewModel.handleAuthCallback("valid_code")
@@ -140,7 +141,7 @@ class MainViewModelTest {
         @DisplayName("無効なコードでエラーが発生する")
         fun withInvalidCode() {
             // Given
-            coEvery { authUseCase.handleAuthCallback(any()) } returns false
+            coEvery { authUseCase.handleAuthCallback(any()) } returns Result.failure(RuntimeException("Auth failed"))
 
             // When
             viewModel.handleAuthCallback("invalid_code")
@@ -156,6 +157,10 @@ class MainViewModelTest {
         @Test
         @DisplayName("nullのコードでエラーが発生する")
         fun nullのコードでエラーが発生する() {
+            // Given
+            coEvery { authUseCase.handleAuthCallback(null) } returns
+                Result.failure(DomainError.AuthError.CallbackFailed())
+
             // When
             viewModel.handleAuthCallback(null)
             testDispatcher.scheduler.advanceUntilIdle()

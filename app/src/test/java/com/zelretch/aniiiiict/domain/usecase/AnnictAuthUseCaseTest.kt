@@ -4,6 +4,7 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -80,13 +81,13 @@ class AnnictAuthUseCaseTest {
         fun withValidCode() = kotlinx.coroutines.test.runTest {
             // Given
             val code = "valid_code"
-            coEvery { repository.handleAuthCallback(code) } returns true
+            coEvery { repository.handleAuthCallback(code) } returns Result.success(Unit)
 
             // When
             val result = useCase.handleAuthCallback(code)
 
             // Then
-            assertEquals(true, result)
+            assertTrue(result.isSuccess)
         }
 
         @Test
@@ -96,7 +97,7 @@ class AnnictAuthUseCaseTest {
             val result = useCase.handleAuthCallback(null)
 
             // Then
-            assertEquals(false, result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -104,13 +105,13 @@ class AnnictAuthUseCaseTest {
         fun withInvalidCode() = kotlinx.coroutines.test.runTest {
             // Given
             val code = "invalid_code"
-            coEvery { repository.handleAuthCallback(code) } returns false
+            coEvery { repository.handleAuthCallback(code) } returns Result.failure(RuntimeException("Auth failed"))
 
             // When
             val result = useCase.handleAuthCallback(code)
 
             // Then
-            assertEquals(false, result)
+            assertTrue(result.isFailure)
         }
     }
 }

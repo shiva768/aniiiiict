@@ -15,16 +15,16 @@ import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
+import com.zelretch.aniiiiict.testing.FakeAnnictRepository
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import javax.inject.Inject
@@ -53,12 +53,11 @@ class WatchingEpisodeModalIntegrationTest {
     @Inject
     lateinit var errorMapper: ErrorMapper
 
+    private val fakeAnnictRepository = FakeAnnictRepository()
+
     @BindValue
     @JvmField
-    val annictRepository: AnnictRepository = mockk<AnnictRepository>().apply {
-        coEvery { updateWorkViewStatus(any(), any()) } returns true
-        coEvery { createRecord(any(), any()) } returns true
-    }
+    val annictRepository: AnnictRepository = fakeAnnictRepository
 
     @BindValue
     @JvmField
@@ -113,7 +112,9 @@ class WatchingEpisodeModalIntegrationTest {
         testRule.composeTestRule.waitForIdle()
 
         // Assert - AnnictRepository.createRecordが呼ばれたことを確認
-        coVerify { annictRepository.createRecord("ep-test", any()) }
+        assertTrue(
+            fakeAnnictRepository.createRecordCalls.any { it.first == "ep-test" }
+        )
     }
 
     @Test
@@ -153,7 +154,9 @@ class WatchingEpisodeModalIntegrationTest {
         testRule.composeTestRule.waitForIdle()
 
         // Assert - AnnictRepository.updateWorkViewStatusが呼ばれたことを確認
-        coVerify { annictRepository.updateWorkViewStatus("work-status", StatusState.WATCHED) }
+        assertTrue(
+            fakeAnnictRepository.updateWorkViewStatusCalls.contains("work-status" to StatusState.WATCHED)
+        )
     }
 
     @Test

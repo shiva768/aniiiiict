@@ -21,13 +21,10 @@ class WatchEpisodeUseCase @Inject constructor(
         }
 
         // episodeId が空のときは記録をスキップ（ViewModel の既存呼び出しに対応）
-        val recordSuccess = if (episodeId.isBlank()) true else repository.createRecord(episodeId, workId)
-        if (!recordSuccess) error("Record creation failed")
-    }.fold(
-        onSuccess = { Result.success(Unit) },
-        onFailure = { e ->
-            Timber.e(e, "WatchEpisodeUseCase.invoke failed")
-            Result.failure(e)
+        if (episodeId.isNotBlank()) {
+            repository.createRecord(episodeId, workId).getOrThrow()
         }
-    )
+    }.onFailure { e ->
+        Timber.e(e, "WatchEpisodeUseCase.invoke failed")
+    }
 }

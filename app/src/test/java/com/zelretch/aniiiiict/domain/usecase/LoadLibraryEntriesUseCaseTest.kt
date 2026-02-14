@@ -6,8 +6,6 @@ import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -49,10 +47,10 @@ class LoadLibraryEntriesUseCaseTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns flowOf(fakeEntries)
+            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
 
             // When
-            val result = useCase(listOf(StatusState.WATCHING)).first()
+            val result = useCase(listOf(StatusState.WATCHING)).getOrThrow()
 
             // Then
             assertEquals(2, result.size)
@@ -66,10 +64,10 @@ class LoadLibraryEntriesUseCaseTest {
         @DisplayName("空の結果を正しく処理できる")
         fun withEmptyResult() = runTest {
             // Given
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns flowOf(emptyList())
+            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING)) } returns Result.success(emptyList())
 
             // When
-            val result = useCase(listOf(StatusState.WATCHING)).first()
+            val result = useCase(listOf(StatusState.WATCHING)).getOrThrow()
 
             // Then
             assertEquals(0, result.size)
@@ -87,10 +85,10 @@ class LoadLibraryEntriesUseCaseTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns flowOf(fakeEntries)
+            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
 
             // When
-            val result = useCase().first()
+            val result = useCase().getOrThrow()
 
             // Then
             assertEquals(1, result.size)

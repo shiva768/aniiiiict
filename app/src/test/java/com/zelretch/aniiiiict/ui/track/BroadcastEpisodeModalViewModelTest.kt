@@ -83,7 +83,6 @@ class BroadcastEpisodeModalViewModelTest {
             }
             val programWithWork = ProgramWithWork(
                 programs = listOf(program),
-                firstProgram = program,
                 work = work
             )
 
@@ -143,7 +142,6 @@ class BroadcastEpisodeModalViewModelTest {
             }
             val programWithWork = ProgramWithWork(
                 programs = listOf(program),
-                firstProgram = program,
                 work = work
             )
 
@@ -185,7 +183,6 @@ class BroadcastEpisodeModalViewModelTest {
             }
             val programWithWork = ProgramWithWork(
                 programs = listOf(program),
-                firstProgram = program,
                 work = work
             )
 

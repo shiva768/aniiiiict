@@ -9,8 +9,6 @@ import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.model.WorkImage as WorkImageModel
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -19,7 +17,7 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepository) {
-    suspend operator fun invoke(): Flow<List<ProgramWithWork>> = repository.getRawProgramsData().map { rawPrograms ->
+    suspend operator fun invoke(): Result<List<ProgramWithWork>> = repository.getRawProgramsData().map { rawPrograms ->
         processProgramsResponse(rawPrograms)
     }
 
@@ -27,18 +25,15 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
         val programs = responsePrograms.mapNotNull { node ->
             if (node == null) return@mapNotNull null
             val startedAt = try {
-                // Parse the UTC datetime string to ZonedDateTime
                 val utcDateTime = ZonedDateTime.parse(
                     node.startedAt.toString(),
                     DateTimeFormatter.ISO_DATE_TIME
                 )
-                // Convert to JST timezone
                 val jstDateTime = utcDateTime.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
-                // Convert to LocalDateTime
                 jstDateTime.toLocalDateTime()
             } catch (e: Exception) {
                 Timber.e(e, "LoadProgramsUseCase: Failed to parse startedAt time")
-                LocalDateTime.now() // パースに失敗した場合は現在時刻を使用
+                LocalDateTime.now()
             }
 
             val channel = Channel(
@@ -81,14 +76,12 @@ class LoadProgramsUseCase @Inject constructor(private val repository: AnnictRepo
             program to work
         }
 
-        // 各作品のプログラムをすべて保持し、最初のエピソードも特定する
-        return programs.groupBy { it.second.title }.map { (_, grouped) ->
+        return programs.groupBy { it.second.title }.mapNotNull { (_, grouped) ->
             val sortedPrograms = grouped.sortedBy { it.first.episode.number ?: Int.MAX_VALUE }
-            val firstProgram = sortedPrograms.firstOrNull()!!
+            val firstEntry = sortedPrograms.firstOrNull() ?: return@mapNotNull null
             ProgramWithWork(
                 programs = sortedPrograms.map { it.first },
-                firstProgram = firstProgram.first,
-                work = firstProgram.second
+                work = firstEntry.second
             )
         }.sortedBy { it.firstProgram.startedAt }
     }

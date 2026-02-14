@@ -31,7 +31,7 @@ class UpdateViewStateUseCaseTest {
         @DisplayName("Repository成功時にResult.successを返す")
         fun onRepositorySuccess() = runTest {
             // Given
-            coEvery { repository.updateWorkViewStatus(any(), any()) } returns true
+            coEvery { repository.updateWorkViewStatus(any(), any()) } returns Result.success(Unit)
 
             // When
             val result = useCase("w1", StatusState.WATCHING)
@@ -41,16 +41,16 @@ class UpdateViewStateUseCaseTest {
         }
 
         @Test
-        @DisplayName("Repository失敗時でもResult.successを返す（警告ログ出力）")
+        @DisplayName("Repository失敗時にResult.failureを返す")
         fun onRepositoryFailure() = runTest {
             // Given
-            coEvery { repository.updateWorkViewStatus(any(), any()) } returns false
+            coEvery { repository.updateWorkViewStatus(any(), any()) } returns Result.failure(RuntimeException("error"))
 
             // When
             val result = useCase("w1", StatusState.WATCHING)
 
             // Then
-            assertTrue(result.isSuccess)
+            assertTrue(result.isFailure)
         }
     }
 }

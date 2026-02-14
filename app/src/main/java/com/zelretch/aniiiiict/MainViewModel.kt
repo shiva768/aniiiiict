@@ -132,56 +132,32 @@ class MainViewModel @Inject constructor(
     // 認証コールバック処理（公開メソッド）
     override fun handleAuthCallback(code: String?) {
         viewModelScope.launch {
-            try {
-                if (code != null) {
-                    Timber.d("MainViewModel: 認証コードを処理中: ${code.take(AUTH_CODE_LOG_LENGTH)}...")
-                    delay(AUTH_CALLBACK_DELAY_MS)
+            Timber.d("MainViewModel: 認証コードを処理中: ${code?.take(AUTH_CODE_LOG_LENGTH)}...")
+            delay(AUTH_CALLBACK_DELAY_MS)
 
-                    if (!isActive) return@launch
+            if (!isActive) return@launch
 
-                    val success = annictAuthUseCase.handleAuthCallback(code)
-                    if (success) {
-                        Timber.d("MainViewModel: 認証成功")
-                        delay(AUTH_SUCCESS_DELAY_MS)
-                        internalUiState.update {
-                            it.copy(isAuthenticating = false, isAuthenticated = true)
-                        }
-                    } else {
-                        Timber.w("認証が失敗しました")
-                        Timber.d("MainViewModel: 認証失敗")
-                        delay(AUTH_CALLBACK_DELAY_MS)
-                        internalUiState.update {
-                            it.copy(
-                                error = "認証に失敗しました。再度お試しください。",
-                                isLoading = false,
-                                isAuthenticating = false,
-                                isAuthenticated = false
-                            )
-                        }
+            annictAuthUseCase.handleAuthCallback(code)
+                .onSuccess {
+                    Timber.d("MainViewModel: 認証成功")
+                    delay(AUTH_SUCCESS_DELAY_MS)
+                    internalUiState.update {
+                        it.copy(isAuthenticating = false, isAuthenticated = true)
                     }
-                } else {
-                    Timber.w("認証コードがnullです")
+                }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "MainViewModel.handleAuthCallback")
                     delay(AUTH_CALLBACK_DELAY_MS)
                     internalUiState.update {
                         it.copy(
-                            error = "認証に失敗しました。再度お試しください。",
+                            error = msg,
                             isLoading = false,
-                            isAuthenticating = false
+                            isAuthenticating = false,
+                            isAuthenticated = false
                         )
                     }
+                    Timber.e(e, "認証コールバック処理に失敗: $msg")
                 }
-            } catch (e: Exception) {
-                val msg = errorMapper.toUserMessage(e, "MainViewModel.handleAuthCallback")
-                delay(AUTH_CALLBACK_DELAY_MS)
-                internalUiState.update {
-                    it.copy(
-                        error = msg,
-                        isLoading = false,
-                        isAuthenticating = false
-                    )
-                }
-                Timber.e(e, "認証コールバック処理に失敗: $msg")
-            }
         }
     }
 

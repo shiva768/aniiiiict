@@ -1,22 +1,9 @@
 package com.zelretch.aniiiiict.domain.usecase
 
-import com.zelretch.aniiiiict.data.model.Record
+import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import javax.inject.Inject
 
-data class RecordsResult(
-    val records: List<Record>,
-    val hasNextPage: Boolean,
-    val endCursor: String?
-)
-
 class LoadRecordsUseCase @Inject constructor(private val repository: AnnictRepository) {
-    suspend operator fun invoke(cursor: String? = null): RecordsResult {
-        val result = repository.getRecords(cursor)
-        return RecordsResult(
-            records = result.records,
-            hasNextPage = result.hasNextPage,
-            endCursor = result.endCursor
-        )
-    }
+    suspend operator fun invoke(cursor: String? = null): Result<PaginatedRecords> = repository.getRecords(cursor)
 }

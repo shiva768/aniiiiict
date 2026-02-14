@@ -4,7 +4,7 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -27,29 +27,29 @@ class DeleteRecordUseCaseTest {
     inner class DeleteRecord {
 
         @Test
-        @DisplayName("成功時にtrueを返す")
+        @DisplayName("成功時にResult.successを返す")
         fun onSuccess() = runTest {
             // Given
-            coEvery { repository.deleteRecord("record1") } returns true
+            coEvery { repository.deleteRecord("record1") } returns Result.success(Unit)
 
             // When
             val result = useCase("record1")
 
             // Then
-            assertEquals(true, result)
+            assertTrue(result.isSuccess)
         }
 
         @Test
-        @DisplayName("失敗時にfalseを返す")
+        @DisplayName("失敗時にResult.failureを返す")
         fun onFailure() = runTest {
             // Given
-            coEvery { repository.deleteRecord("record2") } returns false
+            coEvery { repository.deleteRecord("record2") } returns Result.failure(RuntimeException("error"))
 
             // When
             val result = useCase("record2")
 
             // Then
-            assertEquals(false, result)
+            assertTrue(result.isFailure)
         }
     }
 }

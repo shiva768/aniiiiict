@@ -8,8 +8,6 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -40,10 +38,10 @@ class LoadProgramsUseCaseTest {
         fun groupedAndSorted() = runTest {
             // Given
             val mockPrograms = TestHelper.createMockPrograms()
-            coEvery { repository.getRawProgramsData() } returns flow { emit(mockPrograms) }
+            coEvery { repository.getRawProgramsData() } returns Result.success(mockPrograms)
 
             // When
-            val result = useCase().first()
+            val result = useCase().getOrThrow()
 
             // Then
             assertEquals(2, result.size) // 2つの異なる作品
@@ -71,10 +69,10 @@ class LoadProgramsUseCaseTest {
         fun sortedByEpisodeNumber() = runTest {
             // Given
             val nodes = TestHelper.createMockEpisodesForSameAnime()
-            coEvery { repository.getRawProgramsData() } returns flow { emit(nodes) }
+            coEvery { repository.getRawProgramsData() } returns Result.success(nodes)
 
             // When
-            val result = useCase().first()
+            val result = useCase().getOrThrow()
 
             // Then
             assertEquals(1, result.size) // 1つの作品
@@ -94,10 +92,10 @@ class LoadProgramsUseCaseTest {
         @DisplayName("空のデータが返された場合空のリストが返される")
         fun withEmptyData() = runTest {
             // Given
-            coEvery { repository.getRawProgramsData() } returns flow { emit(emptyList()) }
+            coEvery { repository.getRawProgramsData() } returns Result.success(emptyList())
 
             // When
-            val result = useCase().first()
+            val result = useCase().getOrThrow()
 
             // Then
             assertEquals(0, result.size)

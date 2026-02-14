@@ -49,12 +49,6 @@ class BulkRecordEpisodesUseCase @Inject constructor(
             }
 
             BulkRecordResult(finaleResult = finaleResult)
-        }.fold(
-            onSuccess = { Result.success(it) },
-            onFailure = { e ->
-                // Bulk のエラーハンドリングでは元例外をそのまま返してテスト期待に合わせる
-                Result.failure(e)
-            }
-        )
+        }
     }
 }

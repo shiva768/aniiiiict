@@ -14,12 +14,10 @@ import com.benasher44.uuid.Uuid
 import com.zelretch.aniiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiict.data.auth.TokenManager
-import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -129,7 +127,7 @@ class AnnictRepositoryImplTest {
             val result = repository.createRecord("", workId)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -139,7 +137,7 @@ class AnnictRepositoryImplTest {
             val result = repository.createRecord(episodeId, "")
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -152,7 +150,7 @@ class AnnictRepositoryImplTest {
             val result = repository.createRecord(episodeId, workId)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -175,7 +173,7 @@ class AnnictRepositoryImplTest {
             val result = repository.createRecord(episodeId, workId)
 
             // Then
-            assertTrue(result)
+            assertTrue(result.isSuccess)
         }
 
         @Test
@@ -198,7 +196,7 @@ class AnnictRepositoryImplTest {
             val result = repository.createRecord(episodeId, workId)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -214,15 +212,10 @@ class AnnictRepositoryImplTest {
             } throws RuntimeException("Network Error")
 
             // When
-            var exceptionThrown = false
-            try {
-                repository.createRecord(episodeId, workId)
-            } catch (e: RuntimeException) {
-                exceptionThrown = true
-            }
+            val result = repository.createRecord(episodeId, workId)
 
             // Then
-            assertTrue(exceptionThrown)
+            assertTrue(result.isFailure)
         }
     }
 
@@ -236,19 +229,21 @@ class AnnictRepositoryImplTest {
         @DisplayName("認証成功時にtrueを返す")
         fun 認証成功時にtrueを返す() = runTest {
             // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
             coEvery { authManager.handleAuthorizationCode(code) } returns Result.success(Unit)
 
             // When
             val result = repository.handleAuthCallback(code)
 
             // Then
-            assertTrue(result)
+            assertTrue(result.isSuccess)
         }
 
         @Test
         @DisplayName("認証失敗時にfalseを返す")
         fun 認証失敗時にfalseを返す() = runTest {
             // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
             coEvery { authManager.handleAuthorizationCode(code) } returns
                 Result.failure(RuntimeException("Auth failed"))
 
@@ -256,20 +251,21 @@ class AnnictRepositoryImplTest {
             val result = repository.handleAuthCallback(code)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
         @DisplayName("認証中に例外が発生した場合falseを返す")
         fun 認証中に例外が発生した場合falseを返す() = runTest {
             // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
             coEvery { authManager.handleAuthorizationCode(code) } throws RuntimeException("Network error")
 
             // When
             val result = repository.handleAuthCallback(code)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
     }
 
@@ -284,10 +280,10 @@ class AnnictRepositoryImplTest {
             coEvery { tokenManager.getAccessToken() } returns null
 
             // When
-            val result = repository.getRawProgramsData().first()
+            val result = repository.getRawProgramsData()
 
             // Then
-            assertEquals(emptyList<Any>(), result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -316,10 +312,11 @@ class AnnictRepositoryImplTest {
             } returns mockResponse
 
             // When
-            val result = repository.getRawProgramsData().first()
+            val result = repository.getRawProgramsData()
 
             // Then
-            assertNotEquals(emptyList<ViewerProgramsQuery.Node?>(), result)
+            assertTrue(result.isSuccess)
+            assertNotEquals(emptyList<ViewerProgramsQuery.Node?>(), result.getOrNull())
         }
 
         @Test
@@ -339,10 +336,10 @@ class AnnictRepositoryImplTest {
             } returns mockResponse
 
             // When
-            val result = repository.getRawProgramsData().first()
+            val result = repository.getRawProgramsData()
 
             // Then
-            assertEquals(emptyList<Any>(), result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -358,10 +355,10 @@ class AnnictRepositoryImplTest {
             } throws RuntimeException("Network Error")
 
             // When
-            val result = repository.getRawProgramsData().first()
+            val result = repository.getRawProgramsData()
 
             // Then
-            assertEquals(emptyList<Any>(), result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -379,7 +376,7 @@ class AnnictRepositoryImplTest {
             // When
             var exceptionThrown = false
             try {
-                repository.getRawProgramsData().first()
+                repository.getRawProgramsData()
             } catch (e: CancellationException) {
                 exceptionThrown = true
             }
@@ -403,7 +400,7 @@ class AnnictRepositoryImplTest {
             val result = repository.getRecords()
 
             // Then
-            assertEquals(PaginatedRecords(emptyList()), result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -445,7 +442,8 @@ class AnnictRepositoryImplTest {
             val result = repository.getRecords()
 
             // Then
-            assertNotEquals(emptyList<Record>(), result.records)
+            assertTrue(result.isSuccess)
+            assertNotEquals(emptyList<Record>(), result.getOrNull()!!.records)
         }
 
         @Test
@@ -468,7 +466,7 @@ class AnnictRepositoryImplTest {
             val result = repository.getRecords()
 
             // Then
-            assertEquals(PaginatedRecords(emptyList()), result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -487,7 +485,7 @@ class AnnictRepositoryImplTest {
             val result = repository.getRecords()
 
             // Then
-            assertEquals(PaginatedRecords(emptyList()), result)
+            assertTrue(result.isFailure)
         }
     }
 
@@ -507,7 +505,7 @@ class AnnictRepositoryImplTest {
             val result = repository.deleteRecord(recordId)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -530,7 +528,7 @@ class AnnictRepositoryImplTest {
             val result = repository.deleteRecord(recordId)
 
             // Then
-            assertTrue(result)
+            assertTrue(result.isSuccess)
         }
 
         @Test
@@ -553,7 +551,7 @@ class AnnictRepositoryImplTest {
             val result = repository.deleteRecord(recordId)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -572,7 +570,7 @@ class AnnictRepositoryImplTest {
             val result = repository.deleteRecord(recordId)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
     }
 
@@ -593,7 +591,7 @@ class AnnictRepositoryImplTest {
             val result = repository.updateWorkViewStatus(workId, status)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -616,7 +614,7 @@ class AnnictRepositoryImplTest {
             val result = repository.updateWorkViewStatus(workId, status)
 
             // Then
-            assertTrue(result)
+            assertTrue(result.isSuccess)
         }
 
         @Test
@@ -639,7 +637,7 @@ class AnnictRepositoryImplTest {
             val result = repository.updateWorkViewStatus(workId, status)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
 
         @Test
@@ -658,7 +656,7 @@ class AnnictRepositoryImplTest {
             val result = repository.updateWorkViewStatus(workId, status)
 
             // Then
-            assertFalse(result)
+            assertTrue(result.isFailure)
         }
     }
 }
