@@ -44,6 +44,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun ProgramCard(
@@ -170,7 +171,7 @@ private fun EpisodeInfoSection(
             )
             Text(
                 text = programWithWork.firstProgram.startedAt.format(
-                    DateTimeFormatter.ofPattern("M月d日(E) HH:mm")
+                    DateTimeFormatter.ofPattern("M月d日(E) HH:mm", Locale.JAPANESE)
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
