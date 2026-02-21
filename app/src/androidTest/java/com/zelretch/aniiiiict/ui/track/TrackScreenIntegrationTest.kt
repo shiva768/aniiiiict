@@ -2,6 +2,7 @@ package com.zelretch.aniiiiict.ui.track
 
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.ViewerProgramsQuery
 import com.annict.type.SeasonName
