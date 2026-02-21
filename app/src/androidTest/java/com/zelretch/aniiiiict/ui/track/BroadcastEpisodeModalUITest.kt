@@ -69,7 +69,6 @@ class BroadcastEpisodeModalUITest {
         )
         return ProgramWithWork(
             programs = listOf(program),
-            firstProgram = program,
             work = work
         )
     }
@@ -200,7 +199,6 @@ class BroadcastEpisodeModalUITest {
         )
         val programWithWork = ProgramWithWork(
             programs = listOf(program1, program2),
-            firstProgram = program1,
             work = work
         )
 
@@ -349,7 +347,6 @@ class BroadcastEpisodeModalUITest {
         }
         val programWithWork = ProgramWithWork(
             programs = programs,
-            firstProgram = programs.first(),
             work = work
         )
         val viewModel = createMockViewModel(programWithWork)

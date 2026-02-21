@@ -102,8 +102,8 @@ class TrackViewModel @Inject constructor(
         launchWithMinLoadingTime {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            try {
-                loadProgramsUseCase().collect { programs ->
+            loadProgramsUseCase()
+                .onSuccess { programs ->
                     _uiState.update { currentState ->
                         val availableFilters = programFilterManager.extractAvailableFilters(programs)
                         val filteredPrograms = programFilterManager.filterPrograms(programs, currentState.filterState)
@@ -119,11 +119,11 @@ class TrackViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
-                val msg = errorMapper.toUserMessage(e, "TrackViewModel.loadingPrograms")
-                _uiState.update { it.copy(isLoading = false, error = msg) }
-                Timber.e(e, "プログラム一覧の読み込みに失敗: $msg")
-            }
+                .onFailure { e ->
+                    val msg = errorMapper.toUserMessage(e, "TrackViewModel.loadingPrograms")
+                    _uiState.update { it.copy(isLoading = false, error = msg) }
+                    Timber.e(e, "プログラム一覧の読み込みに失敗: $msg")
+                }
         }
     }
 

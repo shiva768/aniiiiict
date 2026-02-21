@@ -12,16 +12,16 @@ import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.AnnictAuthUseCase
+import com.zelretch.aniiiiict.testing.FakeAnnictRepository
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import javax.inject.Inject
@@ -41,13 +41,13 @@ class AuthScreenIntegrationTest {
     @Inject
     lateinit var annictAuthUseCase: AnnictAuthUseCase
 
+    private val fakeAnnictRepository = FakeAnnictRepository().apply {
+        authenticated = false
+    }
+
     @BindValue
     @JvmField
-    val annictRepository: AnnictRepository = mockk<AnnictRepository>().apply {
-        coEvery { isAuthenticated() } returns false
-        coEvery { getAuthUrl() } returns "https://example.com/auth"
-        coEvery { handleAuthCallback(any()) } returns true
-    }
+    val annictRepository: AnnictRepository = fakeAnnictRepository
 
     @BindValue
     @JvmField
@@ -85,14 +85,9 @@ class AuthScreenIntegrationTest {
 
         testRule.composeTestRule.onNodeWithText("Annictでログイン").performClick()
 
-        // Assert - Wait for coroutine to run and mock to be called
+        // Assert - Wait for coroutine to run and fake to be called
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
-            try {
-                coVerify(atLeast = 1) { annictRepository.getAuthUrl() }
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            fakeAnnictRepository.getAuthUrlCallCount >= 1
         }
     }
 
@@ -105,15 +100,11 @@ class AuthScreenIntegrationTest {
         // Act - handleAuthCallback を直接呼び出し
         viewModel.handleAuthCallback("CODE123")
 
-        // Assert - Wait for coroutine to run and mock to be called
+        // Assert - Wait for coroutine to run and fake to be called
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
-            try {
-                coVerify(exactly = 1) { annictRepository.handleAuthCallback("CODE123") }
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            fakeAnnictRepository.handleAuthCallbackCalls.contains("CODE123")
         }
+        assertTrue(fakeAnnictRepository.handleAuthCallbackCalls.contains("CODE123"))
     }
 
     @Test
@@ -125,21 +116,16 @@ class AuthScreenIntegrationTest {
         // Act - 認証状態確認を実行
         viewModel.checkAuthentication()
 
-        // Assert - Wait for coroutine to run and mock to be called
+        // Assert - Wait for coroutine to run and fake to be called
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
-            try {
-                coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            fakeAnnictRepository.isAuthenticatedCallCount >= 1
         }
     }
 
     @Test
     fun authScreen_認証失敗時_適切にエラーハンドリング() {
         // Arrange
-        coEvery { annictRepository.getAuthUrl() } throws RuntimeException("認証エラー")
+        fakeAnnictRepository.getAuthUrlError = RuntimeException("認証エラー")
 
         val context: Context = ApplicationProvider.getApplicationContext()
         val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
@@ -154,19 +140,14 @@ class AuthScreenIntegrationTest {
 
         // Assert - エラーが発生してもクラッシュしない
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
-            try {
-                coVerify(atLeast = 1) { annictRepository.getAuthUrl() }
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            fakeAnnictRepository.getAuthUrlCallCount >= 1
         }
     }
 
     @Test
     fun authScreen_無効なコールバック_handleAuthCallbackが呼ばれる() {
         // Arrange
-        coEvery { annictRepository.handleAuthCallback("INVALID") } returns false
+        fakeAnnictRepository.handleAuthCallbackResult = Result.failure(RuntimeException("Auth failed"))
 
         val context: Context = ApplicationProvider.getApplicationContext()
         val viewModel = MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
@@ -176,13 +157,9 @@ class AuthScreenIntegrationTest {
 
         // Assert
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
-            try {
-                coVerify(exactly = 1) { annictRepository.handleAuthCallback("INVALID") }
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            fakeAnnictRepository.handleAuthCallbackCalls.contains("INVALID")
         }
+        assertTrue(fakeAnnictRepository.handleAuthCallbackCalls.contains("INVALID"))
     }
 
     @Test
@@ -191,14 +168,9 @@ class AuthScreenIntegrationTest {
         val context: Context = ApplicationProvider.getApplicationContext()
         MainViewModel(annictAuthUseCase, customTabsIntentFactory, errorMapper, context)
 
-        // Assert - Wait for coroutine to run and mock to be called
+        // Assert - Wait for coroutine to run and fake to be called
         testRule.composeTestRule.waitUntil(timeoutMillis = 1000) {
-            try {
-                coVerify(atLeast = 1) { annictRepository.isAuthenticated() }
-                true
-            } catch (_: AssertionError) {
-                false
-            }
+            fakeAnnictRepository.isAuthenticatedCallCount >= 1
         }
     }
 }

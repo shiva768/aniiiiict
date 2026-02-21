@@ -12,7 +12,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -57,8 +56,8 @@ class LibraryViewModelTest {
         @DisplayName("loadLibraryEntriesが呼ばれUIステートが初期値で更新される")
         fun loadLibraryEntriesが呼ばれUIステートが初期値で更新される() = runTest(dispatcher) {
             // Given
-            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(emptyList())
 
             // When
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
@@ -90,8 +89,8 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
 
             // When
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
@@ -130,10 +129,10 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
             coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returnsMany listOf(
-                flowOf(initialEntries),
-                flowOf(refreshedEntries)
+                Result.success(initialEntries),
+                Result.success(refreshedEntries)
             )
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
@@ -166,8 +165,8 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(fakeEntries)
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
@@ -185,8 +184,8 @@ class LibraryViewModelTest {
         @DisplayName("フィルター表示が切り替わる")
         fun toggleFilterVisibility() = runTest(dispatcher) {
             // Given
-            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns flowOf(emptyList())
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(emptyList())
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
@@ -210,10 +209,8 @@ class LibraryViewModelTest {
         fun showsErrorMessage() = runTest(dispatcher) {
             // Given
             val exception = RuntimeException("Network error")
-            coEvery { loadProgramsUseCase() } returns flowOf(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns kotlinx.coroutines.flow.flow {
-                throw exception
-            }
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.failure(exception)
             every { errorMapper.toUserMessage(exception) } returns "ネットワークエラーが発生しました"
 
             // When

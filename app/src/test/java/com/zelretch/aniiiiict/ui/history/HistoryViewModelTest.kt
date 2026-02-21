@@ -1,11 +1,12 @@
 package com.zelretch.aniiiiict.ui.history
 
+import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
-import com.zelretch.aniiiiict.domain.usecase.RecordsResult
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
+import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -32,6 +33,7 @@ open class HistoryViewModelTest {
     private lateinit var loadRecordsUseCase: LoadRecordsUseCase
     private lateinit var searchRecordsUseCase: SearchRecordsUseCase
     private lateinit var deleteRecordUseCase: DeleteRecordUseCase
+    private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
     @BeforeEach
@@ -40,6 +42,7 @@ open class HistoryViewModelTest {
         loadRecordsUseCase = mockk()
         searchRecordsUseCase = mockk()
         deleteRecordUseCase = mockk()
+        errorMapper = mockk(relaxed = true)
     }
 
     @AfterEach
@@ -55,14 +58,15 @@ open class HistoryViewModelTest {
         @DisplayName("loadRecordsが呼ばれUIステートが初期値で更新される")
         fun loadRecordsが呼ばれUIステートが初期値で更新される() = runTest(dispatcher) {
             // Given
-            coEvery { loadRecordsUseCase(null) } returns RecordsResult(emptyList(), false, null)
+            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(emptyList(), false, null))
             every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
 
             // When
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase
+                deleteRecordUseCase,
+                errorMapper
             )
             val state = viewModel.uiState.first { !it.isLoading }
 
@@ -86,14 +90,15 @@ open class HistoryViewModelTest {
                     every { work } returns mockk<Work> { every { title } returns "dummy" }
                 }
             )
-            coEvery { loadRecordsUseCase(null) } returns RecordsResult(dummyRecords, false, null)
+            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(dummyRecords, false, null))
             every { searchRecordsUseCase(dummyRecords, "foo") } returns dummyRecords
             every { searchRecordsUseCase(dummyRecords, "") } returns dummyRecords
 
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase
+                deleteRecordUseCase,
+                errorMapper
             )
             viewModel.uiState.first { !it.isLoading }
 
@@ -119,15 +124,16 @@ open class HistoryViewModelTest {
                 every { id } returns "id1"
                 every { work } returns mockk<Work> { every { title } returns "dummy" }
             }
-            coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record), false, null)
+            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(listOf(record), false, null))
             every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
             every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
-            coEvery { deleteRecordUseCase("id1") } returns true
+            coEvery { deleteRecordUseCase("id1") } returns Result.success(Unit)
 
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase
+                deleteRecordUseCase,
+                errorMapper
             )
             viewModel.uiState.first { !it.isLoading }
 
@@ -154,20 +160,23 @@ open class HistoryViewModelTest {
                 every { id } returns "id2"
                 every { work.title } returns "Anime B"
             }
-            coEvery { loadRecordsUseCase(null) } returns RecordsResult(
-                listOf(record1, record2),
-                false,
-                null
+            coEvery { loadRecordsUseCase(null) } returns Result.success(
+                PaginatedRecords(
+                    listOf(record1, record2),
+                    false,
+                    null
+                )
             )
             every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
             every { searchRecordsUseCase(listOf(record1, record2), "Anime") } returns listOf(record1, record2)
             every { searchRecordsUseCase(listOf(record2), "Anime") } returns listOf(record2)
-            coEvery { deleteRecordUseCase("id1") } returns true
+            coEvery { deleteRecordUseCase("id1") } returns Result.success(Unit)
 
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase
+                deleteRecordUseCase,
+                errorMapper
             )
             viewModel.uiState.first { !it.isLoading }
             viewModel.updateSearchQuery("Anime")
@@ -201,15 +210,18 @@ open class HistoryViewModelTest {
                 every { id } returns "id2"
                 every { work } returns mockk<Work> { every { title } returns "dummy2" }
             }
-            coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record1), true, "cursor")
-            coEvery { loadRecordsUseCase("cursor") } returns RecordsResult(listOf(record2), false, null)
+            coEvery { loadRecordsUseCase(null) } returns
+                Result.success(PaginatedRecords(listOf(record1), true, "cursor"))
+            coEvery { loadRecordsUseCase("cursor") } returns
+                Result.success(PaginatedRecords(listOf(record2), false, null))
             every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
             every { searchRecordsUseCase(listOf(record1, record2), "") } returns listOf(record1, record2)
 
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase
+                deleteRecordUseCase,
+                errorMapper
             )
             viewModel.uiState.first { !it.isLoading }
 
@@ -233,13 +245,15 @@ open class HistoryViewModelTest {
                 every { id } returns "id1"
                 every { work } returns mockk<Work> { every { title } returns "dummy1" }
             }
-            coEvery { loadRecordsUseCase(null) } returns RecordsResult(listOf(record1), false, "cursor")
+            coEvery { loadRecordsUseCase(null) } returns
+                Result.success(PaginatedRecords(listOf(record1), false, "cursor"))
             every { searchRecordsUseCase(listOf(record1), "") } returns listOf(record1)
 
             val viewModel = HistoryViewModel(
                 loadRecordsUseCase,
                 searchRecordsUseCase,
-                deleteRecordUseCase
+                deleteRecordUseCase,
+                errorMapper
             )
             val initialState = viewModel.uiState.first { !it.isLoading }
 

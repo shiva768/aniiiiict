@@ -131,7 +131,7 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(uiState.entries) { entry ->
+                    items(uiState.entries, key = { it.work.id }) { entry ->
                         LibraryEntryCard(
                             entry = entry,
                             onClick = { viewModel.showDetail(entry) }

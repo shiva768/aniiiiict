@@ -98,16 +98,21 @@ class AnimeDetailScreenIntegrationTest {
 
             override suspend fun isAuthenticated(): Boolean = true
             override suspend fun getAuthUrl(): String = "https://example.com/auth"
-            override suspend fun handleAuthCallback(code: String): Boolean = true
-            override suspend fun createRecord(episodeId: String, workId: String): Boolean = true
-            override suspend fun getRawProgramsData() =
-                kotlinx.coroutines.flow.flowOf(emptyList<com.annict.ViewerProgramsQuery.Node>())
-            override suspend fun getRecords(after: String?) =
-                com.zelretch.aniiiiict.data.model.PaginatedRecords(emptyList(), false, null)
-            override suspend fun deleteRecord(recordId: String): Boolean = true
-            override suspend fun updateWorkViewStatus(workId: String, status: StatusState): Boolean = true
-            override suspend fun getLibraryEntries(states: List<StatusState>, after: String?) =
-                kotlinx.coroutines.flow.flowOf(emptyList<com.zelretch.aniiiiict.data.model.LibraryEntry>())
+            override suspend fun handleAuthCallback(code: String): Result<Unit> = Result.success(Unit)
+            override suspend fun createRecord(episodeId: String, workId: String): Result<Unit> = Result.success(Unit)
+            override suspend fun getRawProgramsData(): Result<List<com.annict.ViewerProgramsQuery.Node?>> =
+                Result.success(emptyList())
+            override suspend fun getRecords(
+                after: String?
+            ): Result<com.zelretch.aniiiiict.data.model.PaginatedRecords> =
+                Result.success(com.zelretch.aniiiiict.data.model.PaginatedRecords(emptyList(), false, null))
+            override suspend fun deleteRecord(recordId: String): Result<Unit> = Result.success(Unit)
+            override suspend fun updateWorkViewStatus(workId: String, status: StatusState): Result<Unit> =
+                Result.success(Unit)
+            override suspend fun getLibraryEntries(
+                states: List<StatusState>,
+                after: String?
+            ): Result<List<com.zelretch.aniiiiict.data.model.LibraryEntry>> = Result.success(emptyList())
         }
 
         // Fake MyAnimeList Repository
@@ -160,16 +165,21 @@ class AnimeDetailScreenIntegrationTest {
 
             override suspend fun isAuthenticated(): Boolean = true
             override suspend fun getAuthUrl(): String = "https://example.com/auth"
-            override suspend fun handleAuthCallback(code: String): Boolean = true
-            override suspend fun createRecord(episodeId: String, workId: String): Boolean = true
-            override suspend fun getRawProgramsData() =
-                kotlinx.coroutines.flow.flowOf(emptyList<com.annict.ViewerProgramsQuery.Node>())
-            override suspend fun getRecords(after: String?) =
-                com.zelretch.aniiiiict.data.model.PaginatedRecords(emptyList(), false, null)
-            override suspend fun deleteRecord(recordId: String): Boolean = true
-            override suspend fun updateWorkViewStatus(workId: String, status: StatusState): Boolean = true
-            override suspend fun getLibraryEntries(states: List<StatusState>, after: String?) =
-                kotlinx.coroutines.flow.flowOf(emptyList<com.zelretch.aniiiiict.data.model.LibraryEntry>())
+            override suspend fun handleAuthCallback(code: String): Result<Unit> = Result.success(Unit)
+            override suspend fun createRecord(episodeId: String, workId: String): Result<Unit> = Result.success(Unit)
+            override suspend fun getRawProgramsData(): Result<List<com.annict.ViewerProgramsQuery.Node?>> =
+                Result.success(emptyList())
+            override suspend fun getRecords(
+                after: String?
+            ): Result<com.zelretch.aniiiiict.data.model.PaginatedRecords> =
+                Result.success(com.zelretch.aniiiiict.data.model.PaginatedRecords(emptyList(), false, null))
+            override suspend fun deleteRecord(recordId: String): Result<Unit> = Result.success(Unit)
+            override suspend fun updateWorkViewStatus(workId: String, status: StatusState): Result<Unit> =
+                Result.success(Unit)
+            override suspend fun getLibraryEntries(
+                states: List<StatusState>,
+                after: String?
+            ): Result<List<com.zelretch.aniiiiict.data.model.LibraryEntry>> = Result.success(emptyList())
         }
 
         // Fake MyAnimeList Repository
@@ -241,8 +251,7 @@ class AnimeDetailScreenIntegrationTest {
 
         return ProgramWithWork(
             work = work,
-            programs = listOf(program),
-            firstProgram = program
+            programs = listOf(program)
         )
     }
 

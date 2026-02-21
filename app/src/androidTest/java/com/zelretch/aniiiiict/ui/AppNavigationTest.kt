@@ -10,14 +10,13 @@ import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
+import com.zelretch.aniiiiict.testing.FakeAnnictRepository
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
-import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 
@@ -33,10 +32,7 @@ class AppNavigationTest {
 
     @BindValue
     @JvmField
-    val mockAnnictRepository: AnnictRepository = mockk(relaxed = true) {
-        coEvery { getRawProgramsData() } returns flowOf(emptyList())
-        coEvery { isAuthenticated() } returns true
-    }
+    val mockAnnictRepository: AnnictRepository = FakeAnnictRepository()
 
     @BindValue
     @JvmField

@@ -297,8 +297,7 @@ class AnimeDetailScreenUITest {
 
         return ProgramWithWork(
             work = work,
-            programs = listOf(program),
-            firstProgram = program
+            programs = listOf(program)
         )
     }
 

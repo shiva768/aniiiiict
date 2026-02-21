@@ -61,10 +61,10 @@ class LoadRecordsUseCaseTest {
                 hasNextPage = true,
                 endCursor = "CURSOR123"
             )
-            coEvery { repository.getRecords(null) } returns paginated
+            coEvery { repository.getRecords(null) } returns Result.success(paginated)
 
             // When
-            val result = useCase()
+            val result = useCase().getOrThrow()
 
             // Then
             assertEquals(fakeRecords, result.records)
@@ -81,10 +81,10 @@ class LoadRecordsUseCaseTest {
                 hasNextPage = false,
                 endCursor = null
             )
-            coEvery { repository.getRecords(null) } returns paginated
+            coEvery { repository.getRecords(null) } returns Result.success(paginated)
 
             // When
-            val result = useCase()
+            val result = useCase().getOrThrow()
 
             // Then
             assertEquals(emptyList<Record>(), result.records)

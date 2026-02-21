@@ -143,7 +143,6 @@ class TrackScreenUITest {
 
         val programWithWork = ProgramWithWork(
             programs = listOf(sampleProgram),
-            firstProgram = sampleProgram,
             work = sampleWork
         )
 
@@ -201,7 +200,6 @@ class TrackScreenUITest {
 
         val programWithWork = ProgramWithWork(
             programs = listOf(sampleProgram),
-            firstProgram = sampleProgram,
             work = sampleWork
         )
 
@@ -338,7 +336,6 @@ class TrackScreenUITest {
         )
         val programWithWork = ProgramWithWork(
             programs = listOf(sampleProgram),
-            firstProgram = sampleProgram,
             work = sampleWork
         )
         val state = TrackUiState(programs = listOf(programWithWork))

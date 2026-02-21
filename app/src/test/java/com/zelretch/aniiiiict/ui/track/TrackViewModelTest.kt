@@ -27,8 +27,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -75,7 +73,7 @@ class TrackViewModelTest {
         mockk<Context>(relaxed = true)
 
         // デフォルトで空リストを返すflow
-        coEvery { loadProgramsUseCase.invoke() } returns flowOf(emptyList())
+        coEvery { loadProgramsUseCase.invoke() } returns Result.success(emptyList())
         every { filterProgramsUseCase.invoke(any(), any()) } answers { firstArg() }
         every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
             emptyList(),
@@ -119,7 +117,7 @@ class TrackViewModelTest {
         fun onSuccess() = runTest(dispatcher) {
             // Given
             val fakePrograms = listOf<ProgramWithWork>(mockk(relaxed = true))
-            coEvery { loadProgramsUseCase.invoke() } returns flowOf(fakePrograms)
+            coEvery { loadProgramsUseCase.invoke() } returns Result.success(fakePrograms)
             every { filterProgramsUseCase.invoke(any(), any()) } returns fakePrograms
             every { filterProgramsUseCase.extractAvailableFilters(any()) } returns AvailableFilters(
                 emptyList(),
@@ -144,9 +142,7 @@ class TrackViewModelTest {
         fun onException() = runTest(dispatcher) {
             // Given
             every { errorMapper.toUserMessage(any(), any()) } returns "処理中にエラーが発生しました"
-            coEvery { loadProgramsUseCase.invoke() } returns flow {
-                throw LoadProgramsException("error")
-            }
+            coEvery { loadProgramsUseCase.invoke() } returns Result.failure(LoadProgramsException("error"))
 
             // When
             filterStateFlow.value = filterStateFlow.value.copy(selectedMedia = setOf("dummy-error"))
@@ -170,7 +166,7 @@ class TrackViewModelTest {
             val workId = "work-finale-no"
             val episodeId = "ep-final-12-no"
             val fakePrograms = createTestProgram(workId, episodeId)
-            coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
+            coEvery { loadProgramsUseCase() } returns Result.success(listOf(fakePrograms))
             coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
             coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
                 com.zelretch.aniiiiict.domain.usecase.FinaleState.FINALE_CONFIRMED
@@ -204,7 +200,7 @@ class TrackViewModelTest {
             val episodeId = "ep5"
             val fakePrograms = createTestProgram(workId, episodeId)
 
-            coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
+            coEvery { loadProgramsUseCase() } returns Result.success(listOf(fakePrograms))
             coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
             coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
                 com.zelretch.aniiiiict.domain.usecase.FinaleState.UNKNOWN
@@ -234,7 +230,7 @@ class TrackViewModelTest {
             val episodeId = "ep1"
             val fakePrograms = createTestProgram(workId, episodeId)
 
-            coEvery { loadProgramsUseCase() } returns flowOf(listOf(fakePrograms))
+            coEvery { loadProgramsUseCase() } returns Result.success(listOf(fakePrograms))
             coEvery { watchEpisodeUseCase.invoke(any(), any(), any()) } returns Result.success(Unit)
             coEvery { judgeFinaleUseCase.invoke(any(), any()) } returns JudgeFinaleResult(
                 com.zelretch.aniiiiict.domain.usecase.FinaleState.UNKNOWN
@@ -284,7 +280,6 @@ private fun createTestProgram(workId: String, episodeId: String): ProgramWithWor
     )
     return ProgramWithWork(
         programs = listOf(program),
-        firstProgram = program,
         work = work
     )
 }
