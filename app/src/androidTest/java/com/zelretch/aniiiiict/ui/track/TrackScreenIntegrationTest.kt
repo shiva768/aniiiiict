@@ -215,7 +215,7 @@ class TrackScreenIntegrationTest {
     }
 
     @Test
-    fun trackScreen_プログラムカードクリック_詳細モーダルが表示される() {
+    fun trackScreen_プログラムカードクリック_アニメ詳細コールバックが呼ばれる() {
         // Arrange
         val mockFilterPreferences: FilterPreferences = mockk {
             every { filterState } returns MutableStateFlow(FilterState())
@@ -246,6 +246,59 @@ class TrackScreenIntegrationTest {
         val pw = ProgramWithWork(listOf(program), work)
         val initialState = TrackUiState(programs = listOf(pw))
 
+        var detailCalled: ProgramWithWork? = null
+
+        // Act
+        testRule.composeTestRule.setContent {
+            TrackScreen(
+                viewModel = viewModel,
+                uiState = initialState,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {},
+                onShowAnimeDetail = { detailCalled = it }
+            )
+        }
+
+        // プログラムカードをクリック
+        testRule.composeTestRule.onNodeWithTag("program_card_work-card-click").performClick()
+
+        // Assert - カードタップでアニメ詳細コールバックが呼ばれることを確認
+        testRule.composeTestRule.waitForIdle()
+        assert(detailCalled == pw)
+    }
+
+    @Test
+    fun trackScreen_エピソードボタンクリック_未視聴エピソードモーダルが表示される() {
+        // Arrange
+        val mockFilterPreferences: FilterPreferences = mockk {
+            every { filterState } returns MutableStateFlow(FilterState())
+        }
+
+        val programFilterManager = ProgramFilterManager(filterProgramsUseCase, mockFilterPreferences)
+        val viewModel = TrackViewModel(
+            loadProgramsUseCase,
+            watchEpisodeUseCase,
+            updateViewStateUseCase,
+            programFilterManager,
+            judgeFinaleUseCase,
+            errorMapper
+        )
+
+        val work = Work(
+            id = "work-episode-btn",
+            title = "エピソードボタンテスト",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val episode = Episode(id = "ep-episode-btn", number = 1, numberText = "1", title = "第1話")
+        val program = Program("prog-episode-btn", LocalDateTime.now(), Channel("ch"), episode)
+        val pw = ProgramWithWork(listOf(program), work)
+        val initialState = TrackUiState(programs = listOf(pw))
+
         // Act
         testRule.composeTestRule.setContent {
             TrackScreen(
@@ -257,13 +310,12 @@ class TrackScreenIntegrationTest {
             )
         }
 
-        // プログラムカードをクリック
-        testRule.composeTestRule.onNodeWithTag("program_card_work-card-click").performClick()
+        // エピソードボタンをクリック
+        testRule.composeTestRule.onNodeWithText("エピソード").performClick()
 
-        // Assert
+        // Assert - ViewModelのshowUnwatchedEpisodesが呼ばれ、モーダル表示の状態になることを確認
         testRule.composeTestRule.waitForIdle()
-        // 詳細モーダルが表示される（ViewModelの状態変更は内部的に検証される）
-        // この統合テストでは、カードクリックからモーダル表示までの連携が正常に動作することを確認
+        assert(viewModel.uiState.value.isDetailModalVisible)
     }
 
     @Test
