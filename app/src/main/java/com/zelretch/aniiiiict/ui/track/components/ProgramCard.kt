@@ -23,6 +23,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -60,12 +61,10 @@ fun ProgramCard(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(20.dp)
-        ) {
-            WorkInfoRow(programWithWork = programWithWork)
-            Spacer(modifier = Modifier.height(12.dp))
-            EpisodeInfoRow(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            WorkInfoSection(programWithWork = programWithWork)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            EpisodeInfoSection(
                 programWithWork = programWithWork,
                 uiState = uiState,
                 onRecordEpisode = onRecordEpisode,
@@ -76,26 +75,43 @@ fun ProgramCard(
 }
 
 @Composable
-private fun WorkInfoRow(programWithWork: ProgramWithWork) {
+private fun WorkInfoSection(programWithWork: ProgramWithWork) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         WorkImage(
             imageUrl = programWithWork.work.image?.imageUrl,
             workTitle = programWithWork.work.title
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = programWithWork.work.title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.testTag("work_title_${programWithWork.work.id}")
             )
-            Spacer(modifier = Modifier.height(6.dp))
-            WorkTags(programWithWork = programWithWork)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                InfoTag(
+                    text = programWithWork.firstProgram.channel.name,
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                )
+                InfoTag(
+                    text = programWithWork.work.viewerStatusState.toJapaneseLabel(),
+                    color = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            }
+            val seasonMeta = buildSeasonMeta(programWithWork)
+            if (seasonMeta.isNotEmpty()) {
+                Text(
+                    text = seasonMeta,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -103,7 +119,7 @@ private fun WorkInfoRow(programWithWork: ProgramWithWork) {
 @Composable
 private fun WorkImage(imageUrl: String?, workTitle: String) {
     Box(
-        modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp))
+        modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp))
     ) {
         if (imageUrl != null) {
             AsyncImage(
@@ -114,9 +130,7 @@ private fun WorkImage(imageUrl: String?, workTitle: String) {
             )
         } else {
             Box(
-                modifier = Modifier.fillMaxSize().background(
-                    MaterialTheme.colorScheme.surfaceVariant
-                ),
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -130,76 +144,38 @@ private fun WorkImage(imageUrl: String?, workTitle: String) {
 }
 
 @Composable
-private fun WorkTags(programWithWork: ProgramWithWork) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(vertical = 1.dp)
-        ) {
-            programWithWork.work.media?.let {
-                InfoTag(text = it, color = MaterialTheme.colorScheme.primaryContainer)
-            }
-            programWithWork.work.seasonName?.let {
-                InfoTag(text = it.name, color = MaterialTheme.colorScheme.secondaryContainer)
-            }
-            programWithWork.work.seasonYear?.let {
-                InfoTag(
-                    text = it.toString() + "年",
-                    color = MaterialTheme.colorScheme.secondaryContainer
-                )
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(vertical = 1.dp)
-        ) {
-            programWithWork.work.viewerStatusState.let {
-                InfoTag(
-                    text = it.toString(),
-                    color = MaterialTheme.colorScheme.tertiaryContainer
-                )
-            }
-            InfoTag(
-                text = programWithWork.firstProgram.channel.name,
-                color = MaterialTheme.colorScheme.surfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun EpisodeInfoRow(
+private fun EpisodeInfoSection(
     programWithWork: ProgramWithWork,
     uiState: TrackUiState,
     onRecordEpisode: (String, String, StatusState) -> Unit,
     onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        val episodeText = buildString {
-            append(
-                programWithWork.firstProgram.episode.formattedNumber
-            )
-            programWithWork.firstProgram.episode.title?.let {
-                append(" ")
-                append(it)
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            val episodeText = buildString {
+                append(programWithWork.firstProgram.episode.formattedNumber)
+                programWithWork.firstProgram.episode.title?.let {
+                    append("「$it」")
+                }
             }
+            Text(
+                text = episodeText,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = programWithWork.firstProgram.startedAt.format(
+                    DateTimeFormatter.ofPattern("M月d日(E) HH:mm")
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
-        Text(
-            text = episodeText,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium
-        )
-        Text(
-            text = programWithWork.firstProgram.startedAt.format(
-                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -285,5 +261,23 @@ fun InfoTag(text: String, color: Color) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+private fun StatusState.toJapaneseLabel(): String = when (this) {
+    StatusState.WATCHING -> "視聴中"
+    StatusState.WANNA_WATCH -> "見たい"
+    StatusState.WATCHED -> "見た"
+    StatusState.STOP_WATCHING -> "中止"
+    StatusState.ON_HOLD -> "保留"
+    else -> toString()
+}
+
+private fun buildSeasonMeta(programWithWork: ProgramWithWork): String = buildString {
+    programWithWork.work.seasonYear?.let { append("${it}年") }
+    programWithWork.work.seasonName?.let { append(it.name) }
+    programWithWork.work.media?.let {
+        if (isNotEmpty()) append(" · ")
+        append(it)
     }
 }
