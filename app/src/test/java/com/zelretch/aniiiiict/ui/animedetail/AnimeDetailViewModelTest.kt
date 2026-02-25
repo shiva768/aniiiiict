@@ -10,6 +10,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.ui.base.UiState
 import io.mockk.coEvery
@@ -37,6 +38,7 @@ class AnimeDetailViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var getAnimeDetailUseCase: GetAnimeDetailUseCase
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: AnimeDetailViewModel
 
@@ -44,8 +46,9 @@ class AnimeDetailViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         getAnimeDetailUseCase = mockk()
+        updateViewStateUseCase = mockk()
         errorMapper = mockk(relaxed = true)
-        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase, errorMapper)
+        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase, updateViewStateUseCase, errorMapper)
     }
 
     @AfterEach
@@ -91,6 +94,7 @@ class AnimeDetailViewModelTest {
             assertTrue(state is UiState.Success)
             assertNotNull((state as UiState.Success).data.animeDetailInfo)
             assertEquals("テストアニメ", state.data.animeDetailInfo.work.title)
+            assertEquals(StatusState.WATCHING, state.data.selectedStatus)
         }
 
         @Test
@@ -110,6 +114,55 @@ class AnimeDetailViewModelTest {
             val state = viewModel.uiState.value
             assertTrue(state is UiState.Error)
             assertEquals("エラーが発生しました", (state as UiState.Error).message)
+        }
+    }
+
+    @Nested
+    @DisplayName("ステータス変更")
+    inner class ChangeStatus {
+
+        @Test
+        @DisplayName("成功時にステータスが更新される")
+        fun onSuccess() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val animeDetailInfo = createSampleAnimeDetailInfo()
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.success(Unit)
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.changeStatus(StatusState.WATCHED)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals(StatusState.WATCHED, (state as UiState.Success).data.selectedStatus)
+        }
+
+        @Test
+        @DisplayName("失敗時にステータスが元に戻りエラーメッセージが表示される")
+        fun onFailure() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val animeDetailInfo = createSampleAnimeDetailInfo()
+            every { errorMapper.toUserMessage(any(), any()) } returns "ステータス変更に失敗しました"
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(animeDetailInfo)
+            coEvery { updateViewStateUseCase(any(), any()) } returns Result.failure(Exception("API Error"))
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.changeStatus(StatusState.WATCHED)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals(StatusState.WATCHING, (state as UiState.Success).data.selectedStatus)
+            assertEquals("ステータス変更に失敗しました", state.data.statusChangeError)
         }
     }
 

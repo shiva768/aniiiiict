@@ -260,12 +260,42 @@ class AnimeDetailScreenUITest {
         composeTestRule.onNodeWithText("  • 関連作品タイトル").assertIsDisplayed()
     }
 
+    @Test
+    fun 成功時にステータスドロップダウンが表示される() {
+        // Given: アニメ詳細情報とステータスを含むUIState
+        val animeDetailInfo = createAnimeDetailInfo()
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(
+                AnimeDetailData(
+                    animeDetailInfo = animeDetailInfo,
+                    selectedStatus = StatusState.WATCHING
+                )
+            )
+        )
+        val programWithWork = createSampleProgramWithWork()
+
+        // When: 画面を表示
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    programWithWork = programWithWork,
+                    onNavigateBack = {},
+                    viewModel = mockViewModel
+                )
+            }
+        }
+
+        // Then: ステータスドロップダウンが表示される
+        composeTestRule.onNodeWithText("WATCHING").assertIsDisplayed()
+    }
+
     // Helper functions
 
     private fun createMockViewModel(state: UiState<AnimeDetailData>): AnimeDetailViewModel =
         mockk<AnimeDetailViewModel> {
             coEvery { this@mockk.uiState } returns MutableStateFlow(state)
             coEvery { loadAnimeDetail(any()) } returns Unit
+            coEvery { changeStatus(any()) } returns Unit
         }
 
     private fun createSampleProgramWithWork(): ProgramWithWork {
