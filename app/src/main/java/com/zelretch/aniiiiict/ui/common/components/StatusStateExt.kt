@@ -8,5 +8,6 @@ fun StatusState.toJapaneseLabel(): String = when (this) {
     StatusState.WATCHED -> "見た"
     StatusState.STOP_WATCHING -> "中止"
     StatusState.ON_HOLD -> "保留"
+    StatusState.UNKNOWN__ -> "未設定"
     else -> toString()
 }

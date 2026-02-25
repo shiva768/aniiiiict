@@ -148,9 +148,9 @@ class WatchingEpisodeModalIntegrationTest {
         }
 
         // ステータスドロップダウンを開いて選択
-        testRule.composeTestRule.onNodeWithText("WATCHING").performClick()
+        testRule.composeTestRule.onNodeWithText("視聴中").performClick()
         testRule.composeTestRule.waitForIdle()
-        testRule.composeTestRule.onNodeWithText("WATCHED").performClick()
+        testRule.composeTestRule.onNodeWithText("見た").performClick()
         testRule.composeTestRule.waitForIdle()
 
         // Assert - AnnictRepository.updateWorkViewStatusが呼ばれたことを確認
@@ -233,6 +233,6 @@ class WatchingEpisodeModalIntegrationTest {
         testRule.composeTestRule.onNodeWithText("次のエピソード").assertDoesNotExist()
 
         // Verify status change is still possible
-        testRule.composeTestRule.onNodeWithText("WATCHING").assertExists()
+        testRule.composeTestRule.onNodeWithText("視聴中").assertExists()
     }
 }
