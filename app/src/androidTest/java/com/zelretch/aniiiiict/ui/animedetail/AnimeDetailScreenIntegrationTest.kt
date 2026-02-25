@@ -17,6 +17,7 @@ import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
@@ -125,7 +126,8 @@ class AnimeDetailScreenIntegrationTest {
 
         // 実際のUseCaseを使用してViewModelを生成
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val viewModel = AnimeDetailViewModel(useCase, testErrorMapper)
+        val updateViewStateUseCase = UpdateViewStateUseCase(fakeAnnictRepository)
+        val viewModel = AnimeDetailViewModel(useCase, updateViewStateUseCase, testErrorMapper)
 
         // Act
         testRule.composeTestRule.setContent {
@@ -194,7 +196,8 @@ class AnimeDetailScreenIntegrationTest {
 
         // 実際のUseCaseを使用してViewModelを生成
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val viewModel = AnimeDetailViewModel(useCase, testErrorMapper)
+        val updateViewStateUseCase = UpdateViewStateUseCase(fakeAnnictRepository)
+        val viewModel = AnimeDetailViewModel(useCase, updateViewStateUseCase, testErrorMapper)
 
         // Act
         testRule.composeTestRule.setContent {
