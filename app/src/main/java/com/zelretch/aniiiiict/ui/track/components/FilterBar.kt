@@ -38,6 +38,7 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.filter.SortOrder
+import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 
 private data class FilterChipActions(
     val onMediaClick: () -> Unit,
@@ -287,12 +288,15 @@ private fun ChannelFilterDialog(
 
 @Composable
 private fun StatusFilterDialog(filterState: FilterState, onFilterChange: (FilterState) -> Unit, onDismiss: () -> Unit) {
+    val statusOptions = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH)
+    val statusMap = statusOptions.associateBy { it.toJapaneseLabel() }
+
     FilterSelectionDialog(
         title = "ステータスを選択",
-        items = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH).map { it.name },
-        selectedItems = filterState.selectedStatus.map { it.name }.toSet(),
-        onItemSelected = { statusStr ->
-            val status = StatusState.valueOf(statusStr)
+        items = statusOptions.map { it.toJapaneseLabel() },
+        selectedItems = filterState.selectedStatus.map { it.toJapaneseLabel() }.toSet(),
+        onItemSelected = { japaneseLabel ->
+            val status = statusMap[japaneseLabel] ?: return@FilterSelectionDialog
             val newSelection = filterState.selectedStatus.toMutableSet()
             if (status in newSelection) newSelection.remove(status) else newSelection.add(status)
             onFilterChange(filterState.copy(selectedStatus = newSelection))
