@@ -89,6 +89,33 @@ class AnimeDetailScreenUITest {
     }
 
     @Test
+    fun エピソード数が不明な場合に話数不明と表示される() {
+        // Given: エピソード数がnullのUIState
+        val animeDetailInfo = createAnimeDetailInfo(
+            episodeCount = null,
+            imageUrl = "https://example.com/image.jpg"
+        )
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
+        )
+        val programWithWork = createSampleProgramWithWork()
+
+        // When: 画面を表示
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    programWithWork = programWithWork,
+                    onNavigateBack = {},
+                    viewModel = mockViewModel
+                )
+            }
+        }
+
+        // Then: 話数不明が表示される
+        composeTestRule.onNodeWithText("話数不明").assertIsDisplayed()
+    }
+
+    @Test
     fun エラー発生時にエラーメッセージが表示される() {
         // Given: エラー状態のUIState
         val errorMessage = "アニメ詳細情報の取得に失敗しました"
