@@ -121,56 +121,6 @@ class BroadcastEpisodeModalUITest {
     }
 
     @Test
-    fun broadcastEpisodeModal_ステータスドロップダウン_展開して選択できる() {
-        // Arrange
-        val programWithWork = sampleProgramWithWork(StatusState.WATCHING)
-        val viewModel = mockk<BroadcastEpisodeModalViewModel>(relaxed = true).apply {
-            every { state } returns MutableStateFlow(
-                BroadcastEpisodeModalState(
-                    programs = programWithWork.programs,
-                    selectedStatus = StatusState.WATCHING,
-                    workId = programWithWork.work.id
-                )
-            )
-        }
-
-        // Act
-        composeTestRule.setContent {
-            BroadcastEpisodeModal(
-                programWithWork = programWithWork,
-                isLoading = false,
-                onDismiss = {},
-                viewModel = viewModel,
-                onRefresh = {}
-            )
-        }
-
-        // Wait for composition to complete
-        composeTestRule.waitForIdle()
-
-        // Assert - 初期選択状態が表示されている
-        composeTestRule.onNodeWithText("WATCHING").assertIsDisplayed()
-
-        // クリックでメニュー展開
-        composeTestRule.onNodeWithText("WATCHING").performClick()
-
-        // Wait for dropdown to expand
-        composeTestRule.waitForIdle()
-
-        // いずれかの選択肢が表示される（WATCHED を例に）
-        composeTestRule.onNodeWithText("WATCHED").assertIsDisplayed()
-
-        // 選択できることを確認
-        composeTestRule.onNodeWithText("WATCHED").performClick()
-
-        // Wait for selection to process
-        composeTestRule.waitForIdle()
-
-        // ViewModelのchangeStatusが呼ばれたことを確認
-        verify { viewModel.changeStatus(StatusState.WATCHED) }
-    }
-
-    @Test
     fun broadcastEpisodeModal_一括視聴確認ダイアログ_表示内容が正しい() {
         // Arrange
         // 2エピソードのProgramWithWorkを用意

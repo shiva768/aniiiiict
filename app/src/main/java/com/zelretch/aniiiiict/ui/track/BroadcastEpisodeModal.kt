@@ -21,9 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
-import com.zelretch.aniiiiict.ui.common.components.StatusDropdown
 import com.zelretch.aniiiiict.ui.common.components.episode.ConfirmDialog
 import com.zelretch.aniiiiict.ui.common.components.episode.FinaleConfirmDialog
 import com.zelretch.aniiiiict.ui.common.components.episode.UnwatchedEpisodesContent
@@ -46,7 +44,7 @@ fun BroadcastEpisodeModal(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            BroadcastEpisodeModalTitle(state = state, onDismiss = onDismiss, onStatusChange = viewModel::changeStatus)
+            BroadcastEpisodeModalTitle(state = state, onDismiss = onDismiss)
         },
         text = {
             UnwatchedEpisodesContent(programs = state.programs, isLoading = isLoading, onRecordEpisode = { episodeId ->
@@ -152,39 +150,18 @@ private fun BroadcastEpisodeModalDialogs(
 }
 
 @Composable
-private fun BroadcastEpisodeModalTitle(
-    state: BroadcastEpisodeModalState,
-    onDismiss: () -> Unit,
-    onStatusChange: (StatusState) -> Unit
-) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "未視聴エピソード (${state.programs.size}件)",
-                style = MaterialTheme.typography.titleLarge
-            )
-            IconButton(onClick = onDismiss) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "閉じる")
-            }
-        }
-
-        StatusDropdown(
-            selectedStatus = state.selectedStatus,
-            isChanging = state.isStatusChanging,
-            onStatusChange = onStatusChange
+private fun BroadcastEpisodeModalTitle(state: BroadcastEpisodeModalState, onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "未視聴エピソード (${state.programs.size}件)",
+            style = MaterialTheme.typography.titleLarge
         )
-
-        state.statusChangeError?.let { error ->
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+        IconButton(onClick = onDismiss) {
+            Icon(imageVector = Icons.Default.Close, contentDescription = "閉じる")
         }
     }
 }
