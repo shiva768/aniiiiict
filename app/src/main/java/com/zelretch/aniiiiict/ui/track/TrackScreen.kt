@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -182,22 +181,12 @@ private fun TrackScreenContent(
         Column(modifier = Modifier.fillMaxSize()) {
             // 検索ワードのインジケーター
             if (uiState.filterState.searchQuery.isNotEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                "🔍 ${uiState.filterState.searchQuery}",
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    )
-                }
+                Text(
+                    text = "🔍 ${uiState.filterState.searchQuery}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
             }
 
             if (uiState.isFilterVisible) {
