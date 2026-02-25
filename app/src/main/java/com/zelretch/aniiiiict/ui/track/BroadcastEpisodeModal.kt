@@ -150,10 +150,7 @@ private fun BroadcastEpisodeModalDialogs(
 }
 
 @Composable
-private fun BroadcastEpisodeModalTitle(
-    state: BroadcastEpisodeModalState,
-    onDismiss: () -> Unit
-) {
+private fun BroadcastEpisodeModalTitle(state: BroadcastEpisodeModalState, onDismiss: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
