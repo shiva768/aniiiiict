@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -263,15 +264,6 @@ fun InfoTag(text: String, color: Color) {
             overflow = TextOverflow.Ellipsis
         )
     }
-}
-
-private fun StatusState.toJapaneseLabel(): String = when (this) {
-    StatusState.WATCHING -> "視聴中"
-    StatusState.WANNA_WATCH -> "見たい"
-    StatusState.WATCHED -> "見た"
-    StatusState.STOP_WATCHING -> "中止"
-    StatusState.ON_HOLD -> "保留"
-    else -> toString()
 }
 
 private fun buildSeasonMeta(programWithWork: ProgramWithWork): String = buildString {

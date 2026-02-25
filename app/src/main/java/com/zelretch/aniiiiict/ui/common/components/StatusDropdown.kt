@@ -42,7 +42,7 @@ fun StatusDropdown(
             onExpandedChange = { expanded = !expanded }
         ) {
             TextField(
-                value = selectedStatus?.name ?: "",
+                value = selectedStatus?.toJapaneseLabel() ?: "",
                 onValueChange = {},
                 readOnly = true,
                 enabled = !isChanging,
@@ -64,7 +64,7 @@ fun StatusDropdown(
             ) {
                 StatusState.entries.forEach { status ->
                     DropdownMenuItem(
-                        text = { Text(status.name) },
+                        text = { Text(status.toJapaneseLabel()) },
                         onClick = {
                             expanded = false
                             onStatusChange(status)
