@@ -165,6 +165,64 @@ class GetAnimeDetailUseCaseTest {
 
             coVerify(exactly = 0) { myAnimeListRepository.getAnimeDetail(any()) }
         }
+
+        @Test
+        @DisplayName("エピソード数が0の場合はnullとして扱う（話数不明を意味する）")
+        fun エピソード数が0の場合はnullとして扱う() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val mockOnWork = mockk<WorkDetailQuery.OnWork>()
+            every { mockOnWork.id } returns "test-work-id"
+            every { mockOnWork.episodesCount } returns 0 // 話数不明を示す
+            every { mockOnWork.image } returns null
+            every { mockOnWork.officialSiteUrl } returns null
+            every { mockOnWork.wikipediaUrl } returns null
+            every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
+            every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
+
+            val mockNode = mockk<WorkDetailQuery.Node>()
+            every { mockNode.onWork } returns mockOnWork
+
+            coEvery { annictRepository.getWorkDetail(any()) } returns Result.success(mockNode)
+            coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.failure(Exception("MAL Error"))
+
+            // When
+            val result = useCase(programWithWork)
+
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrNull()
+            assertNotNull(animeDetailInfo)
+            assertNull(animeDetailInfo?.episodeCount) // 0はnullとして扱う
+        }
+
+        @Test
+        @DisplayName("MyAnimeListのエピソード数が0の場合はAnnictのデータを優先する")
+        fun MyAnimeListのエピソード数が0の場合はAnnictのデータを優先する() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            val annictDetail = createMockAnnictDetail()
+            val malResponse = MyAnimeListResponse(
+                id = 12345,
+                mediaType = "tv",
+                numEpisodes = 0, // 0はスキップ
+                status = "currently_airing",
+                broadcast = null,
+                mainPicture = null
+            )
+
+            coEvery { annictRepository.getWorkDetail(any()) } returns Result.success(annictDetail)
+            coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.success(malResponse)
+
+            // When
+            val result = useCase(programWithWork)
+
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrNull()
+            assertNotNull(animeDetailInfo)
+            assertEquals(12, animeDetailInfo?.episodeCount) // Annictのデータが使用される
+        }
     }
 
     @Nested
