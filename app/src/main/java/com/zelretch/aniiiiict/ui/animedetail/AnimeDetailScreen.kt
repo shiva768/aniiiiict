@@ -41,9 +41,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.annict.WorkDetailQuery
+import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.base.UiState
+import com.zelretch.aniiiiict.ui.common.components.StatusDropdown
 
 private const val IMAGE_SIZE = 120
 private const val CARD_ELEVATION = 2
@@ -102,6 +104,10 @@ fun AnimeDetailScreen(
                 is UiState.Success -> {
                     AnimeDetailContent(
                         animeDetailInfo = state.data.animeDetailInfo,
+                        selectedStatus = state.data.selectedStatus,
+                        isStatusChanging = state.data.isStatusChanging,
+                        statusChangeError = state.data.statusChangeError,
+                        onStatusChange = viewModel::changeStatus,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -111,7 +117,14 @@ fun AnimeDetailScreen(
 }
 
 @Composable
-private fun AnimeDetailContent(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
+private fun AnimeDetailContent(
+    animeDetailInfo: AnimeDetailInfo,
+    selectedStatus: StatusState?,
+    isStatusChanging: Boolean,
+    statusChangeError: String?,
+    onStatusChange: (StatusState) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -119,7 +132,13 @@ private fun AnimeDetailContent(animeDetailInfo: AnimeDetailInfo, modifier: Modif
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // ヘッダー情報
-        AnimeDetailHeader(animeDetailInfo = animeDetailInfo)
+        AnimeDetailHeader(
+            animeDetailInfo = animeDetailInfo,
+            selectedStatus = selectedStatus,
+            isStatusChanging = isStatusChanging,
+            statusChangeError = statusChangeError,
+            onStatusChange = onStatusChange
+        )
 
         // 基本情報
         AnimeDetailBasicInfo(animeDetailInfo = animeDetailInfo)
@@ -144,40 +163,64 @@ private fun AnimeDetailContent(animeDetailInfo: AnimeDetailInfo, modifier: Modif
 }
 
 @Composable
-private fun AnimeDetailHeader(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // 画像
-        AsyncImage(
-            model = animeDetailInfo.imageUrl,
-            contentDescription = animeDetailInfo.work.title,
-            modifier = Modifier.size(IMAGE_SIZE.dp),
-            contentScale = ContentScale.Crop
-        )
-
-        // 基本情報
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+private fun AnimeDetailHeader(
+    animeDetailInfo: AnimeDetailInfo,
+    selectedStatus: StatusState?,
+    isStatusChanging: Boolean,
+    statusChangeError: String?,
+    onStatusChange: (StatusState) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = animeDetailInfo.work.title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+            // 画像
+            AsyncImage(
+                model = animeDetailInfo.imageUrl,
+                contentDescription = animeDetailInfo.work.title,
+                modifier = Modifier.size(IMAGE_SIZE.dp),
+                contentScale = ContentScale.Crop
             )
 
-            animeDetailInfo.work.seasonNameText?.let { seasonText ->
+            // 基本情報
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
-                    text = seasonText,
+                    text = animeDetailInfo.work.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                animeDetailInfo.work.seasonNameText?.let { seasonText ->
+                    Text(
+                        text = seasonText,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Text(
+                    text = animeDetailInfo.episodeCount?.let { "全${it}話" } ?: "全?話",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+        }
 
+        // ステータス変更
+        StatusDropdown(
+            selectedStatus = selectedStatus,
+            isChanging = isStatusChanging,
+            onStatusChange = onStatusChange
+        )
+
+        statusChangeError?.let { error ->
             Text(
-                text = animeDetailInfo.episodeCount?.let { "全${it}話" } ?: "話数不明",
-                style = MaterialTheme.typography.bodyMedium
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

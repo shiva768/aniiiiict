@@ -165,7 +165,7 @@ class TrackScreenUITest {
     }
 
     @Test
-    fun trackScreen_プログラムカードクリック_詳細モーダルが開く() {
+    fun trackScreen_プログラムカードクリック_アニメ詳細コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
 
@@ -206,6 +206,61 @@ class TrackScreenUITest {
         val stateWithPrograms = TrackUiState(programs = listOf(programWithWork))
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithPrograms)
 
+        var detailCalled: ProgramWithWork? = null
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = stateWithPrograms,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {},
+                onShowAnimeDetail = { detailCalled = it }
+            )
+        }
+
+        // プログラムカードをクリック
+        composeTestRule.onNodeWithTag("program_card_1").performClick()
+
+        // Assert - onShowAnimeDetailが呼ばれることを確認
+        assert(detailCalled == programWithWork)
+    }
+
+    @Test
+    fun trackScreen_エピソードボタンクリック_モーダルが開く() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+
+        val sampleWork = Work(
+            id = "1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val sampleEpisode = Episode(
+            id = "ep1",
+            title = "第1話",
+            numberText = "1",
+            number = 1
+        )
+        val sampleChannel = Channel(name = "テストチャンネル")
+        val sampleProgram = Program(
+            id = "prog1",
+            startedAt = LocalDateTime.now(),
+            channel = sampleChannel,
+            episode = sampleEpisode
+        )
+        val programWithWork = ProgramWithWork(
+            programs = listOf(sampleProgram),
+            work = sampleWork
+        )
+        val stateWithPrograms = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithPrograms)
+
         // Act
         composeTestRule.setContent {
             TrackScreen(
@@ -217,8 +272,8 @@ class TrackScreenUITest {
             )
         }
 
-        // プログラムカードをクリック
-        composeTestRule.onNodeWithTag("program_card_1").performClick()
+        // エピソードボタンをクリック
+        composeTestRule.onNodeWithText("エピソード").performClick()
 
         // Assert - showUnwatchedEpisodesが呼ばれることを確認
         verify { mockViewModel.showUnwatchedEpisodes(programWithWork) }
