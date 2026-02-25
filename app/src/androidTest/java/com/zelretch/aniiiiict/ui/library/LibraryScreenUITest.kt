@@ -133,8 +133,9 @@ class LibraryScreenUITest {
 
         // Assert
         composeTestRule.onNodeWithText("天国大魔境").assertIsDisplayed()
-        composeTestRule.onNodeWithText("2023年 TV").assertIsDisplayed()
-        composeTestRule.onNodeWithText("次：第9話 「学園の子供たち」").assertIsDisplayed()
+        composeTestRule.onNodeWithText("2023年 · TV").assertIsDisplayed()
+        composeTestRule.onNodeWithText("次").assertIsDisplayed()
+        composeTestRule.onNodeWithText("第9話「学園の子供たち」").assertIsDisplayed()
     }
 
     @Test
