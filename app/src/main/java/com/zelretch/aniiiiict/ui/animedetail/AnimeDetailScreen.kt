@@ -203,7 +203,7 @@ private fun AnimeDetailHeader(
                 }
 
                 Text(
-                    text = animeDetailInfo.episodeCount?.let { "全${it}話" } ?: "全?話",
+                    text = animeDetailInfo.episodeCount?.let { "全${it}話" } ?: "話数不明",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
