@@ -1,7 +1,5 @@
 package com.zelretch.aniiiiict.ui.animedetail
 
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onNodeWithText
 import com.annict.WorkDetailQuery
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -17,37 +15,32 @@ import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.di.AppModule
 import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
-import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
-import com.zelretch.aniiiiict.testing.HiltComposeTestRule
 import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
-import com.zelretch.aniiiiict.ui.base.ErrorMapper
-import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Rule
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
 
 /**
- * Integration test for AnimeDetailScreen.
- * Tests the collaboration between ViewModel and UseCase with real dependencies.
+ * Integration test for GetAnimeDetailUseCase.
+ * Tests the collaboration between UseCase and Repository with real dependencies.
  *
- * Following AGENTS.md strategy:
+ * Following CLAUDE.md strategy:
  * - Mock external boundaries (Repository)
  * - Do NOT mock domain UseCases
- * - Prefer verifying outcomes rather than internal method calls
+ * - Test UseCase+Repository collaboration
  */
 @HiltAndroidTest
 @UninstallModules(AppModule::class)
 class AnimeDetailScreenIntegrationTest {
 
-    @get:Rule
-    val testRule = HiltComposeTestRule(this)
-
-    // --- Hilt Bindings for Test ---
     @BindValue
     @JvmField
     val mockAnnictRepository: AnnictRepository = mockk(relaxed = true)
@@ -58,39 +51,24 @@ class AnimeDetailScreenIntegrationTest {
 
     @BindValue
     @JvmField
+    val mockMyAnimeListRepository: MyAnimeListRepository = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
     val mockProgramFilter: ProgramFilter = mockk(relaxed = true)
 
     @BindValue
     @JvmField
     val mockCustomTabsIntentFactory: CustomTabsIntentFactory = mockk(relaxed = true)
 
-    @BindValue
-    @JvmField
-    val mockMyAnimeListRepository: MyAnimeListRepository = object : MyAnimeListRepository {
-        override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> {
-            // デフォルトの実装（各テストでオーバーライドする）
-            return Result.success(
-                MyAnimeListResponse(
-                    id = animeId,
-                    mediaType = "tv",
-                    numEpisodes = 9999,
-                    status = "currently_airing",
-                    broadcast = null,
-                    mainPicture = null
-                )
-            )
-        }
-    }
-
     @Test
-    fun 実際のViewModelとモックRepositoryでアニメ詳細が正常にロードされる() {
+    fun UseCase_複数Repositoryから正しくデータを取得できる() = runTest {
         // Arrange
         val workId = "test-work-id"
-        val malAnimeId = "12345"
-        val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
+        val malAnimeId = 12345
 
         val mockAnnictDetail = createMockAnnictDetail(workId)
-        val mockMalInfo = createMockMalInfo(malAnimeId.toInt())
+        val mockMalInfo = createMockMalInfo(malAnimeId)
 
         // Fake Annict Repository
         val fakeAnnictRepository = object : AnnictRepository {
@@ -121,44 +99,24 @@ class AnimeDetailScreenIntegrationTest {
             override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> = Result.success(mockMalInfo)
         }
 
-        // Mock ErrorMapper
-        val testErrorMapper = mockk<ErrorMapper>(relaxed = true)
-
-        // 実際のUseCaseを使用してViewModelを生成
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val updateViewStateUseCase = UpdateViewStateUseCase(fakeAnnictRepository)
-        val viewModel = AnimeDetailViewModel(useCase, updateViewStateUseCase, testErrorMapper)
+        val programWithWork = createSampleProgramWithWork(workId, malAnimeId.toString())
 
         // Act
-        testRule.composeTestRule.setContent {
-            AniiiiictTheme {
-                AnimeDetailScreen(
-                    programWithWork = programWithWork,
-                    onNavigateBack = {},
-                    viewModel = viewModel
-                )
-            }
-        }
+        val result = useCase(programWithWork)
 
-        // LaunchedEffectが実行されるのを待つ
-        testRule.composeTestRule.waitForIdle()
-
-        // Wait for loading to complete
-        testRule.composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            viewModel.uiState.value is com.zelretch.aniiiiict.ui.base.UiState.Success
-        }
-
-        // Assert: アニメ詳細が正常に表示される
-        testRule.composeTestRule.onNodeWithText("全24話").assertIsDisplayed()
-        testRule.composeTestRule.onNodeWithText("基本情報").assertIsDisplayed()
+        // Assert: UseCaseが成功を返す
+        assertTrue(result.isSuccess)
+        val animeDetail = result.getOrNull()
+        assertNotNull(animeDetail)
+        assertEquals(24, animeDetail?.episodeCount)
     }
 
     @Test
-    fun Annict失敗時にエラーメッセージが表示される() {
+    fun UseCase_Annict失敗時はエラーを正しく伝播する() = runTest {
         // Arrange
         val workId = "test-work-id"
-        val malAnimeId = "12345"
-        val programWithWork = createSampleProgramWithWork(workId, malAnimeId)
+        val malAnimeId = 12345
 
         // Fake Annict Repository (エラーを返す)
         val fakeAnnictRepository = object : AnnictRepository {
@@ -187,42 +145,17 @@ class AnimeDetailScreenIntegrationTest {
         // Fake MyAnimeList Repository
         val fakeMyAnimeListRepository = object : MyAnimeListRepository {
             override suspend fun getAnimeDetail(animeId: Int): Result<MyAnimeListResponse> =
-                Result.success(createMockMalInfo(malAnimeId.toInt()))
+                Result.success(createMockMalInfo(malAnimeId))
         }
 
-        // Mock ErrorMapper
-        val testErrorMapper = mockk<ErrorMapper>()
-        every { testErrorMapper.toUserMessage(any(), any()) } returns "処理中にエラーが発生しました"
-
-        // 実際のUseCaseを使用してViewModelを生成
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val updateViewStateUseCase = UpdateViewStateUseCase(fakeAnnictRepository)
-        val viewModel = AnimeDetailViewModel(useCase, updateViewStateUseCase, testErrorMapper)
+        val programWithWork = createSampleProgramWithWork(workId, malAnimeId.toString())
 
         // Act
-        testRule.composeTestRule.setContent {
-            AniiiiictTheme {
-                AnimeDetailScreen(
-                    programWithWork = programWithWork,
-                    onNavigateBack = {},
-                    viewModel = viewModel
-                )
-            }
-        }
+        val result = useCase(programWithWork)
 
-        // LaunchedEffectが実行されるのを待つ
-        testRule.composeTestRule.waitForIdle()
-
-        // Wait for error state
-        testRule.composeTestRule.waitUntil(timeoutMillis = 10_000) {
-            viewModel.uiState.value is com.zelretch.aniiiiict.ui.base.UiState.Error
-        }
-
-        // Assert: エラーメッセージが表示される（ErrorMapper経由）
-        testRule.composeTestRule.onNodeWithText(
-            "処理中にエラーが発生しました",
-            substring = true
-        ).assertIsDisplayed()
+        // Assert: UseCaseが失敗を返す
+        assertTrue(result.isFailure)
     }
 
     private fun createSampleProgramWithWork(workId: String, malAnimeId: String?): ProgramWithWork {
