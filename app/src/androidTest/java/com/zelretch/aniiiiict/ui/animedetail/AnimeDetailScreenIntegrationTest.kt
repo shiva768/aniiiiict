@@ -3,19 +3,30 @@ package com.zelretch.aniiiiict.ui.animedetail
 import com.annict.WorkDetailQuery
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.Channel
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
+import com.zelretch.aniiiiict.data.model.Program
+import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.repository.AniListRepository
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
+import com.zelretch.aniiiiict.domain.filter.ProgramFilter
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.di.AppModule
+import com.zelretch.aniiiiict.ui.base.CustomTabsIntentFactory
+import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import java.time.LocalDateTime
 
 /**
  * Integration test for GetAnimeDetailUseCase.
@@ -27,11 +38,31 @@ import kotlin.test.assertTrue
  * - Test UseCase+Repository collaboration
  */
 @HiltAndroidTest
-@UninstallModules
+@UninstallModules(AppModule::class)
 class AnimeDetailScreenIntegrationTest {
 
+    @BindValue
+    @JvmField
+    val mockAnnictRepository: AnnictRepository = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockAniListRepository: AniListRepository = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockMyAnimeListRepository: MyAnimeListRepository = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockProgramFilter: ProgramFilter = mockk(relaxed = true)
+
+    @BindValue
+    @JvmField
+    val mockCustomTabsIntentFactory: CustomTabsIntentFactory = mockk(relaxed = true)
+
     @Test
-    fun UseCase_複数Repositoryから正しくデータを取得できる() {
+    fun UseCase_複数Repositoryから正しくデータを取得できる() = runTest {
         // Arrange
         val workId = "test-work-id"
         val malAnimeId = 12345
@@ -69,20 +100,10 @@ class AnimeDetailScreenIntegrationTest {
         }
 
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
-        val work = Work(
-            id = workId,
-            title = "テストアニメ",
-            seasonName = SeasonName.SPRING,
-            seasonYear = 2024,
-            media = "tv",
-            malAnimeId = malAnimeId.toString(),
-            viewerStatusState = StatusState.WATCHING
-        )
+        val programWithWork = createSampleProgramWithWork(workId, malAnimeId.toString())
 
         // Act
-        val result = kotlin.runBlocking {
-            useCase(work)
-        }
+        val result = useCase(programWithWork)
 
         // Assert: UseCaseが成功を返す
         assertTrue(result.isSuccess)
@@ -92,7 +113,7 @@ class AnimeDetailScreenIntegrationTest {
     }
 
     @Test
-    fun UseCase_Annict失敗時はエラーを正しく伝播する() {
+    fun UseCase_Annict失敗時はエラーを正しく伝播する() = runTest {
         // Arrange
         val workId = "test-work-id"
         val malAnimeId = 12345
@@ -128,23 +149,46 @@ class AnimeDetailScreenIntegrationTest {
         }
 
         val useCase = GetAnimeDetailUseCase(fakeAnnictRepository, fakeMyAnimeListRepository)
+        val programWithWork = createSampleProgramWithWork(workId, malAnimeId.toString())
+
+        // Act
+        val result = useCase(programWithWork)
+
+        // Assert: UseCaseが失敗を返す
+        assertTrue(result.isFailure)
+    }
+
+    private fun createSampleProgramWithWork(workId: String, malAnimeId: String?): ProgramWithWork {
         val work = Work(
             id = workId,
             title = "テストアニメ",
             seasonName = SeasonName.SPRING,
             seasonYear = 2024,
             media = "tv",
-            malAnimeId = malAnimeId.toString(),
+            malAnimeId = malAnimeId,
             viewerStatusState = StatusState.WATCHING
         )
 
-        // Act
-        val result = kotlin.runBlocking {
-            useCase(work)
-        }
+        val episode = Episode(
+            id = "episode-id",
+            number = 1,
+            numberText = "1",
+            title = "第1話"
+        )
 
-        // Assert: UseCaseが失敗を返す
-        assertTrue(result.isFailure)
+        val channel = Channel(name = "テストチャンネル")
+
+        val program = Program(
+            id = "program-id",
+            startedAt = LocalDateTime.now(),
+            channel = channel,
+            episode = episode
+        )
+
+        return ProgramWithWork(
+            work = work,
+            programs = listOf(program)
+        )
     }
 
     private fun createMockAnnictDetail(workId: String): WorkDetailQuery.Node {
