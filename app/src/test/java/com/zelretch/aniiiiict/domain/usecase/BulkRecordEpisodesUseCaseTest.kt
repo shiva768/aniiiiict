@@ -75,6 +75,33 @@ class BulkRecordEpisodesUseCaseTest {
         }
 
         @Test
+        @DisplayName("フィナーレ判定結果がNOT_FINALEの場合finaleResultにNOT_FINALEが含まれる")
+        fun withNotFinale() = runTest {
+            // Given
+            val episodeIds = listOf("ep1", "ep2")
+            val workId = "w1"
+            val status = StatusState.WANNA_WATCH
+            val malAnimeId = 123
+            val lastEpisodeNumber = 9
+            val notFinaleResult = JudgeFinaleResult(FinaleState.NOT_FINALE)
+
+            coEvery { watchEpisodeUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase(lastEpisodeNumber, malAnimeId, null) } returns notFinaleResult
+
+            // When
+            val finaleInfo = FinaleJudgmentInfo(
+                malAnimeId = malAnimeId,
+                lastEpisodeNumber = lastEpisodeNumber,
+                lastEpisodeHasNext = null
+            )
+            val result = useCase(episodeIds, workId, status, finaleInfo)
+
+            // Then
+            assertTrue(result.isSuccess)
+            assertEquals(notFinaleResult, result.getOrNull()?.finaleResult)
+        }
+
+        @Test
         @DisplayName("途中で失敗する場合Result.failureを返す")
         fun onFailure() = runTest {
             // Given

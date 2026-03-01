@@ -74,6 +74,34 @@ class LoadLibraryEntriesUseCaseTest {
         }
 
         @Test
+        @DisplayName("複数のステータスで取得できる")
+        fun withMultipleStates() = runTest {
+            // Given
+            val states = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH)
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Work 1"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry2",
+                    work = createFakeWork("work2", "Work 2"),
+                    nextEpisode = null,
+                    statusState = StatusState.WANNA_WATCH
+                )
+            )
+            coEvery { repository.getLibraryEntries(states) } returns Result.success(fakeEntries)
+
+            // When
+            val result = useCase(states).getOrThrow()
+
+            // Then
+            assertEquals(2, result.size)
+        }
+
+        @Test
         @DisplayName("デフォルトでWATCHINGステートを使用する")
         fun usesWatchingStateByDefault() = runTest {
             // Given
