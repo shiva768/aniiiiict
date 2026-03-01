@@ -321,5 +321,5 @@ ktlint {
 }
 
 detekt {
-    ignoreFailures = true
+    ignoreFailures = false
 }
