@@ -27,6 +27,7 @@ data class LibraryUiState(
     val error: String? = null,
     val showOnlyPastWorks: Boolean = true,
     val filterState: FilterState = FilterState(),
+    val availableMedia: List<String> = emptyList(),
     val isFilterVisible: Boolean = false,
     val selectedEntry: LibraryEntry? = null,
     val isDetailModalVisible: Boolean = false
@@ -71,10 +72,12 @@ class LibraryViewModel @Inject constructor(
             loadLibraryEntriesUseCase(listOf(StatusState.WATCHING))
                 .onSuccess { entries ->
                     Timber.i("ライブラリエントリーを取得: ${entries.size}件")
+                    val availableMedia = entries.mapNotNull { it.work.media }.distinct().sorted()
                     _uiState.update { currentState ->
                         currentState.copy(
                             allEntries = entries,
-                            entries = applyFilters(entries, currentState.showOnlyPastWorks),
+                            availableMedia = availableMedia,
+                            entries = applyFilters(entries, currentState.showOnlyPastWorks, currentState.filterState),
                             isLoading = false,
                             error = null
                         )
@@ -102,7 +105,19 @@ class LibraryViewModel @Inject constructor(
             val newShowOnlyPastWorks = !currentState.showOnlyPastWorks
             currentState.copy(
                 showOnlyPastWorks = newShowOnlyPastWorks,
-                entries = applyFilters(currentState.allEntries, newShowOnlyPastWorks)
+                entries = applyFilters(currentState.allEntries, newShowOnlyPastWorks, currentState.filterState)
+            )
+        }
+    }
+
+    fun toggleMediaFilter(media: String) {
+        _uiState.update { currentState ->
+            val currentSelected = currentState.filterState.selectedMedia
+            val newSelected = if (media in currentSelected) currentSelected - media else currentSelected + media
+            val newFilterState = currentState.filterState.copy(selectedMedia = newSelected)
+            currentState.copy(
+                filterState = newFilterState,
+                entries = applyFilters(currentState.allEntries, currentState.showOnlyPastWorks, newFilterState)
             )
         }
     }
@@ -131,12 +146,19 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    private fun applyFilters(entries: List<LibraryEntry>, showOnlyPastWorks: Boolean): List<LibraryEntry> =
-        if (showOnlyPastWorks) {
-            entries.filter { entry ->
-                entry.work.id !in currentlyAiringWorkIds
-            }
+    private fun applyFilters(
+        entries: List<LibraryEntry>,
+        showOnlyPastWorks: Boolean,
+        filterState: FilterState
+    ): List<LibraryEntry> {
+        var result = if (showOnlyPastWorks) {
+            entries.filter { entry -> entry.work.id !in currentlyAiringWorkIds }
         } else {
             entries
         }
+        if (filterState.selectedMedia.isNotEmpty()) {
+            result = result.filter { entry -> entry.work.media in filterState.selectedMedia }
+        }
+        return result
+    }
 }

@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -113,9 +116,12 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (uiState.isFilterVisible) {
-                PastWorksFilterBar(
+                LibraryFilterBar(
                     showOnlyPastWorks = uiState.showOnlyPastWorks,
-                    onFilterChange = { viewModel.togglePastWorksFilter() }
+                    availableMedia = uiState.availableMedia,
+                    selectedMedia = uiState.filterState.selectedMedia,
+                    onPastWorksFilterChange = { viewModel.togglePastWorksFilter() },
+                    onMediaFilterChange = { viewModel.toggleMediaFilter(it) }
                 )
             }
 
@@ -169,8 +175,15 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PastWorksFilterBar(showOnlyPastWorks: Boolean, onFilterChange: () -> Unit) {
+private fun LibraryFilterBar(
+    showOnlyPastWorks: Boolean,
+    availableMedia: List<String>,
+    selectedMedia: Set<String>,
+    onPastWorksFilterChange: () -> Unit,
+    onMediaFilterChange: (String) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -182,15 +195,26 @@ private fun PastWorksFilterBar(showOnlyPastWorks: Boolean, onFilterChange: () ->
         ) {
             RadioButton(
                 selected = showOnlyPastWorks,
-                onClick = { if (!showOnlyPastWorks) onFilterChange() }
+                onClick = { if (!showOnlyPastWorks) onPastWorksFilterChange() }
             )
             Text("過去作のみ")
             Spacer(modifier = Modifier.width(16.dp))
             RadioButton(
                 selected = !showOnlyPastWorks,
-                onClick = { if (showOnlyPastWorks) onFilterChange() }
+                onClick = { if (showOnlyPastWorks) onPastWorksFilterChange() }
             )
             Text("全作品")
+        }
+        if (availableMedia.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                availableMedia.forEach { media ->
+                    FilterChip(
+                        selected = media in selectedMedia,
+                        onClick = { onMediaFilterChange(media) },
+                        label = { Text(media) }
+                    )
+                }
+            }
         }
     }
 }
