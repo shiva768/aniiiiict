@@ -31,31 +31,27 @@ class JudgeFinaleUseCase @Inject constructor(
 
         return result.fold(onSuccess = { media ->
             when {
-                // MyAnimeListには nextAiringEpisode 相当の情報がないため、
-                // status と num_episodes で判定する
-
-                // 1. num_episodes が数値 かつ currentEp >= num_episodes かつ nextEpisode != true → finale_confirmed
-                // hasNextEpisode == true の場合は、次話があるので最終話ではない（1期・2期問題を回避）
-                media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes && hasNextEpisode != true -> {
-                    Timber.i("現在のエピソードが総エピソード数に達し、nextEpisodeがtrueでないためFINALE_CONFIRMED")
-                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
-                }
-                // 2. num_episodes が null でも hasNextEpisode == true なら最終話ではない
-                // Annictから次のエピソードがあることが確認できれば、エピソード数不明でも最終話ではない
-                media.numEpisodes == null && hasNextEpisode == true -> {
-                    Timber.i("総エピソード数は不明だが、nextEpisodeがtrueのためNOT_FINALE")
+                // 1. Annictにnextエピソードがあれば最終話ではない（最優先）
+                // 1期・2期問題も含め、次話の存在が確認できれば最終話ではない
+                hasNextEpisode == true -> {
+                    Timber.i("nextEpisodeがtrueのためNOT_FINALE")
                     JudgeFinaleResult(FinaleState.NOT_FINALE)
                 }
-                // 3. num_episodes が null で hasNextEpisode != true → unknown
-                // nextEpisode がない理由は、最終話、情報未登録、放送休止など複数考えられるため判定不能
-                media.numEpisodes == null -> {
-                    Timber.i("総エピソード数が不明で次話情報もないためUNKNOWN")
-                    JudgeFinaleResult(FinaleState.UNKNOWN)
-                }
-                // 4. status == currently_airing → not_finale
+                // 2. MALのステータスが放送中なら最終話ではない
+                // num_episodesが不明でも放送中であれば続きがある
                 media.status == "currently_airing" -> {
                     Timber.i("現在放送中のためNOT_FINALE")
                     JudgeFinaleResult(FinaleState.NOT_FINALE)
+                }
+                // 3. num_episodes に達していたら最終話確定
+                media.numEpisodes != null && currentEpisodeNumber >= media.numEpisodes -> {
+                    Timber.i("現在のエピソードが総エピソード数に達したためFINALE_CONFIRMED")
+                    JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
+                }
+                // 4. num_episodes が null で判定できない → unknown
+                media.numEpisodes == null -> {
+                    Timber.i("総エピソード数が不明で次話情報もないためUNKNOWN")
+                    JudgeFinaleResult(FinaleState.UNKNOWN)
                 }
                 // 5. それ以外 → unknown
                 else -> {
