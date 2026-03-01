@@ -224,12 +224,169 @@ class LibraryViewModelTest {
         }
     }
 
-    private fun createFakeWork(id: String, title: String) = Work(
+    @Nested
+    @DisplayName("メディアフィルター")
+    inner class MediaFilter {
+
+        @Test
+        @DisplayName("availableMediaがエントリーから抽出される")
+        fun availableMediaがエントリーから抽出される() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Work 1", media = "TV"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry2",
+                    work = createFakeWork("work2", "Work 2", media = "MOVIE"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry3",
+                    work = createFakeWork("work3", "Work 3", media = "TV"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+
+            // When
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val state = viewModel.uiState.first { !it.isLoading }
+
+            // Then
+            assertEquals(listOf("MOVIE", "TV"), state.availableMedia)
+        }
+
+        @Test
+        @DisplayName("toggleMediaFilterで選択が追加される")
+        fun toggleMediaFilterで選択が追加される() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Work 1", media = "TV"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.toggleMediaFilter("TV")
+            val state = viewModel.uiState.first()
+
+            // Then
+            assertTrue("TV" in state.filterState.selectedMedia)
+        }
+
+        @Test
+        @DisplayName("toggleMediaFilterで選択が解除される")
+        fun toggleMediaFilterで選択が解除される() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Work 1", media = "TV"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+            viewModel.toggleMediaFilter("TV")
+            viewModel.uiState.first { "TV" in it.filterState.selectedMedia }
+
+            // When
+            viewModel.toggleMediaFilter("TV")
+            val state = viewModel.uiState.first()
+
+            // Then
+            assertFalse("TV" in state.filterState.selectedMedia)
+        }
+
+        @Test
+        @DisplayName("メディアフィルターが適用されエントリーが絞り込まれる")
+        fun メディアフィルターが適用されエントリーが絞り込まれる() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "TV Work", media = "TV"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry2",
+                    work = createFakeWork("work2", "Movie Work", media = "MOVIE"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.toggleMediaFilter("TV")
+            val state = viewModel.uiState.first()
+
+            // Then
+            assertEquals(1, state.entries.size)
+            assertEquals("entry1", state.entries[0].id)
+        }
+
+        @Test
+        @DisplayName("メディアフィルターが空の場合は全エントリーが表示される")
+        fun メディアフィルターが空の場合は全エントリーが表示される() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "TV Work", media = "TV"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry2",
+                    work = createFakeWork("work2", "Movie Work", media = "MOVIE"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+
+            // When
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
+            val state = viewModel.uiState.first { !it.isLoading }
+
+            // Then
+            assertEquals(2, state.entries.size)
+            assertTrue(state.filterState.selectedMedia.isEmpty())
+        }
+    }
+
+    private fun createFakeWork(id: String, title: String, media: String? = null) = Work(
         id = id,
         title = title,
         seasonName = null,
         seasonYear = null,
-        media = null,
+        media = media,
         malAnimeId = null,
         viewerStatusState = StatusState.WATCHING,
         image = null
