@@ -216,8 +216,6 @@ android {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-    // Disable Kotest classpath autoscan to reduce startup overhead
-    systemProperty("kotest.framework.classpath.scanning.config.disable", "true")
 }
 
 dependencies {
@@ -273,8 +271,6 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.junit)
     testImplementation(libs.turbine)
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.kotest.assertions.core)
 }
 
 apollo {
