@@ -109,7 +109,7 @@ class WatchingEpisodeModalViewModel @Inject constructor(
             watchEpisodeUseCase(episode.id, workId, status)
                 .onSuccess {
                     // エピソード記録成功後、最終話判定を実行
-                    handleFinaleJudgement(episode, workId)
+                    handleFinaleJudgement(episode)
                     _events.emit(WatchingEpisodeModalEvent.EpisodeRecorded)
                 }
                 .onFailure { e ->
@@ -120,7 +120,7 @@ class WatchingEpisodeModalViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handleFinaleJudgement(episode: Episode, workId: String) {
+    private suspend fun handleFinaleJudgement(episode: Episode) {
         val episodeNumber = episode.number ?: return
         val malAnimeIdString = _state.value.malAnimeId
         if (malAnimeIdString.isNullOrEmpty()) {
