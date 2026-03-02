@@ -201,4 +201,80 @@ class LibraryScreenUITest {
         // Assert
         assert(backPressed)
     }
+
+    @Test
+    fun libraryScreen_hasNextPageがtrueでリスト末尾付近の時_loadNextPageが呼ばれる() {
+        // Arrange: エントリー数がLOAD_MORE_THRESHOLD(3)以下のためレンダリング時に末尾条件が成立する
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entries = listOf(
+            LibraryEntry(
+                id = "entry1",
+                work = Work(
+                    id = "work1",
+                    title = "テスト作品",
+                    seasonName = null,
+                    seasonYear = null,
+                    media = null,
+                    malAnimeId = null,
+                    viewerStatusState = StatusState.WATCHING,
+                    image = null
+                ),
+                nextEpisode = null,
+                statusState = StatusState.WATCHING
+            )
+        )
+        val state = LibraryUiState(entries = entries, allEntries = entries, hasNextPage = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onNavigateBack = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert
+        verify { mockViewModel.loadNextPage() }
+    }
+
+    @Test
+    fun libraryScreen_hasNextPageがfalseの時_loadNextPageが呼ばれない() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entries = listOf(
+            LibraryEntry(
+                id = "entry1",
+                work = Work(
+                    id = "work1",
+                    title = "テスト作品",
+                    seasonName = null,
+                    seasonYear = null,
+                    media = null,
+                    malAnimeId = null,
+                    viewerStatusState = StatusState.WATCHING,
+                    image = null
+                ),
+                nextEpisode = null,
+                statusState = StatusState.WATCHING
+            )
+        )
+        val state = LibraryUiState(entries = entries, allEntries = entries, hasNextPage = false)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onNavigateBack = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert
+        verify(exactly = 0) { mockViewModel.loadNextPage() }
+    }
 }
