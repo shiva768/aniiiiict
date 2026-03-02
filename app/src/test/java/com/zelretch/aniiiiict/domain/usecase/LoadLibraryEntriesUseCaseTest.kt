@@ -102,9 +102,16 @@ class LoadLibraryEntriesUseCaseTest {
         }
 
         @Test
-        @DisplayName("デフォルトでWATCHINGステートを使用する")
-        fun usesWatchingStateByDefault() = runTest {
+        @DisplayName("デフォルトで全ステータスを使用する")
+        fun usesAllStatusesByDefault() = runTest {
             // Given
+            val allStatuses = listOf(
+                StatusState.WATCHING,
+                StatusState.WANNA_WATCH,
+                StatusState.WATCHED,
+                StatusState.ON_HOLD,
+                StatusState.STOP_WATCHING
+            )
             val fakeEntries = listOf(
                 LibraryEntry(
                     id = "entry1",
@@ -113,7 +120,7 @@ class LoadLibraryEntriesUseCaseTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { repository.getLibraryEntries(allStatuses) } returns Result.success(fakeEntries)
 
             // When
             val result = useCase().getOrThrow()

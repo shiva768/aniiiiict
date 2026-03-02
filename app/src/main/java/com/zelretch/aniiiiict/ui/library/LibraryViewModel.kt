@@ -2,7 +2,6 @@ package com.zelretch.aniiiiict.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
@@ -69,7 +68,7 @@ class LibraryViewModel @Inject constructor(
                 }
 
             // ライブラリエントリーを読み込む
-            loadLibraryEntriesUseCase(listOf(StatusState.WATCHING))
+            loadLibraryEntriesUseCase()
                 .onSuccess { entries ->
                     Timber.i("ライブラリエントリーを取得: ${entries.size}件")
                     val availableMedia = entries.mapNotNull { it.work.media }.distinct().sorted()
