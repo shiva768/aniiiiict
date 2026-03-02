@@ -1,7 +1,7 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import javax.inject.Inject
 
@@ -16,6 +16,8 @@ private val ALL_STATUSES = listOf(
 class LoadLibraryEntriesUseCase @Inject constructor(
     private val repository: AnnictRepository
 ) {
-    suspend operator fun invoke(states: List<StatusState> = ALL_STATUSES): Result<List<LibraryEntry>> =
-        repository.getLibraryEntries(states)
+    suspend operator fun invoke(
+        states: List<StatusState> = ALL_STATUSES,
+        after: String? = null
+    ): Result<LibraryEntriesPage> = repository.getLibraryEntries(states, after)
 }

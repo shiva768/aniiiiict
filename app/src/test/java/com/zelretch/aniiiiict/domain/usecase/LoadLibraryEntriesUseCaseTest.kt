@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
@@ -47,30 +48,34 @@ class LoadLibraryEntriesUseCaseTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            val fakePage = LibraryEntriesPage(entries = fakeEntries, hasNextPage = false, endCursor = null)
+            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns
+                Result.success(fakePage)
 
             // When
             val result = useCase(listOf(StatusState.WATCHING)).getOrThrow()
 
             // Then
-            assertEquals(2, result.size)
-            assertEquals("entry1", result[0].id)
-            assertEquals("天国大魔境", result[0].work.title)
-            assertEquals("entry2", result[1].id)
-            assertEquals("終物語", result[1].work.title)
+            assertEquals(2, result.entries.size)
+            assertEquals("entry1", result.entries[0].id)
+            assertEquals("天国大魔境", result.entries[0].work.title)
+            assertEquals("entry2", result.entries[1].id)
+            assertEquals("終物語", result.entries[1].work.title)
         }
 
         @Test
         @DisplayName("空の結果を正しく処理できる")
         fun withEmptyResult() = runTest {
             // Given
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING)) } returns Result.success(emptyList())
+            val fakePage = LibraryEntriesPage(entries = emptyList(), hasNextPage = false, endCursor = null)
+            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns
+                Result.success(fakePage)
 
             // When
             val result = useCase(listOf(StatusState.WATCHING)).getOrThrow()
 
             // Then
-            assertEquals(0, result.size)
+            assertEquals(0, result.entries.size)
         }
 
         @Test
@@ -92,13 +97,14 @@ class LoadLibraryEntriesUseCaseTest {
                     statusState = StatusState.WANNA_WATCH
                 )
             )
-            coEvery { repository.getLibraryEntries(states) } returns Result.success(fakeEntries)
+            val fakePage = LibraryEntriesPage(entries = fakeEntries, hasNextPage = false, endCursor = null)
+            coEvery { repository.getLibraryEntries(states, null) } returns Result.success(fakePage)
 
             // When
             val result = useCase(states).getOrThrow()
 
             // Then
-            assertEquals(2, result.size)
+            assertEquals(2, result.entries.size)
         }
 
         @Test
@@ -120,13 +126,14 @@ class LoadLibraryEntriesUseCaseTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            coEvery { repository.getLibraryEntries(allStatuses) } returns Result.success(fakeEntries)
+            val fakePage = LibraryEntriesPage(entries = fakeEntries, hasNextPage = false, endCursor = null)
+            coEvery { repository.getLibraryEntries(allStatuses, null) } returns Result.success(fakePage)
 
             // When
             val result = useCase().getOrThrow()
 
             // Then
-            assertEquals(1, result.size)
+            assertEquals(1, result.entries.size)
         }
     }
 

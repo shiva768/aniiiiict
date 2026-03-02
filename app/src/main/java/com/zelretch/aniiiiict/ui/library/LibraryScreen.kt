@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -155,6 +157,11 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                             entry = entry,
                             onClick = { viewModel.showDetail(entry) }
                         )
+                    }
+                    if (uiState.hasNextPage) {
+                        item {
+                            LoadMoreButton(uiState.isLoading) { viewModel.loadNextPage() }
+                        }
                     }
                 }
             }
@@ -304,6 +311,27 @@ private fun LibraryEntryCard(entry: LibraryEntry, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadMoreButton(isLoading: Boolean, onLoadMore: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            TextButton(onClick = onLoadMore) {
+                Text(
+                    text = "もっと読み込む",
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
         }
     }

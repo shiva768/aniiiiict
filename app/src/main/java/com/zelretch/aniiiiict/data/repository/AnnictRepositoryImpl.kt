@@ -13,6 +13,7 @@ import com.zelretch.aniiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiict.data.auth.TokenManager
 import com.zelretch.aniiiiict.data.model.Episode
+import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.model.Record
@@ -214,40 +215,34 @@ class AnnictRepositoryImpl @Inject constructor(
             node
         }
 
-    override suspend fun getLibraryEntries(states: List<StatusState>, after: String?): Result<List<LibraryEntry>> =
+    override suspend fun getLibraryEntries(states: List<StatusState>, after: String?): Result<LibraryEntriesPage> =
         executeApiRequest("getLibraryEntries") {
-            Timber.i("ライブラリエントリー一覧の取得を開始: states=$states")
+            Timber.i("ライブラリエントリーの取得を開始: states=$states, after=$after")
 
-            val allEntries = mutableListOf<LibraryEntry>()
-            var cursor: String? = after
+            val query = com.annict.ViewerLibraryEntriesQuery(
+                states = Optional.present(states),
+                after = Optional.presentIfNotNull(after)
+            )
+            val response = annictApolloClient.executeQuery(
+                operation = query,
+                context = "AnnictRepositoryImpl.getLibraryEntries"
+            )
 
-            do {
-                val query = com.annict.ViewerLibraryEntriesQuery(
-                    states = Optional.present(states),
-                    after = Optional.presentIfNotNull(cursor)
-                )
-                val response = annictApolloClient.executeQuery(
-                    operation = query,
-                    context = "AnnictRepositoryImpl.getLibraryEntries"
-                )
+            if (response.hasErrors()) {
+                Timber.e("GraphQLエラー: ${response.errors}")
+                throw DomainError.ApiError.GraphQLError("Library entries query failed: ${response.errors}")
+            }
 
-                if (response.hasErrors()) {
-                    Timber.e("GraphQLエラー: ${response.errors}")
-                    throw DomainError.ApiError.GraphQLError("Library entries query failed: ${response.errors}")
-                }
+            val libraryEntries = response.data?.viewer?.libraryEntries
+            val entries = libraryEntries?.nodes?.filterNotNull()?.mapNotNull { mapToLibraryEntry(it) } ?: emptyList()
+            val pageInfo = libraryEntries?.pageInfo
 
-                val libraryEntries = response.data?.viewer?.libraryEntries
-                val nodes = libraryEntries?.nodes?.filterNotNull() ?: emptyList()
-                allEntries.addAll(nodes.mapNotNull { mapToLibraryEntry(it) })
-
-                val pageInfo = libraryEntries?.pageInfo
-                cursor = if (pageInfo?.hasNextPage == true) pageInfo.endCursor else null
-
-                Timber.i("ページ取得: ${nodes.size}件, hasNextPage=${pageInfo?.hasNextPage}")
-            } while (cursor != null)
-
-            Timber.i("ライブラリエントリー全件取得完了: ${allEntries.size}件")
-            allEntries
+            Timber.i("ライブラリエントリー取得完了: ${entries.size}件, hasNextPage=${pageInfo?.hasNextPage}")
+            LibraryEntriesPage(
+                entries = entries,
+                hasNextPage = pageInfo?.hasNextPage == true,
+                endCursor = pageInfo?.endCursor
+            )
         }
 
     private fun mapToLibraryEntry(node: com.annict.ViewerLibraryEntriesQuery.Node): LibraryEntry? {
