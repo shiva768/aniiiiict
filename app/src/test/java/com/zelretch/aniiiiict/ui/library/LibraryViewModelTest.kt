@@ -57,7 +57,7 @@ class LibraryViewModelTest {
         fun loadLibraryEntriesが呼ばれUIステートが初期値で更新される() = runTest(dispatcher) {
             // Given
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(emptyList())
 
             // When
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
@@ -90,7 +90,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             // When
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
@@ -130,7 +130,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returnsMany listOf(
+            coEvery { loadLibraryEntriesUseCase(any()) } returnsMany listOf(
                 Result.success(initialEntries),
                 Result.success(refreshedEntries)
             )
@@ -166,7 +166,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
@@ -185,7 +185,7 @@ class LibraryViewModelTest {
         fun toggleFilterVisibility() = runTest(dispatcher) {
             // Given
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(emptyList())
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             val initialState = viewModel.uiState.first { !it.isLoading }
@@ -210,7 +210,7 @@ class LibraryViewModelTest {
             // Given
             val exception = RuntimeException("Network error")
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.failure(exception)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.failure(exception)
             every { errorMapper.toUserMessage(exception) } returns "ネットワークエラーが発生しました"
 
             // When
@@ -253,7 +253,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             // When
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
@@ -276,7 +276,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             viewModel.uiState.first { !it.isLoading }
@@ -302,7 +302,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             viewModel.uiState.first { !it.isLoading }
@@ -336,7 +336,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)
             viewModel.uiState.first { !it.isLoading }
@@ -369,7 +369,7 @@ class LibraryViewModelTest {
                 )
             )
             coEvery { loadProgramsUseCase() } returns Result.success(emptyList())
-            coEvery { loadLibraryEntriesUseCase(listOf(StatusState.WATCHING)) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase(any()) } returns Result.success(fakeEntries)
 
             // When
             val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, loadProgramsUseCase, errorMapper)

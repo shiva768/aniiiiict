@@ -218,27 +218,36 @@ class AnnictRepositoryImpl @Inject constructor(
         executeApiRequest("getLibraryEntries") {
             Timber.i("ライブラリエントリー一覧の取得を開始: states=$states")
 
-            val query = com.annict.ViewerLibraryEntriesQuery(
-                states = Optional.present(states),
-                after = Optional.presentIfNotNull(after)
-            )
-            val response = annictApolloClient.executeQuery(
-                operation = query,
-                context = "AnnictRepositoryImpl.getLibraryEntries"
-            )
+            val allEntries = mutableListOf<LibraryEntry>()
+            var cursor: String? = after
 
-            Timber.i("GraphQLのレスポンス: ${response.data != null}")
+            do {
+                val query = com.annict.ViewerLibraryEntriesQuery(
+                    states = Optional.present(states),
+                    after = Optional.presentIfNotNull(cursor)
+                )
+                val response = annictApolloClient.executeQuery(
+                    operation = query,
+                    context = "AnnictRepositoryImpl.getLibraryEntries"
+                )
 
-            if (response.hasErrors()) {
-                Timber.e("GraphQLエラー: ${response.errors}")
-                throw DomainError.ApiError.GraphQLError("Library entries query failed: ${response.errors}")
-            }
+                if (response.hasErrors()) {
+                    Timber.e("GraphQLエラー: ${response.errors}")
+                    throw DomainError.ApiError.GraphQLError("Library entries query failed: ${response.errors}")
+                }
 
-            val nodes = response.data?.viewer?.libraryEntries?.nodes?.filterNotNull() ?: emptyList()
-            val entries = nodes.mapNotNull { node -> mapToLibraryEntry(node) }
+                val libraryEntries = response.data?.viewer?.libraryEntries
+                val nodes = libraryEntries?.nodes?.filterNotNull() ?: emptyList()
+                allEntries.addAll(nodes.mapNotNull { mapToLibraryEntry(it) })
 
-            Timber.i("ライブラリエントリー一覧を取得しました: ${entries.size}件")
-            entries
+                val pageInfo = libraryEntries?.pageInfo
+                cursor = if (pageInfo?.hasNextPage == true) pageInfo.endCursor else null
+
+                Timber.i("ページ取得: ${nodes.size}件, hasNextPage=${pageInfo?.hasNextPage}")
+            } while (cursor != null)
+
+            Timber.i("ライブラリエントリー全件取得完了: ${allEntries.size}件")
+            allEntries
         }
 
     private fun mapToLibraryEntry(node: com.annict.ViewerLibraryEntriesQuery.Node): LibraryEntry? {
