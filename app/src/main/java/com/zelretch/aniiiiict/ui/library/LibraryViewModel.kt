@@ -2,7 +2,6 @@ package com.zelretch.aniiiiict.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
@@ -30,7 +29,9 @@ data class LibraryUiState(
     val availableMedia: List<String> = emptyList(),
     val isFilterVisible: Boolean = false,
     val selectedEntry: LibraryEntry? = null,
-    val isDetailModalVisible: Boolean = false
+    val isDetailModalVisible: Boolean = false,
+    val hasNextPage: Boolean = false,
+    val endCursor: String? = null
 )
 
 /**
@@ -55,7 +56,9 @@ class LibraryViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update {
+                it.copy(isLoading = true, error = null, allEntries = emptyList(), hasNextPage = false, endCursor = null)
+            }
 
             // 先に放送中の番組データを読み込む
             loadProgramsUseCase()
@@ -69,17 +72,23 @@ class LibraryViewModel @Inject constructor(
                 }
 
             // ライブラリエントリーを読み込む
-            loadLibraryEntriesUseCase(listOf(StatusState.WATCHING))
-                .onSuccess { entries ->
-                    Timber.i("ライブラリエントリーを取得: ${entries.size}件")
-                    val availableMedia = entries.mapNotNull { it.work.media }.distinct().sorted()
+            loadLibraryEntriesUseCase()
+                .onSuccess { page ->
+                    Timber.i("ライブラリエントリーを取得: ${page.entries.size}件")
+                    val availableMedia = page.entries.mapNotNull { it.work.media }.distinct().sorted()
                     _uiState.update { currentState ->
                         currentState.copy(
-                            allEntries = entries,
+                            allEntries = page.entries,
                             availableMedia = availableMedia,
-                            entries = applyFilters(entries, currentState.showOnlyPastWorks, currentState.filterState),
+                            entries = applyFilters(
+                                page.entries,
+                                currentState.showOnlyPastWorks,
+                                currentState.filterState
+                            ),
                             isLoading = false,
-                            error = null
+                            error = null,
+                            hasNextPage = page.hasNextPage,
+                            endCursor = page.endCursor
                         )
                     }
                 }
@@ -87,6 +96,32 @@ class LibraryViewModel @Inject constructor(
                     Timber.e(e, "ライブラリエントリーの読み込みに失敗")
                     val errorMessage = errorMapper.toUserMessage(e)
                     _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+                }
+        }
+    }
+
+    fun loadNextPage() {
+        val current = _uiState.value
+        if (current.isLoading || !current.hasNextPage) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            loadLibraryEntriesUseCase(after = current.endCursor)
+                .onSuccess { page ->
+                    _uiState.update { state ->
+                        val newAll = state.allEntries + page.entries
+                        val newMedia = newAll.mapNotNull { it.work.media }.distinct().sorted()
+                        state.copy(
+                            allEntries = newAll,
+                            availableMedia = newMedia,
+                            entries = applyFilters(newAll, state.showOnlyPastWorks, state.filterState),
+                            hasNextPage = page.hasNextPage,
+                            endCursor = page.endCursor,
+                            isLoading = false
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(isLoading = false, error = errorMapper.toUserMessage(e)) }
                 }
         }
     }
