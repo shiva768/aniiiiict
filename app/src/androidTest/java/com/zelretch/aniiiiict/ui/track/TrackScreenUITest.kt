@@ -2,6 +2,7 @@ package com.zelretch.aniiiiict.ui.track
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,6 +16,7 @@ import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.domain.filter.FilterState
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -439,6 +441,194 @@ class TrackScreenUITest {
         composeTestRule.onNodeWithText("放送スケジュール").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("フィルター").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("メニュー").assertIsDisplayed()
+    }
+
+    @Test
+    fun trackScreen_検索結果0件かつ他フィルター有効_オフにするボタンが表示される() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(
+                searchQuery = "存在しない作品",
+                selectedStatus = setOf(StatusState.WATCHING)
+            ),
+            isSearchOnlyMode = false
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("一致する作品が見つかりませんでした").assertIsDisplayed()
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsDisplayed()
+    }
+
+    @Test
+    fun trackScreen_オフにするボタンクリック_ViewModelのtoggleが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(
+                searchQuery = "テスト",
+                selectedStatus = setOf(StatusState.WATCHING)
+            ),
+            isSearchOnlyMode = false
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").performClick()
+
+        // Assert
+        verify { mockViewModel.toggleSearchOnlyMode() }
+    }
+
+    @Test
+    fun trackScreen_検索結果ありの場合_オフにするボタンが表示されない() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val sampleProgram = ProgramWithWork(
+            programs = listOf(
+                Program(
+                    id = "prog1",
+                    startedAt = LocalDateTime.now(),
+                    channel = Channel(name = "チャンネル"),
+                    episode = Episode(id = "ep1", title = "第1話", numberText = "1", number = 1)
+                )
+            ),
+            work = Work(
+                id = "1",
+                title = "テストアニメ",
+                seasonName = SeasonName.SPRING,
+                seasonYear = 2024,
+                media = "TV",
+                mediaText = "TV",
+                viewerStatusState = StatusState.WATCHING
+            )
+        )
+        val state = TrackUiState(
+            programs = listOf(sampleProgram),
+            filterState = FilterState(
+                searchQuery = "テスト",
+                selectedStatus = setOf(StatusState.WATCHING)
+            ),
+            isSearchOnlyMode = false
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsNotDisplayed()
+    }
+
+    @Test
+    fun trackScreen_isSearchOnlyModeがtrue_インジケーターと元に戻すボタンが表示される() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(searchQuery = "テスト"),
+            isSearchOnlyMode = true
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにしています").assertIsDisplayed()
+        composeTestRule.onNodeWithText("元に戻す").assertIsDisplayed()
+    }
+
+    @Test
+    fun trackScreen_元に戻すボタンクリック_ViewModelのtoggleが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(searchQuery = "テスト"),
+            isSearchOnlyMode = true
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.onNodeWithText("元に戻す").performClick()
+
+        // Assert
+        verify { mockViewModel.toggleSearchOnlyMode() }
+    }
+
+    @Test
+    fun trackScreen_他フィルターなしで検索0件_オフにするボタンが表示されない() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(searchQuery = "存在しない作品"),
+            isSearchOnlyMode = false
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert（他フィルターがないのでボタンは非表示）
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsNotDisplayed()
     }
 
     @Test
