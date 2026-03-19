@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +30,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -73,6 +76,95 @@ fun TrackScreen(
             onRecordEpisode = onRecordEpisode,
             onShowAnimeDetail = onShowAnimeDetail
         )
+    }
+}
+
+@Composable
+private fun ProgramListContent(
+    uiState: TrackUiState,
+    onToggleSearchOnlyMode: () -> Unit,
+    onRecordEpisode: (String, String, StatusState) -> Unit,
+    onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit,
+    onShowAnimeDetail: (ProgramWithWork) -> Unit
+) {
+    val showSearchOnlySuggestion = !uiState.isLoading &&
+        uiState.programs.isEmpty() &&
+        uiState.filterState.searchQuery.isNotEmpty() &&
+        uiState.filterState.hasActiveNonSearchFilters() &&
+        !uiState.isSearchOnlyMode
+
+    if (showSearchOnlySuggestion) {
+        SearchOnlySuggestion(
+            onSearchOnly = onToggleSearchOnlyMode,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+
+    if (uiState.isSearchOnlyMode) {
+        SearchOnlyModeIndicator(onRestore = onToggleSearchOnlyMode)
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        state = rememberLazyListState()
+    ) {
+        items(items = uiState.programs, key = { it.work.id }) { program ->
+            ProgramCard(
+                programWithWork = program,
+                onRecordEpisode = onRecordEpisode,
+                onShowUnwatchedEpisodes = { onShowUnwatchedEpisodes(program) },
+                onShowAnimeDetail = onShowAnimeDetail,
+                uiState = uiState
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchOnlyModeIndicator(onRestore: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "他のフィルターを一時的にオフにしています",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onRestore) {
+            Text(
+                text = "元に戻す",
+                style = MaterialTheme.typography.labelMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchOnlySuggestion(onSearchOnly: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "一致する作品が見つかりませんでした",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Button(
+            onClick = onSearchOnly,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "他のフィルターを一時的にオフにして検索",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
     }
 }
 
@@ -224,20 +316,13 @@ private fun TrackScreenContent(
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = rememberLazyListState()
-                ) {
-                    items(items = uiState.programs, key = { it.work.id }) { program ->
-                        ProgramCard(
-                            programWithWork = program,
-                            onRecordEpisode = onRecordEpisode,
-                            onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(program) },
-                            onShowAnimeDetail = onShowAnimeDetail,
-                            uiState = uiState
-                        )
-                    }
-                }
+                ProgramListContent(
+                    uiState = uiState,
+                    onToggleSearchOnlyMode = { viewModel.toggleSearchOnlyMode() },
+                    onRecordEpisode = onRecordEpisode,
+                    onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(it) },
+                    onShowAnimeDetail = onShowAnimeDetail
+                )
             }
         }
     }

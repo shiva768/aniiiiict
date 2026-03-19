@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
@@ -71,25 +70,6 @@ fun FilterBar(filterState: FilterState, filterOptions: FilterOptions, onFilterCh
                 searchQuery = filterState.searchQuery,
                 onQueryChange = { onFilterChange(filterState.copy(searchQuery = it)) }
             )
-
-            if (filterState.searchQuery.isNotEmpty() && filterState.hasActiveNonSearchFilters()) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(end = 2.dp)
-                    )
-                    Text(
-                        text = "検索中: 他のフィルターは無視されています",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
 
             FilterChips(
                 filterState = filterState,

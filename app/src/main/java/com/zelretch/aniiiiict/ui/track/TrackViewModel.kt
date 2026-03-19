@@ -44,7 +44,8 @@ data class TrackUiState(
     val isDetailModalVisible: Boolean = false,
     val isLoadingDetail: Boolean = false,
     val showFinaleConfirmationForWorkId: String? = null,
-    val showFinaleConfirmationForEpisodeNumber: Int? = null
+    val showFinaleConfirmationForEpisodeNumber: Int? = null,
+    val isSearchOnlyMode: Boolean = false
 )
 
 /**
@@ -86,13 +87,23 @@ class TrackViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             filterState = savedFilterState,
-                            programs = programFilterManager.filterPrograms(it.allPrograms, savedFilterState)
+                            programs = programFilterManager.filterPrograms(
+                                it.allPrograms,
+                                effectiveFilterState(savedFilterState, it.isSearchOnlyMode)
+                            )
                         )
                     }
                 }
             }
         }
     }
+
+    private fun effectiveFilterState(filterState: FilterState, isSearchOnlyMode: Boolean): FilterState =
+        if (isSearchOnlyMode) {
+            FilterState(searchQuery = filterState.searchQuery, sortOrder = filterState.sortOrder)
+        } else {
+            filterState
+        }
 
     override fun clearError() {
         _uiState.update { it.copy(error = null) }
@@ -106,7 +117,10 @@ class TrackViewModel @Inject constructor(
                 .onSuccess { programs ->
                     _uiState.update { currentState ->
                         val availableFilters = programFilterManager.extractAvailableFilters(programs)
-                        val filteredPrograms = programFilterManager.filterPrograms(programs, currentState.filterState)
+                        val filteredPrograms = programFilterManager.filterPrograms(
+                            programs,
+                            effectiveFilterState(currentState.filterState, currentState.isSearchOnlyMode)
+                        )
                         currentState.copy(
                             programs = filteredPrograms,
                             availableMedia = availableFilters.media,
@@ -222,14 +236,33 @@ class TrackViewModel @Inject constructor(
     }
 
     fun updateFilter(newFilterState: FilterState) {
+        val searchCleared = newFilterState.searchQuery.isEmpty() && _uiState.value.filterState.searchQuery.isNotEmpty()
+        val newSearchOnlyMode = if (searchCleared) false else _uiState.value.isSearchOnlyMode
         _uiState.update { currentState ->
             currentState.copy(
                 filterState = newFilterState,
-                programs = programFilterManager.filterPrograms(currentState.allPrograms, newFilterState)
+                isSearchOnlyMode = newSearchOnlyMode,
+                programs = programFilterManager.filterPrograms(
+                    currentState.allPrograms,
+                    effectiveFilterState(newFilterState, newSearchOnlyMode)
+                )
             )
         }
         viewModelScope.launch {
             programFilterManager.updateFilterState(newFilterState)
+        }
+    }
+
+    fun toggleSearchOnlyMode() {
+        val newMode = !_uiState.value.isSearchOnlyMode
+        _uiState.update { currentState ->
+            currentState.copy(
+                isSearchOnlyMode = newMode,
+                programs = programFilterManager.filterPrograms(
+                    currentState.allPrograms,
+                    effectiveFilterState(currentState.filterState, newMode)
+                )
+            )
         }
     }
 
