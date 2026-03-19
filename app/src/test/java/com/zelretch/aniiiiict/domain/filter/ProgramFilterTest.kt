@@ -495,6 +495,112 @@ class ProgramFilterTest {
     }
 
     @Nested
+    @DisplayName("タイトル検索中は他のフィルターを無視する")
+    inner class SearchOverridesOtherFilters {
+
+        @Test
+        @DisplayName("searchQueryがある場合、ステータスフィルターを無視する")
+        fun searchIgnoresStatusFilter() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(title = "テスト作品", status = StatusState.WATCHING),
+                createProgramWithWork(title = "テスト作品2", status = StatusState.NO_STATE),
+                createProgramWithWork(title = "別作品", status = StatusState.WATCHING)
+            )
+            val filterState = FilterState(searchQuery = "テスト", selectedStatus = setOf(StatusState.WATCHING))
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then（ステータスフィルターは無視され、タイトルが"テスト"を含む2件が返る）
+            assertEquals(2, result.size)
+            assertEquals(setOf("テスト作品", "テスト作品2"), result.map { it.work.title }.toSet())
+        }
+
+        @Test
+        @DisplayName("searchQueryがある場合、メディア・チャンネル・シーズン・年フィルターをすべて無視する")
+        fun searchIgnoresAllOtherFilters() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(
+                    title = "アニメ",
+                    media = "TV",
+                    channelName = "TOKYO MX",
+                    seasonName = SeasonName.WINTER,
+                    seasonYear = 2024
+                ),
+                createProgramWithWork(
+                    title = "アニメ2",
+                    media = "OVA",
+                    channelName = "BS11",
+                    seasonName = SeasonName.SUMMER,
+                    seasonYear = 2023
+                ),
+                createProgramWithWork(
+                    title = "別作品",
+                    media = "TV",
+                    channelName = "TOKYO MX",
+                    seasonName = SeasonName.WINTER,
+                    seasonYear = 2024
+                )
+            )
+            val filterState = FilterState(
+                searchQuery = "アニメ",
+                selectedMedia = setOf("TV"),
+                selectedChannel = setOf("TOKYO MX"),
+                selectedSeason = setOf(SeasonName.WINTER),
+                selectedYear = setOf(2024)
+            )
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then（全フィルター無視、タイトルが"アニメ"を含む2件が返る）
+            assertEquals(2, result.size)
+            assertEquals(setOf("アニメ", "アニメ2"), result.map { it.work.title }.toSet())
+        }
+
+        @Test
+        @DisplayName("searchQueryがある場合、放送済みフィルターを無視する")
+        fun searchIgnoresAiredFilter() {
+            // Given
+            val now = LocalDateTime.now()
+            val programs = listOf(
+                createProgramWithWork(title = "テスト", startedAt = now.minusHours(1)),
+                createProgramWithWork(title = "テスト未放送", startedAt = now.plusHours(1))
+            )
+            val filterState = FilterState(searchQuery = "テスト", showOnlyAired = true)
+
+            // When
+            val result = programFilter.applyFilters(programs, filterState)
+
+            // Then（放送済みフィルター無視、2件とも返る）
+            assertEquals(2, result.size)
+        }
+
+        @Test
+        @DisplayName("searchQueryをクリアすると他のフィルターが復活する")
+        fun clearingSearchRestoresOtherFilters() {
+            // Given
+            val programs = listOf(
+                createProgramWithWork(title = "テスト作品", status = StatusState.WATCHING),
+                createProgramWithWork(title = "テスト作品2", status = StatusState.NO_STATE)
+            )
+            val filterStateWithSearch = FilterState(searchQuery = "テスト", selectedStatus = setOf(StatusState.WATCHING))
+            val filterStateCleared = filterStateWithSearch.copy(searchQuery = "")
+
+            // When
+            val resultWithSearch = programFilter.applyFilters(programs, filterStateWithSearch)
+            val resultAfterClear = programFilter.applyFilters(programs, filterStateCleared)
+
+            // Then
+            assertEquals(2, resultWithSearch.size) // 検索中は2件
+            assertEquals(1, resultAfterClear.size) // クリア後はステータスフィルターが復活して1件
+            assertEquals(StatusState.WATCHING, resultAfterClear[0].work.viewerStatusState)
+        }
+    }
+
+    @Nested
     @DisplayName("複合フィルター")
     inner class CombinedFilters {
 

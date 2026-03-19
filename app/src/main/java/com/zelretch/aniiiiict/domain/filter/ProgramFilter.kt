@@ -13,8 +13,15 @@ class ProgramFilter {
         private const val SEASON_ORDER_AUTUMN = 3
     }
 
-    fun applyFilters(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> =
-        programs.asSequence().filter { program ->
+    fun applyFilters(programs: List<ProgramWithWork>, filterState: FilterState): List<ProgramWithWork> {
+        // タイトル検索中は他の条件を無視してタイトル検索のみ実施
+        if (filterState.searchQuery.isNotEmpty()) {
+            return programs.asSequence()
+                .filter { program -> applySearchFilter(program, filterState) }
+                .toList()
+                .let { applySortOrder(it, filterState.sortOrder) }
+        }
+        return programs.asSequence().filter { program ->
             applyMediaFilter(program, filterState)
         }.filter { program -> applySeasonFilter(program, filterState) }
             .filter { program -> applyYearFilter(program, filterState) }
@@ -23,6 +30,7 @@ class ProgramFilter {
             .filter { program -> applySearchFilter(program, filterState) }
             .filter { program -> applyAiredFilter(program, filterState) }.toList()
             .let { filteredPrograms -> applySortOrder(filteredPrograms, filterState.sortOrder) }
+    }
 
     private fun applyMediaFilter(program: ProgramWithWork, filterState: FilterState): Boolean =
         filterState.selectedMedia.isEmpty() || program.work.media in filterState.selectedMedia
