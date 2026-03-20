@@ -10,17 +10,21 @@ import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Error
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Query
+import com.apollographql.apollo.exception.ApolloNetworkException
 import com.benasher44.uuid.Uuid
 import com.zelretch.aniiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiict.data.auth.TokenManager
+import com.zelretch.aniiiiict.data.exception.NetworkException
 import com.zelretch.aniiiiict.data.model.Record
+import com.zelretch.aniiiiict.domain.error.DomainError
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -657,6 +661,97 @@ class AnnictRepositoryImplTest {
 
             // Then
             assertTrue(result.isFailure)
+        }
+    }
+
+    @Nested
+    @DisplayName("ネットワークエラーのハンドリング")
+    inner class NetworkErrorHandling {
+
+        @Test
+        @DisplayName("NetworkException.TimeoutExceptionがDomainError.NetworkError.Timeoutにマッピングされる")
+        fun タイムアウト例外がNetworkErrorTimeoutにマッピングされる() = runTest {
+            // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
+            coEvery {
+                annictApolloClient.executeQuery(any<Query<*>>(), any<String>(), any())
+            } throws NetworkException.TimeoutException("timeout")
+
+            // When
+            val result = repository.getRawProgramsData()
+
+            // Then
+            assertTrue(result.isFailure)
+            assertInstanceOf(DomainError.NetworkError.Timeout::class.java, result.exceptionOrNull())
+        }
+
+        @Test
+        @DisplayName("NetworkException.NoNetworkExceptionがDomainError.NetworkError.NoConnectionにマッピングされる")
+        fun 未接続例外がNetworkErrorNoConnectionにマッピングされる() = runTest {
+            // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
+            coEvery {
+                annictApolloClient.executeQuery(any<Query<*>>(), any<String>(), any())
+            } throws NetworkException.NoNetworkException("no network")
+
+            // When
+            val result = repository.getRawProgramsData()
+
+            // Then
+            assertTrue(result.isFailure)
+            assertInstanceOf(DomainError.NetworkError.NoConnection::class.java, result.exceptionOrNull())
+        }
+
+        @Test
+        @DisplayName("NetworkException.ServerErrorExceptionがDomainError.ApiError.ServerErrorにマッピングされる")
+        fun サーバーエラー例外がApiErrorServerErrorにマッピングされる() = runTest {
+            // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
+            coEvery {
+                annictApolloClient.executeQuery(any<Query<*>>(), any<String>(), any())
+            } throws NetworkException.ServerErrorException(500, null, "server error")
+
+            // When
+            val result = repository.getRawProgramsData()
+
+            // Then
+            assertTrue(result.isFailure)
+            assertInstanceOf(DomainError.ApiError.ServerError::class.java, result.exceptionOrNull())
+        }
+
+        @Test
+        @DisplayName("NetworkException.UnauthorizedExceptionがDomainError.AuthError.InvalidTokenにマッピングされる")
+        fun 認証エラー例外がAuthErrorInvalidTokenにマッピングされる() = runTest {
+            // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
+            coEvery {
+                annictApolloClient.executeQuery(any<Query<*>>(), any<String>(), any())
+            } throws NetworkException.UnauthorizedException(401, null, "unauthorized")
+
+            // When
+            val result = repository.getRawProgramsData()
+
+            // Then
+            assertTrue(result.isFailure)
+            assertInstanceOf(DomainError.AuthError.InvalidToken::class.java, result.exceptionOrNull())
+        }
+
+        @Test
+        @DisplayName("ApolloExceptionの原因がNetworkExceptionの場合適切なDomainErrorにマッピングされる")
+        fun Apollo経由のNetworkExceptionが適切にマッピングされる() = runTest {
+            // Given
+            coEvery { tokenManager.getAccessToken() } returns "token"
+            val networkCause = NetworkException.TimeoutException("timeout")
+            coEvery {
+                annictApolloClient.executeQuery(any<Query<*>>(), any<String>(), any())
+            } throws ApolloNetworkException("apollo network error", networkCause)
+
+            // When
+            val result = repository.getRawProgramsData()
+
+            // Then
+            assertTrue(result.isFailure)
+            assertInstanceOf(DomainError.NetworkError.Timeout::class.java, result.exceptionOrNull())
         }
     }
 }
