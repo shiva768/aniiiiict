@@ -162,7 +162,7 @@ class AppNavigationTest {
         // Wait for settings screen to load
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             try {
-                composeTestRule.onNodeWithText("設定画面").assertIsDisplayed()
+                composeTestRule.onNodeWithText("ライブラリを更新する").assertIsDisplayed()
                 true
             } catch (_: AssertionError) {
                 false
