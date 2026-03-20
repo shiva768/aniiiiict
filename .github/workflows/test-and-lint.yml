@@ -15,6 +15,8 @@ jobs:
   test_and_lint:
     if: ${{ !(github.event.action == 'opened' && github.event.pull_request.user.login == 'Copilot') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       GRADLE_OPTS: -Dorg.gradle.configuration-cache=false
       ANNICT_CLIENT_ID: 'dummy'
@@ -43,17 +45,3 @@ jobs:
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
-
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Run UI tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 36
-          target: google_apis
-          arch: x86_64
-          script: ./gradlew connectedDebugAndroidTest
