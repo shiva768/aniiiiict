@@ -12,6 +12,7 @@ import com.apollographql.apollo.exception.ApolloException
 import com.zelretch.aniiiiict.data.api.AnnictApolloClient
 import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
 import com.zelretch.aniiiiict.data.auth.TokenManager
+import com.zelretch.aniiiiict.data.exception.NetworkException
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.model.LibraryEntry
@@ -298,9 +299,18 @@ class AnnictRepositoryImpl @Inject constructor(
         } catch (e: DomainError) {
             Timber.e(e, "[$operation] Domain error")
             Result.failure(e)
+        } catch (e: NetworkException) {
+            Timber.e(e, "[$operation] Network error")
+            Result.failure(mapNetworkException(e))
         } catch (e: ApolloException) {
-            Timber.e(e, "[$operation] API error")
-            Result.failure(DomainError.ApiError.Unknown(e))
+            val cause = e.cause
+            if (cause is NetworkException) {
+                Timber.e(e, "[$operation] Network error (via Apollo)")
+                Result.failure(mapNetworkException(cause))
+            } else {
+                Timber.e(e, "[$operation] API error")
+                Result.failure(DomainError.ApiError.Unknown(e))
+            }
         } catch (e: IOException) {
             Timber.e(e, "[$operation] Network IO error")
             Result.failure(DomainError.NetworkError.NoConnection(e))
@@ -308,5 +318,18 @@ class AnnictRepositoryImpl @Inject constructor(
             Timber.e(e, "[$operation] Unexpected error")
             Result.failure(DomainError.Unknown(cause = e))
         }
+    }
+
+    private fun mapNetworkException(e: NetworkException): DomainError = when (e) {
+        is NetworkException.TimeoutException -> DomainError.NetworkError.Timeout(e)
+        is NetworkException.NoNetworkException -> DomainError.NetworkError.NoConnection(e)
+        is NetworkException.SecurityException -> DomainError.NetworkError.Unknown(e)
+        is NetworkException.UnauthorizedException -> DomainError.AuthError.InvalidToken(e)
+        is NetworkException.ServerErrorException -> DomainError.ApiError.ServerError(e)
+        is NetworkException.ForbiddenException -> DomainError.ApiError.ClientError(e.code, e)
+        is NetworkException.NotFoundException -> DomainError.ApiError.ClientError(e.code, e)
+        is NetworkException.RateLimitException -> DomainError.ApiError.ClientError(e.code, e)
+        is NetworkException.UnknownHttpException -> DomainError.ApiError.ClientError(e.code, e)
+        else -> DomainError.NetworkError.Unknown(e)
     }
 }
