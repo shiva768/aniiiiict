@@ -1,0 +1,31 @@
+query LibraryEntryNode($id: ID!) {
+  node(id: $id) {
+    ... on LibraryEntry {
+      id
+      work {
+        id
+        title
+        seasonName
+        seasonYear
+        media
+        malAnimeId
+        viewerStatusState
+        episodesCount
+        noEpisodes
+        image {
+          recommendedImageUrl
+          facebookOgImageUrl
+        }
+      }
+      nextEpisode {
+        id
+        number
+        numberText
+        title
+      }
+      status {
+        state
+      }
+    }
+  }
+}

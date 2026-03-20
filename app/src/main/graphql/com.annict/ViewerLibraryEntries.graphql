@@ -1,10 +1,9 @@
-query ViewerLibraryEntries($after: String, $states: [StatusState!], $seasonFrom: String) {
+query ViewerLibraryEntries($after: String, $states: [StatusState!]) {
   viewer {
     libraryEntries(
-      first: 50
+      first: 100
       after: $after
       states: $states
-      seasonFrom: $seasonFrom
       orderBy: {
         field: LAST_TRACKED_AT
         direction: DESC

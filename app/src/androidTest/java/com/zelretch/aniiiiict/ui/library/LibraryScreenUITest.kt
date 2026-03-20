@@ -7,11 +7,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
-import com.zelretch.aniiiiict.data.model.LibraryFetchParams
 import com.zelretch.aniiiiict.data.model.Work
 import io.mockk.every
 import io.mockk.mockk
@@ -32,19 +30,12 @@ class LibraryScreenUITest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
-    private val defaultFetchParams = LibraryFetchParams(
-        selectedStates = listOf(StatusState.WANNA_WATCH, StatusState.ON_HOLD),
-        seasonFromYear = 2020,
-        seasonFromName = SeasonName.SPRING
-    )
-
     @Test
     fun libraryScreen_初期状態_基本要素が表示される() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val initialState = LibraryUiState(fetchParams = defaultFetchParams)
+        val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
-        every { mockViewModel.toggleFilterVisibility() } returns Unit
 
         // Act
         composeTestRule.setContent {
@@ -65,7 +56,7 @@ class LibraryScreenUITest {
     fun libraryScreen_エラー状態_エラーメッセージが表示される() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val errorState = LibraryUiState(error = "ネットワークエラーが発生しました", fetchParams = defaultFetchParams)
+        val errorState = LibraryUiState(error = "ネットワークエラーが発生しました")
         every { mockViewModel.uiState } returns MutableStateFlow(errorState)
 
         // Act
@@ -85,7 +76,7 @@ class LibraryScreenUITest {
     fun libraryScreen_ローディング状態_ローディング表示が表示される() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val loadingState = LibraryUiState(isLoading = true, fetchParams = defaultFetchParams)
+        val loadingState = LibraryUiState(isLoading = true)
         every { mockViewModel.uiState } returns MutableStateFlow(loadingState)
 
         // Act
@@ -99,6 +90,26 @@ class LibraryScreenUITest {
 
         // Assert
         composeTestRule.onNodeWithText("読み込み中...").assertIsDisplayed()
+    }
+
+    @Test
+    fun libraryScreen_同期中状態_更新中メッセージが表示される() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val syncingState = LibraryUiState(isSyncing = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(syncingState)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = syncingState,
+                onNavigateBack = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("更新中のためしばらくお待ちください").assertIsDisplayed()
     }
 
     @Test
@@ -129,8 +140,7 @@ class LibraryScreenUITest {
         )
         val stateWithEntries = LibraryUiState(
             entries = entries,
-            allEntries = entries,
-            fetchParams = defaultFetchParams
+            allEntries = entries
         )
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithEntries)
 
@@ -151,13 +161,10 @@ class LibraryScreenUITest {
     }
 
     @Test
-    fun libraryScreen_フィルターが表示されている_ステータスチップが表示される() {
+    fun libraryScreen_フィルターが表示されている_検索バーが表示される() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val stateWithFilter = LibraryUiState(
-            isFilterVisible = true,
-            fetchParams = defaultFetchParams
-        )
+        val stateWithFilter = LibraryUiState(isFilterVisible = true)
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithFilter)
 
         // Act
@@ -170,17 +177,14 @@ class LibraryScreenUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("起点年").assertIsDisplayed()
-        composeTestRule.onNodeWithText("クール").assertIsDisplayed()
-        composeTestRule.onNodeWithText("見たい").assertIsDisplayed()
-        composeTestRule.onNodeWithText("保留").assertIsDisplayed()
+        composeTestRule.onNodeWithText("タイトル検索").assertIsDisplayed()
     }
 
     @Test
     fun libraryScreen_フィルターボタンクリック_ViewModelメソッドが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val initialState = LibraryUiState(fetchParams = defaultFetchParams)
+        val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
 
         // Act
@@ -201,7 +205,7 @@ class LibraryScreenUITest {
     fun libraryScreen_戻るボタンクリック_コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val initialState = LibraryUiState(fetchParams = defaultFetchParams)
+        val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
         var backPressed = false
 
@@ -220,12 +224,12 @@ class LibraryScreenUITest {
     }
 
     @Test
-    fun libraryScreen_ステータスフィルターチップクリック_updateFetchParamsが呼ばれる() {
+    fun libraryScreen_ステータスフィルターチップクリック_toggleStatusFilterが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
         val stateWithFilter = LibraryUiState(
             isFilterVisible = true,
-            fetchParams = defaultFetchParams
+            availableStatuses = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH)
         )
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithFilter)
 
@@ -240,6 +244,6 @@ class LibraryScreenUITest {
         composeTestRule.onNodeWithText("視聴中").performClick()
 
         // Assert
-        verify { mockViewModel.updateFetchParams(any()) }
+        verify { mockViewModel.toggleStatusFilter(StatusState.WATCHING) }
     }
 }

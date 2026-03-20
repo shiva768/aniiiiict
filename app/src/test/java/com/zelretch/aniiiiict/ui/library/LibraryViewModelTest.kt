@@ -1,11 +1,10 @@
 package com.zelretch.aniiiiict.ui.library
 
-import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.datastore.LibraryPreferences
 import com.zelretch.aniiiiict.data.model.LibraryEntry
-import com.zelretch.aniiiiict.data.model.LibraryFetchParams
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
+import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
@@ -35,21 +34,15 @@ import org.junit.jupiter.api.Test
 class LibraryViewModelTest {
 
     private lateinit var loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase
-    private lateinit var libraryPreferences: LibraryPreferences
+    private lateinit var librarySyncService: LibrarySyncService
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
-
-    private val defaultParams = LibraryFetchParams(
-        selectedStates = listOf(StatusState.WANNA_WATCH, StatusState.ON_HOLD),
-        seasonFromYear = 2020,
-        seasonFromName = SeasonName.SPRING
-    )
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(dispatcher)
         loadLibraryEntriesUseCase = mockk()
-        libraryPreferences = mockk()
+        librarySyncService = mockk()
         errorMapper = mockk()
     }
 
@@ -58,20 +51,20 @@ class LibraryViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): LibraryViewModel =
-        LibraryViewModel(loadLibraryEntriesUseCase, libraryPreferences, errorMapper)
+    private fun createViewModel(): LibraryViewModel {
+        every { librarySyncService.status } returns MutableStateFlow(SyncStatus.Idle)
+        return LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, errorMapper)
+    }
 
     @Nested
     @DisplayName("初期化")
     inner class Initialization {
 
         @Test
-        @DisplayName("DataStoreのfetchPrefsを購読してロードが実行される")
-        fun loadLibraryEntriesが呼ばれUIステートが初期値で更新される() = runTest(dispatcher) {
+        @DisplayName("Roomからエントリーを読み込みUIステートが更新される")
+        fun loadsEntriesFromRoom() = runTest(dispatcher) {
             // Given
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns
-                Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
 
             // When
             val viewModel = createViewModel()
@@ -79,10 +72,8 @@ class LibraryViewModelTest {
 
             // Then
             assertEquals(emptyList<LibraryEntry>(), state.entries)
-            assertEquals(emptyList<LibraryEntry>(), state.allEntries)
             assertFalse(state.isLoading)
             assertNull(state.error)
-            assertEquals(defaultParams, state.fetchParams)
         }
 
         @Test
@@ -103,8 +94,7 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(fakeEntries)
 
             // When
             val viewModel = createViewModel()
@@ -120,69 +110,51 @@ class LibraryViewModelTest {
     }
 
     @Nested
-    @DisplayName("リフレッシュ")
-    inner class Refresh {
+    @DisplayName("同期状態")
+    inner class SyncState {
 
         @Test
-        @DisplayName("refreshが呼ばれた時forceRefresh=trueで再ロードされる")
-        fun refreshReloadsEntries() = runTest(dispatcher) {
+        @DisplayName("同期中はisSyncingがtrueになる")
+        fun syncingStateShowsIsSyncing() = runTest(dispatcher) {
             // Given
-            val initialEntries = listOf(
-                LibraryEntry(
-                    id = "entry1",
-                    work = createFakeWork("work1", "Initial Work"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                )
-            )
-            val refreshedEntries = listOf(
-                LibraryEntry(
-                    id = "entry2",
-                    work = createFakeWork("work2", "Refreshed Work"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                )
-            )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), false) } returns Result.success(initialEntries)
-            coEvery { loadLibraryEntriesUseCase(any(), true) } returns Result.success(refreshedEntries)
-
-            val viewModel = createViewModel()
-            viewModel.uiState.first { !it.isLoading }
+            val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Syncing)
+            every { librarySyncService.status } returns syncStatusFlow
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
 
             // When
-            viewModel.refresh()
-            val state = viewModel.uiState.first { !it.isLoading && it.allEntries.isNotEmpty() }
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, errorMapper)
+            val state = viewModel.uiState.first { it.isSyncing }
+
+            // Then
+            assertTrue(state.isSyncing)
+        }
+
+        @Test
+        @DisplayName("Idle遷移時にRoomを再読み込みする")
+        fun idleTransitionReloadsFromRoom() = runTest(dispatcher) {
+            // Given
+            val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Syncing)
+            every { librarySyncService.status } returns syncStatusFlow
+            val entries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Loaded Work"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(entries)
+
+            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, errorMapper)
+            viewModel.uiState.first { it.isSyncing }
+
+            // When
+            syncStatusFlow.value = SyncStatus.Idle
+            val state = viewModel.uiState.first { !it.isLoading && it.entries.isNotEmpty() }
 
             // Then
             assertEquals(1, state.entries.size)
-            assertEquals("entry2", state.entries[0].id)
-            coVerify { loadLibraryEntriesUseCase(any(), true) }
-        }
-    }
-
-    @Nested
-    @DisplayName("フェッチパラメータ更新")
-    inner class UpdateFetchParams {
-
-        @Test
-        @DisplayName("updateFetchParamsでDataStoreが更新される")
-        fun updateFetchParamsSavesToDataStore() = runTest(dispatcher) {
-            // Given
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(emptyList())
-            coEvery { libraryPreferences.updateFetchPrefs(any()) } returns Unit
-
-            val viewModel = createViewModel()
-            viewModel.uiState.first { !it.isLoading }
-
-            val newParams = defaultParams.copy(seasonFromYear = 2019, seasonFromName = SeasonName.AUTUMN)
-
-            // When
-            viewModel.updateFetchParams(newParams)
-
-            // Then
-            coVerify { libraryPreferences.updateFetchPrefs(newParams) }
+            assertEquals("entry1", state.entries[0].id)
         }
     }
 
@@ -194,9 +166,7 @@ class LibraryViewModelTest {
         @DisplayName("フィルター表示が切り替わる")
         fun toggleFilterVisibility() = runTest(dispatcher) {
             // Given
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns
-                Result.success(emptyList())
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
 
             val viewModel = createViewModel()
             val initialState = viewModel.uiState.first { !it.isLoading }
@@ -219,19 +189,86 @@ class LibraryViewModelTest {
         @DisplayName("エラー発生時エラーメッセージが表示される")
         fun showsErrorMessage() = runTest(dispatcher) {
             // Given
-            val exception = RuntimeException("Network error")
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.failure(exception)
-            every { errorMapper.toUserMessage(exception) } returns "ネットワークエラーが発生しました"
+            val exception = RuntimeException("DB error")
+            coEvery { loadLibraryEntriesUseCase() } returns Result.failure(exception)
+            every { errorMapper.toUserMessage(exception) } returns "読み込みエラーが発生しました"
 
             // When
             val viewModel = createViewModel()
             val state = viewModel.uiState.first { !it.isLoading }
 
             // Then
-            assertEquals("ネットワークエラーが発生しました", state.error)
+            assertEquals("読み込みエラーが発生しました", state.error)
             assertFalse(state.isLoading)
             assertEquals(emptyList<LibraryEntry>(), state.entries)
+        }
+    }
+
+    @Nested
+    @DisplayName("検索フィルター")
+    inner class SearchFilter {
+
+        @Test
+        @DisplayName("タイトル検索でエントリーが絞り込まれる")
+        fun titleSearchFiltersEntries() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "天国大魔境"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry2",
+                    work = createFakeWork("work2", "進撃の巨人"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(fakeEntries)
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.updateSearchQuery("天国")
+            val state = viewModel.uiState.first()
+
+            // Then
+            assertEquals(1, state.entries.size)
+            assertEquals("entry1", state.entries[0].id)
+        }
+
+        @Test
+        @DisplayName("検索クエリが空の場合は全エントリーが表示される")
+        fun emptyQueryShowsAllEntries() = runTest(dispatcher) {
+            // Given
+            val fakeEntries = listOf(
+                LibraryEntry(
+                    id = "entry1",
+                    work = createFakeWork("work1", "Work 1"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                ),
+                LibraryEntry(
+                    id = "entry2",
+                    work = createFakeWork("work2", "Work 2"),
+                    nextEpisode = null,
+                    statusState = StatusState.WATCHING
+                )
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(fakeEntries)
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.updateSearchQuery("")
+            val state = viewModel.uiState.first()
+
+            // Then
+            assertEquals(2, state.entries.size)
         }
     }
 
@@ -241,7 +278,7 @@ class LibraryViewModelTest {
 
         @Test
         @DisplayName("availableMediaがエントリーから抽出される")
-        fun availableMediaがエントリーから抽出される() = runTest(dispatcher) {
+        fun availableMediaExtractedFromEntries() = runTest(dispatcher) {
             // Given
             val fakeEntries = listOf(
                 LibraryEntry(
@@ -263,8 +300,7 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(fakeEntries)
 
             // When
             val viewModel = createViewModel()
@@ -275,62 +311,8 @@ class LibraryViewModelTest {
         }
 
         @Test
-        @DisplayName("toggleMediaFilterで選択が追加される")
-        fun toggleMediaFilterで選択が追加される() = runTest(dispatcher) {
-            // Given
-            val fakeEntries = listOf(
-                LibraryEntry(
-                    id = "entry1",
-                    work = createFakeWork("work1", "Work 1", media = "TV"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                )
-            )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(fakeEntries)
-
-            val viewModel = createViewModel()
-            viewModel.uiState.first { !it.isLoading }
-
-            // When
-            viewModel.toggleMediaFilter("TV")
-            val state = viewModel.uiState.first()
-
-            // Then
-            assertTrue("TV" in state.filterState.selectedMedia)
-        }
-
-        @Test
-        @DisplayName("toggleMediaFilterで選択が解除される")
-        fun toggleMediaFilterで選択が解除される() = runTest(dispatcher) {
-            // Given
-            val fakeEntries = listOf(
-                LibraryEntry(
-                    id = "entry1",
-                    work = createFakeWork("work1", "Work 1", media = "TV"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                )
-            )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(fakeEntries)
-
-            val viewModel = createViewModel()
-            viewModel.uiState.first { !it.isLoading }
-            viewModel.toggleMediaFilter("TV")
-            viewModel.uiState.first { "TV" in it.filterState.selectedMedia }
-
-            // When
-            viewModel.toggleMediaFilter("TV")
-            val state = viewModel.uiState.first()
-
-            // Then
-            assertFalse("TV" in state.filterState.selectedMedia)
-        }
-
-        @Test
         @DisplayName("メディアフィルターが適用されエントリーが絞り込まれる")
-        fun メディアフィルターが適用されエントリーが絞り込まれる() = runTest(dispatcher) {
+        fun mediaFilterFiltersEntries() = runTest(dispatcher) {
             // Given
             val fakeEntries = listOf(
                 LibraryEntry(
@@ -346,8 +328,7 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(fakeEntries)
 
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
@@ -363,7 +344,7 @@ class LibraryViewModelTest {
 
         @Test
         @DisplayName("メディアフィルターが空の場合は全エントリーが表示される")
-        fun メディアフィルターが空の場合は全エントリーが表示される() = runTest(dispatcher) {
+        fun emptyMediaFilterShowsAllEntries() = runTest(dispatcher) {
             // Given
             val fakeEntries = listOf(
                 LibraryEntry(
@@ -379,8 +360,7 @@ class LibraryViewModelTest {
                     statusState = StatusState.WATCHING
                 )
             )
-            every { libraryPreferences.fetchPrefs } returns MutableStateFlow(defaultParams)
-            coEvery { loadLibraryEntriesUseCase(any(), any()) } returns Result.success(fakeEntries)
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(fakeEntries)
 
             // When
             val viewModel = createViewModel()
@@ -389,6 +369,56 @@ class LibraryViewModelTest {
             // Then
             assertEquals(2, state.entries.size)
             assertTrue(state.filterState.selectedMedia.isEmpty())
+        }
+
+        @Test
+        @DisplayName("toggleMediaFilterで選択が解除される")
+        fun toggleMediaFilterDeselects() = runTest(dispatcher) {
+            // Given
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(
+                listOf(
+                    LibraryEntry(
+                        id = "entry1",
+                        work = createFakeWork("work1", "Work 1", media = "TV"),
+                        nextEpisode = null,
+                        statusState = StatusState.WATCHING
+                    )
+                )
+            )
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+            viewModel.toggleMediaFilter("TV")
+            viewModel.uiState.first { "TV" in it.filterState.selectedMedia }
+
+            // When
+            viewModel.toggleMediaFilter("TV")
+            val state = viewModel.uiState.first()
+
+            // Then
+            assertFalse("TV" in state.filterState.selectedMedia)
+        }
+    }
+
+    @Nested
+    @DisplayName("エントリー更新")
+    inner class EntryUpdate {
+
+        @Test
+        @DisplayName("onEntryUpdatedでsyncEntryが呼ばれる")
+        fun onEntryUpdatedCallsSyncEntry() = runTest(dispatcher) {
+            // Given
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.onEntryUpdated("entry1")
+
+            // Then
+            coVerify { librarySyncService.syncEntry("entry1") }
         }
     }
 

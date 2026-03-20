@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiict.data.local
 
 import androidx.room.Entity
-import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -10,10 +9,9 @@ import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.data.model.WorkImage
 
-@Entity(tableName = "library_entries", indices = [Index("fetchParamsHash")])
+@Entity(tableName = "library_entries")
 data class LibraryEntryEntity(
     @PrimaryKey val id: String,
-    val fetchParamsHash: String,
     val workId: String,
     val workTitle: String,
     val workMedia: String?,
@@ -31,9 +29,8 @@ data class LibraryEntryEntity(
     val fetchedAt: Long
 )
 
-fun LibraryEntry.toEntity(fetchParamsHash: String) = LibraryEntryEntity(
+fun LibraryEntry.toEntity() = LibraryEntryEntity(
     id = id,
-    fetchParamsHash = fetchParamsHash,
     workId = work.id,
     workTitle = work.title,
     workMedia = work.media,

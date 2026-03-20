@@ -22,28 +22,18 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,15 +43,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
-import com.zelretch.aniiiiict.data.model.LibraryFetchParams
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.track.components.InfoTag
-import java.time.LocalDate
-
-private const val YEAR_RANGE_COUNT = 9
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,57 +102,63 @@ private fun LibraryTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: LibraryUiState, viewModel: LibraryViewModel) {
-    val isRefreshing = uiState.isLoading && uiState.entries.isNotEmpty()
-
-    PullToRefreshBox(
-        modifier = modifier.fillMaxSize(),
-        isRefreshing = isRefreshing,
-        onRefresh = { viewModel.refresh() },
-        state = rememberPullToRefreshState()
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (uiState.isFilterVisible) {
                 LibraryFilterBar(
-                    fetchParams = uiState.fetchParams,
+                    filterState = uiState.filterState,
                     availableMedia = uiState.availableMedia,
-                    selectedMedia = uiState.filterState.selectedMedia,
-                    onFetchParamsChange = { viewModel.updateFetchParams(it) },
-                    onMediaFilterChange = { viewModel.toggleMediaFilter(it) }
+                    availableStatuses = uiState.availableStatuses,
+                    onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+                    onMediaFilterChange = { viewModel.toggleMediaFilter(it) },
+                    onStatusFilterChange = { viewModel.toggleStatusFilter(it) }
                 )
             }
 
-            if (uiState.isLoading && uiState.entries.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text("読み込み中...")
+            when {
+                uiState.isSyncing -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("更新中のためしばらくお待ちください")
+                    }
                 }
-            } else if (uiState.error != null) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = uiState.error,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                uiState.isLoading && uiState.entries.isEmpty() -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("読み込み中...")
+                    }
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(uiState.entries, key = { it.work.id }) { entry ->
-                        LibraryEntryCard(
-                            entry = entry,
-                            onClick = { viewModel.showDetail(entry) }
+                uiState.error != null -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = uiState.error,
+                            color = MaterialTheme.colorScheme.error
                         )
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(uiState.entries, key = { it.work.id }) { entry ->
+                            LibraryEntryCard(
+                                entry = entry,
+                                onClick = { viewModel.showDetail(entry) }
+                            )
+                        }
                     }
                 }
             }
@@ -181,75 +172,46 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                 entry = entry,
                 onDismiss = { viewModel.hideDetail() },
                 watchingEpisodeModalViewModel,
-                onRefresh = { viewModel.refresh() }
+                onRefresh = { viewModel.onEntryUpdated(entry.id) }
             )
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LibraryFilterBar(
-    fetchParams: LibraryFetchParams,
+    filterState: LibraryFilterState,
     availableMedia: List<String>,
-    selectedMedia: Set<String>,
-    onFetchParamsChange: (LibraryFetchParams) -> Unit,
-    onMediaFilterChange: (String) -> Unit
+    availableStatuses: List<StatusState>,
+    onSearchQueryChange: (String) -> Unit,
+    onMediaFilterChange: (String) -> Unit,
+    onStatusFilterChange: (StatusState) -> Unit
 ) {
-    val currentYear = LocalDate.now().year
-    val availableYears = (currentYear downTo currentYear - YEAR_RANGE_COUNT).toList()
-    val availableSeasons = listOf(SeasonName.SPRING, SeasonName.SUMMER, SeasonName.AUTUMN, SeasonName.WINTER)
-    val allStatuses = listOf(
-        StatusState.WANNA_WATCH,
-        StatusState.ON_HOLD,
-        StatusState.WATCHING,
-        StatusState.WATCHED,
-        StatusState.STOP_WATCHING
-    )
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SeasonDropdown(
-                label = "起点年",
-                selected = fetchParams.seasonFromYear.toString(),
-                options = availableYears.map { it.toString() },
-                onSelected = { year ->
-                    onFetchParamsChange(fetchParams.copy(seasonFromYear = year.toInt()))
-                },
-                modifier = Modifier.weight(1f)
-            )
-            SeasonDropdown(
-                label = "クール",
-                selected = fetchParams.seasonFromName.toJapaneseLabel(),
-                options = availableSeasons.map { it.toJapaneseLabel() },
-                onSelected = { label ->
-                    val season = availableSeasons.first { it.toJapaneseLabel() == label }
-                    onFetchParamsChange(fetchParams.copy(seasonFromName = season))
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(top = 8.dp)
-        ) {
-            allStatuses.forEach { status ->
-                FilterChip(
-                    selected = status in fetchParams.selectedStates,
-                    onClick = {
-                        val current = fetchParams.selectedStates
-                        val newStates = if (status in current) current - status else current + status
-                        onFetchParamsChange(fetchParams.copy(selectedStates = newStates))
-                    },
-                    label = { Text(status.toJapaneseLabel()) }
-                )
+        OutlinedTextField(
+            value = filterState.searchQuery,
+            onValueChange = onSearchQueryChange,
+            label = { Text("タイトル検索") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        if (availableStatuses.isNotEmpty()) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                availableStatuses.forEach { status ->
+                    FilterChip(
+                        selected = status in filterState.selectedStatuses,
+                        onClick = { onStatusFilterChange(status) },
+                        label = { Text(status.toJapaneseLabel()) }
+                    )
+                }
             }
         }
         if (availableMedia.isNotEmpty()) {
@@ -259,7 +221,7 @@ private fun LibraryFilterBar(
             ) {
                 availableMedia.forEach { media ->
                     FilterChip(
-                        selected = media in selectedMedia,
+                        selected = media in filterState.selectedMedia,
                         onClick = { onMediaFilterChange(media) },
                         label = { Text(media) }
                     )
@@ -267,54 +229,6 @@ private fun LibraryFilterBar(
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SeasonDropdown(
-    label: String,
-    selected: String,
-    options: List<String>,
-    onSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selected,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable)
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        onSelected(option)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-private fun SeasonName.toJapaneseLabel(): String = when (this) {
-    SeasonName.SPRING -> "春"
-    SeasonName.SUMMER -> "夏"
-    SeasonName.AUTUMN -> "秋"
-    SeasonName.WINTER -> "冬"
-    else -> rawValue
 }
 
 @Composable

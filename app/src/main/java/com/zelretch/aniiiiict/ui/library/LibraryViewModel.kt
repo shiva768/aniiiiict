@@ -2,12 +2,10 @@ package com.zelretch.aniiiiict.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.annict.type.SeasonName
 import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.datastore.LibraryPreferences
 import com.zelretch.aniiiiict.data.model.LibraryEntry
-import com.zelretch.aniiiiict.data.model.LibraryFetchParams
-import com.zelretch.aniiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
+import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,21 +15,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDate
 import javax.inject.Inject
+
+data class LibraryFilterState(
+    val selectedMedia: Set<String> = emptySet(),
+    val selectedStatuses: Set<StatusState> = emptySet(),
+    val searchQuery: String = ""
+)
 
 data class LibraryUiState(
     val entries: List<LibraryEntry> = emptyList(),
     val allEntries: List<LibraryEntry> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val fetchParams: LibraryFetchParams = LibraryFetchParams(
-        selectedStates = listOf(StatusState.WANNA_WATCH, StatusState.ON_HOLD),
-        seasonFromYear = LocalDate.now().year - 5,
-        seasonFromName = SeasonName.SPRING
-    ),
-    val filterState: FilterState = FilterState(),
+    val isSyncing: Boolean = false,
+    val filterState: LibraryFilterState = LibraryFilterState(),
     val availableMedia: List<String> = emptyList(),
+    val availableStatuses: List<StatusState> = emptyList(),
     val isFilterVisible: Boolean = false,
     val selectedEntry: LibraryEntry? = null,
     val isDetailModalVisible: Boolean = false
@@ -40,7 +40,7 @@ data class LibraryUiState(
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
-    private val libraryPreferences: LibraryPreferences,
+    private val librarySyncService: LibrarySyncService,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -49,23 +49,32 @@ class LibraryViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            libraryPreferences.fetchPrefs.collect { params ->
-                _uiState.update { it.copy(fetchParams = params) }
-                loadData(params)
+            librarySyncService.status.collect { status ->
+                _uiState.update { it.copy(isSyncing = status is SyncStatus.Syncing) }
+                if (status is SyncStatus.Idle) {
+                    loadFromRoom()
+                } else if (status is SyncStatus.Error) {
+                    _uiState.update { it.copy(error = status.message) }
+                }
             }
+        }
+        viewModelScope.launch {
+            loadFromRoom()
         }
     }
 
-    private suspend fun loadData(params: LibraryFetchParams, forceRefresh: Boolean = false) {
+    private suspend fun loadFromRoom() {
         _uiState.update { it.copy(isLoading = true, error = null) }
-        loadLibraryEntriesUseCase(params, forceRefresh)
+        loadLibraryEntriesUseCase()
             .onSuccess { entries ->
                 Timber.i("ライブラリエントリーを取得: ${entries.size}件")
                 val availableMedia = entries.mapNotNull { it.work.media }.distinct().sorted()
+                val availableStatuses = entries.mapNotNull { it.statusState }.distinct()
                 _uiState.update { currentState ->
                     currentState.copy(
                         allEntries = entries,
                         availableMedia = availableMedia,
+                        availableStatuses = availableStatuses,
                         entries = applyFilters(entries, currentState.filterState),
                         isLoading = false,
                         error = null
@@ -78,23 +87,42 @@ class LibraryViewModel @Inject constructor(
             }
     }
 
-    fun refresh() {
+    fun onEntryUpdated(libraryEntryId: String) {
         viewModelScope.launch {
-            loadData(_uiState.value.fetchParams, forceRefresh = true)
-        }
-    }
-
-    fun updateFetchParams(params: LibraryFetchParams) {
-        viewModelScope.launch {
-            libraryPreferences.updateFetchPrefs(params)
+            librarySyncService.syncEntry(libraryEntryId)
+            loadFromRoom()
         }
     }
 
     fun toggleMediaFilter(media: String) {
         _uiState.update { currentState ->
-            val currentSelected = currentState.filterState.selectedMedia
-            val newSelected = if (media in currentSelected) currentSelected - media else currentSelected + media
+            val newSelected = currentState.filterState.selectedMedia.let {
+                if (media in it) it - media else it + media
+            }
             val newFilterState = currentState.filterState.copy(selectedMedia = newSelected)
+            currentState.copy(
+                filterState = newFilterState,
+                entries = applyFilters(currentState.allEntries, newFilterState)
+            )
+        }
+    }
+
+    fun toggleStatusFilter(status: StatusState) {
+        _uiState.update { currentState ->
+            val newSelected = currentState.filterState.selectedStatuses.let {
+                if (status in it) it - status else it + status
+            }
+            val newFilterState = currentState.filterState.copy(selectedStatuses = newSelected)
+            currentState.copy(
+                filterState = newFilterState,
+                entries = applyFilters(currentState.allEntries, newFilterState)
+            )
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _uiState.update { currentState ->
+            val newFilterState = currentState.filterState.copy(searchQuery = query)
             currentState.copy(
                 filterState = newFilterState,
                 entries = applyFilters(currentState.allEntries, newFilterState)
@@ -116,8 +144,27 @@ class LibraryViewModel @Inject constructor(
         _uiState.update { it.copy(selectedEntry = null, isDetailModalVisible = false) }
     }
 
-    private fun applyFilters(entries: List<LibraryEntry>, filterState: FilterState): List<LibraryEntry> {
-        if (filterState.selectedMedia.isEmpty()) return entries
-        return entries.filter { it.work.media in filterState.selectedMedia }
-    }
+    private fun applyFilters(entries: List<LibraryEntry>, filterState: LibraryFilterState): List<LibraryEntry> = entries
+        .let { list ->
+            if (filterState.selectedMedia.isEmpty()) {
+                list
+            } else {
+                list.filter { it.work.media in filterState.selectedMedia }
+            }
+        }
+        .let { list ->
+            if (filterState.selectedStatuses.isEmpty()) {
+                list
+            } else {
+                list.filter { it.statusState in filterState.selectedStatuses }
+            }
+        }
+        .let { list ->
+            if (filterState.searchQuery.isBlank()) {
+                list
+            } else {
+                val query = filterState.searchQuery.trim().lowercase()
+                list.filter { it.work.title.lowercase().contains(query) }
+            }
+        }
 }
