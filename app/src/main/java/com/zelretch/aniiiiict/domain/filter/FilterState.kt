@@ -12,7 +12,13 @@ data class FilterState(
     val searchQuery: String = "",
     val showOnlyAired: Boolean = true,
     val sortOrder: SortOrder = SortOrder.START_TIME_ASC
-)
+) {
+    fun hasActiveNonSearchFilters(): Boolean = selectedMedia.isNotEmpty() ||
+        selectedSeason.isNotEmpty() ||
+        selectedYear.isNotEmpty() ||
+        selectedChannel.isNotEmpty() ||
+        selectedStatus.isNotEmpty()
+}
 
 enum class SortOrder {
     START_TIME_ASC, // 放送開始時間（昇順）

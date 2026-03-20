@@ -156,6 +156,62 @@ class TrackViewModelTest {
     }
 
     @Nested
+    @DisplayName("タイトル検索のみモード")
+    inner class SearchOnlyMode {
+
+        @Test
+        @DisplayName("toggleSearchOnlyModeでモードがオンになる")
+        fun toggleOn() = runTest(dispatcher) {
+            // Given
+            val programs = listOf<ProgramWithWork>(mockk(relaxed = true))
+            coEvery { loadProgramsUseCase.invoke() } returns Result.success(programs)
+            filterStateFlow.value = FilterState(
+                searchQuery = "テスト",
+                selectedStatus = setOf(com.annict.type.StatusState.WATCHING)
+            )
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // When
+            viewModel.toggleSearchOnlyMode()
+
+            // Then
+            assertEquals(true, viewModel.uiState.value.isSearchOnlyMode)
+        }
+
+        @Test
+        @DisplayName("toggleSearchOnlyModeを2回呼ぶとオフに戻る")
+        fun toggleOffAfterOn() = runTest(dispatcher) {
+            // Given
+            coEvery { loadProgramsUseCase.invoke() } returns Result.success(emptyList())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // When
+            viewModel.toggleSearchOnlyMode()
+            viewModel.toggleSearchOnlyMode()
+
+            // Then
+            assertEquals(false, viewModel.uiState.value.isSearchOnlyMode)
+        }
+
+        @Test
+        @DisplayName("searchQueryをクリアするとisSearchOnlyModeがfalseにリセットされる")
+        fun clearedSearchResetsMode() = runTest(dispatcher) {
+            // Given
+            coEvery { loadProgramsUseCase.invoke() } returns Result.success(emptyList())
+            filterStateFlow.value = FilterState(searchQuery = "テスト")
+            dispatcher.scheduler.advanceUntilIdle()
+            viewModel.toggleSearchOnlyMode()
+            assertEquals(true, viewModel.uiState.value.isSearchOnlyMode)
+
+            // When
+            viewModel.updateFilter(FilterState(searchQuery = ""))
+
+            // Then
+            assertEquals(false, viewModel.uiState.value.isSearchOnlyMode)
+        }
+    }
+
+    @Nested
     @DisplayName("フィナーレ判定ロジック")
     inner class FinaleJudgment {
 
