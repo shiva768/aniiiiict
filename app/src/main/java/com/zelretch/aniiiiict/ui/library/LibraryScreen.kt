@@ -16,30 +16,34 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,11 +53,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.data.model.LibraryFetchParams
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.track.components.InfoTag
+import java.time.LocalDate
 
-private const val LOAD_MORE_THRESHOLD = 3
+private const val YEAR_RANGE_COUNT = 9
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,19 +121,6 @@ private fun LibraryTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit
 @Composable
 private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: LibraryUiState, viewModel: LibraryViewModel) {
     val isRefreshing = uiState.isLoading && uiState.entries.isNotEmpty()
-    val listState = rememberLazyListState()
-    val shouldLoadNextPage = remember {
-        derivedStateOf {
-            val lastItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-            lastItem != null && lastItem.index >= listState.layoutInfo.totalItemsCount - LOAD_MORE_THRESHOLD
-        }
-    }
-
-    LaunchedEffect(shouldLoadNextPage.value) {
-        if (shouldLoadNextPage.value && uiState.hasNextPage && !uiState.isLoading) {
-            viewModel.loadNextPage()
-        }
-    }
 
     PullToRefreshBox(
         modifier = modifier.fillMaxSize(),
@@ -136,16 +131,15 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
         Column(modifier = Modifier.fillMaxSize()) {
             if (uiState.isFilterVisible) {
                 LibraryFilterBar(
-                    showOnlyPastWorks = uiState.showOnlyPastWorks,
+                    fetchParams = uiState.fetchParams,
                     availableMedia = uiState.availableMedia,
                     selectedMedia = uiState.filterState.selectedMedia,
-                    onPastWorksFilterChange = { viewModel.togglePastWorksFilter() },
+                    onFetchParamsChange = { viewModel.updateFetchParams(it) },
                     onMediaFilterChange = { viewModel.toggleMediaFilter(it) }
                 )
             }
 
             if (uiState.isLoading && uiState.entries.isEmpty()) {
-                // 初回ローディング表示
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -167,7 +161,6 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    state = listState,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.entries, key = { it.work.id }) { entry ->
@@ -181,7 +174,6 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
         }
     }
 
-    // WatchingEpisodeModalを表示
     if (uiState.isDetailModalVisible) {
         val watchingEpisodeModalViewModel = hiltViewModel<WatchingEpisodeModalViewModel>()
         uiState.selectedEntry?.let { entry ->
@@ -195,38 +187,76 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryFilterBar(
-    showOnlyPastWorks: Boolean,
+    fetchParams: LibraryFetchParams,
     availableMedia: List<String>,
     selectedMedia: Set<String>,
-    onPastWorksFilterChange: () -> Unit,
+    onFetchParamsChange: (LibraryFetchParams) -> Unit,
     onMediaFilterChange: (String) -> Unit
 ) {
+    val currentYear = LocalDate.now().year
+    val availableYears = (currentYear downTo currentYear - YEAR_RANGE_COUNT).toList()
+    val availableSeasons = listOf(SeasonName.SPRING, SeasonName.SUMMER, SeasonName.AUTUMN, SeasonName.WINTER)
+    val allStatuses = listOf(
+        StatusState.WANNA_WATCH,
+        StatusState.ON_HOLD,
+        StatusState.WATCHING,
+        StatusState.WATCHED,
+        StatusState.STOP_WATCHING
+    )
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            RadioButton(
-                selected = showOnlyPastWorks,
-                onClick = { if (!showOnlyPastWorks) onPastWorksFilterChange() }
+            SeasonDropdown(
+                label = "起点年",
+                selected = fetchParams.seasonFromYear.toString(),
+                options = availableYears.map { it.toString() },
+                onSelected = { year ->
+                    onFetchParamsChange(fetchParams.copy(seasonFromYear = year.toInt()))
+                },
+                modifier = Modifier.weight(1f)
             )
-            Text("過去作のみ")
-            Spacer(modifier = Modifier.width(16.dp))
-            RadioButton(
-                selected = !showOnlyPastWorks,
-                onClick = { if (showOnlyPastWorks) onPastWorksFilterChange() }
+            SeasonDropdown(
+                label = "クール",
+                selected = fetchParams.seasonFromName.toJapaneseLabel(),
+                options = availableSeasons.map { it.toJapaneseLabel() },
+                onSelected = { label ->
+                    val season = availableSeasons.first { it.toJapaneseLabel() == label }
+                    onFetchParamsChange(fetchParams.copy(seasonFromName = season))
+                },
+                modifier = Modifier.weight(1f)
             )
-            Text("全作品")
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            allStatuses.forEach { status ->
+                FilterChip(
+                    selected = status in fetchParams.selectedStates,
+                    onClick = {
+                        val current = fetchParams.selectedStates
+                        val newStates = if (status in current) current - status else current + status
+                        onFetchParamsChange(fetchParams.copy(selectedStates = newStates))
+                    },
+                    label = { Text(status.toJapaneseLabel()) }
+                )
+            }
         }
         if (availableMedia.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
                 availableMedia.forEach { media ->
                     FilterChip(
                         selected = media in selectedMedia,
@@ -237,6 +267,54 @@ private fun LibraryFilterBar(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SeasonDropdown(
+    label: String,
+    selected: String,
+    options: List<String>,
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selected,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+private fun SeasonName.toJapaneseLabel(): String = when (this) {
+    SeasonName.SPRING -> "春"
+    SeasonName.SUMMER -> "夏"
+    SeasonName.AUTUMN -> "秋"
+    SeasonName.WINTER -> "冬"
+    else -> rawValue
 }
 
 @Composable
@@ -250,7 +328,6 @@ private fun LibraryEntryCard(entry: LibraryEntry, onClick: () -> Unit) {
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // 作品情報セクション
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -292,7 +369,6 @@ private fun LibraryEntryCard(entry: LibraryEntry, onClick: () -> Unit) {
                 }
             }
 
-            // 次のエピソード情報セクション
             entry.nextEpisode?.let { episode ->
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 val episodeText = buildString {

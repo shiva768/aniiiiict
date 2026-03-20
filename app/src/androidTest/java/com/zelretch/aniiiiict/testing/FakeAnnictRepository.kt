@@ -80,6 +80,9 @@ open class FakeAnnictRepository : AnnictRepository {
 
     override suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?> = workDetailResult
 
-    override suspend fun getLibraryEntries(states: List<StatusState>, after: String?): Result<LibraryEntriesPage> =
-        libraryEntriesResult
+    override suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        seasonFrom: String?,
+        after: String?
+    ): Result<LibraryEntriesPage> = libraryEntriesResult
 }

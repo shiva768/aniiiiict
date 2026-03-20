@@ -16,5 +16,9 @@ interface AnnictRepository {
     suspend fun deleteRecord(recordId: String): Result<Unit>
     suspend fun updateWorkViewStatus(workId: String, state: StatusState): Result<Unit>
     suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?>
-    suspend fun getLibraryEntries(states: List<StatusState>, after: String? = null): Result<LibraryEntriesPage>
+    suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        seasonFrom: String?,
+        after: String? = null
+    ): Result<LibraryEntriesPage>
 }
