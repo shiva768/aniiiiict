@@ -313,7 +313,7 @@ class AnimeDetailScreenUITest {
         }
 
         // Then: ステータスドロップダウンが表示される
-        composeTestRule.onNodeWithText("視聴中").assertIsDisplayed()
+        composeTestRule.onNodeWithText("見てる").assertIsDisplayed()
     }
 
     // Helper functions

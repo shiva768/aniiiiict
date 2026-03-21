@@ -228,10 +228,10 @@ class WatchingEpisodeModalUITest {
         composeTestRule.waitForIdle()
 
         // Assert - 初期選択状態が表示されている
-        composeTestRule.onNodeWithText("視聴中").assertIsDisplayed()
+        composeTestRule.onNodeWithText("見てる").assertIsDisplayed()
 
         // クリックでメニュー展開
-        composeTestRule.onNodeWithText("視聴中").performClick()
+        composeTestRule.onNodeWithText("見てる").performClick()
 
         // Wait for dropdown to expand
         composeTestRule.waitForIdle()

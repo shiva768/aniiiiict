@@ -243,7 +243,7 @@ class LibraryScreenUITest {
         }
         composeTestRule.onNodeWithText("ステータス").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("視聴中").performClick()
+        composeTestRule.onNodeWithText("見てる").performClick()
 
         // Assert
         verify { mockViewModel.toggleStatusFilter(StatusState.WATCHING) }
