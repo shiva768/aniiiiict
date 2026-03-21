@@ -2,6 +2,7 @@ package com.zelretch.aniiiiict.data.repository
 
 import com.annict.CreateRecordMutation
 import com.annict.DeleteRecordMutation
+import com.annict.LibraryEntryNodeQuery
 import com.annict.UpdateStatusMutation
 import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
@@ -243,6 +244,54 @@ class AnnictRepositoryImpl @Inject constructor(
                 entries = entries,
                 hasNextPage = pageInfo?.hasNextPage == true,
                 endCursor = pageInfo?.endCursor
+            )
+        }
+
+    override suspend fun getLibraryEntry(libraryEntryId: String): Result<LibraryEntry?> =
+        executeApiRequest("getLibraryEntry") {
+            Timber.i("ライブラリエントリーを取得中: id=$libraryEntryId")
+
+            val query = LibraryEntryNodeQuery(id = libraryEntryId)
+            val response = annictApolloClient.executeQuery(
+                operation = query,
+                context = "AnnictRepositoryImpl.getLibraryEntry"
+            )
+
+            if (response.hasErrors()) {
+                Timber.e("GraphQLエラー: ${response.errors}")
+                throw DomainError.ApiError.GraphQLError("Library entry node query failed: ${response.errors}")
+            }
+
+            val nodeData = response.data?.node?.onLibraryEntry
+                ?: return@executeApiRequest null
+            val viewerStatus = nodeData.work.viewerStatusState ?: return@executeApiRequest null
+            LibraryEntry(
+                id = nodeData.id,
+                work = Work(
+                    id = nodeData.work.id,
+                    title = nodeData.work.title,
+                    seasonName = nodeData.work.seasonName,
+                    seasonYear = nodeData.work.seasonYear,
+                    media = nodeData.work.media.rawValue,
+                    malAnimeId = nodeData.work.malAnimeId,
+                    viewerStatusState = viewerStatus,
+                    noEpisodes = nodeData.work.noEpisodes,
+                    image = nodeData.work.image?.let { image ->
+                        WorkImage(
+                            recommendedImageUrl = image.recommendedImageUrl,
+                            facebookOgImageUrl = image.facebookOgImageUrl
+                        )
+                    }
+                ),
+                nextEpisode = nodeData.nextEpisode?.let { episode ->
+                    Episode(
+                        id = episode.id,
+                        number = episode.number,
+                        numberText = episode.numberText,
+                        title = episode.title
+                    )
+                },
+                statusState = nodeData.status?.state
             )
         }
 

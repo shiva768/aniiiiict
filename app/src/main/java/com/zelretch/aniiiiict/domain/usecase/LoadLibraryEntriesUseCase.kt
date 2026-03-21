@@ -1,23 +1,20 @@
 package com.zelretch.aniiiiict.domain.usecase
 
-import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
-import com.zelretch.aniiiiict.data.repository.AnnictRepository
+import com.zelretch.aniiiiict.data.local.LibraryEntryDao
+import com.zelretch.aniiiiict.data.local.toLibraryEntry
+import com.zelretch.aniiiiict.data.model.LibraryEntry
+import timber.log.Timber
 import javax.inject.Inject
 
-private val ALL_STATUSES = listOf(
-    StatusState.WATCHING,
-    StatusState.WANNA_WATCH,
-    StatusState.WATCHED,
-    StatusState.ON_HOLD,
-    StatusState.STOP_WATCHING
-)
-
 class LoadLibraryEntriesUseCase @Inject constructor(
-    private val repository: AnnictRepository
+    private val libraryEntryDao: LibraryEntryDao
 ) {
-    suspend operator fun invoke(
-        states: List<StatusState> = ALL_STATUSES,
-        after: String? = null
-    ): Result<LibraryEntriesPage> = repository.getLibraryEntries(states, after)
+    suspend operator fun invoke(): Result<List<LibraryEntry>> = try {
+        val entries = libraryEntryDao.getAll().map { it.toLibraryEntry() }
+        Timber.i("Roomからライブラリエントリーを読み込み: ${entries.size}件")
+        Result.success(entries)
+    } catch (e: Exception) {
+        Timber.e(e, "ライブラリエントリーの読み込みに失敗")
+        Result.failure(e)
+    }
 }

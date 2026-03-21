@@ -1,14 +1,15 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.type.StatusState
-import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
+import com.zelretch.aniiiiict.data.local.LibraryEntryDao
+import com.zelretch.aniiiiict.data.local.LibraryEntryEntity
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
-import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -17,134 +18,92 @@ import org.junit.jupiter.api.Test
 @DisplayName("LoadLibraryEntriesUseCase")
 class LoadLibraryEntriesUseCaseTest {
 
-    private lateinit var repository: AnnictRepository
+    private lateinit var libraryEntryDao: LibraryEntryDao
     private lateinit var useCase: LoadLibraryEntriesUseCase
 
     @BeforeEach
     fun setup() {
-        repository = mockk()
-        useCase = LoadLibraryEntriesUseCase(repository)
+        libraryEntryDao = mockk()
+        useCase = LoadLibraryEntriesUseCase(libraryEntryDao)
     }
 
     @Nested
-    @DisplayName("ライブラリエントリーのロード")
-    inner class LoadLibraryEntries {
+    @DisplayName("Roomからの読み込み")
+    inner class LoadFromRoom {
 
         @Test
-        @DisplayName("視聴中作品一覧を正しく取得できる")
-        fun withWatchingEntries() = runTest {
+        @DisplayName("Roomのデータを正常に返す")
+        fun returnsEntriesFromRoom() = runTest {
             // Given
-            val fakeEntries = listOf(
-                LibraryEntry(
-                    id = "entry1",
-                    work = createFakeWork("work1", "天国大魔境"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                ),
-                LibraryEntry(
-                    id = "entry2",
-                    work = createFakeWork("work2", "終物語"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                )
-            )
-            val fakePage = LibraryEntriesPage(entries = fakeEntries, hasNextPage = false, endCursor = null)
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns
-                Result.success(fakePage)
+            val entities = listOf(createFakeEntity("entry1"), createFakeEntity("entry2"))
+            coEvery { libraryEntryDao.getAll() } returns entities
 
             // When
-            val result = useCase(listOf(StatusState.WATCHING)).getOrThrow()
+            val result = useCase()
 
             // Then
-            assertEquals(2, result.entries.size)
-            assertEquals("entry1", result.entries[0].id)
-            assertEquals("天国大魔境", result.entries[0].work.title)
-            assertEquals("entry2", result.entries[1].id)
-            assertEquals("終物語", result.entries[1].work.title)
+            assertTrue(result.isSuccess)
+            assertEquals(2, result.getOrThrow().size)
         }
 
         @Test
-        @DisplayName("空の結果を正しく処理できる")
-        fun withEmptyResult() = runTest {
+        @DisplayName("Roomが空の場合は空リストを返す")
+        fun returnsEmptyListWhenRoomIsEmpty() = runTest {
             // Given
-            val fakePage = LibraryEntriesPage(entries = emptyList(), hasNextPage = false, endCursor = null)
-            coEvery { repository.getLibraryEntries(listOf(StatusState.WATCHING), null) } returns
-                Result.success(fakePage)
+            coEvery { libraryEntryDao.getAll() } returns emptyList()
 
             // When
-            val result = useCase(listOf(StatusState.WATCHING)).getOrThrow()
+            val result = useCase()
 
             // Then
-            assertEquals(0, result.entries.size)
+            assertTrue(result.isSuccess)
+            assertEquals(emptyList<LibraryEntry>(), result.getOrThrow())
         }
 
         @Test
-        @DisplayName("複数のステータスで取得できる")
-        fun withMultipleStates() = runTest {
+        @DisplayName("例外発生時はfailureが返る")
+        fun returnsFailureOnException() = runTest {
             // Given
-            val states = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH)
-            val fakeEntries = listOf(
-                LibraryEntry(
-                    id = "entry1",
-                    work = createFakeWork("work1", "Work 1"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                ),
-                LibraryEntry(
-                    id = "entry2",
-                    work = createFakeWork("work2", "Work 2"),
-                    nextEpisode = null,
-                    statusState = StatusState.WANNA_WATCH
-                )
-            )
-            val fakePage = LibraryEntriesPage(entries = fakeEntries, hasNextPage = false, endCursor = null)
-            coEvery { repository.getLibraryEntries(states, null) } returns Result.success(fakePage)
+            val exception = RuntimeException("DB error")
+            coEvery { libraryEntryDao.getAll() } throws exception
 
             // When
-            val result = useCase(states).getOrThrow()
+            val result = useCase()
 
             // Then
-            assertEquals(2, result.entries.size)
-        }
-
-        @Test
-        @DisplayName("デフォルトで全ステータスを使用する")
-        fun usesAllStatusesByDefault() = runTest {
-            // Given
-            val allStatuses = listOf(
-                StatusState.WATCHING,
-                StatusState.WANNA_WATCH,
-                StatusState.WATCHED,
-                StatusState.ON_HOLD,
-                StatusState.STOP_WATCHING
-            )
-            val fakeEntries = listOf(
-                LibraryEntry(
-                    id = "entry1",
-                    work = createFakeWork("work1", "Test Work"),
-                    nextEpisode = null,
-                    statusState = StatusState.WATCHING
-                )
-            )
-            val fakePage = LibraryEntriesPage(entries = fakeEntries, hasNextPage = false, endCursor = null)
-            coEvery { repository.getLibraryEntries(allStatuses, null) } returns Result.success(fakePage)
-
-            // When
-            val result = useCase().getOrThrow()
-
-            // Then
-            assertEquals(1, result.entries.size)
+            assertTrue(result.isFailure)
+            assertEquals(exception, result.exceptionOrNull())
         }
     }
 
-    private fun createFakeWork(id: String, title: String) = Work(
+    private fun createFakeEntity(id: String) = LibraryEntryEntity(
         id = id,
-        title = title,
-        seasonName = null,
-        seasonYear = null,
-        media = null,
-        malAnimeId = null,
-        viewerStatusState = StatusState.WATCHING,
-        image = null
+        workId = "work_$id",
+        workTitle = "Work $id",
+        workMedia = null,
+        workSeasonName = null,
+        workSeasonYear = null,
+        workViewerStatusState = StatusState.WANNA_WATCH.name,
+        workMalAnimeId = null,
+        workNoEpisodes = false,
+        workImageUrl = null,
+        nextEpisodeId = null,
+        nextEpisodeNumber = null,
+        nextEpisodeNumberText = null,
+        nextEpisodeTitle = null,
+        statusState = null,
+        fetchedAt = System.currentTimeMillis()
+    )
+
+    @Suppress("unused")
+    private fun createFakeLibraryEntry(id: String) = LibraryEntry(
+        id = id,
+        work = Work(
+            id = "work_$id",
+            title = "Work $id",
+            viewerStatusState = StatusState.WANNA_WATCH
+        ),
+        nextEpisode = null,
+        statusState = StatusState.WANNA_WATCH
     )
 }

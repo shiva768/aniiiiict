@@ -2,10 +2,12 @@ package com.zelretch.aniiiiict.ui.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.annict.type.SeasonName
+import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
-import com.zelretch.aniiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
+import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
-import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,146 +18,126 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-/**
- * ライブラリ画面のUI状態
- */
+private const val SEASON_SPRING = 0
+private const val SEASON_SUMMER = 1
+private const val SEASON_AUTUMN = 2
+private const val SEASON_WINTER = 3
+
+private val SEASON_ORDER = mapOf(
+    SeasonName.SPRING to SEASON_SPRING,
+    SeasonName.SUMMER to SEASON_SUMMER,
+    SeasonName.AUTUMN to SEASON_AUTUMN,
+    SeasonName.WINTER to SEASON_WINTER
+)
+
+private fun <T> Set<T>.toggle(item: T): Set<T> = if (item in this) this - item else this + item
+
+enum class LibrarySortOrder {
+    TITLE_ASC,
+    SEASON_DESC,
+    SEASON_ASC
+}
+
+data class LibraryFilterState(
+    val selectedMedia: Set<String> = emptySet(),
+    val selectedStatuses: Set<StatusState> = emptySet(),
+    val selectedYears: Set<Int> = emptySet(),
+    val selectedSeasons: Set<SeasonName> = emptySet(),
+    val searchQuery: String = "",
+    val sortOrder: LibrarySortOrder = LibrarySortOrder.SEASON_DESC
+)
+
 data class LibraryUiState(
     val entries: List<LibraryEntry> = emptyList(),
     val allEntries: List<LibraryEntry> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val showOnlyPastWorks: Boolean = true,
-    val filterState: FilterState = FilterState(),
+    val isSyncing: Boolean = false,
+    val filterState: LibraryFilterState = LibraryFilterState(),
     val availableMedia: List<String> = emptyList(),
+    val availableStatuses: List<StatusState> = emptyList(),
+    val availableYears: List<Int> = emptyList(),
+    val availableSeasons: List<SeasonName> = emptyList(),
     val isFilterVisible: Boolean = false,
     val selectedEntry: LibraryEntry? = null,
-    val isDetailModalVisible: Boolean = false,
-    val hasNextPage: Boolean = false,
-    val endCursor: String? = null
+    val isDetailModalVisible: Boolean = false
 )
 
-/**
- * ライブラリ画面のViewModel
- */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
-    private val loadProgramsUseCase: LoadProgramsUseCase,
+    private val librarySyncService: LibrarySyncService,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
-    // 放送中の作品IDを保持
-    private var currentlyAiringWorkIds: Set<String> = emptySet()
-
     init {
-        loadData()
-    }
-
-    private fun loadData() {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(isLoading = true, error = null, allEntries = emptyList(), hasNextPage = false, endCursor = null)
+            librarySyncService.status.collect { status ->
+                _uiState.update { it.copy(isSyncing = status is SyncStatus.Syncing) }
+                if (status is SyncStatus.Idle) {
+                    loadFromRoom()
+                } else if (status is SyncStatus.Error) {
+                    _uiState.update { it.copy(error = status.message) }
+                }
             }
-
-            // 先に放送中の番組データを読み込む
-            loadProgramsUseCase()
-                .onSuccess { programs ->
-                    currentlyAiringWorkIds = programs.map { it.work.id }.toSet()
-                    Timber.i("放送中の作品を取得: ${currentlyAiringWorkIds.size}件")
-                }
-                .onFailure { e ->
-                    Timber.e(e, "番組データの読み込みに失敗")
-                    // 番組データの読み込みに失敗してもライブラリエントリーは表示する
-                }
-
-            // ライブラリエントリーを読み込む
-            loadLibraryEntriesUseCase()
-                .onSuccess { page ->
-                    Timber.i("ライブラリエントリーを取得: ${page.entries.size}件")
-                    val availableMedia = page.entries.mapNotNull { it.work.media }.distinct().sorted()
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            allEntries = page.entries,
-                            availableMedia = availableMedia,
-                            entries = applyFilters(
-                                page.entries,
-                                currentState.showOnlyPastWorks,
-                                currentState.filterState
-                            ),
-                            isLoading = false,
-                            error = null,
-                            hasNextPage = page.hasNextPage,
-                            endCursor = page.endCursor
-                        )
-                    }
-                }
-                .onFailure { e ->
-                    Timber.e(e, "ライブラリエントリーの読み込みに失敗")
-                    val errorMessage = errorMapper.toUserMessage(e)
-                    _uiState.update { it.copy(isLoading = false, error = errorMessage) }
-                }
         }
-    }
-
-    fun loadNextPage() {
-        val current = _uiState.value
-        if (current.isLoading || !current.hasNextPage) return
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            loadLibraryEntriesUseCase(after = current.endCursor)
-                .onSuccess { page ->
-                    _uiState.update { state ->
-                        val newAll = state.allEntries + page.entries
-                        val newMedia = newAll.mapNotNull { it.work.media }.distinct().sorted()
-                        state.copy(
-                            allEntries = newAll,
-                            availableMedia = newMedia,
-                            entries = applyFilters(newAll, state.showOnlyPastWorks, state.filterState),
-                            hasNextPage = page.hasNextPage,
-                            endCursor = page.endCursor,
-                            isLoading = false
-                        )
-                    }
+            loadFromRoom()
+        }
+    }
+
+    private suspend fun loadFromRoom() {
+        _uiState.update { it.copy(isLoading = true, error = null) }
+        loadLibraryEntriesUseCase()
+            .onSuccess { entries ->
+                Timber.i("ライブラリエントリーを取得: ${entries.size}件")
+                val availableMedia = entries.mapNotNull { it.work.media }.distinct().sorted()
+                val availableStatuses = entries.mapNotNull { it.statusState }.distinct()
+                val availableYears = entries.mapNotNull { it.work.seasonYear }.distinct().sortedDescending()
+                val availableSeasons = entries.mapNotNull { it.work.seasonName }.distinct()
+                    .sortedBy { SEASON_ORDER[it] }
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        allEntries = entries,
+                        availableMedia = availableMedia,
+                        availableStatuses = availableStatuses,
+                        availableYears = availableYears,
+                        availableSeasons = availableSeasons,
+                        entries = applyFilters(entries, currentState.filterState),
+                        isLoading = false,
+                        error = null
+                    )
                 }
-                .onFailure { e ->
-                    _uiState.update { it.copy(isLoading = false, error = errorMapper.toUserMessage(e)) }
-                }
+            }
+            .onFailure { e ->
+                Timber.e(e, "ライブラリエントリーの読み込みに失敗")
+                _uiState.update { it.copy(isLoading = false, error = errorMapper.toUserMessage(e)) }
+            }
+    }
+
+    fun onEntryUpdated(libraryEntryId: String) {
+        viewModelScope.launch {
+            librarySyncService.syncEntry(libraryEntryId)
+            loadFromRoom()
         }
     }
 
-    fun loadLibraryEntries() {
-        loadData()
-    }
+    fun toggleMediaFilter(media: String) = updateFilter { it.copy(selectedMedia = it.selectedMedia.toggle(media)) }
 
-    fun refresh() {
-        Timber.i("データを再読み込み")
-        loadData()
-    }
+    fun toggleStatusFilter(status: StatusState) =
+        updateFilter { it.copy(selectedStatuses = it.selectedStatuses.toggle(status)) }
 
-    fun togglePastWorksFilter() {
-        _uiState.update { currentState ->
-            val newShowOnlyPastWorks = !currentState.showOnlyPastWorks
-            currentState.copy(
-                showOnlyPastWorks = newShowOnlyPastWorks,
-                entries = applyFilters(currentState.allEntries, newShowOnlyPastWorks, currentState.filterState)
-            )
-        }
-    }
+    fun toggleYearFilter(year: Int) = updateFilter { it.copy(selectedYears = it.selectedYears.toggle(year)) }
 
-    fun toggleMediaFilter(media: String) {
-        _uiState.update { currentState ->
-            val currentSelected = currentState.filterState.selectedMedia
-            val newSelected = if (media in currentSelected) currentSelected - media else currentSelected + media
-            val newFilterState = currentState.filterState.copy(selectedMedia = newSelected)
-            currentState.copy(
-                filterState = newFilterState,
-                entries = applyFilters(currentState.allEntries, currentState.showOnlyPastWorks, newFilterState)
-            )
-        }
-    }
+    fun toggleSeasonFilter(season: SeasonName) =
+        updateFilter { it.copy(selectedSeasons = it.selectedSeasons.toggle(season)) }
+
+    fun updateSearchQuery(query: String) = updateFilter { it.copy(searchQuery = query) }
+
+    fun updateSortOrder(sortOrder: LibrarySortOrder) = updateFilter { it.copy(sortOrder = sortOrder) }
 
     fun toggleFilterVisibility() {
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
@@ -163,37 +145,58 @@ class LibraryViewModel @Inject constructor(
 
     fun showDetail(entry: LibraryEntry) {
         Timber.i("DetailModalを表示: ${entry.work.title}")
-        _uiState.update {
-            it.copy(
-                selectedEntry = entry,
-                isDetailModalVisible = true
-            )
-        }
+        _uiState.update { it.copy(selectedEntry = entry, isDetailModalVisible = true) }
     }
 
     fun hideDetail() {
         Timber.i("DetailModalを非表示")
-        _uiState.update {
-            it.copy(
-                selectedEntry = null,
-                isDetailModalVisible = false
+        _uiState.update { it.copy(selectedEntry = null, isDetailModalVisible = false) }
+    }
+
+    private fun updateFilter(transform: (LibraryFilterState) -> LibraryFilterState) {
+        _uiState.update { currentState ->
+            val newFilterState = transform(currentState.filterState)
+            currentState.copy(
+                filterState = newFilterState,
+                entries = applyFilters(currentState.allEntries, newFilterState)
             )
         }
     }
 
-    private fun applyFilters(
-        entries: List<LibraryEntry>,
-        showOnlyPastWorks: Boolean,
-        filterState: FilterState
-    ): List<LibraryEntry> {
-        var result = if (showOnlyPastWorks) {
-            entries.filter { entry -> entry.work.id !in currentlyAiringWorkIds }
-        } else {
-            entries
-        }
+    @Suppress("ComplexMethod")
+    private fun applyFilters(entries: List<LibraryEntry>, filterState: LibraryFilterState): List<LibraryEntry> {
+        var filtered = entries
         if (filterState.selectedMedia.isNotEmpty()) {
-            result = result.filter { entry -> entry.work.media in filterState.selectedMedia }
+            filtered = filtered.filter { it.work.media in filterState.selectedMedia }
         }
-        return result
+        if (filterState.selectedStatuses.isNotEmpty()) {
+            filtered = filtered.filter { it.statusState in filterState.selectedStatuses }
+        }
+        if (filterState.selectedYears.isNotEmpty()) {
+            filtered = filtered.filter { it.work.seasonYear in filterState.selectedYears }
+        }
+        if (filterState.selectedSeasons.isNotEmpty()) {
+            filtered = filtered.filter { it.work.seasonName in filterState.selectedSeasons }
+        }
+        val searched = if (filterState.searchQuery.isBlank()) {
+            filtered
+        } else {
+            val query = filterState.searchQuery.trim().lowercase()
+            filtered.filter { it.work.title.lowercase().contains(query) }
+        }
+        return sortEntries(searched, filterState.sortOrder)
     }
+
+    private fun sortEntries(entries: List<LibraryEntry>, sortOrder: LibrarySortOrder): List<LibraryEntry> =
+        when (sortOrder) {
+            LibrarySortOrder.TITLE_ASC -> entries.sortedBy { it.work.title }
+            LibrarySortOrder.SEASON_DESC -> entries.sortedWith(
+                compareByDescending<LibraryEntry> { it.work.seasonYear }
+                    .thenByDescending { SEASON_ORDER[it.work.seasonName] }
+            )
+            LibrarySortOrder.SEASON_ASC -> entries.sortedWith(
+                compareBy<LibraryEntry> { it.work.seasonYear }
+                    .thenBy { SEASON_ORDER[it.work.seasonName] }
+            )
+        }
 }

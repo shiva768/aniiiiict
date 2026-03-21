@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,6 +55,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailScreen
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
@@ -61,6 +63,7 @@ import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
 import com.zelretch.aniiiiict.ui.history.HistoryViewModel
 import com.zelretch.aniiiiict.ui.library.LibraryScreen
 import com.zelretch.aniiiiict.ui.library.LibraryViewModel
+import com.zelretch.aniiiiict.ui.settings.SettingsViewModel
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import com.zelretch.aniiiiict.ui.track.TrackScreen
 import com.zelretch.aniiiiict.ui.track.TrackViewModel
@@ -329,7 +332,11 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 }
             }
             composable("settings") {
+                val settingsViewModel = hiltViewModel<SettingsViewModel>()
+                val syncStatus by settingsViewModel.syncStatus.collectAsState()
                 SettingsScreen(
+                    syncStatus = syncStatus,
+                    onSyncLibrary = { settingsViewModel.syncLibrary() },
                     onNavigateBack = { navController.navigateUp() }
                 )
             }
@@ -354,7 +361,7 @@ private fun LoadingScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsScreen(onNavigateBack: () -> Unit) {
+private fun SettingsScreen(syncStatus: SyncStatus, onSyncLibrary: () -> Unit, onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -372,25 +379,27 @@ private fun SettingsScreen(onNavigateBack: () -> Unit) {
             )
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Button(
+                onClick = onSyncLibrary,
+                enabled = syncStatus !is SyncStatus.Syncing,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "設定画面",
-                    style = MaterialTheme.typography.titleLarge
+                    text = if (syncStatus is SyncStatus.Syncing) "更新中..." else "ライブラリを更新する"
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+            }
+            if (syncStatus is SyncStatus.Error) {
                 Text(
-                    text = "実装予定",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = (syncStatus as SyncStatus.Error).message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }

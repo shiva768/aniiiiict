@@ -36,7 +36,6 @@ class LibraryScreenUITest {
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
         val initialState = LibraryUiState()
         every { mockViewModel.uiState } returns MutableStateFlow(initialState)
-        every { mockViewModel.toggleFilterVisibility() } returns Unit
 
         // Act
         composeTestRule.setContent {
@@ -94,6 +93,26 @@ class LibraryScreenUITest {
     }
 
     @Test
+    fun libraryScreen_同期中状態_更新中メッセージが表示される() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val syncingState = LibraryUiState(isSyncing = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(syncingState)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = syncingState,
+                onNavigateBack = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("更新中のためしばらくお待ちください").assertIsDisplayed()
+    }
+
+    @Test
     fun libraryScreen_エントリーが存在する_カードが表示される() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
@@ -119,7 +138,10 @@ class LibraryScreenUITest {
                 statusState = StatusState.WATCHING
             )
         )
-        val stateWithEntries = LibraryUiState(entries = entries, allEntries = entries)
+        val stateWithEntries = LibraryUiState(
+            entries = entries,
+            allEntries = entries
+        )
         every { mockViewModel.uiState } returns MutableStateFlow(stateWithEntries)
 
         // Act
@@ -139,7 +161,7 @@ class LibraryScreenUITest {
     }
 
     @Test
-    fun libraryScreen_フィルターが表示されている_ラジオボタンが表示される() {
+    fun libraryScreen_フィルターが表示されている_検索バーが表示される() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
         val stateWithFilter = LibraryUiState(isFilterVisible = true)
@@ -155,8 +177,7 @@ class LibraryScreenUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("過去作のみ").assertIsDisplayed()
-        composeTestRule.onNodeWithText("全作品").assertIsDisplayed()
+        composeTestRule.onNodeWithText("タイトル検索").assertIsDisplayed()
     }
 
     @Test
@@ -203,78 +224,28 @@ class LibraryScreenUITest {
     }
 
     @Test
-    fun libraryScreen_hasNextPageがtrueでリスト末尾付近の時_loadNextPageが呼ばれる() {
-        // Arrange: エントリー数がLOAD_MORE_THRESHOLD(3)以下のためレンダリング時に末尾条件が成立する
-        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val entries = listOf(
-            LibraryEntry(
-                id = "entry1",
-                work = Work(
-                    id = "work1",
-                    title = "テスト作品",
-                    seasonName = null,
-                    seasonYear = null,
-                    media = null,
-                    malAnimeId = null,
-                    viewerStatusState = StatusState.WATCHING,
-                    image = null
-                ),
-                nextEpisode = null,
-                statusState = StatusState.WATCHING
-            )
-        )
-        val state = LibraryUiState(entries = entries, allEntries = entries, hasNextPage = true)
-        every { mockViewModel.uiState } returns MutableStateFlow(state)
-
-        // Act
-        composeTestRule.setContent {
-            LibraryScreen(
-                viewModel = mockViewModel,
-                uiState = state,
-                onNavigateBack = {}
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        // Assert
-        verify { mockViewModel.loadNextPage() }
-    }
-
-    @Test
-    fun libraryScreen_hasNextPageがfalseの時_loadNextPageが呼ばれない() {
+    fun libraryScreen_ステータスフィルターチップクリック_ダイアログが開きtoggleStatusFilterが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val entries = listOf(
-            LibraryEntry(
-                id = "entry1",
-                work = Work(
-                    id = "work1",
-                    title = "テスト作品",
-                    seasonName = null,
-                    seasonYear = null,
-                    media = null,
-                    malAnimeId = null,
-                    viewerStatusState = StatusState.WATCHING,
-                    image = null
-                ),
-                nextEpisode = null,
-                statusState = StatusState.WATCHING
-            )
+        val stateWithFilter = LibraryUiState(
+            isFilterVisible = true,
+            availableStatuses = listOf(StatusState.WATCHING, StatusState.WANNA_WATCH)
         )
-        val state = LibraryUiState(entries = entries, allEntries = entries, hasNextPage = false)
-        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        every { mockViewModel.uiState } returns MutableStateFlow(stateWithFilter)
 
         // Act
         composeTestRule.setContent {
             LibraryScreen(
                 viewModel = mockViewModel,
-                uiState = state,
+                uiState = stateWithFilter,
                 onNavigateBack = {}
             )
         }
+        composeTestRule.onNodeWithText("ステータス").performClick()
         composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("視聴中").performClick()
 
         // Assert
-        verify(exactly = 0) { mockViewModel.loadNextPage() }
+        verify { mockViewModel.toggleStatusFilter(StatusState.WATCHING) }
     }
 }

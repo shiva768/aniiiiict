@@ -247,6 +247,11 @@ dependencies {
     implementation(libs.bundles.okhttp)
     implementation(libs.bundles.apollo)
 
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
     // Async
     implementation(libs.coroutines.android)
 
