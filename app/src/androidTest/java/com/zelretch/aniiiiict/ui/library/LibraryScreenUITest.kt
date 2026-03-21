@@ -224,7 +224,7 @@ class LibraryScreenUITest {
     }
 
     @Test
-    fun libraryScreen_ステータスフィルターチップクリック_toggleStatusFilterが呼ばれる() {
+    fun libraryScreen_ステータスフィルターチップクリック_ダイアログが開きtoggleStatusFilterが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
         val stateWithFilter = LibraryUiState(
@@ -241,6 +241,8 @@ class LibraryScreenUITest {
                 onNavigateBack = {}
             )
         }
+        composeTestRule.onNodeWithText("ステータス").performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("視聴中").performClick()
 
         // Assert

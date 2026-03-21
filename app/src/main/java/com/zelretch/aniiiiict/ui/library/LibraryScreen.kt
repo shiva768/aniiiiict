@@ -19,22 +19,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -55,6 +57,7 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
+import com.zelretch.aniiiiict.ui.track.components.FilterSelectionDialog
 import com.zelretch.aniiiiict.ui.track.components.InfoTag
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,7 +128,7 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                     onSearchQueryChange = { viewModel.updateSearchQuery(it) },
                     onMediaFilterChange = { viewModel.toggleMediaFilter(it) },
                     onStatusFilterChange = { viewModel.toggleStatusFilter(it) },
-                    onYearSelect = { viewModel.selectYear(it) },
+                    onYearFilterChange = { viewModel.toggleYearFilter(it) },
                     onSeasonFilterChange = { viewModel.toggleSeasonFilter(it) },
                     onSortOrderChange = { viewModel.updateSortOrder(it) }
                 )
@@ -203,147 +206,156 @@ private fun LibraryFilterBar(
     onSearchQueryChange: (String) -> Unit,
     onMediaFilterChange: (String) -> Unit,
     onStatusFilterChange: (StatusState) -> Unit,
-    onYearSelect: (Int?) -> Unit,
+    onYearFilterChange: (Int) -> Unit,
     onSeasonFilterChange: (SeasonName) -> Unit,
     onSortOrderChange: (LibrarySortOrder) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        OutlinedTextField(
-            value = filterState.searchQuery,
-            onValueChange = onSearchQueryChange,
-            label = { Text("タイトル検索") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        if (availableStatuses.isNotEmpty()) {
-            FilterChipRow(label = "ステータス") {
-                availableStatuses.forEach { status ->
-                    FilterChip(
-                        selected = status in filterState.selectedStatuses,
-                        onClick = { onStatusFilterChange(status) },
-                        label = { Text(status.toJapaneseLabel()) }
-                    )
-                }
-            }
-        }
-        if (availableYears.isNotEmpty()) {
-            YearDropdown(
-                selectedYear = filterState.selectedYear,
-                availableYears = availableYears,
-                onYearSelect = onYearSelect
-            )
-        }
-        if (availableSeasons.isNotEmpty()) {
-            FilterChipRow(label = "クール") {
-                availableSeasons.forEach { season ->
-                    FilterChip(
-                        selected = season in filterState.selectedSeasons,
-                        onClick = { onSeasonFilterChange(season) },
-                        label = { Text(season.toJapaneseLabel()) }
-                    )
-                }
-            }
-        }
-        if (availableMedia.isNotEmpty()) {
-            FilterChipRow(label = "メディア") {
-                availableMedia.forEach { media ->
-                    FilterChip(
-                        selected = media in filterState.selectedMedia,
-                        onClick = { onMediaFilterChange(media) },
-                        label = { Text(media) }
-                    )
-                }
-            }
-        }
-        FilterChipRow(label = "並び順") {
-            FilterChip(
-                selected = filterState.sortOrder == LibrarySortOrder.SEASON_DESC,
-                onClick = { onSortOrderChange(LibrarySortOrder.SEASON_DESC) },
-                label = { Text("新しい順") }
-            )
-            FilterChip(
-                selected = filterState.sortOrder == LibrarySortOrder.SEASON_ASC,
-                onClick = { onSortOrderChange(LibrarySortOrder.SEASON_ASC) },
-                label = { Text("古い順") }
-            )
-            FilterChip(
-                selected = filterState.sortOrder == LibrarySortOrder.TITLE_ASC,
-                onClick = { onSortOrderChange(LibrarySortOrder.TITLE_ASC) },
-                label = { Text("タイトル順") }
-            )
-        }
-    }
-}
+    var showStatusDialog by remember { mutableStateOf(false) }
+    var showSeasonDialog by remember { mutableStateOf(false) }
+    var showYearDialog by remember { mutableStateOf(false) }
+    var showMediaDialog by remember { mutableStateOf(false) }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun YearDropdown(selectedYear: Int?, availableYears: List<Int>, onYearSelect: (Int?) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = 3.dp
     ) {
-        Text(
-            text = "年",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(52.dp)
-        )
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            modifier = Modifier.weight(1f)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedTextField(
-                value = selectedYear?.let { "${it}年" } ?: "すべて",
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
-            )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                DropdownMenuItem(
-                    text = { Text("すべて") },
-                    onClick = {
-                        onYearSelect(null)
-                        expanded = false
-                    }
-                )
-                availableYears.forEach { year ->
-                    DropdownMenuItem(
-                        text = { Text("${year}年") },
-                        onClick = {
-                            onYearSelect(year)
-                            expanded = false
+                value = filterState.searchQuery,
+                onValueChange = onSearchQueryChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("タイトル検索", style = MaterialTheme.typography.bodyMedium) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "検索") },
+                trailingIcon = {
+                    if (filterState.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "クリア",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
+                    }
+                },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge
+            )
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (availableStatuses.isNotEmpty()) {
+                    FilterChip(
+                        selected = filterState.selectedStatuses.isNotEmpty(),
+                        onClick = { showStatusDialog = true },
+                        label = { Text("ステータス") },
+                        leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) }
+                    )
+                }
+                if (availableSeasons.isNotEmpty()) {
+                    FilterChip(
+                        selected = filterState.selectedSeasons.isNotEmpty(),
+                        onClick = { showSeasonDialog = true },
+                        label = { Text("クール") },
+                        leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                    )
+                }
+                if (availableYears.isNotEmpty()) {
+                    FilterChip(
+                        selected = filterState.selectedYears.isNotEmpty(),
+                        onClick = { showYearDialog = true },
+                        label = { Text("年") },
+                        leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) }
+                    )
+                }
+                if (availableMedia.isNotEmpty()) {
+                    FilterChip(
+                        selected = filterState.selectedMedia.isNotEmpty(),
+                        onClick = { showMediaDialog = true },
+                        label = { Text("メディア") },
+                        leadingIcon = { Icon(Icons.Default.Movie, contentDescription = null) }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("並び順：", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.width(4.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterChip(
+                        selected = filterState.sortOrder == LibrarySortOrder.SEASON_DESC,
+                        onClick = { onSortOrderChange(LibrarySortOrder.SEASON_DESC) },
+                        label = { Text("新しい順") }
+                    )
+                    FilterChip(
+                        selected = filterState.sortOrder == LibrarySortOrder.SEASON_ASC,
+                        onClick = { onSortOrderChange(LibrarySortOrder.SEASON_ASC) },
+                        label = { Text("古い順") }
+                    )
+                    FilterChip(
+                        selected = filterState.sortOrder == LibrarySortOrder.TITLE_ASC,
+                        onClick = { onSortOrderChange(LibrarySortOrder.TITLE_ASC) },
+                        label = { Text("タイトル順") }
                     )
                 }
             }
         }
     }
-}
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FilterChipRow(label: String, chips: @Composable () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(52.dp)
+    if (showStatusDialog) {
+        val statusMap = availableStatuses.associateBy { it.toJapaneseLabel() }
+        FilterSelectionDialog(
+            title = "ステータスを選択",
+            items = availableStatuses.map { it.toJapaneseLabel() },
+            selectedItems = filterState.selectedStatuses.map { it.toJapaneseLabel() }.toSet(),
+            onItemSelected = { label ->
+                statusMap[label]?.let { onStatusFilterChange(it) }
+            },
+            onDismiss = { showStatusDialog = false }
         )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            chips()
-        }
+    }
+    if (showSeasonDialog) {
+        FilterSelectionDialog(
+            title = "クールを選択",
+            items = availableSeasons.map { it.toJapaneseLabel() },
+            selectedItems = filterState.selectedSeasons.map { it.toJapaneseLabel() }.toSet(),
+            onItemSelected = { label ->
+                availableSeasons.find { it.toJapaneseLabel() == label }?.let { onSeasonFilterChange(it) }
+            },
+            onDismiss = { showSeasonDialog = false }
+        )
+    }
+    if (showYearDialog) {
+        FilterSelectionDialog(
+            title = "年を選択",
+            items = availableYears.map { "${it}年" },
+            selectedItems = filterState.selectedYears.map { "${it}年" }.toSet(),
+            onItemSelected = { label ->
+                label.removeSuffix("年").toIntOrNull()?.let { onYearFilterChange(it) }
+            },
+            onDismiss = { showYearDialog = false }
+        )
+    }
+    if (showMediaDialog) {
+        FilterSelectionDialog(
+            title = "メディアを選択",
+            items = availableMedia,
+            selectedItems = filterState.selectedMedia,
+            onItemSelected = { onMediaFilterChange(it) },
+            onDismiss = { showMediaDialog = false }
+        )
     }
 }
 

@@ -41,7 +41,7 @@ enum class LibrarySortOrder {
 data class LibraryFilterState(
     val selectedMedia: Set<String> = emptySet(),
     val selectedStatuses: Set<StatusState> = emptySet(),
-    val selectedYear: Int? = null,
+    val selectedYears: Set<Int> = emptySet(),
     val selectedSeasons: Set<SeasonName> = emptySet(),
     val searchQuery: String = "",
     val sortOrder: LibrarySortOrder = LibrarySortOrder.SEASON_DESC
@@ -130,7 +130,7 @@ class LibraryViewModel @Inject constructor(
     fun toggleStatusFilter(status: StatusState) =
         updateFilter { it.copy(selectedStatuses = it.selectedStatuses.toggle(status)) }
 
-    fun selectYear(year: Int?) = updateFilter { it.copy(selectedYear = year) }
+    fun toggleYearFilter(year: Int) = updateFilter { it.copy(selectedYears = it.selectedYears.toggle(year)) }
 
     fun toggleSeasonFilter(season: SeasonName) =
         updateFilter { it.copy(selectedSeasons = it.selectedSeasons.toggle(season)) }
@@ -172,8 +172,8 @@ class LibraryViewModel @Inject constructor(
         if (filterState.selectedStatuses.isNotEmpty()) {
             filtered = filtered.filter { it.statusState in filterState.selectedStatuses }
         }
-        if (filterState.selectedYear != null) {
-            filtered = filtered.filter { it.work.seasonYear == filterState.selectedYear }
+        if (filterState.selectedYears.isNotEmpty()) {
+            filtered = filtered.filter { it.work.seasonYear in filterState.selectedYears }
         }
         if (filterState.selectedSeasons.isNotEmpty()) {
             filtered = filtered.filter { it.work.seasonName in filterState.selectedSeasons }

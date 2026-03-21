@@ -8,12 +8,18 @@ Aniiiiict is an unofficial Android client for [Annict](https://annict.com), an a
 
 ## Build & Development Commands
 
+**JDK 17 is required.** The default JDK may not be 17; set it explicitly:
+```bash
+export JAVA_HOME=/Users/shiva768/Library/Java/JavaVirtualMachines/jbr-17.0.14/Contents/Home
+```
+
 ```bash
 # Build
 ./gradlew assembleDebug                    # Build debug APK (requires secrets)
 
 # Testing
 ./gradlew testDebugUnitTest                # Unit tests only
+./gradlew testDebugUnitTest --tests "com.zelretch.aniiiiict.ui.library.LibraryViewModelTest"  # Single test class
 ./gradlew connectedDebugAndroidTest        # Instrumentation tests (requires device/emulator)
 ./gradlew check                            # Unit tests + ktlint + detekt (run before committing)
 
@@ -24,6 +30,8 @@ Aniiiiict is an unofficial Android client for [Annict](https://annict.com), an a
 ```
 
 Secrets (ANNICT_CLIENT_ID, ANNICT_CLIENT_SECRET, MAL_CLIENT_ID) are required for `assembleDebug` but NOT for `check`/test tasks (dummy values used). Configure via `local.properties` (see `local.properties.template`).
+
+Base package: `com.zelretch.aniiiiict`
 
 ## Architecture
 
@@ -75,7 +83,7 @@ Three test types are required for changes:
 
 - **UnitTest** (`app/src/test/`): JUnit5 + MockK. Test ViewModels and UseCases in isolation.
 - **IntegrationTest** (`app/src/androidTest/`): Test UseCase+Repository collaboration. Mock external boundaries (Repository, ProgramFilter) but NOT domain UseCases.
-- **UITest** (`app/src/androidTest/`): Mock ViewModel. Verify all three `UiState` states render correctly.
+- **UITest** (`app/src/androidTest/`): Mock ViewModel. Verify all three `UiState` states render correctly. Uses `HiltComposeTestRule` and `FakeAnnictRepository` from `app/src/androidTest/testing/`.
 
 Test naming uses Japanese with `@DisplayName`:
 ```kotlin
