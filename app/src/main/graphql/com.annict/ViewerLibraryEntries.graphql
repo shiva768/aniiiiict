@@ -29,6 +29,14 @@ query ViewerLibraryEntries($after: String, $states: [StatusState!]) {
             recommendedImageUrl
             facebookOgImageUrl
           }
+          episodes(first: 1, orderBy: { field: SORT_NUMBER, direction: ASC }) {
+            nodes {
+              id
+              number
+              numberText
+              title
+            }
+          }
         }
         nextEpisode {
           id

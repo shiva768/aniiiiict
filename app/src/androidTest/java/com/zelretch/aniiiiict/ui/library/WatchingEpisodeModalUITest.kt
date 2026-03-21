@@ -205,7 +205,7 @@ class WatchingEpisodeModalUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("次のエピソード情報がありません").assertIsDisplayed()
+        composeTestRule.onNodeWithText("最新話まで視聴済みです。次回放送をお待ちください。").assertIsDisplayed()
     }
 
     @Test

@@ -16,6 +16,14 @@ query LibraryEntryNode($id: ID!) {
           recommendedImageUrl
           facebookOgImageUrl
         }
+        episodes(first: 1, orderBy: { field: SORT_NUMBER, direction: ASC }) {
+          nodes {
+            id
+            number
+            numberText
+            title
+          }
+        }
       }
       nextEpisode {
         id
