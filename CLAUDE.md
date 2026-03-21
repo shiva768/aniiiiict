@@ -39,12 +39,12 @@ Base package: `com.zelretch.aniiiiict`
 
 ### Layer Structure
 - **UI Layer** (`ui/`): Jetpack Compose screens + ViewModels. State managed via `UiState<T>` (Loading/Success/Error) exposed as `StateFlow`.
-- **Domain Layer** (`domain/`): UseCases with `Result<T>` return types. `DomainError` sealed class hierarchy for typed errors.
-- **Data Layer** (`data/`): Repositories abstract API access. Annict (Apollo GraphQL), AniList (Apollo GraphQL), MyAnimeList (Retrofit REST).
+- **Domain Layer** (`domain/`): UseCases with `Result<T>` return types. `DomainError` sealed class hierarchy for typed errors. Singleton services (e.g. `LibrarySyncService`) manage background sync state via `StateFlow<SyncStatus>`.
+- **Data Layer** (`data/`): Repositories abstract API access. Annict (Apollo GraphQL), AniList (Apollo GraphQL), MyAnimeList (Retrofit REST). Room (`data/local/`) provides local cache for library entries; `AppDatabase` version managed with `fallbackToDestructiveMigration`.
 
 ### Data Flow
 ```
-Composable Screen → ViewModel → UseCase → Repository → API Client/DataStore
+Composable Screen → ViewModel → UseCase → Repository → API Client/DataStore/Room
 ```
 
 ### Key Patterns
@@ -82,8 +82,10 @@ class XxxViewModel @Inject constructor(
 Three test types are required for changes:
 
 - **UnitTest** (`app/src/test/`): JUnit5 + MockK. Test ViewModels and UseCases in isolation.
-- **IntegrationTest** (`app/src/androidTest/`): Test UseCase+Repository collaboration. Mock external boundaries (Repository, ProgramFilter) but NOT domain UseCases.
-- **UITest** (`app/src/androidTest/`): Mock ViewModel. Verify all three `UiState` states render correctly. Uses `HiltComposeTestRule` and `FakeAnnictRepository` from `app/src/androidTest/testing/`.
+- **IntegrationTest** (`app/src/androidTest/`): Test UseCase+Repository collaboration. Mock external boundaries (Repository, ProgramFilter) but NOT domain UseCases. Uses `FakeAnnictRepository` from `app/src/androidTest/testing/`.
+- **UITest** (`app/src/androidTest/`): Mock ViewModel via MockK. Verify UI states and interactions. Navigation tests use `@HiltAndroidTest` + `FakeAnnictRepository`; component tests use `createAndroidComposeRule<ComponentActivity>()` without Hilt.
+
+**UI変更を伴う実装後は必ず `./gradlew connectedDebugAndroidTest` を実行する**（デバイス/エミュレーター接続必須）。
 
 Test naming uses Japanese with `@DisplayName`:
 ```kotlin
@@ -106,4 +108,4 @@ JUnit5 with `@Nested` for test organization. Turbine for Flow testing.
 
 ## Key Dependencies
 
-All versions managed in `gradle/libs.versions.toml`. Key: Compose BOM 2025.06.00, Hilt 2.57.2, Apollo 4.3.3, Retrofit 3.0.0, Kotlin 2.2.20, MinSDK 26, TargetSDK 36, JVM target 17.
+All versions managed in `gradle/libs.versions.toml`. Key: Compose BOM 2025.09.00, Hilt 2.57.2, Apollo 4.3.3, Retrofit 3.0.0, Kotlin 2.2.20, Room 2.7.0, MinSDK 26, TargetSDK 36, JVM target 17.
