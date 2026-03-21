@@ -3,7 +3,7 @@ package com.zelretch.aniiiiict.ui.common.components
 import com.annict.type.StatusState
 
 fun StatusState.toJapaneseLabel(): String = when (this) {
-    StatusState.WATCHING -> "視聴中"
+    StatusState.WATCHING -> "見てる"
     StatusState.WANNA_WATCH -> "見たい"
     StatusState.WATCHED -> "見た"
     StatusState.STOP_WATCHING -> "中止"
