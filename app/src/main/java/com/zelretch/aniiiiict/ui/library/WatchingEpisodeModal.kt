@@ -176,8 +176,13 @@ private fun WatchingEpisodeModalContent(state: WatchingEpisodeModalState, onReco
                     Text("視聴済みにする")
                 }
             } ?: run {
+                val message = if (state.selectedStatus == StatusState.WATCHING) {
+                    "最新話まで視聴済みです。次回放送をお待ちください。"
+                } else {
+                    "次のエピソード情報がありません"
+                }
                 Text(
-                    text = "次のエピソード情報がありません",
+                    text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

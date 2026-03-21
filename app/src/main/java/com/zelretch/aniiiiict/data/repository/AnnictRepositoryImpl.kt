@@ -265,6 +265,7 @@ class AnnictRepositoryImpl @Inject constructor(
             val nodeData = response.data?.node?.onLibraryEntry
                 ?: return@executeApiRequest null
             val viewerStatus = nodeData.work.viewerStatusState ?: return@executeApiRequest null
+            val statusState = nodeData.status?.state
             LibraryEntry(
                 id = nodeData.id,
                 work = Work(
@@ -290,13 +291,19 @@ class AnnictRepositoryImpl @Inject constructor(
                         numberText = episode.numberText,
                         title = episode.title
                     )
+                } ?: firstEpisodeForWannaWatch(statusState, nodeData.work.noEpisodes) {
+                    nodeData.work.episodes?.nodes?.firstOrNull()
+                        ?.let { ep ->
+                            Episode(id = ep.id, number = ep.number, numberText = ep.numberText, title = ep.title)
+                        }
                 },
-                statusState = nodeData.status?.state
+                statusState = statusState
             )
         }
 
     private fun mapToLibraryEntry(node: com.annict.ViewerLibraryEntriesQuery.Node): LibraryEntry? {
         val viewerStatus = node.work.viewerStatusState ?: return null
+        val statusState = node.status?.state
         return LibraryEntry(
             id = node.id,
             work = Work(
@@ -322,8 +329,13 @@ class AnnictRepositoryImpl @Inject constructor(
                     numberText = episode.numberText,
                     title = episode.title
                 )
+            } ?: firstEpisodeForWannaWatch(statusState, node.work.noEpisodes) {
+                node.work.episodes?.nodes?.firstOrNull()
+                    ?.let { ep ->
+                        Episode(id = ep.id, number = ep.number, numberText = ep.numberText, title = ep.title)
+                    }
             },
-            statusState = node.status?.state
+            statusState = statusState
         )
     }
 
@@ -382,3 +394,9 @@ class AnnictRepositoryImpl @Inject constructor(
         else -> DomainError.NetworkError.Unknown(e)
     }
 }
+
+private inline fun firstEpisodeForWannaWatch(
+    statusState: StatusState?,
+    noEpisodes: Boolean,
+    episodeFetcher: () -> Episode?
+): Episode? = if (statusState == StatusState.WANNA_WATCH && !noEpisodes) episodeFetcher() else null
