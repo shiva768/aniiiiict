@@ -22,18 +22,26 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -117,7 +125,7 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                     onSearchQueryChange = { viewModel.updateSearchQuery(it) },
                     onMediaFilterChange = { viewModel.toggleMediaFilter(it) },
                     onStatusFilterChange = { viewModel.toggleStatusFilter(it) },
-                    onYearFilterChange = { viewModel.toggleYearFilter(it) },
+                    onYearSelect = { viewModel.selectYear(it) },
                     onSeasonFilterChange = { viewModel.toggleSeasonFilter(it) },
                     onSortOrderChange = { viewModel.updateSortOrder(it) }
                 )
@@ -195,7 +203,7 @@ private fun LibraryFilterBar(
     onSearchQueryChange: (String) -> Unit,
     onMediaFilterChange: (String) -> Unit,
     onStatusFilterChange: (StatusState) -> Unit,
-    onYearFilterChange: (Int) -> Unit,
+    onYearSelect: (Int?) -> Unit,
     onSeasonFilterChange: (SeasonName) -> Unit,
     onSortOrderChange: (LibrarySortOrder) -> Unit
 ) {
@@ -224,15 +232,11 @@ private fun LibraryFilterBar(
             }
         }
         if (availableYears.isNotEmpty()) {
-            FilterChipRow(label = "年") {
-                availableYears.forEach { year ->
-                    FilterChip(
-                        selected = year in filterState.selectedYears,
-                        onClick = { onYearFilterChange(year) },
-                        label = { Text("${year}年") }
-                    )
-                }
-            }
+            YearDropdown(
+                selectedYear = filterState.selectedYear,
+                availableYears = availableYears,
+                onYearSelect = onYearSelect
+            )
         }
         if (availableSeasons.isNotEmpty()) {
             FilterChipRow(label = "クール") {
@@ -272,6 +276,54 @@ private fun LibraryFilterBar(
                 onClick = { onSortOrderChange(LibrarySortOrder.TITLE_ASC) },
                 label = { Text("タイトル順") }
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun YearDropdown(selectedYear: Int?, availableYears: List<Int>, onYearSelect: (Int?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "年",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(52.dp)
+        )
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            modifier = Modifier.weight(1f)
+        ) {
+            OutlinedTextField(
+                value = selectedYear?.let { "${it}年" } ?: "すべて",
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+            )
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenuItem(
+                    text = { Text("すべて") },
+                    onClick = {
+                        onYearSelect(null)
+                        expanded = false
+                    }
+                )
+                availableYears.forEach { year ->
+                    DropdownMenuItem(
+                        text = { Text("${year}年") },
+                        onClick = {
+                            onYearSelect(year)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }
