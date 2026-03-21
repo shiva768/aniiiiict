@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
@@ -111,9 +112,14 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                     filterState = uiState.filterState,
                     availableMedia = uiState.availableMedia,
                     availableStatuses = uiState.availableStatuses,
+                    availableYears = uiState.availableYears,
+                    availableSeasons = uiState.availableSeasons,
                     onSearchQueryChange = { viewModel.updateSearchQuery(it) },
                     onMediaFilterChange = { viewModel.toggleMediaFilter(it) },
-                    onStatusFilterChange = { viewModel.toggleStatusFilter(it) }
+                    onStatusFilterChange = { viewModel.toggleStatusFilter(it) },
+                    onYearFilterChange = { viewModel.toggleYearFilter(it) },
+                    onSeasonFilterChange = { viewModel.toggleSeasonFilter(it) },
+                    onSortOrderChange = { viewModel.updateSortOrder(it) }
                 )
             }
 
@@ -184,14 +190,20 @@ private fun LibraryFilterBar(
     filterState: LibraryFilterState,
     availableMedia: List<String>,
     availableStatuses: List<StatusState>,
+    availableYears: List<Int>,
+    availableSeasons: List<SeasonName>,
     onSearchQueryChange: (String) -> Unit,
     onMediaFilterChange: (String) -> Unit,
-    onStatusFilterChange: (StatusState) -> Unit
+    onStatusFilterChange: (StatusState) -> Unit,
+    onYearFilterChange: (Int) -> Unit,
+    onSeasonFilterChange: (SeasonName) -> Unit,
+    onSortOrderChange: (LibrarySortOrder) -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         OutlinedTextField(
             value = filterState.searchQuery,
@@ -201,10 +213,7 @@ private fun LibraryFilterBar(
             singleLine = true
         )
         if (availableStatuses.isNotEmpty()) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
+            FilterChipRow(label = "ステータス") {
                 availableStatuses.forEach { status ->
                     FilterChip(
                         selected = status in filterState.selectedStatuses,
@@ -214,11 +223,30 @@ private fun LibraryFilterBar(
                 }
             }
         }
+        if (availableYears.isNotEmpty()) {
+            FilterChipRow(label = "年") {
+                availableYears.forEach { year ->
+                    FilterChip(
+                        selected = year in filterState.selectedYears,
+                        onClick = { onYearFilterChange(year) },
+                        label = { Text("${year}年") }
+                    )
+                }
+            }
+        }
+        if (availableSeasons.isNotEmpty()) {
+            FilterChipRow(label = "クール") {
+                availableSeasons.forEach { season ->
+                    FilterChip(
+                        selected = season in filterState.selectedSeasons,
+                        onClick = { onSeasonFilterChange(season) },
+                        label = { Text(season.toJapaneseLabel()) }
+                    )
+                }
+            }
+        }
         if (availableMedia.isNotEmpty()) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 4.dp)
-            ) {
+            FilterChipRow(label = "メディア") {
                 availableMedia.forEach { media ->
                     FilterChip(
                         selected = media in filterState.selectedMedia,
@@ -227,6 +255,42 @@ private fun LibraryFilterBar(
                     )
                 }
             }
+        }
+        FilterChipRow(label = "並び順") {
+            FilterChip(
+                selected = filterState.sortOrder == LibrarySortOrder.SEASON_DESC,
+                onClick = { onSortOrderChange(LibrarySortOrder.SEASON_DESC) },
+                label = { Text("新しい順") }
+            )
+            FilterChip(
+                selected = filterState.sortOrder == LibrarySortOrder.SEASON_ASC,
+                onClick = { onSortOrderChange(LibrarySortOrder.SEASON_ASC) },
+                label = { Text("古い順") }
+            )
+            FilterChip(
+                selected = filterState.sortOrder == LibrarySortOrder.TITLE_ASC,
+                onClick = { onSortOrderChange(LibrarySortOrder.TITLE_ASC) },
+                label = { Text("タイトル順") }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FilterChipRow(label: String, chips: @Composable () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(52.dp)
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            chips()
         }
     }
 }
@@ -344,4 +408,12 @@ private fun LibraryWorkImage(imageUrl: String?, workTitle: String) {
             }
         }
     }
+}
+
+private fun SeasonName.toJapaneseLabel(): String = when (this) {
+    SeasonName.SPRING -> "春"
+    SeasonName.SUMMER -> "夏"
+    SeasonName.AUTUMN -> "秋"
+    SeasonName.WINTER -> "冬"
+    else -> rawValue
 }
