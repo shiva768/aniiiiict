@@ -7,7 +7,7 @@ fun StatusState.toJapaneseLabel(): String = when (this) {
     StatusState.WANNA_WATCH -> "見たい"
     StatusState.WATCHED -> "見た"
     StatusState.STOP_WATCHING -> "中止"
-    StatusState.ON_HOLD -> "保留"
+    StatusState.ON_HOLD -> "中断"
     StatusState.UNKNOWN__ -> "未設定"
     else -> toString()
 }

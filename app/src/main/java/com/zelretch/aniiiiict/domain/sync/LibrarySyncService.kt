@@ -25,7 +25,7 @@ class LibrarySyncService @Inject constructor(
     private val _status = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val status: StateFlow<SyncStatus> = _status.asStateFlow()
 
-    private val targetStates = listOf(StatusState.WANNA_WATCH, StatusState.WATCHING)
+    private val targetStates = listOf(StatusState.WANNA_WATCH, StatusState.WATCHING, StatusState.ON_HOLD)
 
     suspend fun sync() {
         if (_status.value is SyncStatus.Syncing) {
