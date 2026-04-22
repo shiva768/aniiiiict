@@ -1,6 +1,8 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
+import com.annict.type.Media
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Channel
@@ -38,6 +40,7 @@ class GetAnimeDetailUseCaseTest {
         annictRepository = mockk()
         myAnimeListRepository = mockk()
         useCase = GetAnimeDetailUseCase(annictRepository, myAnimeListRepository)
+        coEvery { annictRepository.getWorkSeriesList(any()) } returns Result.success(null)
     }
 
     @Nested
@@ -51,8 +54,10 @@ class GetAnimeDetailUseCaseTest {
             val programWithWork = createSampleProgramWithWork()
             val annictDetail = createMockAnnictDetail()
             val malResponse = createMockMyAnimeListResponse()
+            val seriesListNode = createMockWorkSeriesListNode()
 
             coEvery { annictRepository.getWorkDetail(any()) } returns Result.success(annictDetail)
+            coEvery { annictRepository.getWorkSeriesList(any()) } returns Result.success(seriesListNode)
             coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.success(malResponse)
 
             // When
@@ -178,7 +183,6 @@ class GetAnimeDetailUseCaseTest {
             every { mockOnWork.officialSiteUrl } returns null
             every { mockOnWork.wikipediaUrl } returns null
             every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
-            every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
 
             val mockNode = mockk<WorkDetailQuery.Node>()
             every { mockNode.onWork } returns mockOnWork
@@ -245,7 +249,6 @@ class GetAnimeDetailUseCaseTest {
             every { mockOnWork.officialSiteUrl } returns "https://example.com/official"
             every { mockOnWork.wikipediaUrl } returns "https://ja.wikipedia.org/wiki/test"
             every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
-            every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
 
             val mockNode = mockk<WorkDetailQuery.Node>()
             every { mockNode.onWork } returns mockOnWork
@@ -281,6 +284,86 @@ class GetAnimeDetailUseCaseTest {
 
             // When
             val result = useCase(programWithWork)
+
+            // Then
+            assertTrue(result.isFailure)
+            assertNotNull(result.exceptionOrNull())
+        }
+    }
+
+    @Nested
+    @DisplayName("workIdのみでの取得")
+    inner class InvokeByWorkId {
+
+        @Test
+        @DisplayName("workIdのみでAnnictとMyAnimeListデータを統合して取得できる")
+        fun workIdのみでデータを取得できる() = runTest {
+            // Given
+            val annictDetail = createMockAnnictDetailWithFullFields()
+            val malResponse = createMockMyAnimeListResponse()
+
+            coEvery { annictRepository.getWorkDetail("test-work-id") } returns Result.success(annictDetail)
+            coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.success(malResponse)
+
+            // When
+            val result = useCase("test-work-id")
+
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrNull()
+            assertNotNull(animeDetailInfo)
+            assertEquals("テストアニメ", animeDetailInfo?.work?.title)
+            assertEquals(StatusState.WATCHING, animeDetailInfo?.work?.viewerStatusState)
+            assertEquals(24, animeDetailInfo?.episodeCount)
+            assertEquals("https://annict.example.com/image.jpg", animeDetailInfo?.imageUrl)
+        }
+
+        @Test
+        @DisplayName("MyAnimeList失敗時もAnnict成功ならworkIdのみでも取得できる")
+        fun MyAnimeList失敗時もworkIdのみで取得できる() = runTest {
+            // Given
+            val annictDetail = createMockAnnictDetailWithFullFields()
+
+            coEvery { annictRepository.getWorkDetail("test-work-id") } returns Result.success(annictDetail)
+            coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.failure(Exception("MAL Error"))
+
+            // When
+            val result = useCase("test-work-id")
+
+            // Then
+            assertTrue(result.isSuccess)
+            val animeDetailInfo = result.getOrNull()
+            assertNotNull(animeDetailInfo)
+            assertNull(animeDetailInfo?.malInfo)
+            assertEquals(12, animeDetailInfo?.episodeCount)
+        }
+
+        @Test
+        @DisplayName("Annict取得失敗時はエラーを返す")
+        fun Annict取得失敗時はworkIdのみでエラーを返す() = runTest {
+            // Given
+            coEvery { annictRepository.getWorkDetail("test-work-id") } returns
+                Result.failure(Exception("Annict API Error"))
+
+            // When
+            val result = useCase("test-work-id")
+
+            // Then
+            assertTrue(result.isFailure)
+            assertNotNull(result.exceptionOrNull())
+        }
+
+        @Test
+        @DisplayName("onWorkがnullの場合はエラーを返す")
+        fun onWorkがnullの場合はエラーを返す() = runTest {
+            // Given
+            val mockNode = mockk<WorkDetailQuery.Node>()
+            every { mockNode.onWork } returns null
+
+            coEvery { annictRepository.getWorkDetail("test-work-id") } returns Result.success(mockNode)
+
+            // When
+            val result = useCase("test-work-id")
 
             // Then
             assertTrue(result.isFailure)
@@ -345,7 +428,14 @@ class GetAnimeDetailUseCaseTest {
         every { mockPrograms.nodes } returns listOf(mockProgram)
         every { mockOnWork.programs } returns mockPrograms
 
-        val mockWork = mockk<WorkDetailQuery.Node3>()
+        val mockNode = mockk<WorkDetailQuery.Node>()
+        every { mockNode.onWork } returns mockOnWork
+
+        return mockNode
+    }
+
+    private fun createMockWorkSeriesListNode(): WorkSeriesListQuery.Node {
+        val mockWork = mockk<WorkSeriesListQuery.Node2>()
         every { mockWork.id } returns "related-work-id"
         every { mockWork.title } returns "関連作品"
         every { mockWork.titleEn } returns "Related Work"
@@ -353,18 +443,47 @@ class GetAnimeDetailUseCaseTest {
         every { mockWork.seasonYear } returns null
         every { mockWork.image } returns null
 
-        val mockWorks = mockk<WorkDetailQuery.Works>()
+        val mockWorks = mockk<WorkSeriesListQuery.Works>()
         every { mockWorks.nodes } returns listOf(mockWork)
 
-        val mockSeries = mockk<WorkDetailQuery.Node2>()
+        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
         every { mockSeries.id } returns "series-id"
         every { mockSeries.name } returns "テストシリーズ"
         every { mockSeries.nameEn } returns "Test Series"
         every { mockSeries.works } returns mockWorks
 
-        val mockSeriesList = mockk<WorkDetailQuery.SeriesList>()
+        val mockSeriesList = mockk<WorkSeriesListQuery.SeriesList>()
         every { mockSeriesList.nodes } returns listOf(mockSeries)
+
+        val mockOnWork = mockk<WorkSeriesListQuery.OnWork>()
         every { mockOnWork.seriesList } returns mockSeriesList
+
+        val mockNode = mockk<WorkSeriesListQuery.Node>()
+        every { mockNode.onWork } returns mockOnWork
+
+        return mockNode
+    }
+
+    private fun createMockAnnictDetailWithFullFields(): WorkDetailQuery.Node {
+        val mockOnWork = mockk<WorkDetailQuery.OnWork>()
+        every { mockOnWork.id } returns "test-work-id"
+        every { mockOnWork.title } returns "テストアニメ"
+        every { mockOnWork.titleEn } returns null
+        every { mockOnWork.seasonName } returns SeasonName.SPRING
+        every { mockOnWork.seasonYear } returns 2024
+        every { mockOnWork.media } returns Media.TV
+        every { mockOnWork.malAnimeId } returns "12345"
+        every { mockOnWork.viewerStatusState } returns StatusState.WATCHING
+        every { mockOnWork.episodesCount } returns 12
+        every { mockOnWork.officialSiteUrl } returns "https://example.com/official"
+        every { mockOnWork.wikipediaUrl } returns "https://ja.wikipedia.org/wiki/test"
+
+        val mockImage = mockk<WorkDetailQuery.Image>()
+        every { mockImage.recommendedImageUrl } returns "https://annict.example.com/image.jpg"
+        every { mockImage.facebookOgImageUrl } returns null
+        every { mockOnWork.image } returns mockImage
+
+        every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
 
         val mockNode = mockk<WorkDetailQuery.Node>()
         every { mockNode.onWork } returns mockOnWork

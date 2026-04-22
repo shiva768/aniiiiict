@@ -7,6 +7,7 @@ import com.annict.UpdateStatusMutation
 import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.exception.ApolloException
@@ -77,11 +78,13 @@ class AnnictRepositoryImpl @Inject constructor(
 
     override suspend fun handleAuthCallback(code: String): Result<Unit> {
         Timber.i("認証コールバック処理開始 - コード: ${code.take(AUTH_CODE_LOG_LENGTH)}...")
-        return executeApiRequest("handleAuthCallback") {
+        return runCatching {
             authManager.handleAuthorizationCode(code).getOrElse { e ->
                 throw DomainError.AuthError.CallbackFailed(e)
             }
             Timber.i("認証成功")
+        }.onFailure { e ->
+            Timber.e(e, "認証コールバック処理に失敗")
         }
     }
 
@@ -214,6 +217,26 @@ class AnnictRepositoryImpl @Inject constructor(
 
             val node = response.data?.node
             Timber.i("作品詳細情報を取得しました: workId=$workId")
+            node
+        }
+
+    override suspend fun getWorkSeriesList(workId: String): Result<WorkSeriesListQuery.Node?> =
+        executeApiRequest("getWorkSeriesList") {
+            Timber.i("シリーズ情報を取得中: workId=$workId")
+
+            val query = WorkSeriesListQuery(workId = workId)
+            val response = annictApolloClient.executeQuery(
+                operation = query,
+                context = "AnnictRepositoryImpl.getWorkSeriesList"
+            )
+
+            if (response.hasErrors()) {
+                Timber.e("GraphQLエラー: ${response.errors}")
+                throw DomainError.ApiError.GraphQLError("Work series list query failed: ${response.errors}")
+            }
+
+            val node = response.data?.node
+            Timber.i("シリーズ情報を取得しました: workId=$workId")
             node
         }
 

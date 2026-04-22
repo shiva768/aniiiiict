@@ -1,0 +1,25 @@
+query WorkSeriesList($workId: ID!) {
+  node(id: $workId) {
+    ... on Work {
+      seriesList(first: 5) {
+        nodes {
+          id
+          name
+          nameEn
+          works(first: 10) {
+            nodes {
+              id
+              title
+              titleEn
+              seasonName
+              seasonYear
+              image {
+                recommendedImageUrl
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.data.model
 
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
 
 data class AnimeDetailInfo(
     // Annict基本情報
@@ -8,7 +9,7 @@ data class AnimeDetailInfo(
 
     // Annict詳細情報
     val programs: List<WorkDetailQuery.Node1?>? = null,
-    val seriesList: List<WorkDetailQuery.Node2?>? = null,
+    val seriesList: List<WorkSeriesListQuery.Node1?>? = null,
 
     // MyAnimeList情報
     val malInfo: MyAnimeListResponse? = null,

@@ -308,28 +308,28 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 LibraryScreen(
                     viewModel = libraryViewModel,
                     uiState = libraryUiState,
-                    onNavigateBack = { navController.navigateUp() }
+                    onNavigateBack = { navController.navigateUp() },
+                    onNavigateToDetail = { workId ->
+                        navController.navigate("anime_detail/$workId")
+                    }
                 )
             }
             composable("anime_detail/{workId}") { backStackEntry ->
                 val workId = backStackEntry.arguments?.getString("workId") ?: ""
                 val trackBackStackEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry("track")
+                    runCatching { navController.getBackStackEntry("track") }.getOrNull()
                 }
-                val trackViewModel: TrackViewModel = hiltViewModel(trackBackStackEntry)
-                val programWithWork = trackViewModel.getProgramWithWork(workId)
+                val trackViewModel: TrackViewModel? = trackBackStackEntry?.let { hiltViewModel(it) }
+                val programWithWork = trackViewModel?.getProgramWithWork(workId)
 
-                if (programWithWork != null) {
-                    AnimeDetailScreen(
-                        programWithWork = programWithWork,
-                        onNavigateBack = { navController.navigateUp() }
-                    )
-                } else {
-                    // データが見つからない場合はTrack画面に戻る
-                    LaunchedEffect(Unit) {
-                        navController.navigateUp()
+                AnimeDetailScreen(
+                    workId = workId,
+                    programWithWork = programWithWork,
+                    onNavigateBack = { navController.navigateUp() },
+                    onNavigateToWork = { relatedWorkId ->
+                        navController.navigate("anime_detail/$relatedWorkId")
                     }
-                }
+                )
             }
             composable("settings") {
                 val settingsViewModel = hiltViewModel<SettingsViewModel>()

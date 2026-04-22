@@ -62,7 +62,12 @@ import com.zelretch.aniiiiict.ui.track.components.InfoTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryScreen(viewModel: LibraryViewModel, uiState: LibraryUiState, onNavigateBack: () -> Unit) {
+fun LibraryScreen(
+    viewModel: LibraryViewModel,
+    uiState: LibraryUiState,
+    onNavigateBack: () -> Unit,
+    onNavigateToDetail: (String) -> Unit = {}
+) {
     Scaffold(
         topBar = {
             LibraryTopAppBar(
@@ -75,7 +80,8 @@ fun LibraryScreen(viewModel: LibraryViewModel, uiState: LibraryUiState, onNaviga
         LibraryScreenContent(
             modifier = Modifier.padding(paddingValues),
             uiState = uiState,
-            viewModel = viewModel
+            viewModel = viewModel,
+            onNavigateToDetail = onNavigateToDetail
         )
     }
 }
@@ -115,7 +121,12 @@ private fun LibraryTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit
 }
 
 @Composable
-private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: LibraryUiState, viewModel: LibraryViewModel) {
+private fun LibraryScreenContent(
+    modifier: Modifier = Modifier,
+    uiState: LibraryUiState,
+    viewModel: LibraryViewModel,
+    onNavigateToDetail: (String) -> Unit = {}
+) {
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (uiState.isFilterVisible) {
@@ -189,7 +200,8 @@ private fun LibraryScreenContent(modifier: Modifier = Modifier, uiState: Library
                 entry = entry,
                 onDismiss = { viewModel.hideDetail() },
                 watchingEpisodeModalViewModel,
-                onRefresh = { viewModel.onEntryUpdated(entry.id) }
+                onRefresh = { viewModel.onEntryUpdated(entry.id) },
+                onNavigateToDetail = { onNavigateToDetail(entry.work.id) }
             )
         }
     }

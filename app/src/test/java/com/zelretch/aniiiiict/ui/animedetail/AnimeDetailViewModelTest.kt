@@ -118,6 +118,51 @@ class AnimeDetailViewModelTest {
     }
 
     @Nested
+    @DisplayName("workIdのみでのアニメ詳細の読み込み")
+    inner class LoadAnimeDetailById {
+
+        @Test
+        @DisplayName("成功時にUIStateが更新される")
+        fun onSuccess() = runTest {
+            // Given
+            val workId = "test-work-id"
+            val animeDetailInfo = createSampleAnimeDetailInfo()
+            every { errorMapper.toUserMessage(any(), any()) } returns "エラーメッセージ"
+
+            coEvery { getAnimeDetailUseCase(workId) } returns Result.success(animeDetailInfo)
+
+            // When
+            viewModel.loadAnimeDetailById(workId)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals("テストアニメ", (state as UiState.Success).data.animeDetailInfo.work.title)
+            assertEquals(StatusState.WATCHING, state.data.selectedStatus)
+        }
+
+        @Test
+        @DisplayName("失敗時にエラーメッセージが表示される")
+        fun onError() = runTest {
+            // Given
+            val workId = "test-work-id"
+            every { errorMapper.toUserMessage(any(), any()) } returns "エラーが発生しました"
+
+            coEvery { getAnimeDetailUseCase(workId) } returns Result.failure(Exception("API Error"))
+
+            // When
+            viewModel.loadAnimeDetailById(workId)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Error)
+            assertEquals("エラーが発生しました", (state as UiState.Error).message)
+        }
+    }
+
+    @Nested
     @DisplayName("ステータス変更")
     inner class ChangeStatus {
 
