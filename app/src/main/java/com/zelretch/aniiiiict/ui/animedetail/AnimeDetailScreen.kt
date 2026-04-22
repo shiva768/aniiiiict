@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,20 +54,31 @@ private const val CARD_ELEVATION = 2
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimeDetailScreen(
-    programWithWork: ProgramWithWork,
+    workId: String,
+    programWithWork: ProgramWithWork? = null,
     onNavigateBack: () -> Unit,
+    onNavigateToWork: (String) -> Unit = {},
     viewModel: AnimeDetailViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel<AnimeDetailViewModel>()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(programWithWork) {
-        viewModel.loadAnimeDetail(programWithWork)
+    LaunchedEffect(workId) {
+        if (programWithWork != null) {
+            viewModel.loadAnimeDetail(programWithWork)
+        } else {
+            viewModel.loadAnimeDetailById(workId)
+        }
+    }
+
+    val title = when (val state = uiState) {
+        is UiState.Success -> state.data.animeDetailInfo.work.title
+        else -> programWithWork?.work?.title ?: ""
     }
 
     Scaffold(
         topBar = {
             AnimeDetailTopAppBar(
-                title = programWithWork.work.title,
+                title = title,
                 onNavigateBack = onNavigateBack
             )
         }
@@ -108,6 +120,7 @@ fun AnimeDetailScreen(
                         isStatusChanging = state.data.isStatusChanging,
                         statusChangeError = state.data.statusChangeError,
                         onStatusChange = viewModel::changeStatus,
+                        onNavigateToWork = onNavigateToWork,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -123,6 +136,7 @@ private fun AnimeDetailContent(
     isStatusChanging: Boolean,
     statusChangeError: String?,
     onStatusChange: (StatusState) -> Unit,
+    onNavigateToWork: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -131,7 +145,6 @@ private fun AnimeDetailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ヘッダー情報
         AnimeDetailHeader(
             animeDetailInfo = animeDetailInfo,
             selectedStatus = selectedStatus,
@@ -140,23 +153,19 @@ private fun AnimeDetailContent(
             onStatusChange = onStatusChange
         )
 
-        // 基本情報
         AnimeDetailBasicInfo(animeDetailInfo = animeDetailInfo)
 
-        // 外部リンク
         AnimeDetailExternalLinks(animeDetailInfo = animeDetailInfo)
 
-        // 配信プラットフォーム
         animeDetailInfo.programs?.let { programs ->
             if (programs.isNotEmpty()) {
                 AnimeDetailPrograms(programs = programs)
             }
         }
 
-        // 関連作品
         animeDetailInfo.seriesList?.let { seriesList ->
             if (seriesList.isNotEmpty()) {
-                AnimeDetailRelatedWorks(seriesList = seriesList)
+                AnimeDetailRelatedWorks(seriesList = seriesList, onNavigateToWork = onNavigateToWork)
             }
         }
     }
@@ -359,7 +368,11 @@ private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier
 }
 
 @Composable
-private fun AnimeDetailRelatedWorks(seriesList: List<WorkDetailQuery.Node2?>, modifier: Modifier = Modifier) {
+private fun AnimeDetailRelatedWorks(
+    seriesList: List<WorkDetailQuery.Node2?>,
+    onNavigateToWork: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
@@ -385,11 +398,29 @@ private fun AnimeDetailRelatedWorks(seriesList: List<WorkDetailQuery.Node2?>, mo
                     )
 
                     series.works?.nodes?.filterNotNull()?.forEach { work ->
-                        Text(
-                            text = "  • ${work.title}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToWork(work.id) }
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "  • ${work.title}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }

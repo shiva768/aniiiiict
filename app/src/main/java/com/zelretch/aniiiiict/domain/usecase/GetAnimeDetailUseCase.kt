@@ -1,9 +1,13 @@
 package com.zelretch.aniiiiict.domain.usecase
 
+import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkImage
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
+import com.zelretch.aniiiiict.domain.error.DomainError
 import kotlinx.coroutines.coroutineScope
 import timber.log.Timber
 import javax.inject.Inject
@@ -16,7 +20,6 @@ class GetAnimeDetailUseCase @Inject constructor(
         val work = programWithWork.work
 
         coroutineScope {
-            // Annict詳細情報を取得（必須）
             val annictDetailResult = annictRepository.getWorkDetail(work.id)
             if (annictDetailResult.isFailure) {
                 throw annictDetailResult.exceptionOrNull()
@@ -24,7 +27,6 @@ class GetAnimeDetailUseCase @Inject constructor(
             }
             val annictDetail = annictDetailResult.getOrNull()
 
-            // MyAnimeList情報を並行取得（オプショナル）
             val malInfo = work.malAnimeId?.toIntOrNull()?.let { malId ->
                 myAnimeListRepository.getAnimeDetail(malId).getOrElse { e ->
                     Timber.w(e, "MyAnimeList情報の取得に失敗しました（続行）")
@@ -32,35 +34,81 @@ class GetAnimeDetailUseCase @Inject constructor(
                 }
             }
 
-            // 統合情報の構築
             val episodeCount = (malInfo?.numEpisodes?.takeIf { it > 0 })
                 ?: annictDetail?.onWork?.episodesCount?.takeIf { it > 0 }
 
-            // 画像のフォールバック: Annict詳細 → MAL → Work既存画像
             val imageUrl = annictDetail?.onWork?.image?.recommendedImageUrl
                 ?: malInfo?.mainPicture?.large
                 ?: malInfo?.mainPicture?.medium
                 ?: work.image?.recommendedImageUrl
 
-            val officialSiteUrl = annictDetail?.onWork?.officialSiteUrl
-            val wikipediaUrl = annictDetail?.onWork?.wikipediaUrl
-
-            // Annict詳細情報の取得
-            val programs = annictDetail?.onWork?.programs?.nodes
-            val seriesList = annictDetail?.onWork?.seriesList?.nodes
-
             AnimeDetailInfo(
                 work = work,
-                programs = programs,
-                seriesList = seriesList,
+                programs = annictDetail?.onWork?.programs?.nodes,
+                seriesList = annictDetail?.onWork?.seriesList?.nodes,
                 malInfo = malInfo,
                 episodeCount = episodeCount,
                 imageUrl = imageUrl,
-                officialSiteUrl = officialSiteUrl,
-                wikipediaUrl = wikipediaUrl
+                officialSiteUrl = annictDetail?.onWork?.officialSiteUrl,
+                wikipediaUrl = annictDetail?.onWork?.wikipediaUrl
             )
         }
     }.onFailure { e ->
         Timber.e(e, "GetAnimeDetailUseCase.invoke failed")
+    }
+
+    suspend operator fun invoke(workId: String): Result<AnimeDetailInfo> = runCatching {
+        coroutineScope {
+            val annictDetailResult = annictRepository.getWorkDetail(workId)
+            if (annictDetailResult.isFailure) {
+                throw annictDetailResult.exceptionOrNull()
+                    ?: Exception("Annict詳細情報の取得に失敗しました")
+            }
+            val onWork = annictDetailResult.getOrNull()?.onWork
+                ?: throw DomainError.Unknown("作品情報が取得できませんでした")
+
+            val work = Work(
+                id = onWork.id,
+                title = onWork.title,
+                seasonName = onWork.seasonName,
+                seasonYear = onWork.seasonYear,
+                media = onWork.media.rawValue,
+                malAnimeId = onWork.malAnimeId,
+                viewerStatusState = onWork.viewerStatusState ?: StatusState.NO_STATE,
+                image = onWork.image?.let { img ->
+                    WorkImage(
+                        recommendedImageUrl = img.recommendedImageUrl,
+                        facebookOgImageUrl = img.facebookOgImageUrl
+                    )
+                }
+            )
+
+            val malInfo = onWork.malAnimeId?.toIntOrNull()?.let { malId ->
+                myAnimeListRepository.getAnimeDetail(malId).getOrElse { e ->
+                    Timber.w(e, "MyAnimeList情報の取得に失敗しました（続行）")
+                    null
+                }
+            }
+
+            val episodeCount = (malInfo?.numEpisodes?.takeIf { it > 0 })
+                ?: onWork.episodesCount?.takeIf { it > 0 }
+
+            val imageUrl = onWork.image?.recommendedImageUrl
+                ?: malInfo?.mainPicture?.large
+                ?: malInfo?.mainPicture?.medium
+
+            AnimeDetailInfo(
+                work = work,
+                programs = onWork.programs?.nodes,
+                seriesList = onWork.seriesList?.nodes,
+                malInfo = malInfo,
+                episodeCount = episodeCount,
+                imageUrl = imageUrl,
+                officialSiteUrl = onWork.officialSiteUrl,
+                wikipediaUrl = onWork.wikipediaUrl
+            )
+        }
+    }.onFailure { e ->
+        Timber.e(e, "GetAnimeDetailUseCase.invoke(workId) failed")
     }
 }

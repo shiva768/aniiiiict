@@ -48,18 +48,10 @@ class AnimeDetailViewModel @Inject constructor(
 
     private var workId: String = ""
 
-    /**
-     * アニメ詳細情報を読み込む
-     *
-     * @param programWithWork 番組情報
-     */
     fun loadAnimeDetail(programWithWork: ProgramWithWork) {
         workId = programWithWork.work.id
         launchWithMinLoadingTime {
-            // ローディング状態に設定
             _uiState.value = UiState.Loading
-
-            // データ取得
             getAnimeDetailUseCase(programWithWork)
                 .onSuccess { animeDetailInfo ->
                     _uiState.value = UiState.Success(
@@ -72,6 +64,28 @@ class AnimeDetailViewModel @Inject constructor(
                 }
                 .onFailure { error ->
                     val message = errorMapper.toUserMessage(error, "AnimeDetailViewModel.loadAnimeDetail")
+                    _uiState.value = UiState.Error(message)
+                    Timber.e(error, "アニメ詳細情報の取得に失敗: $message")
+                }
+        }
+    }
+
+    fun loadAnimeDetailById(id: String) {
+        workId = id
+        launchWithMinLoadingTime {
+            _uiState.value = UiState.Loading
+            getAnimeDetailUseCase(id)
+                .onSuccess { animeDetailInfo ->
+                    _uiState.value = UiState.Success(
+                        AnimeDetailData(
+                            animeDetailInfo = animeDetailInfo,
+                            selectedStatus = animeDetailInfo.work.viewerStatusState
+                        )
+                    )
+                    Timber.i("アニメ詳細情報を取得しました: ${animeDetailInfo.work.title}")
+                }
+                .onFailure { error ->
+                    val message = errorMapper.toUserMessage(error, "AnimeDetailViewModel.loadAnimeDetailById")
                     _uiState.value = UiState.Error(message)
                     Timber.e(error, "アニメ詳細情報の取得に失敗: $message")
                 }

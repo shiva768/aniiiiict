@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.annict.WorkDetailQuery
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -49,6 +50,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -76,6 +78,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -104,6 +107,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -128,6 +132,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -162,6 +167,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -192,6 +198,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -229,6 +236,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -273,6 +281,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -285,6 +294,51 @@ class AnimeDetailScreenUITest {
         composeTestRule.onNodeWithText("テストシリーズ").assertIsDisplayed()
         // 関連作品は "  • タイトル" の形式で表示される
         composeTestRule.onNodeWithText("  • 関連作品タイトル").assertIsDisplayed()
+    }
+
+    @Test
+    fun 関連作品をタップすると遷移コールバックが呼ばれる() {
+        // Given: 関連作品情報を含むAnimeDetailInfo
+        val mockRelatedWork = mockk<WorkDetailQuery.Node3>()
+        every { mockRelatedWork.id } returns "related-work-id"
+        every { mockRelatedWork.title } returns "関連作品タイトル"
+        every { mockRelatedWork.titleEn } returns null
+        every { mockRelatedWork.seasonName } returns null
+        every { mockRelatedWork.seasonYear } returns null
+        every { mockRelatedWork.image } returns null
+
+        val mockWorks = mockk<WorkDetailQuery.Works>()
+        every { mockWorks.nodes } returns listOf(mockRelatedWork)
+
+        val mockSeries = mockk<WorkDetailQuery.Node2>()
+        every { mockSeries.id } returns "series-1"
+        every { mockSeries.name } returns "テストシリーズ"
+        every { mockSeries.nameEn } returns null
+        every { mockSeries.works } returns mockWorks
+
+        val animeDetailInfo = createAnimeDetailInfo(seriesList = listOf(mockSeries))
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
+        )
+        val programWithWork = createSampleProgramWithWork()
+        var navigatedWorkId: String? = null
+
+        // When: 画面を表示してタップ
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    workId = "test-work-id",
+                    programWithWork = programWithWork,
+                    onNavigateBack = {},
+                    onNavigateToWork = { navigatedWorkId = it },
+                    viewModel = mockViewModel
+                )
+            }
+        }
+        composeTestRule.onNodeWithText("  • 関連作品タイトル").performClick()
+
+        // Then: 関連作品IDでナビゲーションが呼ばれる
+        assert(navigatedWorkId == "related-work-id")
     }
 
     @Test
@@ -305,6 +359,7 @@ class AnimeDetailScreenUITest {
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
+                    workId = "test-work-id",
                     programWithWork = programWithWork,
                     onNavigateBack = {},
                     viewModel = mockViewModel
@@ -322,6 +377,7 @@ class AnimeDetailScreenUITest {
         mockk<AnimeDetailViewModel> {
             coEvery { this@mockk.uiState } returns MutableStateFlow(state)
             coEvery { loadAnimeDetail(any()) } returns Unit
+            coEvery { loadAnimeDetailById(any()) } returns Unit
             coEvery { changeStatus(any()) } returns Unit
         }
 
