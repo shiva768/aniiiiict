@@ -313,7 +313,7 @@ class AnimeDetailScreenUITest {
         val mockSeries = mockk<WorkDetailQuery.Node2>()
         every { mockSeries.id } returns "series-1"
         every { mockSeries.name } returns "テストシリーズ"
-        every { mockSeries.nameEn } returns null
+        every { mockSeries.nameEn } returns ""
         every { mockSeries.works } returns mockWorks
 
         val animeDetailInfo = createAnimeDetailInfo(seriesList = listOf(mockSeries))
