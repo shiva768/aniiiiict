@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
@@ -369,7 +370,7 @@ private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier
 
 @Composable
 private fun AnimeDetailRelatedWorks(
-    seriesList: List<WorkDetailQuery.Node2?>,
+    seriesList: List<WorkSeriesListQuery.Node1?>,
     onNavigateToWork: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {

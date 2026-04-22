@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
@@ -252,7 +253,7 @@ class AnimeDetailScreenUITest {
     @Test
     fun 関連作品情報がある場合にセクションが表示される() {
         // Given: 関連作品情報を含むAnimeDetailInfo
-        val mockRelatedWork = mockk<WorkDetailQuery.Node3>()
+        val mockRelatedWork = mockk<WorkSeriesListQuery.Node2>()
         every { mockRelatedWork.id } returns "work-1"
         every { mockRelatedWork.title } returns "関連作品タイトル"
         every { mockRelatedWork.titleEn } returns null
@@ -260,10 +261,10 @@ class AnimeDetailScreenUITest {
         every { mockRelatedWork.seasonYear } returns null
         every { mockRelatedWork.image } returns null
 
-        val mockWorks = mockk<WorkDetailQuery.Works>()
+        val mockWorks = mockk<WorkSeriesListQuery.Works>()
         every { mockWorks.nodes } returns listOf(mockRelatedWork)
 
-        val mockSeries = mockk<WorkDetailQuery.Node2>()
+        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
         every { mockSeries.id } returns "series-1"
         every { mockSeries.name } returns "テストシリーズ"
         every { mockSeries.nameEn } returns "Test Series"
@@ -299,7 +300,7 @@ class AnimeDetailScreenUITest {
     @Test
     fun 関連作品をタップすると遷移コールバックが呼ばれる() {
         // Given: 関連作品情報を含むAnimeDetailInfo
-        val mockRelatedWork = mockk<WorkDetailQuery.Node3>()
+        val mockRelatedWork = mockk<WorkSeriesListQuery.Node2>()
         every { mockRelatedWork.id } returns "related-work-id"
         every { mockRelatedWork.title } returns "関連作品タイトル"
         every { mockRelatedWork.titleEn } returns null
@@ -307,10 +308,10 @@ class AnimeDetailScreenUITest {
         every { mockRelatedWork.seasonYear } returns null
         every { mockRelatedWork.image } returns null
 
-        val mockWorks = mockk<WorkDetailQuery.Works>()
+        val mockWorks = mockk<WorkSeriesListQuery.Works>()
         every { mockWorks.nodes } returns listOf(mockRelatedWork)
 
-        val mockSeries = mockk<WorkDetailQuery.Node2>()
+        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
         every { mockSeries.id } returns "series-1"
         every { mockSeries.name } returns "テストシリーズ"
         every { mockSeries.nameEn } returns ""
@@ -421,7 +422,7 @@ class AnimeDetailScreenUITest {
         wikipediaUrl: String? = null,
         malInfo: MyAnimeListResponse? = null,
         programs: List<WorkDetailQuery.Node1?>? = null,
-        seriesList: List<WorkDetailQuery.Node2?>? = null
+        seriesList: List<WorkSeriesListQuery.Node1?>? = null
     ): AnimeDetailInfo {
         val work = Work(
             id = "test-work-id",

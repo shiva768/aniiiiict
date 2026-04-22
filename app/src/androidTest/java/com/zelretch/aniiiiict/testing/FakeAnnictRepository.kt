@@ -2,6 +2,7 @@ package com.zelretch.aniiiiict.testing
 
 import com.annict.ViewerProgramsQuery
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.model.LibraryEntry
@@ -23,6 +24,7 @@ open class FakeAnnictRepository : AnnictRepository {
     var deleteRecordResult: Result<Unit> = Result.success(Unit)
     var updateWorkViewStatusResult: Result<Unit> = Result.success(Unit)
     var workDetailResult: Result<WorkDetailQuery.Node?> = Result.success(null)
+    var workSeriesListResult: Result<WorkSeriesListQuery.Node?> = Result.success(null)
     var libraryEntriesResult: Result<LibraryEntriesPage> = Result.success(LibraryEntriesPage(emptyList(), false, null))
     var libraryEntryResult: Result<LibraryEntry?> = Result.success(null)
 
@@ -81,6 +83,8 @@ open class FakeAnnictRepository : AnnictRepository {
     }
 
     override suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?> = workDetailResult
+
+    override suspend fun getWorkSeriesList(workId: String): Result<WorkSeriesListQuery.Node?> = workSeriesListResult
 
     override suspend fun getLibraryEntries(states: List<StatusState>, after: String?): Result<LibraryEntriesPage> =
         libraryEntriesResult

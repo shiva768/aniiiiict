@@ -28,25 +28,6 @@ query WorkDetail($workId: ID!) {
           }
         }
       }
-      seriesList(first: 5) {
-        nodes {
-          id
-          name
-          nameEn
-          works(first: 10) {
-            nodes {
-              id
-              title
-              titleEn
-              seasonName
-              seasonYear
-              image {
-                recommendedImageUrl
-              }
-            }
-          }
-        }
-      }
-    }
+}
   }
 }

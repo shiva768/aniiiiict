@@ -42,10 +42,16 @@ class GetAnimeDetailUseCase @Inject constructor(
                 ?: malInfo?.mainPicture?.medium
                 ?: work.image?.recommendedImageUrl
 
+            val seriesListResult = annictRepository.getWorkSeriesList(work.id)
+            val seriesList = seriesListResult.getOrElse { e ->
+                Timber.w(e, "シリーズ情報の取得に失敗しました（続行）")
+                null
+            }?.onWork?.seriesList?.nodes
+
             AnimeDetailInfo(
                 work = work,
                 programs = annictDetail?.onWork?.programs?.nodes,
-                seriesList = annictDetail?.onWork?.seriesList?.nodes,
+                seriesList = seriesList,
                 malInfo = malInfo,
                 episodeCount = episodeCount,
                 imageUrl = imageUrl,
@@ -97,10 +103,15 @@ class GetAnimeDetailUseCase @Inject constructor(
                 ?: malInfo?.mainPicture?.large
                 ?: malInfo?.mainPicture?.medium
 
+            val seriesList = annictRepository.getWorkSeriesList(workId).getOrElse { e ->
+                Timber.w(e, "シリーズ情報の取得に失敗しました（続行）")
+                null
+            }?.onWork?.seriesList?.nodes
+
             AnimeDetailInfo(
                 work = work,
                 programs = onWork.programs?.nodes,
-                seriesList = onWork.seriesList?.nodes,
+                seriesList = seriesList,
                 malInfo = malInfo,
                 episodeCount = episodeCount,
                 imageUrl = imageUrl,

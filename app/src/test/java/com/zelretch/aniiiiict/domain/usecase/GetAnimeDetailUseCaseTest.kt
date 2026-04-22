@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.domain.usecase
 
 import com.annict.WorkDetailQuery
+import com.annict.WorkSeriesListQuery
 import com.annict.type.Media
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -39,6 +40,7 @@ class GetAnimeDetailUseCaseTest {
         annictRepository = mockk()
         myAnimeListRepository = mockk()
         useCase = GetAnimeDetailUseCase(annictRepository, myAnimeListRepository)
+        coEvery { annictRepository.getWorkSeriesList(any()) } returns Result.success(null)
     }
 
     @Nested
@@ -52,8 +54,10 @@ class GetAnimeDetailUseCaseTest {
             val programWithWork = createSampleProgramWithWork()
             val annictDetail = createMockAnnictDetail()
             val malResponse = createMockMyAnimeListResponse()
+            val seriesListNode = createMockWorkSeriesListNode()
 
             coEvery { annictRepository.getWorkDetail(any()) } returns Result.success(annictDetail)
+            coEvery { annictRepository.getWorkSeriesList(any()) } returns Result.success(seriesListNode)
             coEvery { myAnimeListRepository.getAnimeDetail(12345) } returns Result.success(malResponse)
 
             // When
@@ -179,7 +183,6 @@ class GetAnimeDetailUseCaseTest {
             every { mockOnWork.officialSiteUrl } returns null
             every { mockOnWork.wikipediaUrl } returns null
             every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
-            every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
 
             val mockNode = mockk<WorkDetailQuery.Node>()
             every { mockNode.onWork } returns mockOnWork
@@ -246,7 +249,6 @@ class GetAnimeDetailUseCaseTest {
             every { mockOnWork.officialSiteUrl } returns "https://example.com/official"
             every { mockOnWork.wikipediaUrl } returns "https://ja.wikipedia.org/wiki/test"
             every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
-            every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
 
             val mockNode = mockk<WorkDetailQuery.Node>()
             every { mockNode.onWork } returns mockOnWork
@@ -426,7 +428,14 @@ class GetAnimeDetailUseCaseTest {
         every { mockPrograms.nodes } returns listOf(mockProgram)
         every { mockOnWork.programs } returns mockPrograms
 
-        val mockWork = mockk<WorkDetailQuery.Node3>()
+        val mockNode = mockk<WorkDetailQuery.Node>()
+        every { mockNode.onWork } returns mockOnWork
+
+        return mockNode
+    }
+
+    private fun createMockWorkSeriesListNode(): WorkSeriesListQuery.Node {
+        val mockWork = mockk<WorkSeriesListQuery.Node2>()
         every { mockWork.id } returns "related-work-id"
         every { mockWork.title } returns "関連作品"
         every { mockWork.titleEn } returns "Related Work"
@@ -434,20 +443,22 @@ class GetAnimeDetailUseCaseTest {
         every { mockWork.seasonYear } returns null
         every { mockWork.image } returns null
 
-        val mockWorks = mockk<WorkDetailQuery.Works>()
+        val mockWorks = mockk<WorkSeriesListQuery.Works>()
         every { mockWorks.nodes } returns listOf(mockWork)
 
-        val mockSeries = mockk<WorkDetailQuery.Node2>()
+        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
         every { mockSeries.id } returns "series-id"
         every { mockSeries.name } returns "テストシリーズ"
         every { mockSeries.nameEn } returns "Test Series"
         every { mockSeries.works } returns mockWorks
 
-        val mockSeriesList = mockk<WorkDetailQuery.SeriesList>()
+        val mockSeriesList = mockk<WorkSeriesListQuery.SeriesList>()
         every { mockSeriesList.nodes } returns listOf(mockSeries)
+
+        val mockOnWork = mockk<WorkSeriesListQuery.OnWork>()
         every { mockOnWork.seriesList } returns mockSeriesList
 
-        val mockNode = mockk<WorkDetailQuery.Node>()
+        val mockNode = mockk<WorkSeriesListQuery.Node>()
         every { mockNode.onWork } returns mockOnWork
 
         return mockNode
@@ -473,7 +484,6 @@ class GetAnimeDetailUseCaseTest {
         every { mockOnWork.image } returns mockImage
 
         every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
-        every { mockOnWork.seriesList } returns mockk { every { nodes } returns emptyList() }
 
         val mockNode = mockk<WorkDetailQuery.Node>()
         every { mockNode.onWork } returns mockOnWork

@@ -32,7 +32,8 @@ fun WatchingEpisodeModal(
     entry: LibraryEntry,
     onDismiss: () -> Unit,
     viewModel: WatchingEpisodeModalViewModel = hiltViewModel<WatchingEpisodeModalViewModel>(),
-    onRefresh: () -> Unit = {}
+    onRefresh: () -> Unit = {},
+    onNavigateToDetail: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -61,7 +62,14 @@ fun WatchingEpisodeModal(
                     onRecordEpisode = viewModel::recordEpisode
                 )
             },
-            confirmButton = { }
+            confirmButton = {
+                TextButton(onClick = {
+                    onDismiss()
+                    onNavigateToDetail()
+                }) {
+                    Text("詳細を見る")
+                }
+            }
         )
     }
 }
