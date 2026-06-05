@@ -1,7 +1,6 @@
 package com.zelretch.aniiiiict.ui.animedetail
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +39,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
@@ -101,7 +101,7 @@ fun AnimeDetailScreen(
                     }
                 }
 
-                is com.zelretch.aniiiiict.ui.base.UiState.Error -> {
+                is UiState.Error -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -307,7 +307,7 @@ private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier:
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                                 context.startActivity(intent)
                             }
                             .padding(vertical = 4.dp)
