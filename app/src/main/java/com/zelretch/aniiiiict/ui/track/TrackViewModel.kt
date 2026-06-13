@@ -368,4 +368,8 @@ class TrackViewModel @Inject constructor(
     }
 
     fun getProgramWithWork(workId: String): ProgramWithWork? = _uiState.value.allPrograms.find { it.work.id == workId }
+
+    /** フィルターシートの「N件を表示」用：ドラフト適用時の結果件数を事前計算する。 */
+    fun previewCount(draft: FilterState): Int =
+        programFilterManager.filterPrograms(_uiState.value.allPrograms, draft).size
 }

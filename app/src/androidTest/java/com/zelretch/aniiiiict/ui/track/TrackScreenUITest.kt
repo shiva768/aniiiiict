@@ -692,4 +692,53 @@ class TrackScreenUITest {
         // index=1 までの一括記録が呼ばれる
         verify { mockViewModel.bulkRecordUpTo(programWithWork, 1) }
     }
+
+    @Test
+    fun trackScreen_フィルターシート表示_カテゴリと件数ボタンが出る() {
+        // Arrange - isFilterVisible=true でボトムシートを開いた状態
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            isFilterVisible = true,
+            availableMedia = listOf("TV"),
+            availableChannels = listOf("テレビ東京")
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        every { mockViewModel.previewCount(any()) } returns 3
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert - シート内にカテゴリと「N件を表示」ボタン
+        composeTestRule.onNodeWithText("ステータス").assertIsDisplayed()
+        composeTestRule.onNodeWithText("3件を表示").assertIsDisplayed()
+    }
+
+    @Test
+    fun trackScreen_検索適用中_要約行に検索チップが表示される() {
+        // Arrange - 検索クエリ適用中
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(filterState = FilterState(searchQuery = "ガンダム"))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert - 要約行の検索チップ
+        composeTestRule.onNodeWithText("🔍 ガンダム").assertIsDisplayed()
+    }
 }
