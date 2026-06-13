@@ -34,10 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -78,16 +74,13 @@ data class HistoryScreenActions(
     val onLoadNextPage: () -> Unit,
     val onSearchQueryChange: (String) -> Unit,
     val onRecordClick: (Record) -> Unit,
-    val onDismissRecordDetail: () -> Unit,
-    val onUndoDelete: () -> Unit = {},
-    val onCommitDelete: () -> Unit = {}
+    val onDismissRecordDetail: () -> Unit
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
     val listState = rememberLazyListState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val shouldLoadNextPage = remember {
         derivedStateOf {
             val lastItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
@@ -101,23 +94,7 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
         }
     }
 
-    // スワイプ削除の取り消しSnackbar：タイムアウトで確定、「取り消し」で復元
-    LaunchedEffect(uiState.pendingDeletion?.id) {
-        if (uiState.pendingDeletion != null) {
-            val result = snackbarHostState.showSnackbar(
-                message = "記録を削除しました",
-                actionLabel = "取り消し",
-                duration = SnackbarDuration.Short
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                actions.onUndoDelete()
-            } else {
-                actions.onCommitDelete()
-            }
-        }
-    }
-
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, topBar = {
+    Scaffold(topBar = {
         TopAppBar(
             title = {
                 Text(
