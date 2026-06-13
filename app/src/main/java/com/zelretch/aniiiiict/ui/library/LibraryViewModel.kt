@@ -60,8 +60,6 @@ data class LibraryUiState(
     val availableYears: List<Int> = emptyList(),
     val availableSeasons: List<SeasonName> = emptyList(),
     val isFilterVisible: Boolean = false,
-    val selectedEntry: LibraryEntry? = null,
-    val isDetailModalVisible: Boolean = false,
     val recordingEntryId: String? = null
 )
 
@@ -172,16 +170,6 @@ class LibraryViewModel @Inject constructor(
 
     fun toggleFilterVisibility() {
         _uiState.update { it.copy(isFilterVisible = !it.isFilterVisible) }
-    }
-
-    fun showDetail(entry: LibraryEntry) {
-        Timber.i("DetailModalを表示: ${entry.work.title}")
-        _uiState.update { it.copy(selectedEntry = entry, isDetailModalVisible = true) }
-    }
-
-    fun hideDetail() {
-        Timber.i("DetailModalを非表示")
-        _uiState.update { it.copy(selectedEntry = null, isDetailModalVisible = false) }
     }
 
     private fun updateFilter(transform: (LibraryFilterState) -> LibraryFilterState) {

@@ -57,7 +57,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -191,26 +190,13 @@ private fun LibraryScreenContent(
                             LibraryEntryCard(
                                 entry = entry,
                                 isRecording = uiState.recordingEntryId == entry.id,
-                                onClick = { viewModel.showDetail(entry) },
+                                onClick = { onNavigateToDetail(entry.work.id) },
                                 onRecordNextEpisode = { viewModel.recordNextEpisode(entry) }
                             )
                         }
                     }
                 }
             }
-        }
-    }
-
-    if (uiState.isDetailModalVisible) {
-        val watchingEpisodeModalViewModel = hiltViewModel<WatchingEpisodeModalViewModel>()
-        uiState.selectedEntry?.let { entry ->
-            WatchingEpisodeModal(
-                entry = entry,
-                onDismiss = { viewModel.hideDetail() },
-                watchingEpisodeModalViewModel,
-                onRefresh = { viewModel.onEntryUpdated(entry.id) },
-                onNavigateToDetail = { onNavigateToDetail(entry.work.id) }
-            )
         }
     }
 }

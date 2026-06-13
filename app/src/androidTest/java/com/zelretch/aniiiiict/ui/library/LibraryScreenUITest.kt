@@ -305,4 +305,34 @@ class LibraryScreenUITest {
         // Assert - 「次/見た」ではなく「すべて視聴済み」が出る
         composeTestRule.onNodeWithText("すべて視聴済み").assertIsDisplayed()
     }
+
+    @Test
+    fun libraryScreen_カードタップ_作品詳細へ遷移する() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = LibraryEntry(
+            id = "entry1",
+            work = Work(id = "work1", title = "テストアニメ", viewerStatusState = StatusState.WATCHING),
+            nextEpisode = Episode(id = "ep1", numberText = "1", number = 1),
+            statusState = StatusState.WATCHING
+        )
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        var navigatedWorkId: String? = null
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onNavigateBack = {},
+                onNavigateToDetail = { navigatedWorkId = it }
+            )
+        }
+        // カード本体（タイトル）をタップ
+        composeTestRule.onNodeWithText("テストアニメ").performClick()
+
+        // Assert - インライン展開やモーダルではなく作品詳細へ遷移
+        assert(navigatedWorkId == "work1")
+    }
 }
