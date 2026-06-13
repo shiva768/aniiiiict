@@ -380,7 +380,7 @@ private fun LibraryFilterBar(
 }
 
 @Composable
-private fun LibraryEntryCard(
+internal fun LibraryEntryCard(
     entry: LibraryEntry,
     isRecording: Boolean,
     onClick: () -> Unit,
