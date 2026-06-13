@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.apollo)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.roborazzi)
 }
 
 // local.propertiesから値を読み込む
@@ -212,10 +213,22 @@ android {
             isReturnDefaultValues = true
         }
     }
+    lint {
+        // Android Lint が Kotlin FIR の内部例外でテストソース解析中にクラッシュするため、
+        // テストソースの lint を無効化する（プロダクションコードの lint は従来どおり実行）。
+        ignoreTestSources = true
+    }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Roborazzi のスクショテストは debug の ui-test-manifest（ComponentActivity）前提のため、
+// release のユニットテストからは除外する（debug 側で record/verifyRoborazzi により実行・比較される）。
+tasks.matching { it.name == "testReleaseUnitTest" }.configureEach {
+    this as Test
+    exclude("**/screenshot/**")
 }
 
 dependencies {
@@ -279,6 +292,16 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.junit)
     testImplementation(libs.turbine)
+
+    // ビジュアル回帰テスト（Roborazzi: ホスト側スクショ。エミュレータ不要）
+    // Robolectric/Roborazzi のテストは JUnit4(@RunWith) なので vintage エンジンで動かす
+    testRuntimeOnly(libs.junit.vintage.engine)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test)
+    testImplementation(libs.compose.ui.test.manifest)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit.rule)
 }
 
 apollo {

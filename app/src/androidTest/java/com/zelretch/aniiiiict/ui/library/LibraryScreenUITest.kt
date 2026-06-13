@@ -248,4 +248,61 @@ class LibraryScreenUITest {
         // Assert
         verify { mockViewModel.toggleStatusFilter(StatusState.WATCHING) }
     }
+
+    @Test
+    fun libraryScreen_見たボタンクリック_recordNextEpisodeが呼ばれる() {
+        // Arrange - nextEpisode を持つ視聴中エントリー
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = LibraryEntry(
+            id = "entry1",
+            work = Work(id = "work1", title = "テストアニメ", viewerStatusState = StatusState.WATCHING),
+            nextEpisode = Episode(id = "ep1", title = "始まり", numberText = "1", number = 1),
+            statusState = StatusState.WATCHING
+        )
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onNavigateBack = {}
+            )
+        }
+
+        // Assert - ステータスチップ（見てる）と「見た」ボタンが表示される
+        composeTestRule.onNodeWithText("見てる").assertIsDisplayed()
+        composeTestRule.onNodeWithText("見た").assertIsDisplayed()
+
+        // 「見た」ボタンをクリックすると recordNextEpisode が呼ばれる
+        composeTestRule.onNodeWithText("見た").performClick()
+        verify { mockViewModel.recordNextEpisode(entry) }
+    }
+
+    @Test
+    fun libraryScreen_視聴済みエントリー_すべて視聴済みが表示される() {
+        // Arrange - nextEpisode 無し
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = LibraryEntry(
+            id = "entry1",
+            work = Work(id = "work1", title = "テストアニメ", viewerStatusState = StatusState.WATCHED),
+            nextEpisode = null,
+            statusState = StatusState.WATCHED
+        )
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onNavigateBack = {}
+            )
+        }
+
+        // Assert - 「次/見た」ではなく「すべて視聴済み」が出る
+        composeTestRule.onNodeWithText("すべて視聴済み").assertIsDisplayed()
+    }
 }

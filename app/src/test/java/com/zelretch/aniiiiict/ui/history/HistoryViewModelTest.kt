@@ -8,6 +8,7 @@ import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
 import com.zelretch.aniiiiict.domain.usecase.SearchRecordsUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("HistoryViewModel")
@@ -191,6 +193,60 @@ open class HistoryViewModelTest {
             // Then
             assertEquals(listOf(record2), state.allRecords)
             assertEquals(listOf(record2), state.records)
+        }
+
+        @Test
+        @DisplayName("スワイプ削除後に取り消すとレコードが復元されAPIは呼ばれない")
+        fun undoRestoresRecord() = runTest(dispatcher) {
+            // Given
+            val record = mockk<Record> {
+                every { id } returns "id1"
+                every { createdAt } returns ZonedDateTime.now()
+                every { work } returns mockk<Work> { every { title } returns "dummy" }
+            }
+            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(listOf(record), false, null))
+            every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
+            every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
+
+            val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+
+            // When - 楽観的に外す → 取り消し
+            viewModel.deleteRecord("id1")
+            assertEquals(record, viewModel.uiState.value.pendingDeletion)
+            assertEquals(emptyList<Record>(), viewModel.uiState.value.allRecords)
+            viewModel.undoDelete()
+
+            // Then - 復元されAPIは未呼び出し
+            assertEquals(listOf(record), viewModel.uiState.value.allRecords)
+            assertNull(viewModel.uiState.value.pendingDeletion)
+            coVerify(exactly = 0) { deleteRecordUseCase(any()) }
+        }
+
+        @Test
+        @DisplayName("スワイプ削除をコミットするとAPIが呼ばれる")
+        fun commitCallsApi() = runTest(dispatcher) {
+            // Given
+            val record = mockk<Record> {
+                every { id } returns "id1"
+                every { createdAt } returns ZonedDateTime.now()
+                every { work } returns mockk<Work> { every { title } returns "dummy" }
+            }
+            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(listOf(record), false, null))
+            every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
+            every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
+            coEvery { deleteRecordUseCase("id1") } returns Result.success(Unit)
+
+            val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.deleteRecord("id1")
+            viewModel.commitDelete()
+
+            // Then
+            coVerify { deleteRecordUseCase("id1") }
+            assertNull(viewModel.uiState.value.pendingDeletion)
         }
     }
 

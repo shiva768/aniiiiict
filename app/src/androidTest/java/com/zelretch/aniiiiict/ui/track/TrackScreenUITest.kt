@@ -230,7 +230,7 @@ class TrackScreenUITest {
     }
 
     @Test
-    fun trackScreen_エピソードボタンクリック_モーダルが開く() {
+    fun trackScreen_まとめてボタンクリック_インライン未視聴一覧が展開する() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
 
@@ -274,11 +274,11 @@ class TrackScreenUITest {
             )
         }
 
-        // エピソードボタンをクリック
-        composeTestRule.onNodeWithText("エピソード").performClick()
+        // 「まとめて」ボタンをクリックするとカード内に未視聴一覧がインライン展開する
+        composeTestRule.onNodeWithText("まとめて").performClick()
 
-        // Assert - showUnwatchedEpisodesが呼ばれることを確認
-        verify { mockViewModel.showUnwatchedEpisodes(programWithWork) }
+        // Assert - インライン一覧のヘッダーが表示される
+        composeTestRule.onNodeWithText("未視聴 1話 ・ タップで記録").assertIsDisplayed()
     }
 
     @Test
@@ -409,8 +409,8 @@ class TrackScreenUITest {
             )
         }
 
-        // 記録ボタンを押下（ProgramCard内の contentDescription="記録する"）
-        composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        // 記録ボタンを押下（ProgramCard内の contentDescription="この話を記録"）
+        composeTestRule.onNodeWithContentDescription("この話を記録").performClick()
 
         // Assert
         verify {
@@ -652,5 +652,44 @@ class TrackScreenUITest {
 
         // ViewModel.refresh が呼ばれる
         verify { mockViewModel.refresh() }
+    }
+
+    @Test
+    fun trackScreen_インライン未視聴行タップ_bulkRecordUpToが呼ばれる() {
+        // Arrange - 2話分の未視聴プログラム
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val work = Work(
+            id = "1",
+            title = "テストアニメ",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val programs = (0..1).map { i ->
+            Program(
+                id = "prog$i",
+                startedAt = LocalDateTime.now(),
+                channel = Channel(name = "ch"),
+                episode = Episode(id = "ep$i", title = "話$i", numberText = "${i + 1}", number = i + 1)
+            )
+        }
+        val programWithWork = ProgramWithWork(programs = programs, work = work)
+        val state = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // 「まとめて」でインライン展開し、2行目（index=1）をタップ
+        composeTestRule.onNodeWithText("まとめて").performClick()
+        composeTestRule.onNodeWithTag("inline_episode_1").performClick()
+
+        // index=1 までの一括記録が呼ばれる
+        verify { mockViewModel.bulkRecordUpTo(programWithWork, 1) }
     }
 }

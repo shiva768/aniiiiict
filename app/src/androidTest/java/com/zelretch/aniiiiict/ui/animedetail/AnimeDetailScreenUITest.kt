@@ -343,7 +343,7 @@ class AnimeDetailScreenUITest {
     }
 
     @Test
-    fun 成功時にステータスドロップダウンが表示される() {
+    fun 成功時にステータスFilterChipが横並び表示される() {
         // Given: アニメ詳細情報とステータスを含むUIState
         val animeDetailInfo = createAnimeDetailInfo()
         val mockViewModel = createMockViewModel(
@@ -368,8 +368,12 @@ class AnimeDetailScreenUITest {
             }
         }
 
-        // Then: ステータスドロップダウンが表示される
+        // Then: ドロップダウンではなく、色付きFilterChipが全ステータス分横並び表示される
         composeTestRule.onNodeWithText("見てる").assertIsDisplayed()
+        composeTestRule.onNodeWithText("見たい").assertIsDisplayed()
+        composeTestRule.onNodeWithText("見た").assertIsDisplayed()
+        composeTestRule.onNodeWithText("中断").assertIsDisplayed()
+        composeTestRule.onNodeWithText("中止").assertIsDisplayed()
     }
 
     // Helper functions

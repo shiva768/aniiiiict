@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.ui.history
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.domain.usecase.DeleteRecordUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadRecordsUseCase
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -27,7 +29,9 @@ data class HistoryUiState(
     val endCursor: String? = null,
     val searchQuery: String = "",
     val selectedRecord: Record? = null,
-    val isDetailModalVisible: Boolean = false
+    val isDetailModalVisible: Boolean = false,
+    // スワイプ削除で楽観的にリストから外し、取り消し待ちのレコード（Snackbarの取り消し対象）
+    val pendingDeletion: Record? = null
 )
 
 /**
@@ -111,26 +115,59 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
+    /**
+     * スワイプ削除：API呼び出しはすぐに行わず、まずリストから楽観的に外して取り消し待ちにする。
+     * Snackbar がタイムアウトしたら [commitDelete]、取り消されたら [undoDelete] が呼ばれる。
+     */
     fun deleteRecord(recordId: String) {
-        launchWithMinLoadingTime {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+        val record = _uiState.value.allRecords.find { it.id == recordId } ?: return
+        // 直前の取り消し待ちがあれば先に確定する
+        _uiState.value.pendingDeletion?.let { commitDeleteInternal(it) }
+        _uiState.update { currentState ->
+            val newAllRecords = currentState.allRecords.filter { it.id != recordId }
+            currentState.copy(
+                allRecords = newAllRecords,
+                records = searchRecordsUseCase(newAllRecords, currentState.searchQuery),
+                pendingDeletion = record
+            )
+        }
+    }
 
-            deleteRecordUseCase(recordId)
-                .onSuccess {
-                    _uiState.update { currentState ->
-                        val newAllRecords = currentState.allRecords.filter { it.id != recordId }
-                        currentState.copy(
-                            allRecords = newAllRecords,
-                            records = searchRecordsUseCase(newAllRecords, currentState.searchQuery),
-                            isLoading = false,
-                            error = null
-                        )
-                    }
-                    Timber.i("レコードを削除しました: $recordId")
-                }
+    /** Snackbarの「取り消し」：楽観的に外したレコードをリストへ戻す。 */
+    fun undoDelete() {
+        val pending = _uiState.value.pendingDeletion ?: return
+        _uiState.update { currentState ->
+            val restored = (currentState.allRecords + pending).sortedByDescending { it.createdAt }
+            currentState.copy(
+                allRecords = restored,
+                records = searchRecordsUseCase(restored, currentState.searchQuery),
+                pendingDeletion = null
+            )
+        }
+    }
+
+    /** Snackbarがタイムアウト：取り消し待ちのレコードを実際にAPIで削除する。 */
+    fun commitDelete() {
+        val pending = _uiState.value.pendingDeletion ?: return
+        _uiState.update { it.copy(pendingDeletion = null) }
+        commitDeleteInternal(pending)
+    }
+
+    private fun commitDeleteInternal(record: Record) {
+        viewModelScope.launch {
+            deleteRecordUseCase(record.id)
+                .onSuccess { Timber.i("レコードを削除しました: ${record.id}") }
                 .onFailure { e ->
                     val msg = errorMapper.toUserMessage(e, "HistoryViewModel.deleteRecord")
-                    _uiState.update { it.copy(isLoading = false, error = msg) }
+                    _uiState.update { currentState ->
+                        // 失敗したらリストへ戻す
+                        val restored = (currentState.allRecords + record).sortedByDescending { it.createdAt }
+                        currentState.copy(
+                            allRecords = restored,
+                            records = searchRecordsUseCase(restored, currentState.searchQuery),
+                            error = msg
+                        )
+                    }
                     Timber.e(e, "レコード削除に失敗: $msg")
                 }
         }

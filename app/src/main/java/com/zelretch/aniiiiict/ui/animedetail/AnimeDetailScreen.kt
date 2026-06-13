@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,11 +17,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -47,7 +53,8 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.ui.base.UiState
-import com.zelretch.aniiiiict.ui.common.components.StatusDropdown
+import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
+import com.zelretch.aniiiiict.ui.common.components.toStatusColor
 
 private const val IMAGE_SIZE = 120
 private const val CARD_ELEVATION = 2
@@ -219,8 +226,8 @@ private fun AnimeDetailHeader(
             }
         }
 
-        // ステータス変更
-        StatusDropdown(
+        // ステータス変更（色付きFilterChipの横並び1タップ切替）
+        StatusChipRow(
             selectedStatus = selectedStatus,
             isChanging = isStatusChanging,
             onStatusChange = onStatusChange
@@ -231,6 +238,54 @@ private fun AnimeDetailHeader(
                 text = error,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun StatusChipRow(
+    selectedStatus: StatusState?,
+    isChanging: Boolean,
+    onStatusChange: (StatusState) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val statuses = listOf(
+        StatusState.WATCHING,
+        StatusState.WANNA_WATCH,
+        StatusState.WATCHED,
+        StatusState.ON_HOLD,
+        StatusState.STOP_WATCHING
+    )
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        statuses.forEach { status ->
+            val selected = selectedStatus == status
+            FilterChip(
+                selected = selected,
+                enabled = !isChanging,
+                onClick = { if (status != selectedStatus) onStatusChange(status) },
+                label = { Text(status.toJapaneseLabel()) },
+                leadingIcon = if (selected) {
+                    {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                } else {
+                    null
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = status.toStatusColor(),
+                    selectedLabelColor = Color.White,
+                    selectedLeadingIconColor = Color.White
+                )
             )
         }
     }

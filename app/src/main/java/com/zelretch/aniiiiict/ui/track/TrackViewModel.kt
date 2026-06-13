@@ -7,6 +7,8 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Record
 import com.zelretch.aniiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
@@ -59,11 +61,12 @@ data class TrackUiState(
  * Note: 複雑な状態管理（フィルタ、モーダル、フィナーレ判定など）があるため、
  * 現時点では従来のUiStateパターンを維持。
  */
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 @HiltViewModel
 class TrackViewModel @Inject constructor(
     private val loadProgramsUseCase: LoadProgramsUseCase,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
+    private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val programFilterManager: ProgramFilterManager,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
@@ -173,6 +176,48 @@ class TrackViewModel @Inject constructor(
         }
         handleFinaleJudgement(episodeId, workId)
         refresh()
+    }
+
+    /**
+     * カード内インライン一括記録：未視聴一覧の index 番目までをまとめて記録する。
+     */
+    fun bulkRecordUpTo(program: ProgramWithWork, upToIndex: Int) {
+        val targets = program.programs.take(upToIndex + 1)
+        if (targets.isEmpty()) return
+        val episodeIds = targets.map { it.episode.id }
+        val lastEpisode = targets.last().episode
+        val finaleInfo = program.work.malAnimeId?.toIntOrNull()?.let { malId ->
+            FinaleJudgmentInfo(
+                malAnimeId = malId,
+                lastEpisodeNumber = lastEpisode.number,
+                lastEpisodeHasNext = lastEpisode.hasNextEpisode
+            )
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRecording = true) }
+            bulkRecordEpisodesUseCase(
+                episodeIds = episodeIds,
+                workId = program.work.id,
+                currentStatus = program.work.viewerStatusState,
+                finaleInfo = finaleInfo
+            ).onSuccess { result ->
+                _uiState.update { it.copy(isRecording = false, error = null) }
+                val finale = result.finaleResult
+                if (finale?.isFinale == true && lastEpisode.number != null) {
+                    _uiState.update {
+                        it.copy(
+                            showFinaleConfirmationForWorkId = program.work.id,
+                            showFinaleConfirmationForEpisodeNumber = lastEpisode.number
+                        )
+                    }
+                }
+                refresh()
+            }.onFailure { e ->
+                val msg = errorMapper.toUserMessage(e, "TrackViewModel.bulkRecordUpTo")
+                _uiState.update { it.copy(error = msg, isRecording = false) }
+                Timber.e(e, "まとめて記録に失敗: $msg")
+            }
+        }
     }
 
     private suspend fun handleFinaleJudgement(episodeId: String, workId: String) {

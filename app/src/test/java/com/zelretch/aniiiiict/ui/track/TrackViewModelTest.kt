@@ -13,6 +13,7 @@ import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.filter.AvailableFilters
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
 import com.zelretch.aniiiiict.domain.usecase.FilterProgramsUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
@@ -50,6 +51,7 @@ class TrackViewModelTest {
     private lateinit var filterPreferences: FilterPreferences
     private lateinit var loadProgramsUseCase: LoadProgramsUseCase
     private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var filterProgramsUseCase: FilterProgramsUseCase
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
@@ -65,7 +67,7 @@ class TrackViewModelTest {
         }
         loadProgramsUseCase = mockk()
         watchEpisodeUseCase = mockk()
-        mockk<BulkRecordEpisodesUseCase>()
+        bulkRecordEpisodesUseCase = mockk()
         updateViewStateUseCase = mockk()
         filterProgramsUseCase = mockk()
         judgeFinaleUseCase = mockk()
@@ -95,6 +97,7 @@ class TrackViewModelTest {
         viewModel = TrackViewModel(
             loadProgramsUseCase,
             watchEpisodeUseCase,
+            bulkRecordEpisodesUseCase,
             updateViewStateUseCase,
             programFilterManager,
             judgeFinaleUseCase,
@@ -306,6 +309,42 @@ class TrackViewModelTest {
                 assertNull(finalState.showFinaleConfirmationForWorkId)
 
                 coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("まとめて記録")
+    inner class BulkRecord {
+
+        @Test
+        @DisplayName("bulkRecordUpToで指定indexまでのエピソードがまとめて記録される")
+        fun bulkRecordUpTo() = runTest {
+            // Given - 3話分の未視聴プログラム
+            val work = Work(id = "work1", title = "T", viewerStatusState = StatusState.WATCHING)
+            val programs = (0..2).map { i ->
+                Program("p$i", LocalDateTime.now(), Channel("ch"), Episode(id = "ep$i", number = i + 1))
+            }
+            val pww = ProgramWithWork(programs = programs, work = work)
+            coEvery { loadProgramsUseCase() } returns Result.success(listOf(pww))
+            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } returns
+                Result.success(BulkRecordResult())
+
+            // When - index1まで（ep0, ep1）
+            viewModel.refresh()
+            dispatcher.scheduler.advanceUntilIdle()
+            viewModel.bulkRecordUpTo(pww, 1)
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            coVerify {
+                bulkRecordEpisodesUseCase(
+                    listOf("ep0", "ep1"),
+                    "work1",
+                    StatusState.WATCHING,
+                    any(),
+                    any()
+                )
             }
         }
     }

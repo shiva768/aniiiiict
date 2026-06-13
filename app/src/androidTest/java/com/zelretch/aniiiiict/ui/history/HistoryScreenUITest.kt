@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -157,10 +159,10 @@ class HistoryScreenUITest {
             )
         }
 
-        // Assert
+        // Assert - 日付グループ見出し＋コンパクト行が表示される
+        composeTestRule.onNodeWithText("今日").assertIsDisplayed()
         composeTestRule.onNodeWithText("テストアニメ").assertIsDisplayed()
         composeTestRule.onNodeWithText("EP1 始まりの物語").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("削除").assertIsDisplayed()
     }
 
     @Test
@@ -285,7 +287,7 @@ class HistoryScreenUITest {
     }
 
     @Test
-    fun historyScreen_削除ボタンクリック_削除コールバックが呼ばれる() {
+    fun historyScreen_スワイプ削除_削除コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnDeleteRecord = mockk<(String) -> Unit>(relaxed = true)
@@ -336,7 +338,9 @@ class HistoryScreenUITest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("削除").performClick()
+        // 行を左にスワイプして削除（EndToStart）
+        composeTestRule.onNodeWithText("テストアニメ").performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
 
         // Assert
         verify { mockOnDeleteRecord("record1") }
@@ -622,5 +626,54 @@ class HistoryScreenUITest {
 
         // Assert - numberから生成されたフォーマット（第X話）が使用されている
         composeTestRule.onNodeWithText("第3話").assertIsDisplayed()
+    }
+
+    @Test
+    fun historyScreen_取り消し待ち状態_削除Snackbarが表示され取り消しでコールバックが呼ばれる() {
+        // Arrange - pendingDeletion がセットされた状態
+        val mockOnUndo = mockk<() -> Unit>(relaxed = true)
+        val sampleWork = Work(id = "w1", title = "作品", viewerStatusState = StatusState.WATCHING)
+        val sampleEpisode = Episode(id = "e1", title = "話", numberText = "1", number = 1)
+        val pending = Record(
+            id = "r1",
+            comment = null,
+            rating = null,
+            createdAt = ZonedDateTime.now(),
+            episode = sampleEpisode,
+            work = sampleWork
+        )
+        val state = HistoryUiState(records = emptyList(), pendingDeletion = pending)
+
+        // Snackbar の自動消滅とクリックが競合しないよう、時計を手動制御する
+        composeTestRule.mainClock.autoAdvance = false
+
+        // Act
+        composeTestRule.setContent {
+            HistoryScreen(
+                uiState = state,
+                actions = HistoryScreenActions(
+                    onNavigateBack = {},
+                    onRetry = {},
+                    onDeleteRecord = {},
+                    onRefresh = {},
+                    onLoadNextPage = {},
+                    onSearchQueryChange = {},
+                    onRecordClick = {},
+                    onDismissRecordDetail = {},
+                    onUndoDelete = mockOnUndo,
+                    onCommitDelete = {}
+                )
+            )
+        }
+        // Snackbar が出る程度（自動消滅の4秒未満）だけ進める
+        composeTestRule.mainClock.advanceTimeBy(500)
+
+        // Assert - 削除Snackbarと「取り消し」が表示され、クリックで onUndoDelete が呼ばれる
+        composeTestRule.onNodeWithText("記録を削除しました").assertIsDisplayed()
+        composeTestRule.onNodeWithText("取り消し").performClick()
+
+        composeTestRule.mainClock.autoAdvance = true
+        composeTestRule.waitForIdle()
+        verify { mockOnUndo() }
     }
 }
