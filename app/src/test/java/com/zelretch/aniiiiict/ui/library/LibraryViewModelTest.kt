@@ -1,11 +1,13 @@
 package com.zelretch.aniiiiict.ui.library
 
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
+import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -35,6 +37,7 @@ class LibraryViewModelTest {
 
     private lateinit var loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase
     private lateinit var librarySyncService: LibrarySyncService
+    private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -43,6 +46,7 @@ class LibraryViewModelTest {
         Dispatchers.setMain(dispatcher)
         loadLibraryEntriesUseCase = mockk()
         librarySyncService = mockk()
+        watchEpisodeUseCase = mockk()
         errorMapper = mockk()
     }
 
@@ -53,7 +57,7 @@ class LibraryViewModelTest {
 
     private fun createViewModel(): LibraryViewModel {
         every { librarySyncService.status } returns MutableStateFlow(SyncStatus.Idle)
-        return LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, errorMapper)
+        return LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, watchEpisodeUseCase, errorMapper)
     }
 
     @Nested
@@ -122,7 +126,8 @@ class LibraryViewModelTest {
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
 
             // When
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, watchEpisodeUseCase, errorMapper)
             val state = viewModel.uiState.first { it.isSyncing }
 
             // Then
@@ -145,7 +150,8 @@ class LibraryViewModelTest {
             )
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(entries)
 
-            val viewModel = LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, errorMapper)
+            val viewModel =
+                LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, watchEpisodeUseCase, errorMapper)
             viewModel.uiState.first { it.isSyncing }
 
             // When
@@ -419,6 +425,32 @@ class LibraryViewModelTest {
 
             // Then
             coVerify { librarySyncService.syncEntry("entry1") }
+        }
+
+        @Test
+        @DisplayName("recordNextEpisodeで次の話が記録され再同期される")
+        fun recordNextEpisodeRecordsAndSyncs() = runTest(dispatcher) {
+            // Given
+            val entry = LibraryEntry(
+                id = "entry1",
+                work = createFakeWork("work1", "Work"),
+                nextEpisode = Episode(id = "ep1", number = 1),
+                statusState = StatusState.WATCHING
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.recordNextEpisode(entry)
+
+            // Then
+            coVerify { watchEpisodeUseCase("ep1", "work1", StatusState.WATCHING) }
+            coVerify { librarySyncService.syncEntry("entry1") }
+            assertNull(viewModel.uiState.value.recordingEntryId)
         }
     }
 

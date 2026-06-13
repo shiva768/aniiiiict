@@ -84,7 +84,7 @@ private fun ProgramListContent(
     uiState: TrackUiState,
     onToggleSearchOnlyMode: () -> Unit,
     onRecordEpisode: (String, String, StatusState) -> Unit,
-    onShowUnwatchedEpisodes: (ProgramWithWork) -> Unit,
+    onBulkRecordUpTo: (ProgramWithWork, Int) -> Unit,
     onShowAnimeDetail: (ProgramWithWork) -> Unit
 ) {
     val showSearchOnlySuggestion = !uiState.isLoading &&
@@ -112,7 +112,7 @@ private fun ProgramListContent(
             ProgramCard(
                 programWithWork = program,
                 onRecordEpisode = onRecordEpisode,
-                onShowUnwatchedEpisodes = { onShowUnwatchedEpisodes(program) },
+                onBulkRecordUpTo = { index -> onBulkRecordUpTo(program, index) },
                 onShowAnimeDetail = onShowAnimeDetail,
                 uiState = uiState
             )
@@ -210,19 +210,23 @@ private fun TrackSnackbarHost(
     onRefresh: () -> Unit
 ) {
     // Render snackbars directly based on UI state so tests can observe them
+    // Snackbar アクション色：ダーク背景(inverseSurface)でのコントラスト確保に inversePrimary を使う
+    val snackbarActionColors = ButtonDefaults.textButtonColors(
+        contentColor = MaterialTheme.colorScheme.inversePrimary
+    )
     if (uiState.showFinaleConfirmationForWorkId != null) {
         Snackbar(modifier = Modifier.testTag("finale_confirmation_snackbar"), action = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Place "いいえ" first, then "はい" to avoid any layout quirks causing mis-clicks
-                TextButton(onClick = onDismissFinale) {
+                TextButton(onClick = onDismissFinale, colors = snackbarActionColors) {
                     Text(
                         text = "いいえ",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
-                TextButton(onClick = onConfirmFinale) {
+                TextButton(onClick = onConfirmFinale, colors = snackbarActionColors) {
                     Text(
                         text = "はい",
                         style = MaterialTheme.typography.labelLarge
@@ -243,7 +247,7 @@ private fun TrackSnackbarHost(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onRefresh) {
+                TextButton(onClick = onRefresh, colors = snackbarActionColors) {
                     Text(
                         text = "再読み込み",
                         style = MaterialTheme.typography.labelLarge
@@ -320,7 +324,7 @@ private fun TrackScreenContent(
                     uiState = uiState,
                     onToggleSearchOnlyMode = { viewModel.toggleSearchOnlyMode() },
                     onRecordEpisode = onRecordEpisode,
-                    onShowUnwatchedEpisodes = { viewModel.showUnwatchedEpisodes(it) },
+                    onBulkRecordUpTo = { program, index -> viewModel.bulkRecordUpTo(program, index) },
                     onShowAnimeDetail = onShowAnimeDetail
                 )
             }

@@ -8,6 +8,7 @@ import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
+import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,13 +61,15 @@ data class LibraryUiState(
     val availableSeasons: List<SeasonName> = emptyList(),
     val isFilterVisible: Boolean = false,
     val selectedEntry: LibraryEntry? = null,
-    val isDetailModalVisible: Boolean = false
+    val isDetailModalVisible: Boolean = false,
+    val recordingEntryId: String? = null
 )
 
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
     private val librarySyncService: LibrarySyncService,
+    private val watchEpisodeUseCase: WatchEpisodeUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -122,6 +125,34 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch {
             librarySyncService.syncEntry(libraryEntryId)
             loadFromRoom()
+        }
+    }
+
+    /**
+     * カードの「見た」ボタン：次の1話をその場で記録し、ライブラリを再同期して進捗に反映する。
+     */
+    fun recordNextEpisode(entry: LibraryEntry) {
+        val episode = entry.nextEpisode ?: return
+        if (_uiState.value.recordingEntryId != null) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(recordingEntryId = entry.id, error = null) }
+            watchEpisodeUseCase(
+                episodeId = episode.id,
+                workId = entry.work.id,
+                currentStatus = entry.statusState ?: entry.work.viewerStatusState
+            ).onSuccess {
+                librarySyncService.syncEntry(entry.id)
+                loadFromRoom()
+                _uiState.update { it.copy(recordingEntryId = null) }
+            }.onFailure { e ->
+                Timber.e(e, "「見た」記録に失敗: ${entry.work.title}")
+                _uiState.update {
+                    it.copy(
+                        recordingEntryId = null,
+                        error = errorMapper.toUserMessage(e, "LibraryViewModel.recordNextEpisode")
+                    )
+                }
+            }
         }
     }
 

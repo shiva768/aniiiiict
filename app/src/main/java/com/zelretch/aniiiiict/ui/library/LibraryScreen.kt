@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +33,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -47,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,8 +63,8 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
+import com.zelretch.aniiiiict.ui.common.components.toStatusColor
 import com.zelretch.aniiiiict.ui.track.components.FilterSelectionDialog
-import com.zelretch.aniiiiict.ui.track.components.InfoTag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -184,7 +190,9 @@ private fun LibraryScreenContent(
                         items(uiState.entries, key = { it.work.id }) { entry ->
                             LibraryEntryCard(
                                 entry = entry,
-                                onClick = { viewModel.showDetail(entry) }
+                                isRecording = uiState.recordingEntryId == entry.id,
+                                onClick = { viewModel.showDetail(entry) },
+                                onRecordNextEpisode = { viewModel.recordNextEpisode(entry) }
                             )
                         }
                     }
@@ -372,7 +380,13 @@ private fun LibraryFilterBar(
 }
 
 @Composable
-private fun LibraryEntryCard(entry: LibraryEntry, onClick: () -> Unit) {
+private fun LibraryEntryCard(
+    entry: LibraryEntry,
+    isRecording: Boolean,
+    onClick: () -> Unit,
+    onRecordNextEpisode: () -> Unit
+) {
+    val statusColor = entry.statusState?.toStatusColor()
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -381,81 +395,148 @@ private fun LibraryEntryCard(entry: LibraryEntry, onClick: () -> Unit) {
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                LibraryWorkImage(
-                    imageUrl = entry.work.image?.imageUrl,
-                    workTitle = entry.work.title
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = entry.work.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    entry.statusState?.let { status ->
-                        InfoTag(
-                            text = status.toJapaneseLabel(),
-                            color = MaterialTheme.colorScheme.tertiaryContainer
-                        )
-                    }
-                    val seasonMeta = buildString {
-                        entry.work.seasonYear?.let { append("${it}年") }
-                        entry.work.seasonName?.let { append(it.rawValue) }
-                        entry.work.media?.let {
-                            if (isNotEmpty()) append(" · ")
-                            append(it)
-                        }
-                    }
-                    if (seasonMeta.isNotEmpty()) {
-                        Text(
-                            text = seasonMeta,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            entry.nextEpisode?.let { episode ->
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                val episodeText = buildString {
-                    episode.numberText?.let { append(it) } ?: episode.number?.let { append("第${it}話") }
-                    episode.title?.let {
-                        if (isNotEmpty()) append("「$it」")
-                    }
-                }
+        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            // ステータス色レール（5dp）
+            Box(
+                modifier = Modifier
+                    .width(5.dp)
+                    .fillMaxHeight()
+                    .background(statusColor ?: MaterialTheme.colorScheme.outlineVariant)
+            )
+            Column(modifier = Modifier.weight(1f)) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "次",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(4.dp)
+                    LibraryWorkImage(
+                        imageUrl = entry.work.image?.imageUrl,
+                        workTitle = entry.work.title
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = entry.work.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        entry.statusState?.let { status ->
+                            StatusChip(text = status.toJapaneseLabel(), color = statusColor ?: status.toStatusColor())
+                        }
+                        val seasonMeta = buildString {
+                            entry.work.seasonYear?.let { append("${it}年") }
+                            entry.work.seasonName?.let { append(it.rawValue) }
+                            entry.work.media?.let {
+                                if (isNotEmpty()) append(" · ")
+                                append(it)
+                            }
+                        }
+                        if (seasonMeta.isNotEmpty()) {
+                            Text(
+                                text = seasonMeta,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = episodeText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                        }
+                    }
                 }
+
+                LibraryNextEpisodeRow(
+                    entry = entry,
+                    statusColor = statusColor,
+                    isRecording = isRecording,
+                    onRecordNextEpisode = onRecordNextEpisode
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun LibraryNextEpisodeRow(
+    entry: LibraryEntry,
+    statusColor: Color?,
+    isRecording: Boolean,
+    onRecordNextEpisode: () -> Unit
+) {
+    val episode = entry.nextEpisode
+    // 視聴済み（WATCHED）作品はボタンなしの静的表示
+    val isWatched = entry.statusState == StatusState.WATCHED
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (episode == null || isWatched) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = statusColor ?: MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "すべて視聴済み",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            val episodeText = buildString {
+                episode.numberText?.let { append(it) } ?: episode.number?.let { append("第${it}話") }
+                episode.title?.let {
+                    if (isNotEmpty()) append("「$it」")
+                }
+            }
+            Text(
+                text = "次",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = episodeText,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = onRecordNextEpisode,
+                enabled = !isRecording,
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "見た", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(text: String, color: Color) {
+    Surface(
+        color = color,
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.height(22.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            color = Color.White,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

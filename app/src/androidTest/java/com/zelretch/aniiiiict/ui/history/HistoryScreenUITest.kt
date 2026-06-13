@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
@@ -157,10 +159,10 @@ class HistoryScreenUITest {
             )
         }
 
-        // Assert
+        // Assert - 日付グループ見出し＋コンパクト行が表示される
+        composeTestRule.onNodeWithText("今日").assertIsDisplayed()
         composeTestRule.onNodeWithText("テストアニメ").assertIsDisplayed()
         composeTestRule.onNodeWithText("EP1 始まりの物語").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("削除").assertIsDisplayed()
     }
 
     @Test
@@ -285,7 +287,7 @@ class HistoryScreenUITest {
     }
 
     @Test
-    fun historyScreen_削除ボタンクリック_削除コールバックが呼ばれる() {
+    fun historyScreen_スワイプ削除_削除コールバックが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<HistoryViewModel>(relaxed = true)
         val mockOnDeleteRecord = mockk<(String) -> Unit>(relaxed = true)
@@ -336,7 +338,9 @@ class HistoryScreenUITest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("削除").performClick()
+        // 行を左にスワイプして削除（EndToStart）
+        composeTestRule.onNodeWithText("テストアニメ").performTouchInput { swipeLeft() }
+        composeTestRule.waitForIdle()
 
         // Assert
         verify { mockOnDeleteRecord("record1") }

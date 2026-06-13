@@ -3,6 +3,7 @@ package com.zelretch.aniiiiict.ui.history
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,9 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,16 +28,24 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -44,11 +53,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.zelretch.aniiiiict.data.model.Record
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private const val LOAD_MORE_THRESHOLD = 3
 private val PADDING_HORIZONTAL = 16.dp
@@ -65,13 +78,16 @@ data class HistoryScreenActions(
     val onLoadNextPage: () -> Unit,
     val onSearchQueryChange: (String) -> Unit,
     val onRecordClick: (Record) -> Unit,
-    val onDismissRecordDetail: () -> Unit
+    val onDismissRecordDetail: () -> Unit,
+    val onUndoDelete: () -> Unit = {},
+    val onCommitDelete: () -> Unit = {}
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val shouldLoadNextPage = remember {
         derivedStateOf {
             val lastItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
@@ -85,7 +101,23 @@ fun HistoryScreen(uiState: HistoryUiState, actions: HistoryScreenActions) {
         }
     }
 
-    Scaffold(topBar = {
+    // スワイプ削除の取り消しSnackbar：タイムアウトで確定、「取り消し」で復元
+    LaunchedEffect(uiState.pendingDeletion?.id) {
+        if (uiState.pendingDeletion != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = "記録を削除しました",
+                actionLabel = "取り消し",
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                actions.onUndoDelete()
+            } else {
+                actions.onCommitDelete()
+            }
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, topBar = {
         TopAppBar(
             title = {
                 Text(
@@ -181,18 +213,189 @@ private fun HistorySearchBar(query: String, onQueryChange: (String) -> Unit) {
 
 @Composable
 private fun HistoryList(uiState: HistoryUiState, listState: LazyListState, actions: HistoryScreenActions) {
+    val groups = remember(uiState.records) { groupRecordsByDate(uiState.records) }
     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-        items(items = uiState.records, key = { it.id }) { record ->
-            RecordItem(
-                record = record,
-                onDelete = { actions.onDeleteRecord(record.id) },
-                onClick = { actions.onRecordClick(record) }
-            )
+        groups.forEach { group ->
+            item(key = "header_${group.label}") {
+                DateGroupHeader(label = group.label, count = group.records.size)
+            }
+            item(key = "group_${group.label}") {
+                DateGroupCard(records = group.records, actions = actions)
+            }
         }
         if (uiState.hasNextPage) {
             item {
                 LoadMoreButton(uiState.isLoading, actions.onLoadNextPage)
             }
+        }
+    }
+}
+
+private data class DateGroup(val label: String, val records: List<Record>)
+
+private fun groupRecordsByDate(records: List<Record>): List<DateGroup> {
+    val zone = ZoneId.of("Asia/Tokyo")
+    val today = LocalDate.now(zone)
+    val yesterday = today.minusDays(1)
+    val headerFormatter = DateTimeFormatter.ofPattern("M月d日(E)", Locale.JAPANESE)
+    return records
+        .groupBy { it.createdAt.withZoneSameInstant(zone).toLocalDate() }
+        .toList()
+        .sortedByDescending { it.first }
+        .map { (date, recs) ->
+            val label = when (date) {
+                today -> "今日"
+                yesterday -> "昨日"
+                else -> date.format(headerFormatter)
+            }
+            DateGroup(label, recs.sortedByDescending { it.createdAt })
+        }
+}
+
+@Composable
+private fun DateGroupHeader(label: String, count: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PADDING_HORIZONTAL, vertical = PADDING_VERTICAL),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "${count}件",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun DateGroupCard(records: List<Record>, actions: HistoryScreenActions) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PADDING_HORIZONTAL, vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            records.forEachIndexed { index, record ->
+                if (index > 0) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                }
+                SwipeableRecordRow(
+                    record = record,
+                    onDelete = { actions.onDeleteRecord(record.id) },
+                    onClick = { actions.onRecordClick(record) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableRecordRow(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else {
+                false
+            }
+        }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "削除",
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+    ) {
+        CompactRecordRow(record = record, onClick = onClick)
+    }
+}
+
+@Composable
+private fun CompactRecordRow(record: Record, onClick: () -> Unit) {
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val time = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo")).format(timeFormatter)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(horizontal = PADDING_HORIZONTAL, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        RecordCoverImage(imageUrl = record.work.image?.imageUrl, title = record.work.title)
+        Column(modifier = Modifier.weight(COLUMN_WEIGHT)) {
+            Text(
+                text = record.work.title,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "${record.episode.formattedNumber} ${record.episode.title ?: ""}".trim(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = time,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                record.rating?.let { rating ->
+                    Text(text = "★$rating", style = MaterialTheme.typography.labelSmall)
+                }
+                if (!record.comment.isNullOrBlank()) {
+                    Text(text = "💬", style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecordCoverImage(imageUrl: String?, title: String) {
+    Box(
+        modifier = Modifier
+            .height(40.dp)
+            .width(40.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        if (imageUrl != null) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }
@@ -259,57 +462,6 @@ private fun HistoryErrorState(error: String?, onRetry: () -> Unit) {
                     text = "再試行",
                     style = MaterialTheme.typography.labelLarge
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun RecordItem(record: Record, onDelete: () -> Unit, onClick: () -> Unit) {
-    val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
-    val zonedDateTime = record.createdAt.withZoneSameInstant(ZoneId.of("Asia/Tokyo"))
-    val formattedDate = zonedDateTime.format(formatter)
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = PADDING_HORIZONTAL,
-                vertical = PADDING_VERTICAL
-            )
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(COLUMN_WEIGHT)) {
-                Text(
-                    text = record.work.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "${record.episode.formattedNumber} ${record.episode.title ?: ""}",
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formattedDate,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "削除", tint = MaterialTheme.colorScheme.error)
             }
         }
     }

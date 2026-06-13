@@ -230,7 +230,7 @@ class TrackScreenUITest {
     }
 
     @Test
-    fun trackScreen_エピソードボタンクリック_モーダルが開く() {
+    fun trackScreen_まとめてボタンクリック_インライン未視聴一覧が展開する() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
 
@@ -274,11 +274,11 @@ class TrackScreenUITest {
             )
         }
 
-        // エピソードボタンをクリック
-        composeTestRule.onNodeWithText("エピソード").performClick()
+        // 「まとめて」ボタンをクリックするとカード内に未視聴一覧がインライン展開する
+        composeTestRule.onNodeWithText("まとめて").performClick()
 
-        // Assert - showUnwatchedEpisodesが呼ばれることを確認
-        verify { mockViewModel.showUnwatchedEpisodes(programWithWork) }
+        // Assert - インライン一覧のヘッダーが表示される
+        composeTestRule.onNodeWithText("未視聴 1話 ・ タップで記録").assertIsDisplayed()
     }
 
     @Test
@@ -409,8 +409,8 @@ class TrackScreenUITest {
             )
         }
 
-        // 記録ボタンを押下（ProgramCard内の contentDescription="記録する"）
-        composeTestRule.onNodeWithContentDescription("記録する").performClick()
+        // 記録ボタンを押下（ProgramCard内の contentDescription="この話を記録"）
+        composeTestRule.onNodeWithContentDescription("この話を記録").performClick()
 
         // Assert
         verify {
