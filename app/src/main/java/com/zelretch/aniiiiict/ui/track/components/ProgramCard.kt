@@ -304,6 +304,7 @@ private fun InlineUnwatchedRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("inline_episode_$index")
             .clickable(interactionSource = interactionSource, indication = LocalIndication.current) { onClick() }
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,

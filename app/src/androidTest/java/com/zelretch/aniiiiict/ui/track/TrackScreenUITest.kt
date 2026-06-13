@@ -653,4 +653,43 @@ class TrackScreenUITest {
         // ViewModel.refresh が呼ばれる
         verify { mockViewModel.refresh() }
     }
+
+    @Test
+    fun trackScreen_インライン未視聴行タップ_bulkRecordUpToが呼ばれる() {
+        // Arrange - 2話分の未視聴プログラム
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val work = Work(
+            id = "1",
+            title = "テストアニメ",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val programs = (0..1).map { i ->
+            Program(
+                id = "prog$i",
+                startedAt = LocalDateTime.now(),
+                channel = Channel(name = "ch"),
+                episode = Episode(id = "ep$i", title = "話$i", numberText = "${i + 1}", number = i + 1)
+            )
+        }
+        val programWithWork = ProgramWithWork(programs = programs, work = work)
+        val state = TrackUiState(programs = listOf(programWithWork))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // 「まとめて」でインライン展開し、2行目（index=1）をタップ
+        composeTestRule.onNodeWithText("まとめて").performClick()
+        composeTestRule.onNodeWithTag("inline_episode_1").performClick()
+
+        // index=1 までの一括記録が呼ばれる
+        verify { mockViewModel.bulkRecordUpTo(programWithWork, 1) }
+    }
 }
