@@ -239,6 +239,25 @@ class TrackViewModelTest {
                 )
             }
         }
+
+        @Test
+        @DisplayName("検索専用モード中にフィルターを明示的に適用するとisSearchOnlyModeが解除される")
+        fun updateFilterWhileSearchOnlyModeResetsMode() = runTest(dispatcher) {
+            // Given - 検索専用モードがオンの状態
+            coEvery { loadProgramsUseCase.invoke() } returns Result.success(emptyList())
+            filterStateFlow.value = FilterState(searchQuery = "テスト", showOnlyAired = true)
+            dispatcher.scheduler.advanceUntilIdle()
+            viewModel.toggleSearchOnlyMode()
+            assertEquals(true, viewModel.uiState.value.isSearchOnlyMode)
+
+            // When - ボトムシートで放送済のみ表示をOFFにして明示的に適用
+            val explicitFilter = FilterState(searchQuery = "テスト", showOnlyAired = false)
+            viewModel.updateFilter(explicitFilter)
+
+            // Then - 検索専用モードは解除され、ユーザーが指定した通りのFilterStateでフィルタされる
+            assertEquals(false, viewModel.uiState.value.isSearchOnlyMode)
+            verify { programFilterManager.filterPrograms(any(), explicitFilter) }
+        }
     }
 
     @Nested

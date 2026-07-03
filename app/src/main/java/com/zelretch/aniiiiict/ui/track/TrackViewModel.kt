@@ -284,17 +284,16 @@ class TrackViewModel @Inject constructor(
         loadingPrograms()
     }
 
+    /**
+     * フィルターを明示的に適用する（ボトムシートの「N件を表示」、検索チップの×など）。
+     * ユーザーが自分でフィルターを設定し直した以上、検索専用モードの一時的な上書きは解除する。
+     */
     fun updateFilter(newFilterState: FilterState) {
-        val searchCleared = newFilterState.searchQuery.isEmpty() && _uiState.value.filterState.searchQuery.isNotEmpty()
-        val newSearchOnlyMode = if (searchCleared) false else _uiState.value.isSearchOnlyMode
         _uiState.update { currentState ->
             currentState.copy(
                 filterState = newFilterState,
-                isSearchOnlyMode = newSearchOnlyMode,
-                programs = programFilterManager.filterPrograms(
-                    currentState.allPrograms,
-                    effectiveFilterState(newFilterState, newSearchOnlyMode)
-                )
+                isSearchOnlyMode = false,
+                programs = programFilterManager.filterPrograms(currentState.allPrograms, newFilterState)
             )
         }
         viewModelScope.launch {
