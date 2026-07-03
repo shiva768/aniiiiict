@@ -335,4 +335,36 @@ class LibraryScreenUITest {
         // Assert - インライン展開やモーダルではなく作品詳細へ遷移
         assert(navigatedWorkId == "work1")
     }
+
+    @Test
+    fun libraryScreen_エピソード情報がない作品_すべて視聴済みと表示されない() {
+        // Arrange - 映画等、Annict上にエピソード情報が無く未視聴（見たい）のケース
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = LibraryEntry(
+            id = "entry1",
+            work = Work(
+                id = "work1",
+                title = "テスト映画",
+                viewerStatusState = StatusState.WANNA_WATCH,
+                noEpisodes = true
+            ),
+            nextEpisode = null,
+            statusState = StatusState.WANNA_WATCH
+        )
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onNavigateBack = {}
+            )
+        }
+
+        // Assert - 未視聴なのに「すべて視聴済み」と表示されてはいけない
+        composeTestRule.onNodeWithText("すべて視聴済み").assertDoesNotExist()
+        composeTestRule.onNodeWithText("エピソード情報なし").assertIsDisplayed()
+    }
 }

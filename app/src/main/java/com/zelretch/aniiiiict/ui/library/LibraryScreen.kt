@@ -449,12 +449,20 @@ private fun LibraryNextEpisodeRow(
     val episode = entry.nextEpisode
     // 視聴済み（WATCHED）作品はボタンなしの静的表示
     val isWatched = entry.statusState == StatusState.WATCHED
+    // 映画等、Annict上にエピソード情報自体が存在しない作品（視聴済みとは別概念）
+    val hasNoEpisodeData = entry.work.noEpisodes
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (episode == null || isWatched) {
+        if (episode == null && !isWatched && hasNoEpisodeData) {
+            Text(
+                text = "エピソード情報なし",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (episode == null || isWatched) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
