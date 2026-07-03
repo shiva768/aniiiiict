@@ -29,9 +29,7 @@ data class HistoryUiState(
     val endCursor: String? = null,
     val searchQuery: String = "",
     val selectedRecord: Record? = null,
-    val isDetailModalVisible: Boolean = false,
-    // スワイプ削除で楽観的にリストから外し、取り消し待ちのレコード（Snackbarの取り消し対象）
-    val pendingDeletion: Record? = null
+    val isDetailModalVisible: Boolean = false
 )
 
 /**
@@ -116,47 +114,21 @@ class HistoryViewModel @Inject constructor(
     }
 
     /**
-     * スワイプ削除：API呼び出しはすぐに行わず、まずリストから楽観的に外して取り消し待ちにする。
-     * Snackbar がタイムアウトしたら [commitDelete]、取り消されたら [undoDelete] が呼ばれる。
+     * スワイプ削除：その場でAPI削除する。UIは楽観的に即リストから外し、失敗したら戻す。
      */
     fun deleteRecord(recordId: String) {
         val record = _uiState.value.allRecords.find { it.id == recordId } ?: return
-        // 直前の取り消し待ちがあれば先に確定する
-        _uiState.value.pendingDeletion?.let { commitDeleteInternal(it) }
+        // 楽観的にリストから外す（即時反映）
         _uiState.update { currentState ->
             val newAllRecords = currentState.allRecords.filter { it.id != recordId }
             currentState.copy(
                 allRecords = newAllRecords,
-                records = searchRecordsUseCase(newAllRecords, currentState.searchQuery),
-                pendingDeletion = record
+                records = searchRecordsUseCase(newAllRecords, currentState.searchQuery)
             )
         }
-    }
-
-    /** Snackbarの「取り消し」：楽観的に外したレコードをリストへ戻す。 */
-    fun undoDelete() {
-        val pending = _uiState.value.pendingDeletion ?: return
-        _uiState.update { currentState ->
-            val restored = (currentState.allRecords + pending).sortedByDescending { it.createdAt }
-            currentState.copy(
-                allRecords = restored,
-                records = searchRecordsUseCase(restored, currentState.searchQuery),
-                pendingDeletion = null
-            )
-        }
-    }
-
-    /** Snackbarがタイムアウト：取り消し待ちのレコードを実際にAPIで削除する。 */
-    fun commitDelete() {
-        val pending = _uiState.value.pendingDeletion ?: return
-        _uiState.update { it.copy(pendingDeletion = null) }
-        commitDeleteInternal(pending)
-    }
-
-    private fun commitDeleteInternal(record: Record) {
         viewModelScope.launch {
-            deleteRecordUseCase(record.id)
-                .onSuccess { Timber.i("レコードを削除しました: ${record.id}") }
+            deleteRecordUseCase(recordId)
+                .onSuccess { Timber.i("レコードを削除しました: $recordId") }
                 .onFailure { e ->
                     val msg = errorMapper.toUserMessage(e, "HistoryViewModel.deleteRecord")
                     _uiState.update { currentState ->

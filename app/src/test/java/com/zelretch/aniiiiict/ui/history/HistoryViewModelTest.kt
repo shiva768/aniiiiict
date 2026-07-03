@@ -196,36 +196,8 @@ open class HistoryViewModelTest {
         }
 
         @Test
-        @DisplayName("スワイプ削除後に取り消すとレコードが復元されAPIは呼ばれない")
-        fun undoRestoresRecord() = runTest(dispatcher) {
-            // Given
-            val record = mockk<Record> {
-                every { id } returns "id1"
-                every { createdAt } returns ZonedDateTime.now()
-                every { work } returns mockk<Work> { every { title } returns "dummy" }
-            }
-            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(listOf(record), false, null))
-            every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
-            every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
-
-            val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase, errorMapper)
-            viewModel.uiState.first { !it.isLoading }
-
-            // When - 楽観的に外す → 取り消し
-            viewModel.deleteRecord("id1")
-            assertEquals(record, viewModel.uiState.value.pendingDeletion)
-            assertEquals(emptyList<Record>(), viewModel.uiState.value.allRecords)
-            viewModel.undoDelete()
-
-            // Then - 復元されAPIは未呼び出し
-            assertEquals(listOf(record), viewModel.uiState.value.allRecords)
-            assertNull(viewModel.uiState.value.pendingDeletion)
-            coVerify(exactly = 0) { deleteRecordUseCase(any()) }
-        }
-
-        @Test
-        @DisplayName("スワイプ削除をコミットするとAPIが呼ばれる")
-        fun commitCallsApi() = runTest(dispatcher) {
+        @DisplayName("スワイプ削除でその場でAPI削除されリストから消える")
+        fun deletesImmediately() = runTest(dispatcher) {
             // Given
             val record = mockk<Record> {
                 every { id } returns "id1"
@@ -242,11 +214,34 @@ open class HistoryViewModelTest {
 
             // When
             viewModel.deleteRecord("id1")
-            viewModel.commitDelete()
 
-            // Then
+            // Then - 即API削除＋リストから除去
             coVerify { deleteRecordUseCase("id1") }
-            assertNull(viewModel.uiState.value.pendingDeletion)
+            assertEquals(emptyList<Record>(), viewModel.uiState.value.allRecords)
+        }
+
+        @Test
+        @DisplayName("API削除に失敗したらレコードはリストへ戻る")
+        fun restoresOnFailure() = runTest(dispatcher) {
+            // Given
+            val record = mockk<Record> {
+                every { id } returns "id1"
+                every { createdAt } returns ZonedDateTime.now()
+                every { work } returns mockk<Work> { every { title } returns "dummy" }
+            }
+            coEvery { loadRecordsUseCase(null) } returns Result.success(PaginatedRecords(listOf(record), false, null))
+            every { searchRecordsUseCase(listOf(record), "") } returns listOf(record)
+            every { searchRecordsUseCase(emptyList(), "") } returns emptyList()
+            coEvery { deleteRecordUseCase("id1") } returns Result.failure(RuntimeException("network"))
+
+            val viewModel = HistoryViewModel(loadRecordsUseCase, searchRecordsUseCase, deleteRecordUseCase, errorMapper)
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.deleteRecord("id1")
+
+            // Then - 失敗で復元
+            assertEquals(listOf(record), viewModel.uiState.value.allRecords)
         }
     }
 
