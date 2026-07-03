@@ -741,4 +741,36 @@ class TrackScreenUITest {
         // Assert - 要約行の検索チップ
         composeTestRule.onNodeWithText("🔍 ガンダム").assertIsDisplayed()
     }
+
+    @Test
+    fun trackScreen_フィルターシート表示_放送済のみ表示トグルが出る() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(isFilterVisible = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        every { mockViewModel.previewCount(any()) } returns 5
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert - 「放送済のみ表示」トグルが表示される（デフォルトはON）
+        composeTestRule.onNodeWithText("放送済のみ表示").assertIsDisplayed()
+
+        // Act - トグルをOFFにして適用
+        composeTestRule.onNodeWithText("放送済のみ表示").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("5件を表示").performClick()
+        composeTestRule.waitForIdle()
+
+        // Assert - showOnlyAired=false でupdateFilterが呼ばれる
+        verify { mockViewModel.updateFilter(match { !it.showOnlyAired }) }
+    }
 }
