@@ -88,10 +88,12 @@ private fun ProgramListContent(
     onBulkRecordUpTo: (ProgramWithWork, Int) -> Unit,
     onShowAnimeDetail: (ProgramWithWork) -> Unit
 ) {
+    // showOnlyAired（放送済のみ表示）も検索結果を絞る要因になるため、他のフィルターが
+    // 未選択でもこれがONなら「検索専用モード」の提案対象に含める
     val showSearchOnlySuggestion = !uiState.isLoading &&
         uiState.programs.isEmpty() &&
         uiState.filterState.searchQuery.isNotEmpty() &&
-        uiState.filterState.hasActiveNonSearchFilters() &&
+        (uiState.filterState.hasActiveNonSearchFilters() || uiState.filterState.showOnlyAired) &&
         !uiState.isSearchOnlyMode
 
     if (showSearchOnlySuggestion) {

@@ -475,6 +475,33 @@ class TrackScreenUITest {
     }
 
     @Test
+    fun trackScreen_検索結果0件かつ放送済フィルターのみ有効_オフにするボタンが表示される() {
+        // Arrange - 他のフィルターは未選択でも showOnlyAired（デフォルトON）が絞り込みの原因になりうる
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(searchQuery = "未放送作品", showOnlyAired = true),
+            isSearchOnlyMode = false
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("一致する作品が見つかりませんでした").assertIsDisplayed()
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsDisplayed()
+    }
+
+    @Test
     fun trackScreen_オフにするボタンクリック_ViewModelのtoggleが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
@@ -607,12 +634,12 @@ class TrackScreenUITest {
     }
 
     @Test
-    fun trackScreen_他フィルターなしで検索0件_オフにするボタンが表示されない() {
-        // Arrange
+    fun trackScreen_フィルターが何も絞り込んでいない場合_オフにするボタンが表示されない() {
+        // Arrange - selectedXxx系もshowOnlyAiredも絞り込みの原因になっていない状態
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val state = TrackUiState(
             programs = emptyList(),
-            filterState = FilterState(searchQuery = "存在しない作品"),
+            filterState = FilterState(searchQuery = "存在しない作品", showOnlyAired = false),
             isSearchOnlyMode = false
         )
         every { mockViewModel.uiState } returns MutableStateFlow(state)
@@ -628,7 +655,7 @@ class TrackScreenUITest {
             )
         }
 
-        // Assert（他フィルターがないのでボタンは非表示）
+        // Assert（絞り込み要因が無いのでボタンは非表示）
         composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsNotDisplayed()
     }
 
