@@ -17,6 +17,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiict.domain.filter.SortOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -474,6 +475,33 @@ class TrackScreenUITest {
     }
 
     @Test
+    fun trackScreen_検索結果0件かつ放送済フィルターのみ有効_オフにするボタンが表示される() {
+        // Arrange - 他のフィルターは未選択でも showOnlyAired（デフォルトON）が絞り込みの原因になりうる
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(
+            programs = emptyList(),
+            filterState = FilterState(searchQuery = "未放送作品", showOnlyAired = true),
+            isSearchOnlyMode = false
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("一致する作品が見つかりませんでした").assertIsDisplayed()
+        composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsDisplayed()
+    }
+
+    @Test
     fun trackScreen_オフにするボタンクリック_ViewModelのtoggleが呼ばれる() {
         // Arrange
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
@@ -606,12 +634,12 @@ class TrackScreenUITest {
     }
 
     @Test
-    fun trackScreen_他フィルターなしで検索0件_オフにするボタンが表示されない() {
-        // Arrange
+    fun trackScreen_フィルターが何も絞り込んでいない場合_オフにするボタンが表示されない() {
+        // Arrange - selectedXxx系もshowOnlyAiredも絞り込みの原因になっていない状態
         val mockViewModel = mockk<TrackViewModel>(relaxed = true)
         val state = TrackUiState(
             programs = emptyList(),
-            filterState = FilterState(searchQuery = "存在しない作品"),
+            filterState = FilterState(searchQuery = "存在しない作品", showOnlyAired = false),
             isSearchOnlyMode = false
         )
         every { mockViewModel.uiState } returns MutableStateFlow(state)
@@ -627,7 +655,7 @@ class TrackScreenUITest {
             )
         }
 
-        // Assert（他フィルターがないのでボタンは非表示）
+        // Assert（絞り込み要因が無いのでボタンは非表示）
         composeTestRule.onNodeWithText("他のフィルターを一時的にオフにして検索").assertIsNotDisplayed()
     }
 
@@ -740,5 +768,71 @@ class TrackScreenUITest {
 
         // Assert - 要約行の検索チップ
         composeTestRule.onNodeWithText("🔍 ガンダム").assertIsDisplayed()
+    }
+
+    @Test
+    fun trackScreen_フィルターシート表示_放送済のみ表示トグルが出る() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(isFilterVisible = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        every { mockViewModel.previewCount(any()) } returns 5
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert - 「放送済のみ表示」トグルが表示される（デフォルトはON）
+        composeTestRule.onNodeWithText("放送済のみ表示").assertIsDisplayed()
+
+        // Act - トグルをOFFにして適用
+        composeTestRule.onNodeWithText("放送済のみ表示").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("5件を表示").performClick()
+        composeTestRule.waitForIdle()
+
+        // Assert - showOnlyAired=false でupdateFilterが呼ばれる
+        verify { mockViewModel.updateFilter(match { !it.showOnlyAired }) }
+    }
+
+    @Test
+    fun trackScreen_フィルターシート表示_並び順チップが出る() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(isFilterVisible = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        every { mockViewModel.previewCount(any()) } returns 5
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert - 並び順チップが表示される
+        composeTestRule.onNodeWithText("並び順").assertIsDisplayed()
+        composeTestRule.onNodeWithText("昇順").assertIsDisplayed()
+        composeTestRule.onNodeWithText("降順").assertIsDisplayed()
+
+        // Act - 降順に切り替えて適用
+        composeTestRule.onNodeWithText("降順").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("5件を表示").performClick()
+        composeTestRule.waitForIdle()
+
+        // Assert - sortOrder=START_TIME_DESC でupdateFilterが呼ばれる
+        verify { mockViewModel.updateFilter(match { it.sortOrder == SortOrder.START_TIME_DESC }) }
     }
 }
