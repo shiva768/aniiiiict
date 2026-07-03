@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.domain.filter.FilterState
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
+import kotlinx.coroutines.launch
 
 private const val YEAR_COLLAPSE_AFTER = 4
 private const val CHANNEL_COLLAPSE_AFTER = 6
@@ -62,7 +64,13 @@ fun FilterBottomSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
     var draft by remember { mutableStateOf(filterState) }
+
+    // ボタンでの明示的な適用時もスワイプ/スクリムタップと同じくhideアニメーションを待ってから閉じる
+    fun applyAndClose() {
+        scope.launch { sheetState.hide() }.invokeOnCompletion { onApply(draft) }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -144,7 +152,7 @@ fun FilterBottomSheet(
             )
 
             Button(
-                onClick = { onApply(draft) },
+                onClick = ::applyAndClose,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp)
             ) {
