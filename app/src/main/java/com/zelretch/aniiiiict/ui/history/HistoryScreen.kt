@@ -45,6 +45,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -261,14 +262,16 @@ private fun DateGroupCard(records: List<Record>, actions: HistoryScreenActions) 
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             records.forEachIndexed { index, record ->
-                if (index > 0) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                key(record.id) {
+                    if (index > 0) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    }
+                    SwipeableRecordRow(
+                        record = record,
+                        onDelete = { actions.onDeleteRecord(record.id) },
+                        onClick = { actions.onRecordClick(record) }
+                    )
                 }
-                SwipeableRecordRow(
-                    record = record,
-                    onDelete = { actions.onDeleteRecord(record.id) },
-                    onClick = { actions.onRecordClick(record) }
-                )
             }
         }
     }
