@@ -1,111 +1,19 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Claude Code (claude.ai/code) がこのリポジトリで作業する際のガイド。
 
-## Project Overview
+- **発言は日本語で行うこと。**
+- Aniiiiict は [Annict](https://annict.com)（アニメ視聴管理サービス）の非公式 Android クライアント。Annict OAuth でログインし、視聴中/視聴予定の管理・エピソード記録・履歴閲覧を行う。AniList（GraphQL）と MyAnimeList（REST）を補助メタデータに利用。
 
-Aniiiiict is an unofficial Android client for [Annict](https://annict.com), an anime tracking service. Users log in via Annict OAuth, manage watching/planned anime, record episodes, and view history. It also integrates with AniList (GraphQL) and MyAnimeList (REST) for supplemental metadata.
+## 必ず守ること
+- **JDK 17 必須**。Gradle 実行前に `export JAVA_HOME=/Users/shiva768/Library/Java/JavaVirtualMachines/jbr-17.0.14/Contents/Home`
+- コミット前に `./gradlew ktlintFormat && ./gradlew check` を実行
+- **UI変更を伴う実装後は必ず `./gradlew connectedDebugAndroidTest`**（デバイス/エミュレーター接続必須）
+- ブランチは `master` から切る（`feat/issue-xx` / `fix/issue-xx`）
+- UI テキストは日本語
 
-## Build & Development Commands
-
-**JDK 17 is required.** The default JDK may not be 17; set it explicitly:
-```bash
-export JAVA_HOME=/Users/shiva768/Library/Java/JavaVirtualMachines/jbr-17.0.14/Contents/Home
-```
-
-```bash
-# Build
-./gradlew assembleDebug                    # Build debug APK (requires secrets)
-
-# Testing
-./gradlew testDebugUnitTest                # Unit tests only
-./gradlew testDebugUnitTest --tests "com.zelretch.aniiiiict.ui.library.LibraryViewModelTest"  # Single test class
-./gradlew connectedDebugAndroidTest        # Instrumentation tests (requires device/emulator)
-./gradlew check                            # Unit tests + ktlint + detekt (run before committing)
-
-# Linting & Formatting
-./gradlew ktlintCheck                      # Check Kotlin style
-./gradlew ktlintFormat                     # Auto-fix style issues
-./gradlew detekt                           # Static analysis
-```
-
-Secrets (ANNICT_CLIENT_ID, ANNICT_CLIENT_SECRET, MAL_CLIENT_ID) are required for `assembleDebug` but NOT for `check`/test tasks (dummy values used). Configure via `local.properties` (see `local.properties.template`).
-
-Base package: `com.zelretch.aniiiiict`
-
-## Architecture
-
-**Clean Architecture + MVVM** following the "Now in Android" pattern. Single module (`:app`).
-
-### Layer Structure
-- **UI Layer** (`ui/`): Jetpack Compose screens + ViewModels. State managed via `UiState<T>` (Loading/Success/Error) exposed as `StateFlow`.
-- **Domain Layer** (`domain/`): UseCases with `Result<T>` return types. `DomainError` sealed class hierarchy for typed errors. Singleton services (e.g. `LibrarySyncService`) manage background sync state via `StateFlow<SyncStatus>`.
-- **Data Layer** (`data/`): Repositories abstract API access. Annict (Apollo GraphQL), AniList (Apollo GraphQL), MyAnimeList (Retrofit REST). Room (`data/local/`) provides local cache for library entries; `AppDatabase` version managed with `fallbackToDestructiveMigration`.
-
-### Data Flow
-```
-Composable Screen → ViewModel → UseCase → Repository → API Client/DataStore/Room
-```
-
-### Key Patterns
-- **`UiState<T>`** sealed interface: all screens handle Loading/Success/Error states
-- **`DomainError`** sealed class: Network, Auth, Api.ClientError, Api.ServerError, Business, Unknown, Unexpected
-- **`ErrorMapper`**: converts `DomainError` to user-facing Japanese messages; inject into all ViewModels
-- **`launchWithMinLoadingTime()`**: ViewModel extension ensuring minimum 1s loading display
-- **`Result<T>`**: Kotlin Result for explicit error propagation from repositories/use cases
-
-### ViewModel Template
-```kotlin
-@HiltViewModel
-class XxxViewModel @Inject constructor(
-    private val useCase: XxxUseCase,
-    private val errorMapper: ErrorMapper,
-) : ViewModel() {
-    private val _uiState = MutableStateFlow<UiState<XxxData>>(UiState.Loading)
-    val uiState: StateFlow<UiState<XxxData>> = _uiState.asStateFlow()
-
-    fun load() = launchWithMinLoadingTime {
-        useCase().onSuccess { _uiState.value = UiState.Success(it) }
-            .onFailure { _uiState.value = UiState.Error(errorMapper.toUserMessage(it, "XxxViewModel.load")) }
-    }
-}
-```
-
-## API Integration
-
-- **Annict (primary)**: GraphQL via Apollo. Schemas in `app/src/main/graphql/com.annict/`. OAuth 2.0 Bearer token auth. Callback: `aniiiiict://oauth/callback`
-- **AniList (supplemental)**: GraphQL via Apollo. Schemas in `app/src/main/graphql/co.anilist/`. No auth required.
-- **MyAnimeList (fallback)**: REST via Retrofit. `X-MAL-Client-ID` header auth. Used for episode counts and images when Annict data is incomplete.
-
-## Testing Conventions
-
-Three test types are required for changes:
-
-- **UnitTest** (`app/src/test/`): JUnit5 + MockK. Test ViewModels and UseCases in isolation.
-- **IntegrationTest** (`app/src/androidTest/`): Test UseCase+Repository collaboration. Mock external boundaries (Repository, ProgramFilter) but NOT domain UseCases. Uses `FakeAnnictRepository` from `app/src/androidTest/testing/`.
-- **UITest** (`app/src/androidTest/`): Mock ViewModel via MockK. Verify UI states and interactions. Navigation tests use `@HiltAndroidTest` + `FakeAnnictRepository`; component tests use `createAndroidComposeRule<ComponentActivity>()` without Hilt.
-
-**UI変更を伴う実装後は必ず `./gradlew connectedDebugAndroidTest` を実行する**（デバイス/エミュレーター接続必須）。
-
-Test naming uses Japanese with `@DisplayName`:
-```kotlin
-@Test
-@DisplayName("初期状態でローディング表示される")
-fun initialStateShowsLoading() { ... }
-```
-
-JUnit5 with `@Nested` for test organization. Turbine for Flow testing.
-
-## Coding Conventions
-
-- Kotlin with explicit imports (no wildcards, no FQCNs)
-- Use `hiltViewModel<T>()` with explicit type parameter (import from `androidx.hilt.lifecycle.viewmodel.compose`)
-- Max line length: 120 characters (detekt)
-- UI text is in Japanese
-- Branch naming: `feat/issue-xx`, `fix/issue-xx` off `master`
-- Run `./gradlew ktlintFormat && ./gradlew check` before committing
-- Use `git mv` for file moves/renames to preserve history
-
-## Key Dependencies
-
-All versions managed in `gradle/libs.versions.toml`. Key: Compose BOM 2025.09.00, Hilt 2.57.2, Apollo 4.3.3, Retrofit 3.0.0, Kotlin 2.2.20, Room 2.7.0, MinSDK 26, TargetSDK 36, JVM target 17.
+## 詳細ドキュメント（索引）
+- [ビルド & 開発コマンド](docs/build.md) — 全コマンド、secrets、JDK設定
+- [アーキテクチャ](docs/architecture.md) — レイヤー構成、データフロー、主要パターン、ViewModelテンプレート、API連携、依存関係
+- [テスト規約](docs/testing.md) — 3種のテスト、命名、Turbine/MockK
+- [コーディング規約](docs/conventions.md) — import、行長、ブランチ命名など
