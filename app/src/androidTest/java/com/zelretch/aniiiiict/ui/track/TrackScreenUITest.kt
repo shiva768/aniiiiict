@@ -17,6 +17,7 @@ import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiict.domain.filter.SortOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -772,5 +773,39 @@ class TrackScreenUITest {
 
         // Assert - showOnlyAired=false でupdateFilterが呼ばれる
         verify { mockViewModel.updateFilter(match { !it.showOnlyAired }) }
+    }
+
+    @Test
+    fun trackScreen_フィルターシート表示_並び順チップが出る() {
+        // Arrange
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val state = TrackUiState(isFilterVisible = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        every { mockViewModel.previewCount(any()) } returns 5
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        // Assert - 並び順チップが表示される
+        composeTestRule.onNodeWithText("並び順").assertIsDisplayed()
+        composeTestRule.onNodeWithText("昇順").assertIsDisplayed()
+        composeTestRule.onNodeWithText("降順").assertIsDisplayed()
+
+        // Act - 降順に切り替えて適用
+        composeTestRule.onNodeWithText("降順").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("5件を表示").performClick()
+        composeTestRule.waitForIdle()
+
+        // Assert - sortOrder=START_TIME_DESC でupdateFilterが呼ばれる
+        verify { mockViewModel.updateFilter(match { it.sortOrder == SortOrder.START_TIME_DESC }) }
     }
 }

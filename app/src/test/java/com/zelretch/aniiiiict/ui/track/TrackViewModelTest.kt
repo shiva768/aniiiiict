@@ -25,6 +25,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,6 +57,7 @@ class TrackViewModelTest {
     private lateinit var filterProgramsUseCase: FilterProgramsUseCase
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
     private lateinit var errorMapper: ErrorMapper
+    private lateinit var programFilterManager: ProgramFilterManager
     private lateinit var viewModel: TrackViewModel
 
     @BeforeEach
@@ -84,7 +86,7 @@ class TrackViewModelTest {
             emptyList()
         )
 
-        val programFilterManager = mockk<ProgramFilterManager>(relaxed = true) {
+        programFilterManager = mockk<ProgramFilterManager>(relaxed = true) {
             every { filterState } returns filterPreferences.filterState
             every { filterPrograms(any(), any()) } answers { firstArg() }
             every { extractAvailableFilters(any()) } returns AvailableFilters(
@@ -211,6 +213,31 @@ class TrackViewModelTest {
 
             // Then
             assertEquals(false, viewModel.uiState.value.isSearchOnlyMode)
+        }
+
+        @Test
+        @DisplayName("toggleSearchOnlyModeを有効にするとshowOnlyAiredも無効化されてフィルタされる")
+        fun toggleOnDisablesShowOnlyAired() = runTest(dispatcher) {
+            // Given - 「放送済のみ表示」がONのまま検索専用モードに切り替える
+            coEvery { loadProgramsUseCase.invoke() } returns Result.success(emptyList())
+            filterStateFlow.value = FilterState(
+                searchQuery = "テスト",
+                selectedStatus = setOf(StatusState.WATCHING),
+                showOnlyAired = true
+            )
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // When
+            viewModel.toggleSearchOnlyMode()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then - 未放送作品も検索でヒットするよう showOnlyAired=false でフィルタされる
+            verify {
+                programFilterManager.filterPrograms(
+                    any(),
+                    match { !it.showOnlyAired && it.searchQuery == "テスト" }
+                )
+            }
         }
     }
 

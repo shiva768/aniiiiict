@@ -103,7 +103,11 @@ class TrackViewModel @Inject constructor(
 
     private fun effectiveFilterState(filterState: FilterState, isSearchOnlyMode: Boolean): FilterState =
         if (isSearchOnlyMode) {
-            FilterState(searchQuery = filterState.searchQuery, sortOrder = filterState.sortOrder)
+            FilterState(
+                searchQuery = filterState.searchQuery,
+                sortOrder = filterState.sortOrder,
+                showOnlyAired = false
+            )
         } else {
             filterState
         }

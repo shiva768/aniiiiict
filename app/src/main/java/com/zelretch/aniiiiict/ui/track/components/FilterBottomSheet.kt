@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.domain.filter.FilterState
+import com.zelretch.aniiiiict.domain.filter.SortOrder
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import kotlinx.coroutines.launch
 
@@ -165,6 +166,24 @@ fun FilterBottomSheet(
                 Switch(
                     checked = draft.showOnlyAired,
                     onCheckedChange = { draft = draft.copy(showOnlyAired = it) }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(text = "並び順", style = MaterialTheme.typography.bodyMedium)
+                FilterChip(
+                    selected = draft.sortOrder == SortOrder.START_TIME_ASC,
+                    onClick = { draft = draft.copy(sortOrder = SortOrder.START_TIME_ASC) },
+                    label = { Text("昇順") }
+                )
+                FilterChip(
+                    selected = draft.sortOrder == SortOrder.START_TIME_DESC,
+                    onClick = { draft = draft.copy(sortOrder = SortOrder.START_TIME_DESC) },
+                    label = { Text("降順") }
                 )
             }
 
