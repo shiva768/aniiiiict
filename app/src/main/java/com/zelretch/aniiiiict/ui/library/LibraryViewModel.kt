@@ -132,8 +132,9 @@ class LibraryViewModel @Inject constructor(
     fun recordNextEpisode(entry: LibraryEntry) {
         val episode = entry.nextEpisode ?: return
         if (_uiState.value.recordingEntryId != null) return
+        // 二重タップ防止: launch の外で同期的にフラグを立て、連打の2回目を確実に弾く
+        _uiState.update { it.copy(recordingEntryId = entry.id, error = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(recordingEntryId = entry.id, error = null) }
             watchEpisodeUseCase(
                 episodeId = episode.id,
                 workId = entry.work.id,
