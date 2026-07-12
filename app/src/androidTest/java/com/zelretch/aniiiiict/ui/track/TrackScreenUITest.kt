@@ -1,6 +1,9 @@
 package com.zelretch.aniiiiict.ui.track
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -280,6 +283,58 @@ class TrackScreenUITest {
 
         // Assert - インライン一覧のヘッダーが表示される
         composeTestRule.onNodeWithText("未視聴 1話 ・ タップで記録").assertIsDisplayed()
+    }
+
+    @Test
+    fun trackScreen_記録中はインライン未視聴行のタップが無効化され重複記録されない() {
+        // Arrange - 2話分の未視聴プログラム
+        val mockViewModel = mockk<TrackViewModel>(relaxed = true)
+        val sampleWork = Work(
+            id = "1",
+            title = "テストアニメ",
+            seasonName = SeasonName.SPRING,
+            seasonYear = 2024,
+            media = "TV",
+            mediaText = "TV",
+            viewerStatusState = StatusState.WATCHING
+        )
+        val programs = (0..1).map { i ->
+            Program(
+                id = "prog$i",
+                startedAt = LocalDateTime.now(),
+                channel = Channel(name = "テストチャンネル"),
+                episode = Episode(id = "ep$i", title = "第${i + 1}話", numberText = "${i + 1}", number = i + 1)
+            )
+        }
+        val programWithWork = ProgramWithWork(programs = programs, work = sampleWork)
+
+        var state by mutableStateOf(TrackUiState(programs = listOf(programWithWork), isRecording = false))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        composeTestRule.setContent {
+            TrackScreen(
+                viewModel = mockViewModel,
+                uiState = state,
+                onRecordEpisode = { _, _, _ -> },
+                onMenuClick = {},
+                onRefresh = {}
+            )
+        }
+
+        // まとめて展開 → 先頭行タップで1回記録
+        composeTestRule.onNodeWithText("まとめて").performClick()
+        composeTestRule.onNodeWithTag("inline_episode_0").performClick()
+        composeTestRule.waitForIdle()
+        verify(exactly = 1) { mockViewModel.bulkRecordUpTo(any(), 0) }
+
+        // 記録中状態に切り替え（＝1回目の記録が進行中）
+        state = state.copy(isRecording = true)
+        composeTestRule.waitForIdle()
+
+        // 記録中に同じ行を連打しても2回目は無効化されて呼ばれない
+        composeTestRule.onNodeWithTag("inline_episode_0").performClick()
+        composeTestRule.waitForIdle()
+        verify(exactly = 1) { mockViewModel.bulkRecordUpTo(any(), 0) }
     }
 
     @Test

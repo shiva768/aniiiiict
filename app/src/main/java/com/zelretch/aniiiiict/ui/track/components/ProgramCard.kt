@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -57,6 +58,9 @@ import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+// 記録処理中に無効化した未視聴行を薄く見せる透明度
+private const val DISABLED_ROW_ALPHA = 0.4f
 
 @Composable
 fun ProgramCard(
@@ -213,6 +217,7 @@ private fun EpisodeInfoSection(
         AnimatedVisibility(visible = expanded) {
             InlineUnwatchedList(
                 programWithWork = programWithWork,
+                isRecording = uiState.isRecording,
                 onBulkRecordUpTo = onBulkRecordUpTo
             )
         }
@@ -260,7 +265,11 @@ private fun BulkRecordButton(
 }
 
 @Composable
-private fun InlineUnwatchedList(programWithWork: ProgramWithWork, onBulkRecordUpTo: (Int) -> Unit) {
+private fun InlineUnwatchedList(
+    programWithWork: ProgramWithWork,
+    isRecording: Boolean,
+    onBulkRecordUpTo: (Int) -> Unit
+) {
     var pressedIndex by remember { mutableStateOf<Int?>(null) }
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -280,6 +289,7 @@ private fun InlineUnwatchedList(programWithWork: ProgramWithWork, onBulkRecordUp
                     index = index,
                     filled = pressedIndex != null && index <= pressedIndex!!,
                     showCountChip = pressedIndex == index,
+                    enabled = !isRecording,
                     onPressedChange = { pressed -> pressedIndex = if (pressed) index else null },
                     onClick = { onBulkRecordUpTo(index) }
                 )
@@ -294,6 +304,7 @@ private fun InlineUnwatchedRow(
     index: Int,
     filled: Boolean,
     showCountChip: Boolean,
+    enabled: Boolean,
     onPressedChange: (Boolean) -> Unit,
     onClick: () -> Unit
 ) {
@@ -305,7 +316,13 @@ private fun InlineUnwatchedRow(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("inline_episode_$index")
-            .clickable(interactionSource = interactionSource, indication = LocalIndication.current) { onClick() }
+            // 記録処理中はタップを無効化し、二度押しによる重複記録を防ぐ
+            .alpha(if (enabled) 1f else DISABLED_ROW_ALPHA)
+            .clickable(
+                enabled = enabled,
+                interactionSource = interactionSource,
+                indication = LocalIndication.current
+            ) { onClick() }
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
