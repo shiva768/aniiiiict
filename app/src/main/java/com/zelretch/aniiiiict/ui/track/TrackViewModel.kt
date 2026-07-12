@@ -186,6 +186,8 @@ class TrackViewModel @Inject constructor(
      * カード内インライン一括記録：未視聴一覧の index 番目までをまとめて記録する。
      */
     fun bulkRecordUpTo(program: ProgramWithWork, upToIndex: Int) {
+        // 二重タップ防止: 記録中は弾く
+        if (_uiState.value.isRecording) return
         val targets = program.programs.take(upToIndex + 1)
         if (targets.isEmpty()) return
         val episodeIds = targets.map { it.episode.id }
@@ -197,8 +199,8 @@ class TrackViewModel @Inject constructor(
                 lastEpisodeHasNext = lastEpisode.hasNextEpisode
             )
         }
+        _uiState.update { it.copy(isRecording = true) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isRecording = true) }
             bulkRecordEpisodesUseCase(
                 episodeIds = episodeIds,
                 workId = program.work.id,

@@ -13,6 +13,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -451,6 +452,36 @@ class LibraryViewModelTest {
             coVerify { watchEpisodeUseCase("ep1", "work1", StatusState.WATCHING) }
             coVerify { librarySyncService.syncEntry("entry1") }
             assertNull(viewModel.uiState.value.recordingEntryId)
+        }
+
+        @Test
+        @DisplayName("記録処理が完了する前に連打しても2回目は弾かれ記録は1度だけ実行される")
+        fun recordNextEpisodeIgnoresDoubleTap() = runTest(dispatcher) {
+            // Given - 1回目の記録が完了しないよう watchEpisodeUseCase を保留させる
+            val entry = LibraryEntry(
+                id = "entry1",
+                work = createFakeWork("work1", "Work"),
+                nextEpisode = Episode(id = "ep1", number = 1),
+                statusState = StatusState.WATCHING
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            val gate = CompletableDeferred<Unit>()
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } coAnswers {
+                gate.await()
+                Result.success(Unit)
+            }
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When - 1回目は処理中のまま、続けて2回目をタップ
+            viewModel.recordNextEpisode(entry)
+            viewModel.recordNextEpisode(entry)
+            gate.complete(Unit)
+
+            // Then - 記録は1度だけ
+            coVerify(exactly = 1) { watchEpisodeUseCase("ep1", "work1", StatusState.WATCHING) }
         }
     }
 

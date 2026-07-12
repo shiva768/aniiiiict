@@ -26,6 +26,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -392,6 +393,36 @@ class TrackViewModelTest {
                     any()
                 )
             }
+        }
+
+        @Test
+        @DisplayName("記録処理が完了する前に連打しても2回目は弾かれ記録は1度だけ実行される")
+        fun bulkRecordUpToIgnoresDoubleTap() = runTest {
+            // Given
+            val work = Work(id = "work1", title = "T", viewerStatusState = StatusState.WATCHING)
+            val programs = (0..2).map { i ->
+                Program("p$i", LocalDateTime.now(), Channel("ch"), Episode(id = "ep$i", number = i + 1))
+            }
+            val pww = ProgramWithWork(programs = programs, work = work)
+            coEvery { loadProgramsUseCase() } returns Result.success(listOf(pww))
+            // 1回目の記録が完了しないよう保留させ、処理中に2回目を叩く
+            val gate = CompletableDeferred<Unit>()
+            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } coAnswers {
+                gate.await()
+                Result.success(BulkRecordResult())
+            }
+
+            viewModel.refresh()
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // When - 1回目は処理中のまま、続けて2回目をタップ
+            viewModel.bulkRecordUpTo(pww, 1)
+            viewModel.bulkRecordUpTo(pww, 1)
+            gate.complete(Unit)
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Then - 記録は1度だけ
+            coVerify(exactly = 1) { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) }
         }
     }
 }
