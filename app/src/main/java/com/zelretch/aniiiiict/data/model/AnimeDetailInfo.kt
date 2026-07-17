@@ -9,6 +9,7 @@ data class AnimeDetailInfo(
 
     // Annict詳細情報
     val programs: List<WorkDetailQuery.Node1?>? = null,
+    val casts: List<WorkDetailQuery.Node2?>? = null,
     val seriesList: List<WorkSeriesListQuery.Node1?>? = null,
 
     // MyAnimeList情報

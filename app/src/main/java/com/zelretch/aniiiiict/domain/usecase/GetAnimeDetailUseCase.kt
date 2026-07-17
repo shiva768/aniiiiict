@@ -51,6 +51,7 @@ class GetAnimeDetailUseCase @Inject constructor(
             AnimeDetailInfo(
                 work = work,
                 programs = annictDetail?.onWork?.programs?.nodes,
+                casts = annictDetail?.onWork?.casts?.nodes,
                 seriesList = seriesList,
                 malInfo = malInfo,
                 episodeCount = episodeCount,
@@ -111,6 +112,7 @@ class GetAnimeDetailUseCase @Inject constructor(
             AnimeDetailInfo(
                 work = work,
                 programs = onWork.programs?.nodes,
+                casts = onWork.casts?.nodes,
                 seriesList = seriesList,
                 malInfo = malInfo,
                 episodeCount = episodeCount,

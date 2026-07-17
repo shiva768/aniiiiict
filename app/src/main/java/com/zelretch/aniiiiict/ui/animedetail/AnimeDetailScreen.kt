@@ -163,6 +163,12 @@ private fun AnimeDetailContent(
 
         AnimeDetailBasicInfo(animeDetailInfo = animeDetailInfo)
 
+        animeDetailInfo.casts?.let { casts ->
+            if (casts.isNotEmpty()) {
+                AnimeDetailCasts(casts = casts)
+            }
+        }
+
         AnimeDetailExternalLinks(animeDetailInfo = animeDetailInfo)
 
         animeDetailInfo.programs?.let { programs ->
@@ -416,6 +422,48 @@ private fun AnimeDetailPrograms(programs: List<WorkDetailQuery.Node1?>, modifier
                     Text(
                         text = channelName,
                         style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimeDetailCasts(casts: List<WorkDetailQuery.Node2?>, modifier: Modifier = Modifier) {
+    // 同一声優・同一キャラの重複を排除し、登場順（sortNumber順のAPI応答順）を維持
+    val uniqueCasts = casts.filterNotNull().distinctBy { it.id }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "キャスト",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            uniqueCasts.forEach { cast ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = cast.character.name.ifBlank { "―" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = cast.person.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
                     )
                 }
             }

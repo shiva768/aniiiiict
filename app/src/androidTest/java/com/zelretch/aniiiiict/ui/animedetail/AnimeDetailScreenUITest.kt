@@ -251,6 +251,45 @@ class AnimeDetailScreenUITest {
     }
 
     @Test
+    fun キャスト情報がある場合にセクションが表示される() {
+        // Given: キャスト（声優）情報を含むAnimeDetailInfo
+        val mockCharacter = mockk<WorkDetailQuery.Character>()
+        every { mockCharacter.name } returns "テストキャラ"
+        val mockPerson = mockk<WorkDetailQuery.Person>()
+        every { mockPerson.name } returns "テスト声優"
+        val mockCast = mockk<WorkDetailQuery.Node2>()
+        every { mockCast.id } returns "cast-1"
+        every { mockCast.name } returns "テスト声優"
+        every { mockCast.character } returns mockCharacter
+        every { mockCast.person } returns mockPerson
+
+        val animeDetailInfo = createAnimeDetailInfo(
+            casts = listOf(mockCast)
+        )
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
+        )
+        val programWithWork = createSampleProgramWithWork()
+
+        // When: 画面を表示
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    workId = "test-work-id",
+                    programWithWork = programWithWork,
+                    onNavigateBack = {},
+                    viewModel = mockViewModel
+                )
+            }
+        }
+
+        // Then: キャストセクションが表示される
+        composeTestRule.onNodeWithText("キャスト").assertIsDisplayed()
+        composeTestRule.onNodeWithText("テストキャラ").assertIsDisplayed()
+        composeTestRule.onNodeWithText("テスト声優").assertIsDisplayed()
+    }
+
+    @Test
     fun 関連作品情報がある場合にセクションが表示される() {
         // Given: 関連作品情報を含むAnimeDetailInfo
         val mockRelatedWork = mockk<WorkSeriesListQuery.Node2>()
@@ -426,7 +465,8 @@ class AnimeDetailScreenUITest {
         wikipediaUrl: String? = null,
         malInfo: MyAnimeListResponse? = null,
         programs: List<WorkDetailQuery.Node1?>? = null,
-        seriesList: List<WorkSeriesListQuery.Node1?>? = null
+        seriesList: List<WorkSeriesListQuery.Node1?>? = null,
+        casts: List<WorkDetailQuery.Node2?>? = null
     ): AnimeDetailInfo {
         val work = Work(
             id = "test-work-id",
@@ -441,6 +481,7 @@ class AnimeDetailScreenUITest {
         return AnimeDetailInfo(
             work = work,
             programs = programs,
+            casts = casts,
             seriesList = seriesList,
             malInfo = malInfo,
             episodeCount = episodeCount,

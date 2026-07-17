@@ -75,6 +75,9 @@ class GetAnimeDetailUseCaseTest {
             assertNotNull(animeDetailInfo?.programs)
             assertNotNull(animeDetailInfo?.seriesList)
             assertNotNull(animeDetailInfo?.malInfo)
+            // キャスト（声優）情報が取得できている
+            assertEquals("テストキャラ", animeDetailInfo?.casts?.first()?.character?.name)
+            assertEquals("テスト声優", animeDetailInfo?.casts?.first()?.person?.name)
 
             coVerify { annictRepository.getWorkDetail(programWithWork.work.id) }
             coVerify { myAnimeListRepository.getAnimeDetail(12345) }
@@ -183,6 +186,7 @@ class GetAnimeDetailUseCaseTest {
             every { mockOnWork.officialSiteUrl } returns null
             every { mockOnWork.wikipediaUrl } returns null
             every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
+            every { mockOnWork.casts } returns null
 
             val mockNode = mockk<WorkDetailQuery.Node>()
             every { mockNode.onWork } returns mockOnWork
@@ -249,6 +253,7 @@ class GetAnimeDetailUseCaseTest {
             every { mockOnWork.officialSiteUrl } returns "https://example.com/official"
             every { mockOnWork.wikipediaUrl } returns "https://ja.wikipedia.org/wiki/test"
             every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
+            every { mockOnWork.casts } returns null
 
             val mockNode = mockk<WorkDetailQuery.Node>()
             every { mockNode.onWork } returns mockOnWork
@@ -428,6 +433,19 @@ class GetAnimeDetailUseCaseTest {
         every { mockPrograms.nodes } returns listOf(mockProgram)
         every { mockOnWork.programs } returns mockPrograms
 
+        val mockCharacter = mockk<WorkDetailQuery.Character>()
+        every { mockCharacter.name } returns "テストキャラ"
+        val mockPerson = mockk<WorkDetailQuery.Person>()
+        every { mockPerson.name } returns "テスト声優"
+        val mockCast = mockk<WorkDetailQuery.Node2>()
+        every { mockCast.id } returns "cast-id"
+        every { mockCast.name } returns "テスト声優"
+        every { mockCast.character } returns mockCharacter
+        every { mockCast.person } returns mockPerson
+        val mockCasts = mockk<WorkDetailQuery.Casts>()
+        every { mockCasts.nodes } returns listOf(mockCast)
+        every { mockOnWork.casts } returns mockCasts
+
         val mockNode = mockk<WorkDetailQuery.Node>()
         every { mockNode.onWork } returns mockOnWork
 
@@ -484,6 +502,7 @@ class GetAnimeDetailUseCaseTest {
         every { mockOnWork.image } returns mockImage
 
         every { mockOnWork.programs } returns mockk { every { nodes } returns emptyList() }
+        every { mockOnWork.casts } returns null
 
         val mockNode = mockk<WorkDetailQuery.Node>()
         every { mockNode.onWork } returns mockOnWork
