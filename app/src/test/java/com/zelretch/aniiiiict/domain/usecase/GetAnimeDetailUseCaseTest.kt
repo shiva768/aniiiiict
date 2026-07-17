@@ -453,21 +453,23 @@ class GetAnimeDetailUseCaseTest {
     }
 
     private fun createMockWorkSeriesListNode(): WorkSeriesListQuery.Node {
-        val mockWork = mockk<WorkSeriesListQuery.Node2>()
-        every { mockWork.id } returns "related-work-id"
-        every { mockWork.title } returns "関連作品"
-        every { mockWork.titleEn } returns "Related Work"
-        every { mockWork.seasonName } returns null
-        every { mockWork.seasonYear } returns null
-        every { mockWork.image } returns null
+        // Annict の Series.works は edges { item } 経由で取得する
+        val mockItem = mockk<WorkSeriesListQuery.Item>()
+        every { mockItem.id } returns "related-work-id"
+        every { mockItem.title } returns "関連作品"
+        every { mockItem.seasonName } returns null
+        every { mockItem.seasonYear } returns null
+        every { mockItem.image } returns null
+
+        val mockEdge = mockk<WorkSeriesListQuery.Edge>()
+        every { mockEdge.item } returns mockItem
 
         val mockWorks = mockk<WorkSeriesListQuery.Works>()
-        every { mockWorks.nodes } returns listOf(mockWork)
+        every { mockWorks.edges } returns listOf(mockEdge)
 
         val mockSeries = mockk<WorkSeriesListQuery.Node1>()
         every { mockSeries.id } returns "series-id"
         every { mockSeries.name } returns "テストシリーズ"
-        every { mockSeries.nameEn } returns "Test Series"
         every { mockSeries.works } returns mockWorks
 
         val mockSeriesList = mockk<WorkSeriesListQuery.SeriesList>()
