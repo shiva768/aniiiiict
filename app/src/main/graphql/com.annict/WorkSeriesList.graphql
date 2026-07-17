@@ -12,6 +12,7 @@ query WorkSeriesList($workId: ID!) {
               item {
                 id
                 title
+                media
                 seasonName
                 seasonYear
                 image {

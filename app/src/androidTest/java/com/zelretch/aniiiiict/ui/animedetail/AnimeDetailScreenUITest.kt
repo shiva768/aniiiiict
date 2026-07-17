@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
+import com.annict.type.Media
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
@@ -317,8 +318,9 @@ class AnimeDetailScreenUITest {
         // Then: 関連作品セクションが表示される
         composeTestRule.onNodeWithText("関連作品").assertIsDisplayed()
         composeTestRule.onNodeWithText("テストシリーズ").assertIsDisplayed()
-        // 関連作品は "  • タイトル" の形式で表示される
-        composeTestRule.onNodeWithText("  • 関連作品タイトル").assertIsDisplayed()
+        composeTestRule.onNodeWithText("関連作品タイトル").assertIsDisplayed()
+        // メディア種別バッジ（TV）が表示される
+        composeTestRule.onNodeWithText("TV").assertIsDisplayed()
     }
 
     @Test
@@ -345,7 +347,7 @@ class AnimeDetailScreenUITest {
                 )
             }
         }
-        composeTestRule.onNodeWithText("  • 関連作品タイトル").performClick()
+        composeTestRule.onNodeWithText("関連作品タイトル").performClick()
 
         // Then: 関連作品IDでナビゲーションが呼ばれる
         assert(navigatedWorkId == "related-work-id")
@@ -400,6 +402,7 @@ class AnimeDetailScreenUITest {
         val mockItem = mockk<WorkSeriesListQuery.Item>()
         every { mockItem.id } returns workId
         every { mockItem.title } returns workTitle
+        every { mockItem.media } returns Media.TV
         every { mockItem.seasonName } returns null
         every { mockItem.seasonYear } returns null
         every { mockItem.image } returns null

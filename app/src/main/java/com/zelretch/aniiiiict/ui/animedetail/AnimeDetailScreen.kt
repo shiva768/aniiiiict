@@ -1,6 +1,7 @@
 package com.zelretch.aniiiiict.ui.animedetail
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -49,6 +51,7 @@ import androidx.core.net.toUri
 import coil.compose.AsyncImage
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
+import com.annict.type.Media
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
@@ -58,6 +61,7 @@ import com.zelretch.aniiiiict.ui.common.components.toStatusColor
 
 private const val IMAGE_SIZE = 120
 private const val CARD_ELEVATION = 2
+private const val MEDIA_BADGE_RADIUS = 4
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -522,11 +526,12 @@ private fun AnimeDetailRelatedWorks(
                                 .fillMaxWidth()
                                 .clickable { onNavigateToWork(work.id) }
                                 .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            MediaBadge(media = work.media)
                             Text(
-                                text = "  • ${work.title}",
+                                text = work.title,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.weight(1f),
@@ -545,6 +550,30 @@ private fun AnimeDetailRelatedWorks(
             }
         }
     }
+}
+
+/** 関連作品のメディア種別（映画/TV/OVA/WEB/その他）を表す小さなバッジ。 */
+@Composable
+private fun MediaBadge(media: Media, modifier: Modifier = Modifier) {
+    val label = when (media) {
+        Media.MOVIE -> "映画"
+        Media.TV -> "TV"
+        Media.OVA -> "OVA"
+        Media.WEB -> "WEB"
+        Media.OTHER, Media.UNKNOWN__ -> "その他"
+    }
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        maxLines = 1,
+        modifier = modifier
+            .background(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(MEDIA_BADGE_RADIUS.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 1.dp)
+    )
 }
 
 @Composable
