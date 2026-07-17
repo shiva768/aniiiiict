@@ -28,6 +28,20 @@ query WorkDetail($workId: ID!) {
           }
         }
       }
+      casts(first: 30) {
+        nodes {
+          id
+          name
+          character {
+            id
+            name
+          }
+          person {
+            id
+            name
+          }
+        }
+      }
 }
   }
 }
