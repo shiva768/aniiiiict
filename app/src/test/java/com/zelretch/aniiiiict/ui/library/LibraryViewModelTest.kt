@@ -429,6 +429,52 @@ class LibraryViewModelTest {
         }
 
         @Test
+        @DisplayName("onWorkStatusChangedでworkIdから該当エントリーを再同期する")
+        fun onWorkStatusChangedSyncsMatchingEntry() = runTest(dispatcher) {
+            // Given
+            val entry = LibraryEntry(
+                id = "entry1",
+                work = createFakeWork("work1", "Work 1"),
+                nextEpisode = null,
+                statusState = StatusState.WATCHING
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When: 詳細画面で work1 のステータスが変更された
+            viewModel.onWorkStatusChanged("work1")
+
+            // Then: workId から entry1 を引いて再同期する
+            coVerify { librarySyncService.syncEntry("entry1") }
+        }
+
+        @Test
+        @DisplayName("onWorkStatusChangedで該当エントリーが無ければ何もしない")
+        fun onWorkStatusChangedNoopWhenNotFound() = runTest(dispatcher) {
+            // Given
+            val entry = LibraryEntry(
+                id = "entry1",
+                work = createFakeWork("work1", "Work 1"),
+                nextEpisode = null,
+                statusState = StatusState.WATCHING
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When: ライブラリに存在しない作品
+            viewModel.onWorkStatusChanged("unknown-work")
+
+            // Then: 再同期は呼ばれない
+            coVerify(exactly = 0) { librarySyncService.syncEntry(any()) }
+        }
+
+        @Test
         @DisplayName("recordNextEpisodeで次の話が記録され再同期される")
         fun recordNextEpisodeRecordsAndSyncs() = runTest(dispatcher) {
             // Given

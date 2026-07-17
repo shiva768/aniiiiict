@@ -3,6 +3,7 @@ package com.zelretch.aniiiiict
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
@@ -57,7 +58,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailScreen
+import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailViewModel
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
+import com.zelretch.aniiiiict.ui.base.UiState
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
 import com.zelretch.aniiiiict.ui.history.HistoryViewModel
@@ -319,16 +322,35 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                 val trackBackStackEntry = remember(backStackEntry) {
                     runCatching { navController.getBackStackEntry("track") }.getOrNull()
                 }
+                val libraryBackStackEntry = remember(backStackEntry) {
+                    runCatching { navController.getBackStackEntry("library") }.getOrNull()
+                }
                 val trackViewModel: TrackViewModel? = trackBackStackEntry?.let { hiltViewModel(it) }
+                val libraryViewModel: LibraryViewModel? = libraryBackStackEntry?.let { hiltViewModel(it) }
+                val detailViewModel: AnimeDetailViewModel = hiltViewModel()
                 val programWithWork = trackViewModel?.getProgramWithWork(workId)
+
+                // 画面を閉じる際、この画面でステータス変更していれば遷移元へ反映する
+                val onClose: () -> Unit = {
+                    val changed = (detailViewModel.uiState.value as? UiState.Success)?.data?.statusChanged == true
+                    if (changed) {
+                        trackViewModel?.refresh()
+                        libraryViewModel?.onWorkStatusChanged(workId)
+                    }
+                    navController.navigateUp()
+                }
+
+                // システムバック（ジェスチャー/戻るボタン）でも反映されるようにする
+                BackHandler(onBack = onClose)
 
                 AnimeDetailScreen(
                     workId = workId,
                     programWithWork = programWithWork,
-                    onNavigateBack = { navController.navigateUp() },
+                    onNavigateBack = onClose,
                     onNavigateToWork = { relatedWorkId ->
                         navController.navigate("anime_detail/$relatedWorkId")
-                    }
+                    },
+                    viewModel = detailViewModel
                 )
             }
             composable("settings") {

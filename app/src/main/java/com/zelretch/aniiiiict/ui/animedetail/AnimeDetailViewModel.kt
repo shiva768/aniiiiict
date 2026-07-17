@@ -25,7 +25,9 @@ data class AnimeDetailData(
     val animeDetailInfo: AnimeDetailInfo,
     val selectedStatus: StatusState? = null,
     val isStatusChanging: Boolean = false,
-    val statusChangeError: String? = null
+    val statusChangeError: String? = null,
+    // この画面でステータス変更が成功したか（閉じる時に遷移元へ反映するために使う）
+    val statusChanged: Boolean = false
 )
 
 /**
@@ -127,7 +129,7 @@ class AnimeDetailViewModel @Inject constructor(
                     return@launch
                 }
             (_uiState.value as? UiState.Success)?.data?.let { data ->
-                _uiState.value = UiState.Success(data.copy(isStatusChanging = false))
+                _uiState.value = UiState.Success(data.copy(isStatusChanging = false, statusChanged = true))
             }
         }
     }
