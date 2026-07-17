@@ -127,6 +127,15 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
+     * 詳細画面などで作品のステータスが変更されたとき、workId から該当エントリーを引いて再同期する。
+     * ライブラリに存在しない作品（該当エントリー無し）の場合は何もしない。
+     */
+    fun onWorkStatusChanged(workId: String) {
+        val entryId = _uiState.value.allEntries.firstOrNull { it.work.id == workId }?.id ?: return
+        onEntryUpdated(entryId)
+    }
+
+    /**
      * カードの「見た」ボタン：次の1話をその場で記録し、ライブラリを再同期して進捗に反映する。
      */
     fun recordNextEpisode(entry: LibraryEntry) {

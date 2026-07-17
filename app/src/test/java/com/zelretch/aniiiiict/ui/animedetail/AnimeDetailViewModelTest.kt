@@ -185,6 +185,8 @@ class AnimeDetailViewModelTest {
             val state = viewModel.uiState.value
             assertTrue(state is UiState.Success)
             assertEquals(StatusState.WATCHED, (state as UiState.Success).data.selectedStatus)
+            // 遷移元へ反映するためのフラグが立つ
+            assertTrue(state.data.statusChanged)
         }
 
         @Test
@@ -208,6 +210,8 @@ class AnimeDetailViewModelTest {
             assertTrue(state is UiState.Success)
             assertEquals(StatusState.WATCHING, (state as UiState.Success).data.selectedStatus)
             assertEquals("ステータス変更に失敗しました", state.data.statusChangeError)
+            // 失敗時はフラグを立てない（遷移元を無駄にリフレッシュしない）
+            assertEquals(false, state.data.statusChanged)
         }
     }
 
