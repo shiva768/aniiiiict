@@ -292,22 +292,7 @@ class AnimeDetailScreenUITest {
     @Test
     fun 関連作品情報がある場合にセクションが表示される() {
         // Given: 関連作品情報を含むAnimeDetailInfo
-        val mockRelatedWork = mockk<WorkSeriesListQuery.Node2>()
-        every { mockRelatedWork.id } returns "work-1"
-        every { mockRelatedWork.title } returns "関連作品タイトル"
-        every { mockRelatedWork.titleEn } returns null
-        every { mockRelatedWork.seasonName } returns null
-        every { mockRelatedWork.seasonYear } returns null
-        every { mockRelatedWork.image } returns null
-
-        val mockWorks = mockk<WorkSeriesListQuery.Works>()
-        every { mockWorks.nodes } returns listOf(mockRelatedWork)
-
-        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
-        every { mockSeries.id } returns "series-1"
-        every { mockSeries.name } returns "テストシリーズ"
-        every { mockSeries.nameEn } returns "Test Series"
-        every { mockSeries.works } returns mockWorks
+        val mockSeries = mockSeriesNode(workId = "work-1", workTitle = "関連作品タイトル")
 
         val animeDetailInfo = createAnimeDetailInfo(
             seriesList = listOf(mockSeries)
@@ -339,22 +324,7 @@ class AnimeDetailScreenUITest {
     @Test
     fun 関連作品をタップすると遷移コールバックが呼ばれる() {
         // Given: 関連作品情報を含むAnimeDetailInfo
-        val mockRelatedWork = mockk<WorkSeriesListQuery.Node2>()
-        every { mockRelatedWork.id } returns "related-work-id"
-        every { mockRelatedWork.title } returns "関連作品タイトル"
-        every { mockRelatedWork.titleEn } returns null
-        every { mockRelatedWork.seasonName } returns null
-        every { mockRelatedWork.seasonYear } returns null
-        every { mockRelatedWork.image } returns null
-
-        val mockWorks = mockk<WorkSeriesListQuery.Works>()
-        every { mockWorks.nodes } returns listOf(mockRelatedWork)
-
-        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
-        every { mockSeries.id } returns "series-1"
-        every { mockSeries.name } returns "テストシリーズ"
-        every { mockSeries.nameEn } returns ""
-        every { mockSeries.works } returns mockWorks
+        val mockSeries = mockSeriesNode(workId = "related-work-id", workTitle = "関連作品タイトル")
 
         val animeDetailInfo = createAnimeDetailInfo(seriesList = listOf(mockSeries))
         val mockViewModel = createMockViewModel(
@@ -424,6 +394,28 @@ class AnimeDetailScreenUITest {
             coEvery { loadAnimeDetailById(any()) } returns Unit
             coEvery { changeStatus(any()) } returns Unit
         }
+
+    // Annict の Series.works は edges { item } 経由で取得するため、その構造でモックする
+    private fun mockSeriesNode(workId: String, workTitle: String): WorkSeriesListQuery.Node1 {
+        val mockItem = mockk<WorkSeriesListQuery.Item>()
+        every { mockItem.id } returns workId
+        every { mockItem.title } returns workTitle
+        every { mockItem.seasonName } returns null
+        every { mockItem.seasonYear } returns null
+        every { mockItem.image } returns null
+
+        val mockEdge = mockk<WorkSeriesListQuery.Edge>()
+        every { mockEdge.item } returns mockItem
+
+        val mockWorks = mockk<WorkSeriesListQuery.Works>()
+        every { mockWorks.edges } returns listOf(mockEdge)
+
+        val mockSeries = mockk<WorkSeriesListQuery.Node1>()
+        every { mockSeries.id } returns "series-1"
+        every { mockSeries.name } returns "テストシリーズ"
+        every { mockSeries.works } returns mockWorks
+        return mockSeries
+    }
 
     private fun createSampleProgramWithWork(): ProgramWithWork {
         val work = Work(

@@ -179,7 +179,11 @@ private fun AnimeDetailContent(
 
         animeDetailInfo.seriesList?.let { seriesList ->
             if (seriesList.isNotEmpty()) {
-                AnimeDetailRelatedWorks(seriesList = seriesList, onNavigateToWork = onNavigateToWork)
+                AnimeDetailRelatedWorks(
+                    seriesList = seriesList,
+                    currentWorkId = animeDetailInfo.work.id,
+                    onNavigateToWork = onNavigateToWork
+                )
             }
         }
     }
@@ -474,9 +478,20 @@ private fun AnimeDetailCasts(casts: List<WorkDetailQuery.Node2?>, modifier: Modi
 @Composable
 private fun AnimeDetailRelatedWorks(
     seriesList: List<WorkSeriesListQuery.Node1?>,
+    currentWorkId: String,
     onNavigateToWork: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // シリーズごとに、表示中の作品を除外した作品リストを構築（並び順はクエリの orderBy: SEASON に従う）
+    val seriesWithWorks = seriesList.filterNotNull().map { series ->
+        val works = series.works?.edges?.mapNotNull { it?.item }
+            ?.filter { it.id != currentWorkId }
+            .orEmpty()
+        series to works
+    }.filter { it.second.isNotEmpty() }
+
+    if (seriesWithWorks.isEmpty()) return
+
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = CARD_ELEVATION.dp)
@@ -491,7 +506,7 @@ private fun AnimeDetailRelatedWorks(
                 fontWeight = FontWeight.Bold
             )
 
-            seriesList.filterNotNull().forEach { series ->
+            seriesWithWorks.forEach { (series, works) ->
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -501,7 +516,7 @@ private fun AnimeDetailRelatedWorks(
                         fontWeight = FontWeight.Medium
                     )
 
-                    series.works?.nodes?.filterNotNull()?.forEach { work ->
+                    works.forEach { work ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

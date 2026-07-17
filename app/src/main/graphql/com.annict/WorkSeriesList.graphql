@@ -5,16 +5,18 @@ query WorkSeriesList($workId: ID!) {
         nodes {
           id
           name
-          nameEn
-          works(first: 10) {
-            nodes {
-              id
-              title
-              titleEn
-              seasonName
-              seasonYear
-              image {
-                recommendedImageUrl
+          # NOTE: Annict の Series.works は nodes で辿ると HTTP 500 になるため、
+          # edges { item } 経由で取得する必要がある。
+          works(first: 30, orderBy: { field: SEASON, direction: ASC }) {
+            edges {
+              item {
+                id
+                title
+                seasonName
+                seasonYear
+                image {
+                  recommendedImageUrl
+                }
               }
             }
           }
