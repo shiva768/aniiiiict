@@ -8,6 +8,7 @@ import com.zelretch.aniiiiict.data.model.WorkImage
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import com.zelretch.aniiiiict.data.repository.MyAnimeListRepository
 import com.zelretch.aniiiiict.domain.error.DomainError
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import timber.log.Timber
 import javax.inject.Inject
@@ -20,19 +21,19 @@ class GetAnimeDetailUseCase @Inject constructor(
         val work = programWithWork.work
 
         coroutineScope {
-            val annictDetailResult = annictRepository.getWorkDetail(work.id)
+            // 3つのAPIは互いに依存しないので並列に取得する
+            val annictDetailDeferred = async { annictRepository.getWorkDetail(work.id) }
+            val malInfoDeferred = async { work.malAnimeId?.toIntOrNull()?.let { fetchMalInfo(it) } }
+            val seriesListDeferred = async { fetchSeriesList(work.id) }
+
+            val annictDetailResult = annictDetailDeferred.await()
             if (annictDetailResult.isFailure) {
                 throw annictDetailResult.exceptionOrNull()
                     ?: Exception("Annict詳細情報の取得に失敗しました")
             }
             val annictDetail = annictDetailResult.getOrNull()
 
-            val malInfo = work.malAnimeId?.toIntOrNull()?.let { malId ->
-                myAnimeListRepository.getAnimeDetail(malId).getOrElse { e ->
-                    Timber.w(e, "MyAnimeList情報の取得に失敗しました（続行）")
-                    null
-                }
-            }
+            val malInfo = malInfoDeferred.await()
 
             val episodeCount = (malInfo?.numEpisodes?.takeIf { it > 0 })
                 ?: annictDetail?.onWork?.episodesCount?.takeIf { it > 0 }
@@ -42,11 +43,7 @@ class GetAnimeDetailUseCase @Inject constructor(
                 ?: malInfo?.mainPicture?.medium
                 ?: work.image?.recommendedImageUrl
 
-            val seriesListResult = annictRepository.getWorkSeriesList(work.id)
-            val seriesList = seriesListResult.getOrElse { e ->
-                Timber.w(e, "シリーズ情報の取得に失敗しました（続行）")
-                null
-            }?.onWork?.seriesList?.nodes
+            val seriesList = seriesListDeferred.await()
 
             AnimeDetailInfo(
                 work = work,
@@ -66,6 +63,8 @@ class GetAnimeDetailUseCase @Inject constructor(
 
     suspend operator fun invoke(workId: String): Result<AnimeDetailInfo> = runCatching {
         coroutineScope {
+            // シリーズ情報は workId だけで取れるので詳細取得と並列に走らせる
+            val seriesListDeferred = async { fetchSeriesList(workId) }
             val annictDetailResult = annictRepository.getWorkDetail(workId)
             if (annictDetailResult.isFailure) {
                 throw annictDetailResult.exceptionOrNull()
@@ -90,12 +89,7 @@ class GetAnimeDetailUseCase @Inject constructor(
                 }
             )
 
-            val malInfo = onWork.malAnimeId?.toIntOrNull()?.let { malId ->
-                myAnimeListRepository.getAnimeDetail(malId).getOrElse { e ->
-                    Timber.w(e, "MyAnimeList情報の取得に失敗しました（続行）")
-                    null
-                }
-            }
+            val malInfo = onWork.malAnimeId?.toIntOrNull()?.let { fetchMalInfo(it) }
 
             val episodeCount = (malInfo?.numEpisodes?.takeIf { it > 0 })
                 ?: onWork.episodesCount?.takeIf { it > 0 }
@@ -104,10 +98,7 @@ class GetAnimeDetailUseCase @Inject constructor(
                 ?: malInfo?.mainPicture?.large
                 ?: malInfo?.mainPicture?.medium
 
-            val seriesList = annictRepository.getWorkSeriesList(workId).getOrElse { e ->
-                Timber.w(e, "シリーズ情報の取得に失敗しました（続行）")
-                null
-            }?.onWork?.seriesList?.nodes
+            val seriesList = seriesListDeferred.await()
 
             AnimeDetailInfo(
                 work = work,
@@ -124,4 +115,14 @@ class GetAnimeDetailUseCase @Inject constructor(
     }.onFailure { e ->
         Timber.e(e, "GetAnimeDetailUseCase.invoke(workId) failed")
     }
+
+    private suspend fun fetchMalInfo(malId: Int) = myAnimeListRepository.getAnimeDetail(malId).getOrElse { e ->
+        Timber.w(e, "MyAnimeList情報の取得に失敗しました（続行）")
+        null
+    }
+
+    private suspend fun fetchSeriesList(workId: String) = annictRepository.getWorkSeriesList(workId).getOrElse { e ->
+        Timber.w(e, "シリーズ情報の取得に失敗しました（続行）")
+        null
+    }?.onWork?.seriesList?.nodes
 }
