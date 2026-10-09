@@ -3,15 +3,18 @@ package com.zelretch.aniiiiict.ui.library
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -462,6 +465,77 @@ class LibraryScreenUITest {
         composeTestRule.onNodeWithText("後で").performClick()
         verify { mockViewModel.dismissFinale() }
     }
+
+    @Test
+    fun libraryScreen_カード長押し_優先度ダイアログからsetPriorityが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+        composeTestRule.onNodeWithText("テストアニメ").performTouchInput { longClick() }
+
+        // Assert
+        composeTestRule.onNodeWithText("優先度（この端末だけに保存されます）").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_option_TIER1").performClick()
+        verify { mockViewModel.setPriority(entry, WorkPriority.TIER1) }
+    }
+
+    @Test
+    fun libraryScreen_Tierあり_Tierごとに見出しが出る() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entries = listOf(
+            priorityEntry("w1", "ティア1アニメ", WorkPriority.TIER1),
+            priorityEntry("w2", "ティア3アニメ", WorkPriority.TIER3),
+            priorityEntry("w3", "無印アニメ", WorkPriority.NONE)
+        )
+        val state = LibraryUiState(entries = entries, allEntries = entries)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("Tier1（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tier3（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("無印（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("library_section_TIER2").assertDoesNotExist()
+        composeTestRule.onNodeWithText("ティア3アニメ").assertIsDisplayed()
+    }
+
+    @Test
+    fun libraryScreen_全て無印_見出しは出ない() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entries = listOf(priorityEntry("w1", "無印アニメ", WorkPriority.NONE))
+        val state = LibraryUiState(entries = entries, allEntries = entries)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("無印アニメ").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("library_section_NONE").assertDoesNotExist()
+    }
+
+    private fun priorityEntry(id: String, title: String, priority: WorkPriority) = LibraryEntry(
+        id = "entry_$id",
+        work = Work(id = id, title = title, viewerStatusState = StatusState.WATCHING),
+        nextEpisode = null,
+        statusState = StatusState.WATCHING,
+        priority = priority
+    )
 
     private fun bulkEntry() = LibraryEntry(
         id = "entry1",

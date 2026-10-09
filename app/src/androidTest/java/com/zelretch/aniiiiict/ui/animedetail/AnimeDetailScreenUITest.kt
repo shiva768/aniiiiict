@@ -1,10 +1,12 @@
 package com.zelretch.aniiiiict.ui.animedetail
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
 import com.annict.type.Media
@@ -17,11 +19,13 @@ import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.ui.base.UiState
 import com.zelretch.aniiiiict.ui.theme.AniiiiictTheme
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
@@ -387,6 +391,62 @@ class AnimeDetailScreenUITest {
         composeTestRule.onNodeWithText("中止").assertIsDisplayed()
     }
 
+    @Test
+    fun 優先度FilterChipが表示され現在の優先度が選択されている() {
+        // Given: 優先度が「Tier1」のUIState
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(
+                AnimeDetailData(
+                    animeDetailInfo = createAnimeDetailInfo(),
+                    priority = WorkPriority.TIER1
+                )
+            )
+        )
+
+        // When: 画面を表示
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    workId = "test-work-id",
+                    programWithWork = createSampleProgramWithWork(),
+                    onNavigateBack = {},
+                    viewModel = mockViewModel
+                )
+            }
+        }
+
+        // Then: 4つの優先度チップが表示され、現在の優先度が選択状態
+        composeTestRule.onNodeWithText("優先度").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_TIER1").assertIsDisplayed().assertIsSelected()
+        composeTestRule.onNodeWithTag("priority_chip_TIER2").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_TIER3").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_NONE").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun 優先度FilterChipをタップすると優先度変更が呼ばれる() {
+        // Given: 優先度が「無印」のUIState
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = createAnimeDetailInfo()))
+        )
+
+        // When: 画面を表示して「Tier3」をタップ
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    workId = "test-work-id",
+                    programWithWork = createSampleProgramWithWork(),
+                    onNavigateBack = {},
+                    viewModel = mockViewModel
+                )
+            }
+        }
+        composeTestRule.onNodeWithTag("priority_chip_TIER3").performScrollTo().performClick()
+
+        // Then: 選んだ優先度で変更が呼ばれる
+        verify(exactly = 1) { mockViewModel.changePriority(WorkPriority.TIER3) }
+    }
+
     // Helper functions
 
     private fun createMockViewModel(state: UiState<AnimeDetailData>): AnimeDetailViewModel =
@@ -395,6 +455,7 @@ class AnimeDetailScreenUITest {
             coEvery { loadAnimeDetail(any()) } returns Unit
             coEvery { loadAnimeDetailById(any()) } returns Unit
             coEvery { changeStatus(any()) } returns Unit
+            every { changePriority(any()) } returns Unit
         }
 
     // Annict の Series.works は edges { item } 経由で取得するため、その構造でモックする

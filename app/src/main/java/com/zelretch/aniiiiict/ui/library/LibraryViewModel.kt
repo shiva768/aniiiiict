@@ -6,6 +6,7 @@ import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
@@ -13,6 +14,7 @@ import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadUnwatchedEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.SetWorkPriorityUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
@@ -97,6 +99,7 @@ class LibraryViewModel @Inject constructor(
     private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
+    private val setWorkPriorityUseCase: SetWorkPriorityUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -162,6 +165,13 @@ class LibraryViewModel @Inject constructor(
     fun onWorkStatusChanged(workId: String) {
         val entryId = _uiState.value.allEntries.firstOrNull { it.work.id == workId }?.id ?: return
         onEntryUpdated(entryId)
+    }
+
+    /**
+     * 詳細画面などで優先度（端末内）が変わったとき、Room から読み直して並びに反映する。
+     */
+    fun onPriorityChanged() {
+        viewModelScope.launch { loadFromRoom() }
     }
 
     /**
@@ -303,6 +313,23 @@ class LibraryViewModel @Inject constructor(
         _uiState.update { it.copy(finaleConfirmation = null) }
     }
 
+    /**
+     * カード長押しから優先度（Tier1/Tier2/Tier3/無印）を変更する。端末内に保存し、並びに反映する。
+     */
+    fun setPriority(entry: LibraryEntry, priority: WorkPriority) {
+        if (entry.priority == priority) return
+        viewModelScope.launch {
+            setWorkPriorityUseCase(entry.work.id, priority)
+                .onSuccess { loadFromRoom() }
+                .onFailure { e ->
+                    Timber.e(e, "優先度の変更に失敗: ${entry.work.title}")
+                    _uiState.update {
+                        it.copy(error = errorMapper.toUserMessage(e, "LibraryViewModel.setPriority"))
+                    }
+                }
+        }
+    }
+
     private fun collapseBulkRecord() {
         _uiState.update { it.copy(bulkRecordEntryId = null, bulkEpisodes = null) }
     }
@@ -356,7 +383,8 @@ class LibraryViewModel @Inject constructor(
             val query = filterState.searchQuery.trim().lowercase()
             filtered.filter { it.work.title.lowercase().contains(query) }
         }
-        return sortEntries(searched, filterState.sortOrder)
+        // 優先度でセクション分けする。sortedBy は安定ソートなので、セクション内は選んだ並び順のまま
+        return sortEntries(searched, filterState.sortOrder).sortedBy { it.priority.ordinal }
     }
 
     private fun sortEntries(entries: List<LibraryEntry>, sortOrder: LibrarySortOrder): List<LibraryEntry> =

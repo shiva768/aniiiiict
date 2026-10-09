@@ -4,6 +4,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
@@ -14,11 +15,13 @@ import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadUnwatchedEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.SetWorkPriorityUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
@@ -51,6 +54,7 @@ class LibraryViewModelTest {
     private lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
+    private lateinit var setWorkPriorityUseCase: SetWorkPriorityUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -64,6 +68,8 @@ class LibraryViewModelTest {
         bulkRecordEpisodesUseCase = mockk()
         judgeFinaleUseCase = mockk()
         updateViewStateUseCase = mockk()
+        setWorkPriorityUseCase = mockk()
+        coEvery { setWorkPriorityUseCase(any(), any()) } returns Result.success(Unit)
         errorMapper = mockk()
     }
 
@@ -82,6 +88,7 @@ class LibraryViewModelTest {
             bulkRecordEpisodesUseCase,
             judgeFinaleUseCase,
             updateViewStateUseCase,
+            setWorkPriorityUseCase,
             errorMapper
         )
     }
@@ -161,6 +168,7 @@ class LibraryViewModelTest {
                     bulkRecordEpisodesUseCase,
                     judgeFinaleUseCase,
                     updateViewStateUseCase,
+                    setWorkPriorityUseCase,
                     errorMapper
                 )
             val state = viewModel.uiState.first { it.isSyncing }
@@ -194,6 +202,7 @@ class LibraryViewModelTest {
                     bulkRecordEpisodesUseCase,
                     judgeFinaleUseCase,
                     updateViewStateUseCase,
+                    setWorkPriorityUseCase,
                     errorMapper
                 )
             viewModel.uiState.first { it.isSyncing }
@@ -797,6 +806,87 @@ class LibraryViewModelTest {
 
             assertNull(viewModel.uiState.value.finaleConfirmation)
             coVerify(exactly = 0) { updateViewStateUseCase(any(), any()) }
+        }
+    }
+
+    @Nested
+    @DisplayName("優先度")
+    inner class Priority {
+
+        private fun entry(id: String, title: String, priority: WorkPriority = WorkPriority.NONE) = LibraryEntry(
+            id = "entry_$id",
+            work = createFakeWork(id, title),
+            nextEpisode = Episode(id = "ep_$id", number = 1),
+            statusState = StatusState.WATCHING,
+            priority = priority
+        )
+
+        @Test
+        @DisplayName("Tier1 → Tier2 → Tier3 → 無印 の順に並び、セクション内はタイトル順のまま")
+        fun sortsByPriorityKeepingInnerOrder() = runTest(dispatcher) {
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(
+                listOf(
+                    entry("w1", "D", WorkPriority.TIER3),
+                    entry("w2", "C"),
+                    entry("w3", "B", WorkPriority.TIER1),
+                    entry("w4", "A"),
+                    entry("w5", "E", WorkPriority.TIER1),
+                    entry("w6", "F", WorkPriority.TIER2)
+                )
+            )
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            viewModel.updateSortOrder(LibrarySortOrder.TITLE_ASC)
+
+            assertEquals(
+                listOf("B", "E", "F", "D", "A", "C"),
+                viewModel.uiState.value.entries.map { it.work.title }
+            )
+        }
+
+        @Test
+        @DisplayName("setPriority で保存して Room から読み直す")
+        fun setPriorityPersistsAndReloads() = runTest(dispatcher) {
+            val target = entry("w1", "A")
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            viewModel.setPriority(target, WorkPriority.TIER1)
+
+            coVerifyOrder {
+                setWorkPriorityUseCase("w1", WorkPriority.TIER1)
+                loadLibraryEntriesUseCase()
+            }
+        }
+
+        @Test
+        @DisplayName("同じ優先度を選んだときは何もしない")
+        fun setSamePriorityDoesNothing() = runTest(dispatcher) {
+            val target = entry("w1", "A", WorkPriority.TIER2)
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            viewModel.setPriority(target, WorkPriority.TIER2)
+
+            coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
+        }
+
+        @Test
+        @DisplayName("記録しても優先度は変わらない")
+        fun recordNextEpisodeKeepsPriority() = runTest(dispatcher) {
+            val target = entry("w1", "A", WorkPriority.TIER3)
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            viewModel.recordNextEpisode(target)
+
+            coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
         }
     }
 

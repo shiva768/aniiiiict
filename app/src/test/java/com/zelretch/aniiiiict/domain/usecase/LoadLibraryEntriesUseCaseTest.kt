@@ -3,8 +3,11 @@ package com.zelretch.aniiiiict.domain.usecase
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.local.LibraryEntryDao
 import com.zelretch.aniiiiict.data.local.LibraryEntryEntity
+import com.zelretch.aniiiiict.data.local.WorkPriorityDao
+import com.zelretch.aniiiiict.data.local.WorkPriorityEntity
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -19,12 +22,15 @@ import org.junit.jupiter.api.Test
 class LoadLibraryEntriesUseCaseTest {
 
     private lateinit var libraryEntryDao: LibraryEntryDao
+    private lateinit var workPriorityDao: WorkPriorityDao
     private lateinit var useCase: LoadLibraryEntriesUseCase
 
     @BeforeEach
     fun setup() {
         libraryEntryDao = mockk()
-        useCase = LoadLibraryEntriesUseCase(libraryEntryDao)
+        workPriorityDao = mockk()
+        coEvery { workPriorityDao.getAll() } returns emptyList()
+        useCase = LoadLibraryEntriesUseCase(libraryEntryDao, workPriorityDao)
     }
 
     @Nested
@@ -58,6 +64,23 @@ class LoadLibraryEntriesUseCaseTest {
             // Then
             assertTrue(result.isSuccess)
             assertEquals(emptyList<LibraryEntry>(), result.getOrThrow())
+        }
+
+        @Test
+        @DisplayName("優先度テーブルの値が workId で重ねられ、無い作品は無印になる")
+        fun overlaysPriority() = runTest {
+            // Given
+            coEvery { libraryEntryDao.getAll() } returns listOf(createFakeEntity("entry1"), createFakeEntity("entry2"))
+            coEvery { workPriorityDao.getAll() } returns listOf(
+                WorkPriorityEntity(workId = "work_entry1", priority = WorkPriority.TIER1.name)
+            )
+
+            // When
+            val entries = useCase().getOrThrow()
+
+            // Then
+            assertEquals(WorkPriority.TIER1, entries[0].priority)
+            assertEquals(WorkPriority.NONE, entries[1].priority)
         }
 
         @Test

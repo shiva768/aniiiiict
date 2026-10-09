@@ -1,8 +1,11 @@
 package com.zelretch.aniiiiict.ui.library
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +35,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -47,6 +51,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,6 +71,7 @@ import coil.compose.AsyncImage
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.ui.common.components.episode.FinaleConfirmDialog
 import com.zelretch.aniiiiict.ui.common.components.episode.InlineUnwatchedEpisodeList
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
@@ -196,26 +202,123 @@ private fun LibraryScreenContent(
                     }
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(uiState.entries, key = { it.work.id }) { entry ->
-                            LibraryEntryCard(
-                                entry = entry,
-                                isRecording = uiState.recordingEntryId == entry.id,
-                                onClick = { onNavigateToDetail(entry.work.id) },
-                                onRecordNextEpisode = { viewModel.recordNextEpisode(entry) },
-                                bulkEpisodes = uiState.bulkEpisodes.takeIf { uiState.bulkRecordEntryId == entry.id },
-                                onToggleBulkRecord = { viewModel.toggleBulkRecord(entry) },
-                                onBulkRecordUpTo = { index -> viewModel.bulkRecordUpTo(entry, index) }
-                            )
-                        }
-                    }
+                    LibraryEntryList(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onNavigateToDetail = onNavigateToDetail
+                    )
                 }
             }
         }
     }
+}
+
+/**
+ * 優先度ごとのセクション（Tier1 → Tier2 → Tier3 → 無印）で一覧を出す。
+ * Tier を付けた作品が無いときは見出しを出さず、今までどおりの一覧になる。
+ */
+@Composable
+private fun LibraryEntryList(
+    uiState: LibraryUiState,
+    viewModel: LibraryViewModel,
+    onNavigateToDetail: (String) -> Unit
+) {
+    var priorityTarget by remember { mutableStateOf<LibraryEntry?>(null) }
+    // entries は ViewModel で優先度順に並んでいる
+    val sections = uiState.entries.groupBy { it.priority }
+    val showHeaders = sections.keys.any { it != WorkPriority.NONE }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        sections.forEach { (priority, entries) ->
+            if (showHeaders) {
+                item(key = "header_${priority.name}") { LibrarySectionHeader(priority, entries.size) }
+            }
+            items(entries, key = { it.work.id }) { entry ->
+                LibraryEntryCard(
+                    entry = entry,
+                    isRecording = uiState.recordingEntryId == entry.id,
+                    onClick = { onNavigateToDetail(entry.work.id) },
+                    onLongClick = { priorityTarget = entry },
+                    onRecordNextEpisode = { viewModel.recordNextEpisode(entry) },
+                    bulkEpisodes = uiState.bulkEpisodes.takeIf { uiState.bulkRecordEntryId == entry.id },
+                    onToggleBulkRecord = { viewModel.toggleBulkRecord(entry) },
+                    onBulkRecordUpTo = { index -> viewModel.bulkRecordUpTo(entry, index) }
+                )
+            }
+        }
+    }
+
+    priorityTarget?.let { entry ->
+        PriorityPickerDialog(
+            title = entry.work.title,
+            current = entry.priority,
+            onSelect = { priority ->
+                viewModel.setPriority(entry, priority)
+                priorityTarget = null
+            },
+            onDismiss = { priorityTarget = null }
+        )
+    }
+}
+
+@Composable
+private fun LibrarySectionHeader(priority: WorkPriority, count: Int) {
+    Text(
+        text = "${priority.toJapaneseLabel()}（$count）",
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .testTag("library_section_${priority.name}")
+    )
+}
+
+@Composable
+private fun PriorityPickerDialog(
+    title: String,
+    current: WorkPriority,
+    onSelect: (WorkPriority) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        text = {
+            Column {
+                Text(
+                    text = "優先度（この端末だけに保存されます）",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                WorkPriority.entries.forEach { priority ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(priority) }
+                            .padding(vertical = 12.dp)
+                            .testTag("priority_option_${priority.name}"),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.width(32.dp)) {
+                            if (priority == current) {
+                                Icon(Icons.Default.Check, contentDescription = "選択中")
+                            }
+                        }
+                        Text(priority.toJapaneseLabel(), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("閉じる") }
+        }
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -383,11 +486,13 @@ private fun LibraryFilterBar(
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 internal fun LibraryEntryCard(
     entry: LibraryEntry,
     isRecording: Boolean,
     onClick: () -> Unit,
     onRecordNextEpisode: () -> Unit,
+    onLongClick: () -> Unit = {},
     // null のときは「まとめて」が閉じている
     bulkEpisodes: BulkEpisodesState? = null,
     onToggleBulkRecord: () -> Unit = {},
@@ -398,7 +503,7 @@ internal fun LibraryEntryCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = "優先度を変更"),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp)
     ) {
@@ -428,8 +533,14 @@ internal fun LibraryEntryCard(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
-                        entry.statusState?.let { status ->
-                            StatusChip(text = status.toJapaneseLabel(), color = statusColor ?: status.toStatusColor())
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            entry.statusState?.let { status ->
+                                StatusChip(
+                                    text = status.toJapaneseLabel(),
+                                    color = statusColor ?: status.toStatusColor()
+                                )
+                            }
+                            PriorityChip(priority = entry.priority)
                         }
                         val seasonMeta = buildString {
                             entry.work.seasonYear?.let { append("${it}年") }
@@ -609,6 +720,31 @@ private fun StatusChip(text: String, color: Color) {
             color = Color.White,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/** Tier を付けたときだけ出す小さな目印（無印は何も出さない） */
+@Composable
+private fun PriorityChip(priority: WorkPriority) {
+    val color = when (priority) {
+        WorkPriority.TIER1 -> MaterialTheme.colorScheme.tertiary
+        WorkPriority.TIER2 -> MaterialTheme.colorScheme.primary
+        WorkPriority.TIER3 -> MaterialTheme.colorScheme.outline
+        WorkPriority.NONE -> return
+    }
+    Surface(
+        color = Color.Transparent,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, color),
+        modifier = Modifier.height(22.dp).testTag("library_priority_chip")
+    ) {
+        Text(
+            text = priority.toJapaneseLabel(),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            color = color,
+            maxLines = 1
         )
     }
 }

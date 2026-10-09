@@ -9,11 +9,15 @@ import com.zelretch.aniiiiict.data.model.MyAnimeListResponse
 import com.zelretch.aniiiiict.data.model.Program
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.domain.usecase.GetWorkPriorityUseCase
+import com.zelretch.aniiiiict.domain.usecase.SetWorkPriorityUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.ui.base.UiState
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +43,8 @@ class AnimeDetailViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var getAnimeDetailUseCase: GetAnimeDetailUseCase
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
+    private lateinit var getWorkPriorityUseCase: GetWorkPriorityUseCase
+    private lateinit var setWorkPriorityUseCase: SetWorkPriorityUseCase
     private lateinit var errorMapper: ErrorMapper
     private lateinit var viewModel: AnimeDetailViewModel
 
@@ -47,8 +53,17 @@ class AnimeDetailViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getAnimeDetailUseCase = mockk()
         updateViewStateUseCase = mockk()
+        getWorkPriorityUseCase = mockk()
+        setWorkPriorityUseCase = mockk()
         errorMapper = mockk(relaxed = true)
-        viewModel = AnimeDetailViewModel(getAnimeDetailUseCase, updateViewStateUseCase, errorMapper)
+        coEvery { getWorkPriorityUseCase(any()) } returns WorkPriority.NONE
+        viewModel = AnimeDetailViewModel(
+            getAnimeDetailUseCase,
+            updateViewStateUseCase,
+            getWorkPriorityUseCase,
+            setWorkPriorityUseCase,
+            errorMapper
+        )
     }
 
     @AfterEach
@@ -212,6 +227,119 @@ class AnimeDetailViewModelTest {
             assertEquals("ステータス変更に失敗しました", state.data.statusChangeError)
             // 失敗時はフラグを立てない（遷移元を無駄にリフレッシュしない）
             assertEquals(false, state.data.statusChanged)
+        }
+    }
+
+    @Nested
+    @DisplayName("優先度の読み込み")
+    inner class LoadPriority {
+
+        @Test
+        @DisplayName("詳細取得成功時に端末内の優先度が反映される")
+        fun loadWithProgramWithWork() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(createSampleAnimeDetailInfo())
+            coEvery { getWorkPriorityUseCase("test-work-id") } returns WorkPriority.TIER1
+
+            // When
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals(WorkPriority.TIER1, (state as UiState.Success).data.priority)
+            assertEquals(false, state.data.priorityChanged)
+        }
+
+        @Test
+        @DisplayName("workIdのみでの詳細取得成功時にも優先度が反映される")
+        fun loadById() = runTest {
+            // Given
+            val workId = "test-work-id"
+            coEvery { getAnimeDetailUseCase(workId) } returns Result.success(createSampleAnimeDetailInfo())
+            coEvery { getWorkPriorityUseCase(workId) } returns WorkPriority.TIER3
+
+            // When
+            viewModel.loadAnimeDetailById(workId)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals(WorkPriority.TIER3, (state as UiState.Success).data.priority)
+        }
+    }
+
+    @Nested
+    @DisplayName("優先度変更")
+    inner class ChangePriority {
+
+        @Test
+        @DisplayName("成功時に優先度が更新され変更フラグが立つ")
+        fun onSuccess() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(createSampleAnimeDetailInfo())
+            coEvery { setWorkPriorityUseCase(any(), any()) } returns Result.success(Unit)
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.changePriority(WorkPriority.TIER1)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals(WorkPriority.TIER1, (state as UiState.Success).data.priority)
+            assertTrue(state.data.priorityChanged)
+            // ステータス変更フラグには影響しない
+            assertEquals(false, state.data.statusChanged)
+            coVerify(exactly = 1) { setWorkPriorityUseCase("test-work-id", WorkPriority.TIER1) }
+        }
+
+        @Test
+        @DisplayName("失敗時に優先度が元に戻りエラーメッセージが表示される")
+        fun onFailure() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            every { errorMapper.toUserMessage(any(), any()) } returns "優先度の変更に失敗しました"
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(createSampleAnimeDetailInfo())
+            coEvery { setWorkPriorityUseCase(any(), any()) } returns Result.failure(Exception("DB Error"))
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.changePriority(WorkPriority.TIER3)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state is UiState.Success)
+            assertEquals(WorkPriority.NONE, (state as UiState.Success).data.priority)
+            assertEquals("優先度の変更に失敗しました", state.data.statusChangeError)
+            assertEquals(false, state.data.priorityChanged)
+        }
+
+        @Test
+        @DisplayName("同じ優先度を選んだ場合は保存しない")
+        fun samePriority() = runTest {
+            // Given
+            val programWithWork = createSampleProgramWithWork()
+            coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(createSampleAnimeDetailInfo())
+            viewModel.loadAnimeDetail(programWithWork)
+            testScheduler.advanceUntilIdle()
+
+            // When
+            viewModel.changePriority(WorkPriority.NONE)
+            testScheduler.advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
+            val state = viewModel.uiState.value as UiState.Success
+            assertEquals(false, state.data.priorityChanged)
         }
     }
 
