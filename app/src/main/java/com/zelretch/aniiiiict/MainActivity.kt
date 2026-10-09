@@ -348,13 +348,15 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                         val detailViewModel: AnimeDetailViewModel = hiltViewModel()
                         val programWithWork = trackViewModel?.getProgramWithWork(workId)
 
-                        // 画面を閉じる際、この画面でステータス変更していれば遷移元へ反映する
+                        // 画面を閉じる際、この画面でステータス/優先度を変更していれば遷移元へ反映する
                         val onClose: () -> Unit = {
-                            val changed =
-                                (detailViewModel.uiState.value as? UiState.Success)?.data?.statusChanged == true
-                            if (changed) {
+                            val detailData = (detailViewModel.uiState.value as? UiState.Success)?.data
+                            if (detailData?.statusChanged == true) {
                                 trackViewModel?.refresh()
                                 libraryViewModel?.onWorkStatusChanged(workId)
+                            }
+                            if (detailData?.priorityChanged == true) {
+                                libraryViewModel?.onPriorityChanged()
                             }
                             navController.navigateUp()
                         }

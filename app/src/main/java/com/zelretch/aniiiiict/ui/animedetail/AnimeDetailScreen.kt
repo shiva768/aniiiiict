@@ -55,6 +55,7 @@ import com.annict.type.Media
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.ui.base.UiState
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.common.components.toStatusColor
@@ -132,6 +133,8 @@ fun AnimeDetailScreen(
                         isStatusChanging = state.data.isStatusChanging,
                         statusChangeError = state.data.statusChangeError,
                         onStatusChange = viewModel::changeStatus,
+                        priority = state.data.priority,
+                        onPriorityChange = viewModel::changePriority,
                         onNavigateToWork = onNavigateToWork,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -148,6 +151,8 @@ private fun AnimeDetailContent(
     isStatusChanging: Boolean,
     statusChangeError: String?,
     onStatusChange: (StatusState) -> Unit,
+    priority: WorkPriority,
+    onPriorityChange: (WorkPriority) -> Unit,
     onNavigateToWork: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -162,7 +167,9 @@ private fun AnimeDetailContent(
             selectedStatus = selectedStatus,
             isStatusChanging = isStatusChanging,
             statusChangeError = statusChangeError,
-            onStatusChange = onStatusChange
+            onStatusChange = onStatusChange,
+            priority = priority,
+            onPriorityChange = onPriorityChange
         )
 
         AnimeDetailBasicInfo(animeDetailInfo = animeDetailInfo)
@@ -200,6 +207,8 @@ private fun AnimeDetailHeader(
     isStatusChanging: Boolean,
     statusChangeError: String?,
     onStatusChange: (StatusState) -> Unit,
+    priority: WorkPriority,
+    onPriorityChange: (WorkPriority) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -245,6 +254,12 @@ private fun AnimeDetailHeader(
             selectedStatus = selectedStatus,
             isChanging = isStatusChanging,
             onStatusChange = onStatusChange
+        )
+
+        // 優先度（端末内のみ・Annict には送らない）
+        PriorityChipRow(
+            selectedPriority = priority,
+            onPriorityChange = onPriorityChange
         )
 
         statusChangeError?.let { error ->
@@ -300,6 +315,46 @@ private fun StatusChipRow(
                     selectedLabelColor = Color.White,
                     selectedLeadingIconColor = Color.White
                 )
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PriorityChipRow(
+    selectedPriority: WorkPriority,
+    onPriorityChange: (WorkPriority) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "優先度",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        WorkPriority.entries.forEach { priority ->
+            val selected = selectedPriority == priority
+            FilterChip(
+                selected = selected,
+                onClick = { if (priority != selectedPriority) onPriorityChange(priority) },
+                label = { Text(priority.toJapaneseLabel()) },
+                leadingIcon = if (selected) {
+                    {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                } else {
+                    null
+                },
+                modifier = Modifier.testTag("priority_chip_${priority.name}")
             )
         }
     }

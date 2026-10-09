@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.AnimeDetailInfo
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.domain.usecase.GetAnimeDetailUseCase
+import com.zelretch.aniiiiict.domain.usecase.GetWorkPriorityUseCase
+import com.zelretch.aniiiiict.domain.usecase.SetWorkPriorityUseCase
 import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import com.zelretch.aniiiiict.ui.base.UiState
@@ -27,7 +30,11 @@ data class AnimeDetailData(
     val isStatusChanging: Boolean = false,
     val statusChangeError: String? = null,
     // この画面でステータス変更が成功したか（閉じる時に遷移元へ反映するために使う）
-    val statusChanged: Boolean = false
+    val statusChanged: Boolean = false,
+    // 端末内に保存している優先度
+    val priority: WorkPriority = WorkPriority.NORMAL,
+    // この画面で優先度変更が成功したか（閉じる時に遷移元へ反映するために使う）
+    val priorityChanged: Boolean = false
 )
 
 /**
@@ -42,6 +49,8 @@ data class AnimeDetailData(
 class AnimeDetailViewModel @Inject constructor(
     private val getAnimeDetailUseCase: GetAnimeDetailUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
+    private val getWorkPriorityUseCase: GetWorkPriorityUseCase,
+    private val setWorkPriorityUseCase: SetWorkPriorityUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -56,10 +65,12 @@ class AnimeDetailViewModel @Inject constructor(
             _uiState.value = UiState.Loading
             getAnimeDetailUseCase(programWithWork)
                 .onSuccess { animeDetailInfo ->
+                    val priority = getWorkPriorityUseCase(workId)
                     _uiState.value = UiState.Success(
                         AnimeDetailData(
                             animeDetailInfo = animeDetailInfo,
-                            selectedStatus = programWithWork.work.viewerStatusState
+                            selectedStatus = programWithWork.work.viewerStatusState,
+                            priority = priority
                         )
                     )
                     Timber.i("アニメ詳細情報を取得しました: ${animeDetailInfo.work.title}")
@@ -78,10 +89,12 @@ class AnimeDetailViewModel @Inject constructor(
             _uiState.value = UiState.Loading
             getAnimeDetailUseCase(id)
                 .onSuccess { animeDetailInfo ->
+                    val priority = getWorkPriorityUseCase(workId)
                     _uiState.value = UiState.Success(
                         AnimeDetailData(
                             animeDetailInfo = animeDetailInfo,
-                            selectedStatus = animeDetailInfo.work.viewerStatusState
+                            selectedStatus = animeDetailInfo.work.viewerStatusState,
+                            priority = priority
                         )
                     )
                     Timber.i("アニメ詳細情報を取得しました: ${animeDetailInfo.work.title}")
@@ -131,6 +144,38 @@ class AnimeDetailViewModel @Inject constructor(
             (_uiState.value as? UiState.Success)?.data?.let { data ->
                 _uiState.value = UiState.Success(data.copy(isStatusChanging = false, statusChanged = true))
             }
+        }
+    }
+
+    /**
+     * 作品の優先度（端末内のみ）を変更する
+     *
+     * @param priority 変更後の優先度
+     */
+    fun changePriority(priority: WorkPriority) {
+        val currentData = (_uiState.value as? UiState.Success)?.data ?: return
+        val previous = currentData.priority
+        if (previous == priority) return
+        _uiState.value = UiState.Success(
+            currentData.copy(priority = priority, statusChangeError = null)
+        )
+        viewModelScope.launch {
+            setWorkPriorityUseCase(workId, priority)
+                .onSuccess {
+                    (_uiState.value as? UiState.Success)?.data?.let { data ->
+                        _uiState.value = UiState.Success(data.copy(priorityChanged = true))
+                    }
+                    Timber.i("優先度を変更しました: $priority")
+                }
+                .onFailure { e ->
+                    val message = errorMapper.toUserMessage(e, "AnimeDetailViewModel.changePriority")
+                    (_uiState.value as? UiState.Success)?.data?.let { data ->
+                        _uiState.value = UiState.Success(
+                            data.copy(priority = previous, statusChangeError = message)
+                        )
+                    }
+                    Timber.e(e, "優先度の変更に失敗: $message")
+                }
         }
     }
 }
