@@ -23,35 +23,35 @@ class WorkPriorityUseCasesTest {
     }
 
     @Test
-    @DisplayName("注目/後回しは保存される")
+    @DisplayName("Tier1〜3は保存される")
     fun setStoresNonNormal() = runTest {
-        SetWorkPriorityUseCase(dao)("work1", WorkPriority.DEFERRED)
+        SetWorkPriorityUseCase(dao)("work1", WorkPriority.TIER3)
 
-        coVerify { dao.upsert(WorkPriorityEntity("work1", "DEFERRED")) }
+        coVerify { dao.upsert(WorkPriorityEntity("work1", "TIER3")) }
     }
 
     @Test
-    @DisplayName("ふつうにすると行を削除する")
+    @DisplayName("無印にすると行を削除する")
     fun setNormalDeletes() = runTest {
-        SetWorkPriorityUseCase(dao)("work1", WorkPriority.NORMAL)
+        SetWorkPriorityUseCase(dao)("work1", WorkPriority.NONE)
 
         coVerify { dao.delete("work1") }
         coVerify(exactly = 0) { dao.upsert(any()) }
     }
 
     @Test
-    @DisplayName("保存が無い作品はふつうを返す")
+    @DisplayName("保存が無い作品は無印を返す")
     fun getDefaultsToNormal() = runTest {
         coEvery { dao.get("work1") } returns null
 
-        assertEquals(WorkPriority.NORMAL, GetWorkPriorityUseCase(dao)("work1"))
+        assertEquals(WorkPriority.NONE, GetWorkPriorityUseCase(dao)("work1"))
     }
 
     @Test
     @DisplayName("保存されている優先度を返す")
     fun getReturnsStored() = runTest {
-        coEvery { dao.get("work1") } returns WorkPriorityEntity("work1", "FEATURED")
+        coEvery { dao.get("work1") } returns WorkPriorityEntity("work1", "TIER1")
 
-        assertEquals(WorkPriority.FEATURED, GetWorkPriorityUseCase(dao)("work1"))
+        assertEquals(WorkPriority.TIER1, GetWorkPriorityUseCase(dao)("work1"))
     }
 }

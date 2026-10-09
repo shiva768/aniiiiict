@@ -67,20 +67,20 @@ class LoadLibraryEntriesUseCaseTest {
         }
 
         @Test
-        @DisplayName("優先度テーブルの値が workId で重ねられ、無い作品はふつうになる")
+        @DisplayName("優先度テーブルの値が workId で重ねられ、無い作品は無印になる")
         fun overlaysPriority() = runTest {
             // Given
             coEvery { libraryEntryDao.getAll() } returns listOf(createFakeEntity("entry1"), createFakeEntity("entry2"))
             coEvery { workPriorityDao.getAll() } returns listOf(
-                WorkPriorityEntity(workId = "work_entry1", priority = WorkPriority.FEATURED.name)
+                WorkPriorityEntity(workId = "work_entry1", priority = WorkPriority.TIER1.name)
             )
 
             // When
             val entries = useCase().getOrThrow()
 
             // Then
-            assertEquals(WorkPriority.FEATURED, entries[0].priority)
-            assertEquals(WorkPriority.NORMAL, entries[1].priority)
+            assertEquals(WorkPriority.TIER1, entries[0].priority)
+            assertEquals(WorkPriority.NONE, entries[1].priority)
         }
 
         @Test

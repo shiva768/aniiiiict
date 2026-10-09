@@ -32,7 +32,7 @@ data class AnimeDetailData(
     // この画面でステータス変更が成功したか（閉じる時に遷移元へ反映するために使う）
     val statusChanged: Boolean = false,
     // 端末内に保存している優先度
-    val priority: WorkPriority = WorkPriority.NORMAL,
+    val priority: WorkPriority = WorkPriority.NONE,
     // この画面で優先度変更が成功したか（閉じる時に遷移元へ反映するために使う）
     val priorityChanged: Boolean = false
 )

@@ -6,5 +6,5 @@ data class LibraryEntry(
     val nextEpisode: Episode?,
     val statusState: com.annict.type.StatusState?,
     // 端末内だけで持つ優先度（Annict には無い）
-    val priority: WorkPriority = WorkPriority.NORMAL
+    val priority: WorkPriority = WorkPriority.NONE
 )

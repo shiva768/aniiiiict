@@ -86,9 +86,7 @@ data class LibraryUiState(
     // 「まとめて」を展開中のエントリー（同時に展開するのは1件だけ）
     val bulkRecordEntryId: String? = null,
     val bulkEpisodes: BulkEpisodesState? = null,
-    val finaleConfirmation: FinaleConfirmation? = null,
-    // 「後回し」セクションを展開しているか（初期は折りたたみ）
-    val isDeferredExpanded: Boolean = false
+    val finaleConfirmation: FinaleConfirmation? = null
 )
 
 @HiltViewModel
@@ -190,7 +188,6 @@ class LibraryViewModel @Inject constructor(
                 workId = entry.work.id,
                 currentStatus = entry.statusState ?: entry.work.viewerStatusState
             ).onSuccess {
-                resumeIfDeferred(entry)
                 librarySyncService.syncEntry(entry.id)
                 loadFromRoom()
                 _uiState.update { it.copy(recordingEntryId = null) }
@@ -254,7 +251,6 @@ class LibraryViewModel @Inject constructor(
                     )
                 }
             )
-            if (result.isSuccess) resumeIfDeferred(entry)
             // 途中で失敗しても一部は記録済みの可能性があるので、どちらの場合も再同期する
             librarySyncService.syncEntry(entry.id)
             loadFromRoom()
@@ -318,7 +314,7 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
-     * カード長押しから優先度（注目/ふつう/後回し）を変更する。端末内に保存し、並びに反映する。
+     * カード長押しから優先度（Tier1/Tier2/Tier3/無印）を変更する。端末内に保存し、並びに反映する。
      */
     fun setPriority(entry: LibraryEntry, priority: WorkPriority) {
         if (entry.priority == priority) return
@@ -332,17 +328,6 @@ class LibraryViewModel @Inject constructor(
                     }
                 }
         }
-    }
-
-    fun toggleDeferredSection() {
-        _uiState.update { it.copy(isDeferredExpanded = !it.isDeferredExpanded) }
-    }
-
-    /** 後回しにしていた作品を記録した＝再開したとみなし、ふつうに戻す */
-    private suspend fun resumeIfDeferred(entry: LibraryEntry) {
-        if (entry.priority != WorkPriority.DEFERRED) return
-        setWorkPriorityUseCase(entry.work.id, WorkPriority.NORMAL)
-            .onFailure { e -> Timber.e(e, "後回しの解除に失敗: ${entry.work.title}") }
     }
 
     private fun collapseBulkRecord() {

@@ -63,8 +63,8 @@ class AppDatabaseMigrationTest {
         // Assert
         runBlocking {
             assertEquals(listOf("entry1"), database.libraryEntryDao().getAll().map { it.id })
-            database.workPriorityDao().upsert(WorkPriorityEntity("work1", "FEATURED"))
-            assertEquals("FEATURED", database.workPriorityDao().get("work1")?.priority)
+            database.workPriorityDao().upsert(WorkPriorityEntity("work1", "TIER1"))
+            assertEquals("TIER1", database.workPriorityDao().get("work1")?.priority)
         }
         database.close()
     }

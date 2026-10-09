@@ -813,7 +813,7 @@ class LibraryViewModelTest {
     @DisplayName("優先度")
     inner class Priority {
 
-        private fun entry(id: String, title: String, priority: WorkPriority = WorkPriority.NORMAL) = LibraryEntry(
+        private fun entry(id: String, title: String, priority: WorkPriority = WorkPriority.NONE) = LibraryEntry(
             id = "entry_$id",
             work = createFakeWork(id, title),
             nextEpisode = Episode(id = "ep_$id", number = 1),
@@ -822,15 +822,16 @@ class LibraryViewModelTest {
         )
 
         @Test
-        @DisplayName("注目 → ふつう → 後回し の順に並び、セクション内はタイトル順のまま")
+        @DisplayName("Tier1 → Tier2 → Tier3 → 無印 の順に並び、セクション内はタイトル順のまま")
         fun sortsByPriorityKeepingInnerOrder() = runTest(dispatcher) {
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(
                 listOf(
-                    entry("w1", "D", WorkPriority.DEFERRED),
+                    entry("w1", "D", WorkPriority.TIER3),
                     entry("w2", "C"),
-                    entry("w3", "B", WorkPriority.FEATURED),
+                    entry("w3", "B", WorkPriority.TIER1),
                     entry("w4", "A"),
-                    entry("w5", "E", WorkPriority.FEATURED)
+                    entry("w5", "E", WorkPriority.TIER1),
+                    entry("w6", "F", WorkPriority.TIER2)
                 )
             )
             val viewModel = createViewModel()
@@ -839,7 +840,7 @@ class LibraryViewModelTest {
             viewModel.updateSortOrder(LibrarySortOrder.TITLE_ASC)
 
             assertEquals(
-                listOf("B", "E", "A", "C", "D"),
+                listOf("B", "E", "F", "D", "A", "C"),
                 viewModel.uiState.value.entries.map { it.work.title }
             )
         }
@@ -852,10 +853,10 @@ class LibraryViewModelTest {
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
 
-            viewModel.setPriority(target, WorkPriority.FEATURED)
+            viewModel.setPriority(target, WorkPriority.TIER1)
 
             coVerifyOrder {
-                setWorkPriorityUseCase("w1", WorkPriority.FEATURED)
+                setWorkPriorityUseCase("w1", WorkPriority.TIER1)
                 loadLibraryEntriesUseCase()
             }
         }
@@ -863,49 +864,20 @@ class LibraryViewModelTest {
         @Test
         @DisplayName("同じ優先度を選んだときは何もしない")
         fun setSamePriorityDoesNothing() = runTest(dispatcher) {
-            val target = entry("w1", "A", WorkPriority.FEATURED)
+            val target = entry("w1", "A", WorkPriority.TIER2)
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
 
-            viewModel.setPriority(target, WorkPriority.FEATURED)
+            viewModel.setPriority(target, WorkPriority.TIER2)
 
             coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
         }
 
         @Test
-        @DisplayName("後回しセクションは初期は閉じていて、トグルで開閉する")
-        fun toggleDeferredSection() = runTest(dispatcher) {
-            coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
-            val viewModel = createViewModel()
-            assertFalse(viewModel.uiState.value.isDeferredExpanded)
-
-            viewModel.toggleDeferredSection()
-            assertTrue(viewModel.uiState.value.isDeferredExpanded)
-
-            viewModel.toggleDeferredSection()
-            assertFalse(viewModel.uiState.value.isDeferredExpanded)
-        }
-
-        @Test
-        @DisplayName("後回しの作品を「見た」で記録するとふつうに戻る")
-        fun recordNextEpisodeResumesDeferred() = runTest(dispatcher) {
-            val target = entry("w1", "A", WorkPriority.DEFERRED)
-            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
-            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
-            coEvery { librarySyncService.syncEntry(any()) } returns Unit
-            val viewModel = createViewModel()
-            viewModel.uiState.first { !it.isLoading }
-
-            viewModel.recordNextEpisode(target)
-
-            coVerify { setWorkPriorityUseCase("w1", WorkPriority.NORMAL) }
-        }
-
-        @Test
-        @DisplayName("ふつうの作品を記録しても優先度は触らない")
-        fun recordNextEpisodeKeepsNormal() = runTest(dispatcher) {
-            val target = entry("w1", "A")
+        @DisplayName("記録しても優先度は変わらない")
+        fun recordNextEpisodeKeepsPriority() = runTest(dispatcher) {
+            val target = entry("w1", "A", WorkPriority.TIER3)
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
             coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
             coEvery { librarySyncService.syncEntry(any()) } returns Unit
@@ -915,31 +887,6 @@ class LibraryViewModelTest {
             viewModel.recordNextEpisode(target)
 
             coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
-        }
-
-        @Test
-        @DisplayName("後回しの作品をまとめて記録するとふつうに戻るが、失敗したときは戻さない")
-        fun bulkRecordResumesDeferredOnlyOnSuccess() = runTest(dispatcher) {
-            val target = entry("w1", "A", WorkPriority.DEFERRED)
-            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
-            coEvery { loadUnwatchedEpisodesUseCase(any(), any()) } returns
-                Result.success(listOf(Episode(id = "ep_w1", number = 1)))
-            coEvery { librarySyncService.syncEntry(any()) } returns Unit
-            val error = RuntimeException("boom")
-            every { errorMapper.toUserMessage(error, any()) } returns "記録失敗"
-            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } returns Result.failure(error)
-            val viewModel = createViewModel()
-            viewModel.uiState.first { !it.isLoading }
-
-            viewModel.toggleBulkRecord(target)
-            viewModel.bulkRecordUpTo(target, 0)
-            coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
-
-            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } returns
-                Result.success(BulkRecordResult())
-            viewModel.toggleBulkRecord(target)
-            viewModel.bulkRecordUpTo(target, 0)
-            coVerify { setWorkPriorityUseCase("w1", WorkPriority.NORMAL) }
         }
     }
 

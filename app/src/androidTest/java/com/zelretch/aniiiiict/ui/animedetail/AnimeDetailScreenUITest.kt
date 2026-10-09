@@ -392,12 +392,12 @@ class AnimeDetailScreenUITest {
 
     @Test
     fun 優先度FilterChipが表示され現在の優先度が選択されている() {
-        // Given: 優先度が「注目」のUIState
+        // Given: 優先度が「Tier1」のUIState
         val mockViewModel = createMockViewModel(
             state = UiState.Success(
                 AnimeDetailData(
                     animeDetailInfo = createAnimeDetailInfo(),
-                    priority = WorkPriority.FEATURED
+                    priority = WorkPriority.TIER1
                 )
             )
         )
@@ -414,21 +414,22 @@ class AnimeDetailScreenUITest {
             }
         }
 
-        // Then: 3つの優先度チップが表示され、現在の優先度が選択状態
+        // Then: 4つの優先度チップが表示され、現在の優先度が選択状態
         composeTestRule.onNodeWithText("優先度").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("priority_chip_FEATURED").assertIsDisplayed().assertIsSelected()
-        composeTestRule.onNodeWithTag("priority_chip_NORMAL").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("priority_chip_DEFERRED").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_TIER1").assertIsDisplayed().assertIsSelected()
+        composeTestRule.onNodeWithTag("priority_chip_TIER2").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_TIER3").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_NONE").assertIsDisplayed()
     }
 
     @Test
     fun 優先度FilterChipをタップすると優先度変更が呼ばれる() {
-        // Given: 優先度が「ふつう」のUIState
+        // Given: 優先度が「無印」のUIState
         val mockViewModel = createMockViewModel(
             state = UiState.Success(AnimeDetailData(animeDetailInfo = createAnimeDetailInfo()))
         )
 
-        // When: 画面を表示して「後回し」をタップ
+        // When: 画面を表示して「Tier3」をタップ
         composeTestRule.setContent {
             AniiiiictTheme {
                 AnimeDetailScreen(
@@ -439,10 +440,10 @@ class AnimeDetailScreenUITest {
                 )
             }
         }
-        composeTestRule.onNodeWithTag("priority_chip_DEFERRED").performClick()
+        composeTestRule.onNodeWithTag("priority_chip_TIER3").performClick()
 
         // Then: 選んだ優先度で変更が呼ばれる
-        verify(exactly = 1) { mockViewModel.changePriority(WorkPriority.DEFERRED) }
+        verify(exactly = 1) { mockViewModel.changePriority(WorkPriority.TIER3) }
     }
 
     // Helper functions

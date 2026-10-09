@@ -56,7 +56,7 @@ class AnimeDetailViewModelTest {
         getWorkPriorityUseCase = mockk()
         setWorkPriorityUseCase = mockk()
         errorMapper = mockk(relaxed = true)
-        coEvery { getWorkPriorityUseCase(any()) } returns WorkPriority.NORMAL
+        coEvery { getWorkPriorityUseCase(any()) } returns WorkPriority.NONE
         viewModel = AnimeDetailViewModel(
             getAnimeDetailUseCase,
             updateViewStateUseCase,
@@ -240,7 +240,7 @@ class AnimeDetailViewModelTest {
             // Given
             val programWithWork = createSampleProgramWithWork()
             coEvery { getAnimeDetailUseCase(programWithWork) } returns Result.success(createSampleAnimeDetailInfo())
-            coEvery { getWorkPriorityUseCase("test-work-id") } returns WorkPriority.FEATURED
+            coEvery { getWorkPriorityUseCase("test-work-id") } returns WorkPriority.TIER1
 
             // When
             viewModel.loadAnimeDetail(programWithWork)
@@ -249,7 +249,7 @@ class AnimeDetailViewModelTest {
             // Then
             val state = viewModel.uiState.value
             assertTrue(state is UiState.Success)
-            assertEquals(WorkPriority.FEATURED, (state as UiState.Success).data.priority)
+            assertEquals(WorkPriority.TIER1, (state as UiState.Success).data.priority)
             assertEquals(false, state.data.priorityChanged)
         }
 
@@ -259,7 +259,7 @@ class AnimeDetailViewModelTest {
             // Given
             val workId = "test-work-id"
             coEvery { getAnimeDetailUseCase(workId) } returns Result.success(createSampleAnimeDetailInfo())
-            coEvery { getWorkPriorityUseCase(workId) } returns WorkPriority.DEFERRED
+            coEvery { getWorkPriorityUseCase(workId) } returns WorkPriority.TIER3
 
             // When
             viewModel.loadAnimeDetailById(workId)
@@ -268,7 +268,7 @@ class AnimeDetailViewModelTest {
             // Then
             val state = viewModel.uiState.value
             assertTrue(state is UiState.Success)
-            assertEquals(WorkPriority.DEFERRED, (state as UiState.Success).data.priority)
+            assertEquals(WorkPriority.TIER3, (state as UiState.Success).data.priority)
         }
     }
 
@@ -287,17 +287,17 @@ class AnimeDetailViewModelTest {
             testScheduler.advanceUntilIdle()
 
             // When
-            viewModel.changePriority(WorkPriority.FEATURED)
+            viewModel.changePriority(WorkPriority.TIER1)
             testScheduler.advanceUntilIdle()
 
             // Then
             val state = viewModel.uiState.value
             assertTrue(state is UiState.Success)
-            assertEquals(WorkPriority.FEATURED, (state as UiState.Success).data.priority)
+            assertEquals(WorkPriority.TIER1, (state as UiState.Success).data.priority)
             assertTrue(state.data.priorityChanged)
             // ステータス変更フラグには影響しない
             assertEquals(false, state.data.statusChanged)
-            coVerify(exactly = 1) { setWorkPriorityUseCase("test-work-id", WorkPriority.FEATURED) }
+            coVerify(exactly = 1) { setWorkPriorityUseCase("test-work-id", WorkPriority.TIER1) }
         }
 
         @Test
@@ -312,13 +312,13 @@ class AnimeDetailViewModelTest {
             testScheduler.advanceUntilIdle()
 
             // When
-            viewModel.changePriority(WorkPriority.DEFERRED)
+            viewModel.changePriority(WorkPriority.TIER3)
             testScheduler.advanceUntilIdle()
 
             // Then
             val state = viewModel.uiState.value
             assertTrue(state is UiState.Success)
-            assertEquals(WorkPriority.NORMAL, (state as UiState.Success).data.priority)
+            assertEquals(WorkPriority.NONE, (state as UiState.Success).data.priority)
             assertEquals("優先度の変更に失敗しました", state.data.statusChangeError)
             assertEquals(false, state.data.priorityChanged)
         }
@@ -333,7 +333,7 @@ class AnimeDetailViewModelTest {
             testScheduler.advanceUntilIdle()
 
             // When
-            viewModel.changePriority(WorkPriority.NORMAL)
+            viewModel.changePriority(WorkPriority.NONE)
             testScheduler.advanceUntilIdle()
 
             // Then

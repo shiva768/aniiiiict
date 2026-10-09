@@ -17,7 +17,7 @@ class LoadLibraryEntriesUseCase @Inject constructor(
         val entries = libraryEntryDao.getAll().map { entity ->
             val priority = priorities[entity.workId]
                 ?.let { runCatching { WorkPriority.valueOf(it) }.getOrNull() }
-                ?: WorkPriority.NORMAL
+                ?: WorkPriority.NONE
             entity.toLibraryEntry().copy(priority = priority)
         }
         Timber.i("Roomからライブラリエントリーを読み込み: ${entries.size}件")

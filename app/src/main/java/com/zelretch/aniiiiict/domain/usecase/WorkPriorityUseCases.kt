@@ -9,7 +9,7 @@ class SetWorkPriorityUseCase @Inject constructor(
     private val workPriorityDao: WorkPriorityDao
 ) {
     suspend operator fun invoke(workId: String, priority: WorkPriority): Result<Unit> = runCatching {
-        if (priority == WorkPriority.NORMAL) {
+        if (priority == WorkPriority.NONE) {
             workPriorityDao.delete(workId)
         } else {
             workPriorityDao.upsert(WorkPriorityEntity(workId, priority.name))
@@ -22,5 +22,5 @@ class GetWorkPriorityUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(workId: String): WorkPriority = runCatching {
         workPriorityDao.get(workId)?.priority?.let { WorkPriority.valueOf(it) }
-    }.getOrNull() ?: WorkPriority.NORMAL
+    }.getOrNull() ?: WorkPriority.NONE
 }

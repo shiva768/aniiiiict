@@ -482,18 +482,19 @@ class LibraryScreenUITest {
 
         // Assert
         composeTestRule.onNodeWithText("優先度（この端末だけに保存されます）").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("priority_option_FEATURED").performClick()
-        verify { mockViewModel.setPriority(entry, WorkPriority.FEATURED) }
+        composeTestRule.onNodeWithTag("priority_option_TIER1").performClick()
+        verify { mockViewModel.setPriority(entry, WorkPriority.TIER1) }
     }
 
     @Test
-    fun libraryScreen_優先度あり_セクション見出しが出て後回しは折りたたまれる() {
+    fun libraryScreen_Tierあり_Tierごとに見出しが出る() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val featured = priorityEntry("w1", "注目アニメ", WorkPriority.FEATURED)
-        val normal = priorityEntry("w2", "ふつうアニメ", WorkPriority.NORMAL)
-        val deferred = priorityEntry("w3", "後回しアニメ", WorkPriority.DEFERRED)
-        val entries = listOf(featured, normal, deferred)
+        val entries = listOf(
+            priorityEntry("w1", "ティア1アニメ", WorkPriority.TIER1),
+            priorityEntry("w2", "ティア3アニメ", WorkPriority.TIER3),
+            priorityEntry("w3", "無印アニメ", WorkPriority.NONE)
+        )
         val state = LibraryUiState(entries = entries, allEntries = entries)
         every { mockViewModel.uiState } returns MutableStateFlow(state)
 
@@ -503,21 +504,19 @@ class LibraryScreenUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("注目（1）").assertIsDisplayed()
-        composeTestRule.onNodeWithText("ふつう（1）").assertIsDisplayed()
-        composeTestRule.onNodeWithText("後回し（1）").assertIsDisplayed()
-        composeTestRule.onNodeWithText("注目アニメ").assertIsDisplayed()
-        composeTestRule.onNodeWithText("後回しアニメ").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("library_section_DEFERRED").performClick()
-        verify { mockViewModel.toggleDeferredSection() }
+        composeTestRule.onNodeWithText("Tier1（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tier3（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("無印（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("library_section_TIER2").assertDoesNotExist()
+        composeTestRule.onNodeWithText("ティア3アニメ").assertIsDisplayed()
     }
 
     @Test
-    fun libraryScreen_後回し展開中_後回しの作品が表示される() {
+    fun libraryScreen_全て無印_見出しは出ない() {
         // Arrange
         val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
-        val deferred = priorityEntry("w3", "後回しアニメ", WorkPriority.DEFERRED)
-        val state = LibraryUiState(entries = listOf(deferred), allEntries = listOf(deferred), isDeferredExpanded = true)
+        val entries = listOf(priorityEntry("w1", "無印アニメ", WorkPriority.NONE))
+        val state = LibraryUiState(entries = entries, allEntries = entries)
         every { mockViewModel.uiState } returns MutableStateFlow(state)
 
         // Act
@@ -526,7 +525,8 @@ class LibraryScreenUITest {
         }
 
         // Assert
-        composeTestRule.onNodeWithText("後回しアニメ").assertIsDisplayed()
+        composeTestRule.onNodeWithText("無印アニメ").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("library_section_NONE").assertDoesNotExist()
     }
 
     private fun priorityEntry(id: String, title: String, priority: WorkPriority) = LibraryEntry(

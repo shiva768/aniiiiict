@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,8 +31,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
@@ -217,8 +214,8 @@ private fun LibraryScreenContent(
 }
 
 /**
- * 優先度ごとのセクション（注目 → ふつう → 後回し）で一覧を出す。
- * 注目も後回しも無いときは見出しを出さず、今までどおりの一覧になる。
+ * 優先度ごとのセクション（Tier1 → Tier2 → Tier3 → 無印）で一覧を出す。
+ * Tier を付けた作品が無いときは見出しを出さず、今までどおりの一覧になる。
  */
 @Composable
 private fun LibraryEntryList(
@@ -227,49 +224,30 @@ private fun LibraryEntryList(
     onNavigateToDetail: (String) -> Unit
 ) {
     var priorityTarget by remember { mutableStateOf<LibraryEntry?>(null) }
-    val featured = uiState.entries.filter { it.priority == WorkPriority.FEATURED }
-    val normal = uiState.entries.filter { it.priority == WorkPriority.NORMAL }
-    val deferred = uiState.entries.filter { it.priority == WorkPriority.DEFERRED }
-
-    val entryItems: LazyListScope.(List<LibraryEntry>) -> Unit = { entries ->
-        items(entries, key = { it.work.id }) { entry ->
-            LibraryEntryCard(
-                entry = entry,
-                isRecording = uiState.recordingEntryId == entry.id,
-                onClick = { onNavigateToDetail(entry.work.id) },
-                onLongClick = { priorityTarget = entry },
-                onRecordNextEpisode = { viewModel.recordNextEpisode(entry) },
-                bulkEpisodes = uiState.bulkEpisodes.takeIf { uiState.bulkRecordEntryId == entry.id },
-                onToggleBulkRecord = { viewModel.toggleBulkRecord(entry) },
-                onBulkRecordUpTo = { index -> viewModel.bulkRecordUpTo(entry, index) }
-            )
-        }
-    }
+    // entries は ViewModel で優先度順に並んでいる
+    val sections = uiState.entries.groupBy { it.priority }
+    val showHeaders = sections.keys.any { it != WorkPriority.NONE }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (featured.isNotEmpty()) {
-            item(key = "header_featured") { LibrarySectionHeader(WorkPriority.FEATURED, featured.size) }
-            entryItems(featured)
-        }
-        if (normal.isNotEmpty()) {
-            if (featured.isNotEmpty() || deferred.isNotEmpty()) {
-                item(key = "header_normal") { LibrarySectionHeader(WorkPriority.NORMAL, normal.size) }
+        sections.forEach { (priority, entries) ->
+            if (showHeaders) {
+                item(key = "header_${priority.name}") { LibrarySectionHeader(priority, entries.size) }
             }
-            entryItems(normal)
-        }
-        if (deferred.isNotEmpty()) {
-            item(key = "header_deferred") {
-                LibrarySectionHeader(
-                    priority = WorkPriority.DEFERRED,
-                    count = deferred.size,
-                    expanded = uiState.isDeferredExpanded,
-                    onToggle = { viewModel.toggleDeferredSection() }
+            items(entries, key = { it.work.id }) { entry ->
+                LibraryEntryCard(
+                    entry = entry,
+                    isRecording = uiState.recordingEntryId == entry.id,
+                    onClick = { onNavigateToDetail(entry.work.id) },
+                    onLongClick = { priorityTarget = entry },
+                    onRecordNextEpisode = { viewModel.recordNextEpisode(entry) },
+                    bulkEpisodes = uiState.bulkEpisodes.takeIf { uiState.bulkRecordEntryId == entry.id },
+                    onToggleBulkRecord = { viewModel.toggleBulkRecord(entry) },
+                    onBulkRecordUpTo = { index -> viewModel.bulkRecordUpTo(entry, index) }
                 )
             }
-            if (uiState.isDeferredExpanded) entryItems(deferred)
         }
     }
 
@@ -287,36 +265,17 @@ private fun LibraryEntryList(
 }
 
 @Composable
-private fun LibrarySectionHeader(
-    priority: WorkPriority,
-    count: Int,
-    expanded: Boolean = true,
-    // null のときは折りたためない見出し
-    onToggle: (() -> Unit)? = null
-) {
-    Row(
+private fun LibrarySectionHeader(priority: WorkPriority, count: Int) {
+    Text(
+        text = "${priority.toJapaneseLabel()}（$count）",
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (onToggle != null) Modifier.clickable(onClick = onToggle) else Modifier)
             .padding(horizontal = 20.dp, vertical = 8.dp)
-            .testTag("library_section_${priority.name}"),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "${priority.toJapaneseLabel()}（$count）",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (onToggle != null) {
-            Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (expanded) "折りたたむ" else "展開する",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+            .testTag("library_section_${priority.name}")
+    )
 }
 
 @Composable
@@ -765,13 +724,14 @@ private fun StatusChip(text: String, color: Color) {
     }
 }
 
-/** 注目/後回しのときだけ出す小さな目印（ふつうは何も出さない） */
+/** Tier を付けたときだけ出す小さな目印（無印は何も出さない） */
 @Composable
 private fun PriorityChip(priority: WorkPriority) {
     val color = when (priority) {
-        WorkPriority.FEATURED -> MaterialTheme.colorScheme.tertiary
-        WorkPriority.DEFERRED -> MaterialTheme.colorScheme.outline
-        WorkPriority.NORMAL -> return
+        WorkPriority.TIER1 -> MaterialTheme.colorScheme.tertiary
+        WorkPriority.TIER2 -> MaterialTheme.colorScheme.primary
+        WorkPriority.TIER3 -> MaterialTheme.colorScheme.outline
+        WorkPriority.NONE -> return
     }
     Surface(
         color = Color.Transparent,
