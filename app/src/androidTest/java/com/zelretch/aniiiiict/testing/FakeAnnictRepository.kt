@@ -4,6 +4,7 @@ import com.annict.ViewerProgramsQuery
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
@@ -27,6 +28,7 @@ open class FakeAnnictRepository : AnnictRepository {
     var workSeriesListResult: Result<WorkSeriesListQuery.Node?> = Result.success(null)
     var libraryEntriesResult: Result<LibraryEntriesPage> = Result.success(LibraryEntriesPage(emptyList(), false, null))
     var libraryEntryResult: Result<LibraryEntry?> = Result.success(null)
+    var workEpisodesResult: Result<List<Episode>> = Result.success(emptyList())
 
     // 呼び出し記録
     val createRecordCalls = mutableListOf<Pair<String, String>>()
@@ -90,4 +92,6 @@ open class FakeAnnictRepository : AnnictRepository {
         libraryEntriesResult
 
     override suspend fun getLibraryEntry(libraryEntryId: String): Result<LibraryEntry?> = libraryEntryResult
+
+    override suspend fun getWorkEpisodes(workId: String): Result<List<Episode>> = workEpisodesResult
 }

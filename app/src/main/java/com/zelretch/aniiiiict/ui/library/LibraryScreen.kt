@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiict.ui.library
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
@@ -31,6 +33,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -39,6 +42,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -54,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,6 +66,8 @@ import coil.compose.AsyncImage
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.ui.common.components.episode.FinaleConfirmDialog
+import com.zelretch.aniiiiict.ui.common.components.episode.InlineUnwatchedEpisodeList
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.common.components.toStatusColor
 import com.zelretch.aniiiiict.ui.track.components.FilterSelectionDialog
@@ -87,6 +94,13 @@ fun LibraryScreen(
             uiState = uiState,
             viewModel = viewModel,
             onNavigateToDetail = onNavigateToDetail
+        )
+    }
+    uiState.finaleConfirmation?.let { finale ->
+        FinaleConfirmDialog(
+            episodeNumber = finale.episodeNumber,
+            onConfirm = { viewModel.confirmFinale() },
+            onDismiss = { viewModel.dismissFinale() }
         )
     }
 }
@@ -191,7 +205,10 @@ private fun LibraryScreenContent(
                                 entry = entry,
                                 isRecording = uiState.recordingEntryId == entry.id,
                                 onClick = { onNavigateToDetail(entry.work.id) },
-                                onRecordNextEpisode = { viewModel.recordNextEpisode(entry) }
+                                onRecordNextEpisode = { viewModel.recordNextEpisode(entry) },
+                                bulkEpisodes = uiState.bulkEpisodes.takeIf { uiState.bulkRecordEntryId == entry.id },
+                                onToggleBulkRecord = { viewModel.toggleBulkRecord(entry) },
+                                onBulkRecordUpTo = { index -> viewModel.bulkRecordUpTo(entry, index) }
                             )
                         }
                     }
@@ -370,7 +387,11 @@ internal fun LibraryEntryCard(
     entry: LibraryEntry,
     isRecording: Boolean,
     onClick: () -> Unit,
-    onRecordNextEpisode: () -> Unit
+    onRecordNextEpisode: () -> Unit,
+    // null のときは「まとめて」が閉じている
+    bulkEpisodes: BulkEpisodesState? = null,
+    onToggleBulkRecord: () -> Unit = {},
+    onBulkRecordUpTo: (Int) -> Unit = {}
 ) {
     val statusColor = entry.statusState?.toStatusColor()
     ElevatedCard(
@@ -432,8 +453,16 @@ internal fun LibraryEntryCard(
                     entry = entry,
                     statusColor = statusColor,
                     isRecording = isRecording,
-                    onRecordNextEpisode = onRecordNextEpisode
+                    onRecordNextEpisode = onRecordNextEpisode,
+                    onToggleBulkRecord = onToggleBulkRecord
                 )
+                AnimatedVisibility(visible = bulkEpisodes != null) {
+                    LibraryBulkEpisodes(
+                        state = bulkEpisodes,
+                        isRecording = isRecording,
+                        onBulkRecordUpTo = onBulkRecordUpTo
+                    )
+                }
             }
         }
     }
@@ -444,7 +473,8 @@ private fun LibraryNextEpisodeRow(
     entry: LibraryEntry,
     statusColor: Color?,
     isRecording: Boolean,
-    onRecordNextEpisode: () -> Unit
+    onRecordNextEpisode: () -> Unit,
+    onToggleBulkRecord: () -> Unit
 ) {
     val episode = entry.nextEpisode
     // 視聴済み（WATCHED）作品はボタンなしの静的表示
@@ -502,6 +532,20 @@ private fun LibraryNextEpisodeRow(
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(8.dp))
+            // 話のタイトルを削らないよう、Track の「まとめて」と同じアイコンだけのボタンにする
+            OutlinedIconButton(
+                onClick = onToggleBulkRecord,
+                enabled = !isRecording,
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.size(36.dp).testTag("library_bulk_record_button")
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.List,
+                    contentDescription = "まとめて記録",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
             FilledTonalButton(
                 onClick = onRecordNextEpisode,
                 enabled = !isRecording,
@@ -512,6 +556,41 @@ private fun LibraryNextEpisodeRow(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(text = "見た", style = MaterialTheme.typography.labelMedium)
             }
+        }
+    }
+}
+
+@Composable
+private fun LibraryBulkEpisodes(state: BulkEpisodesState?, isRecording: Boolean, onBulkRecordUpTo: (Int) -> Unit) {
+    val modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+    when (state) {
+        null -> Unit
+        BulkEpisodesState.Loading -> Box(
+            modifier = modifier.padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+        }
+        is BulkEpisodesState.Error -> Text(
+            text = state.message,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = modifier
+        )
+        is BulkEpisodesState.Loaded -> if (state.episodes.isEmpty()) {
+            Text(
+                text = "未視聴のエピソードはありません",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = modifier
+            )
+        } else {
+            InlineUnwatchedEpisodeList(
+                episodes = state.episodes,
+                isRecording = isRecording,
+                onRecordUpTo = onBulkRecordUpTo,
+                modifier = modifier
+            )
         }
     }
 }

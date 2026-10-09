@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -367,4 +368,105 @@ class LibraryScreenUITest {
         composeTestRule.onNodeWithText("すべて視聴済み").assertDoesNotExist()
         composeTestRule.onNodeWithText("エピソード情報なし").assertIsDisplayed()
     }
+
+    @Test
+    fun libraryScreen_まとめてボタンクリック_toggleBulkRecordが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+        composeTestRule.onNodeWithContentDescription("まとめて記録").performClick()
+
+        // Assert
+        verify { mockViewModel.toggleBulkRecord(entry) }
+    }
+
+    @Test
+    fun libraryScreen_まとめて展開中_未視聴一覧が表示されタップでbulkRecordUpToが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(
+            entries = listOf(entry),
+            allEntries = listOf(entry),
+            bulkRecordEntryId = entry.id,
+            bulkEpisodes = BulkEpisodesState.Loaded(
+                listOf(
+                    Episode(id = "ep2", numberText = "第2話", number = 2, title = "二話"),
+                    Episode(id = "ep3", numberText = "第3話", number = 3, title = "三話")
+                )
+            )
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("未視聴 2話 ・ タップで記録").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("inline_episode_1").performClick()
+        verify { mockViewModel.bulkRecordUpTo(entry, 1) }
+    }
+
+    @Test
+    fun libraryScreen_まとめて展開中_未視聴が無い場合はその旨が表示される() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(
+            entries = listOf(entry),
+            allEntries = listOf(entry),
+            bulkRecordEntryId = entry.id,
+            bulkEpisodes = BulkEpisodesState.Loaded(emptyList())
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("未視聴のエピソードはありません").assertIsDisplayed()
+    }
+
+    @Test
+    fun libraryScreen_最終話確認中_ダイアログが表示されボタンでconfirmとdismissが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(
+            entries = listOf(entry),
+            allEntries = listOf(entry),
+            finaleConfirmation = FinaleConfirmation(entryId = entry.id, workId = entry.work.id, episodeNumber = 12)
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
+        composeTestRule.onNodeWithText("視聴完了にする").performClick()
+        verify { mockViewModel.confirmFinale() }
+        composeTestRule.onNodeWithText("後で").performClick()
+        verify { mockViewModel.dismissFinale() }
+    }
+
+    private fun bulkEntry() = LibraryEntry(
+        id = "entry1",
+        work = Work(id = "work1", title = "テストアニメ", viewerStatusState = StatusState.WATCHING),
+        nextEpisode = Episode(id = "ep2", title = "二話", numberText = "第2話", number = 2),
+        statusState = StatusState.WATCHING
+    )
 }

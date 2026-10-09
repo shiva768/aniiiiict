@@ -4,6 +4,7 @@ import com.annict.ViewerProgramsQuery
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
@@ -21,4 +22,7 @@ interface AnnictRepository {
     suspend fun getWorkSeriesList(workId: String): Result<WorkSeriesListQuery.Node?>
     suspend fun getLibraryEntries(states: List<StatusState>, after: String? = null): Result<LibraryEntriesPage>
     suspend fun getLibraryEntry(libraryEntryId: String): Result<LibraryEntry?>
+
+    /** 作品の全エピソードを話数順で取得する（ページングは内部で辿る） */
+    suspend fun getWorkEpisodes(workId: String): Result<List<Episode>>
 }

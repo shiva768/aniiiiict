@@ -7,6 +7,7 @@ import com.annict.UpdateStatusMutation
 import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
 import com.annict.WorkDetailQuery
+import com.annict.WorkEpisodesQuery
 import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
 import com.apollographql.apollo.api.Optional
@@ -33,6 +34,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+@Suppress("TooManyFunctions")
 class AnnictRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager,
     private val authManager: AnnictAuthManager,
@@ -41,6 +43,9 @@ class AnnictRepositoryImpl @Inject constructor(
 
     companion object {
         private const val AUTH_CODE_LOG_LENGTH = 5
+
+        // 長期シリーズで無限にページを辿らないための上限（100話 × 20 = 2000話）
+        private const val MAX_EPISODE_PAGES = 20
     }
 
     override suspend fun isAuthenticated(): Boolean {
@@ -323,6 +328,39 @@ class AnnictRepositoryImpl @Inject constructor(
                 statusState = statusState
             )
         }
+
+    override suspend fun getWorkEpisodes(workId: String): Result<List<Episode>> = executeApiRequest("getWorkEpisodes") {
+        Timber.i("エピソード一覧を取得中: workId=$workId")
+        val episodes = mutableListOf<Episode>()
+        var after: String? = null
+        repeat(MAX_EPISODE_PAGES) {
+            val response = annictApolloClient.executeQuery(
+                operation = WorkEpisodesQuery(workId = workId, after = Optional.presentIfNotNull(after)),
+                context = "AnnictRepositoryImpl.getWorkEpisodes"
+            )
+            if (response.hasErrors()) {
+                Timber.e("GraphQLエラー: ${response.errors}")
+                throw DomainError.ApiError.GraphQLError("Work episodes query failed: ${response.errors}")
+            }
+            val connection = response.data?.node?.onWork?.episodes ?: return@repeat
+            connection.nodes?.filterNotNull()?.mapTo(episodes) { node ->
+                Episode(
+                    id = node.id,
+                    number = node.number,
+                    numberText = node.numberText,
+                    title = node.title,
+                    viewerDidTrack = node.viewerDidTrack
+                )
+            }
+            if (!connection.pageInfo.hasNextPage) {
+                Timber.i("エピソード一覧を取得しました: workId=$workId, ${episodes.size}件")
+                return@executeApiRequest episodes
+            }
+            after = connection.pageInfo.endCursor
+        }
+        Timber.w("エピソード一覧が上限に達したため打ち切り: workId=$workId, ${episodes.size}件")
+        episodes
+    }
 
     private fun mapToLibraryEntry(node: com.annict.ViewerLibraryEntriesQuery.Node): LibraryEntry? {
         val viewerStatus = node.work.viewerStatusState ?: return null

@@ -4,10 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
+import com.zelretch.aniiiiict.domain.usecase.LoadUnwatchedEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,6 +54,20 @@ data class LibraryFilterState(
     val sortOrder: LibrarySortOrder = LibrarySortOrder.SEASON_DESC
 )
 
+/** カードの「まとめて」で展開する未視聴エピソード一覧の状態 */
+sealed interface BulkEpisodesState {
+    data object Loading : BulkEpisodesState
+    data class Loaded(val episodes: List<Episode>) : BulkEpisodesState
+    data class Error(val message: String) : BulkEpisodesState
+}
+
+/** 最終話を記録したときに出す「視聴完了にしますか？」ダイアログの対象 */
+data class FinaleConfirmation(
+    val entryId: String,
+    val workId: String,
+    val episodeNumber: Int
+)
+
 data class LibraryUiState(
     val entries: List<LibraryEntry> = emptyList(),
     val allEntries: List<LibraryEntry> = emptyList(),
@@ -60,14 +80,23 @@ data class LibraryUiState(
     val availableYears: List<Int> = emptyList(),
     val availableSeasons: List<SeasonName> = emptyList(),
     val isFilterVisible: Boolean = false,
-    val recordingEntryId: String? = null
+    val recordingEntryId: String? = null,
+    // 「まとめて」を展開中のエントリー（同時に展開するのは1件だけ）
+    val bulkRecordEntryId: String? = null,
+    val bulkEpisodes: BulkEpisodesState? = null,
+    val finaleConfirmation: FinaleConfirmation? = null
 )
 
 @HiltViewModel
+@Suppress("TooManyFunctions", "LongParameterList")
 class LibraryViewModel @Inject constructor(
     private val loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase,
     private val librarySyncService: LibrarySyncService,
     private val watchEpisodeUseCase: WatchEpisodeUseCase,
+    private val loadUnwatchedEpisodesUseCase: LoadUnwatchedEpisodesUseCase,
+    private val bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase,
+    private val judgeFinaleUseCase: JudgeFinaleUseCase,
+    private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -152,6 +181,7 @@ class LibraryViewModel @Inject constructor(
                 librarySyncService.syncEntry(entry.id)
                 loadFromRoom()
                 _uiState.update { it.copy(recordingEntryId = null) }
+                judgeFinale(entry, episode.number)
             }.onFailure { e ->
                 Timber.e(e, "「見た」記録に失敗: ${entry.work.title}")
                 _uiState.update {
@@ -162,6 +192,119 @@ class LibraryViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * カードの「まとめて」：未視聴エピソード一覧の展開/折りたたみ。展開時に一覧を取得する。
+     */
+    fun toggleBulkRecord(entry: LibraryEntry) {
+        if (_uiState.value.bulkRecordEntryId == entry.id) {
+            collapseBulkRecord()
+            return
+        }
+        _uiState.update { it.copy(bulkRecordEntryId = entry.id, bulkEpisodes = BulkEpisodesState.Loading) }
+        viewModelScope.launch {
+            val result = loadUnwatchedEpisodesUseCase(entry.work.id, entry.nextEpisode?.id)
+            // 取得中に別のカードを開いた/閉じた場合は結果を捨てる
+            if (_uiState.value.bulkRecordEntryId != entry.id) return@launch
+            val state = result.fold(
+                onSuccess = { BulkEpisodesState.Loaded(it) },
+                onFailure = { e ->
+                    BulkEpisodesState.Error(errorMapper.toUserMessage(e, "LibraryViewModel.toggleBulkRecord"))
+                }
+            )
+            _uiState.update { it.copy(bulkEpisodes = state) }
+        }
+    }
+
+    /**
+     * 展開中の未視聴一覧の index 番目までをまとめて記録する。
+     */
+    fun bulkRecordUpTo(entry: LibraryEntry, upToIndex: Int) {
+        val state = _uiState.value
+        val episodes = (state.bulkEpisodes as? BulkEpisodesState.Loaded)?.episodes.orEmpty()
+        val targets = episodes.take(upToIndex + 1)
+        // 二重タップ防止: 記録中は弾く（launch の外で同期的にフラグを立てる）
+        if (state.bulkRecordEntryId != entry.id || targets.isEmpty() || state.recordingEntryId != null) return
+        _uiState.update { it.copy(recordingEntryId = entry.id, error = null) }
+        viewModelScope.launch {
+            val lastEpisode = targets.last()
+            val result = bulkRecordEpisodesUseCase(
+                episodeIds = targets.map { it.id },
+                workId = entry.work.id,
+                currentStatus = entry.statusState ?: entry.work.viewerStatusState,
+                finaleInfo = entry.work.malAnimeId?.toIntOrNull()?.let { malId ->
+                    FinaleJudgmentInfo(
+                        malAnimeId = malId,
+                        lastEpisodeNumber = lastEpisode.number,
+                        lastEpisodeHasNext = lastEpisode.hasNextEpisode
+                    )
+                }
+            )
+            // 途中で失敗しても一部は記録済みの可能性があるので、どちらの場合も再同期する
+            librarySyncService.syncEntry(entry.id)
+            loadFromRoom()
+            collapseBulkRecord()
+            _uiState.update { state ->
+                state.copy(
+                    recordingEntryId = null,
+                    error = result.exceptionOrNull()?.let { e ->
+                        Timber.e(e, "まとめて記録に失敗: ${entry.work.title}")
+                        errorMapper.toUserMessage(e, "LibraryViewModel.bulkRecordUpTo")
+                    }
+                )
+            }
+            val episodeNumber = lastEpisode.number
+            if (result.getOrNull()?.finaleResult?.isFinale == true && episodeNumber != null) {
+                showFinaleConfirmation(entry, episodeNumber)
+            }
+        }
+    }
+
+    /**
+     * 「見た」で記録した話が最終話かを MAL の話数で判定し、最終話ならダイアログを出す（Track と同じ基準）。
+     */
+    private suspend fun judgeFinale(entry: LibraryEntry, episodeNumber: Int?) {
+        val malAnimeId = entry.work.malAnimeId?.toIntOrNull() ?: return
+        if (episodeNumber == null) return
+        if (judgeFinaleUseCase(episodeNumber, malAnimeId).isFinale) {
+            showFinaleConfirmation(entry, episodeNumber)
+        }
+    }
+
+    private fun showFinaleConfirmation(entry: LibraryEntry, episodeNumber: Int) {
+        _uiState.update {
+            it.copy(finaleConfirmation = FinaleConfirmation(entry.id, entry.work.id, episodeNumber))
+        }
+    }
+
+    /**
+     * 最終話ダイアログの「視聴完了にする」：作品を WATCHED にしてライブラリを再同期する。
+     */
+    fun confirmFinale() {
+        val confirmation = _uiState.value.finaleConfirmation ?: return
+        _uiState.update { it.copy(finaleConfirmation = null) }
+        viewModelScope.launch {
+            updateViewStateUseCase(confirmation.workId, StatusState.WATCHED)
+                .onSuccess {
+                    librarySyncService.syncEntry(confirmation.entryId)
+                    loadFromRoom()
+                }
+                .onFailure { e ->
+                    Timber.e(e, "視聴完了への変更に失敗: workId=${confirmation.workId}")
+                    _uiState.update {
+                        it.copy(error = errorMapper.toUserMessage(e, "LibraryViewModel.confirmFinale"))
+                    }
+                }
+        }
+    }
+
+    fun dismissFinale() {
+        _uiState.update { it.copy(finaleConfirmation = null) }
+    }
+
+    private fun collapseBulkRecord() {
+        _uiState.update { it.copy(bulkRecordEntryId = null, bulkEpisodes = null) }
     }
 
     fun toggleMediaFilter(media: String) = updateFilter { it.copy(selectedMedia = it.selectedMedia.toggle(media)) }
