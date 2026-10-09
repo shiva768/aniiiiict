@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.annict.WorkDetailQuery
 import com.annict.WorkSeriesListQuery
 import com.annict.type.Media
@@ -417,9 +418,9 @@ class AnimeDetailScreenUITest {
         // Then: 4つの優先度チップが表示され、現在の優先度が選択状態
         composeTestRule.onNodeWithText("優先度").assertIsDisplayed()
         composeTestRule.onNodeWithTag("priority_chip_TIER1").assertIsDisplayed().assertIsSelected()
-        composeTestRule.onNodeWithTag("priority_chip_TIER2").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("priority_chip_TIER3").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("priority_chip_NONE").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_TIER2").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_TIER3").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_chip_NONE").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -440,7 +441,7 @@ class AnimeDetailScreenUITest {
                 )
             }
         }
-        composeTestRule.onNodeWithTag("priority_chip_TIER3").performClick()
+        composeTestRule.onNodeWithTag("priority_chip_TIER3").performScrollTo().performClick()
 
         // Then: 選んだ優先度で変更が呼ばれる
         verify(exactly = 1) { mockViewModel.changePriority(WorkPriority.TIER3) }
