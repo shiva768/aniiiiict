@@ -165,6 +165,13 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
+     * 詳細画面などで優先度（端末内）が変わったとき、Room から読み直して並びに反映する。
+     */
+    fun onPriorityChanged() {
+        viewModelScope.launch { loadFromRoom() }
+    }
+
+    /**
      * カードの「見た」ボタン：次の1話をその場で記録し、ライブラリを再同期して進捗に反映する。
      */
     fun recordNextEpisode(entry: LibraryEntry) {
