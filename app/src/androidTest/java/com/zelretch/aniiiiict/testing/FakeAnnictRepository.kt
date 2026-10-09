@@ -6,7 +6,6 @@ import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
-import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 
@@ -27,7 +26,6 @@ open class FakeAnnictRepository : AnnictRepository {
     var workDetailResult: Result<WorkDetailQuery.Node?> = Result.success(null)
     var workSeriesListResult: Result<WorkSeriesListQuery.Node?> = Result.success(null)
     var libraryEntriesResult: Result<LibraryEntriesPage> = Result.success(LibraryEntriesPage(emptyList(), false, null))
-    var libraryEntryResult: Result<LibraryEntry?> = Result.success(null)
     var workEpisodesResult: Result<List<Episode>> = Result.success(emptyList())
 
     // 呼び出し記録
@@ -88,10 +86,11 @@ open class FakeAnnictRepository : AnnictRepository {
 
     override suspend fun getWorkSeriesList(workId: String): Result<WorkSeriesListQuery.Node?> = workSeriesListResult
 
-    override suspend fun getLibraryEntries(states: List<StatusState>, after: String?): Result<LibraryEntriesPage> =
-        libraryEntriesResult
-
-    override suspend fun getLibraryEntry(libraryEntryId: String): Result<LibraryEntry?> = libraryEntryResult
+    override suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        after: String?,
+        seasons: List<String>?
+    ): Result<LibraryEntriesPage> = libraryEntriesResult
 
     override suspend fun getWorkEpisodes(workId: String): Result<List<Episode>> = workEpisodesResult
 }
