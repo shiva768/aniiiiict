@@ -52,14 +52,23 @@ jobs:
         env:
           BUILD_TIMESTAMP: ${{ steps.timestamp.outputs.value }}
           BUILD_REF_NAME: ${{ github.head_ref || github.ref_name }}
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug assembleRelease --stacktrace
 
       - name: Rename APK
-        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
+        run: |
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
+          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/app-release-${{ steps.timestamp.outputs.value }}.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-${{ steps.timestamp.outputs.value }}
           path: app/build/outputs/apk/debug/app-debug-${{ steps.timestamp.outputs.value }}.apk
+          retention-days: 7
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ steps.timestamp.outputs.value }}
+          path: app/build/outputs/apk/release/app-release-${{ steps.timestamp.outputs.value }}.apk
           retention-days: 7
