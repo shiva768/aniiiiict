@@ -17,6 +17,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -30,6 +32,10 @@ import java.time.LocalDateTime
 
 @DisplayName("GetAnimeDetailUseCase")
 class GetAnimeDetailUseCaseTest {
+
+    private companion object {
+        const val API_DELAY_MS = 1000L
+    }
 
     private lateinit var annictRepository: AnnictRepository
     private lateinit var myAnimeListRepository: MyAnimeListRepository
@@ -150,6 +156,32 @@ class GetAnimeDetailUseCaseTest {
             assertNotNull(animeDetailInfo)
             assertEquals(12, animeDetailInfo?.episodeCount) // Annictのデータにフォールバック
             assertNull(animeDetailInfo?.malInfo)
+        }
+
+        @Test
+        @DisplayName("Annict詳細・MyAnimeList・シリーズ情報を並列に取得する")
+        fun Annict詳細とMyAnimeListとシリーズ情報を並列に取得する() = runTest {
+            // Given: 各APIがそれぞれ1秒かかる
+            val programWithWork = createSampleProgramWithWork()
+            coEvery { annictRepository.getWorkDetail(any()) } coAnswers {
+                delay(API_DELAY_MS)
+                Result.success(createMockAnnictDetail())
+            }
+            coEvery { myAnimeListRepository.getAnimeDetail(any()) } coAnswers {
+                delay(API_DELAY_MS)
+                Result.success(createMockMyAnimeListResponse())
+            }
+            coEvery { annictRepository.getWorkSeriesList(any()) } coAnswers {
+                delay(API_DELAY_MS)
+                Result.success(null)
+            }
+
+            // When
+            val result = useCase(programWithWork)
+
+            // Then: 直列なら3秒かかるところ1秒で終わる
+            assertTrue(result.isSuccess)
+            assertEquals(API_DELAY_MS, currentTime)
         }
 
         @Test
