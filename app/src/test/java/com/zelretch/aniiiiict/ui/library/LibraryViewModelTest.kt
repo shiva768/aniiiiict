@@ -63,6 +63,8 @@ class LibraryViewModelTest {
         Dispatchers.setMain(dispatcher)
         loadLibraryEntriesUseCase = mockk()
         librarySyncService = mockk()
+        coEvery { librarySyncService.advanceEntry(any(), any()) } returns Unit
+        coEvery { librarySyncService.removeEntry(any()) } returns Unit
         watchEpisodeUseCase = mockk()
         loadUnwatchedEpisodesUseCase = mockk()
         bulkRecordEpisodesUseCase = mockk()
@@ -527,8 +529,8 @@ class LibraryViewModelTest {
         }
 
         @Test
-        @DisplayName("recordNextEpisodeで次の話が記録され再同期される")
-        fun recordNextEpisodeRecordsAndSyncs() = runTest(dispatcher) {
+        @DisplayName("recordNextEpisodeで記録し、エピソード一覧から次の話へ進める（Annictから取り直さない）")
+        fun recordNextEpisodeRecordsAndAdvances() = runTest(dispatcher) {
             // Given
             val entry = LibraryEntry(
                 id = "entry1",
@@ -536,9 +538,11 @@ class LibraryViewModelTest {
                 nextEpisode = Episode(id = "ep1", number = 1),
                 statusState = StatusState.WATCHING
             )
+            val ep2 = Episode(id = "ep2", number = 2)
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
             coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
-            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+            coEvery { loadUnwatchedEpisodesUseCase("work1", "ep1") } returns
+                Result.success(listOf(Episode(id = "ep1", number = 1, hasNextEpisode = true), ep2))
 
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
@@ -548,8 +552,35 @@ class LibraryViewModelTest {
 
             // Then
             coVerify { watchEpisodeUseCase("ep1", "work1", StatusState.WATCHING) }
-            coVerify { librarySyncService.syncEntry("entry1") }
+            coVerify { librarySyncService.advanceEntry("entry1", ep2) }
+            coVerify(exactly = 0) { librarySyncService.syncEntry(any()) }
             assertNull(viewModel.uiState.value.recordingEntryId)
+        }
+
+        @Test
+        @DisplayName("エピソード一覧が取れないときはAnnictから取り直す")
+        fun recordNextEpisodeFallsBackToSync() = runTest(dispatcher) {
+            // Given
+            val entry = LibraryEntry(
+                id = "entry1",
+                work = createFakeWork("work1", "Work"),
+                nextEpisode = Episode(id = "ep1", number = 1),
+                statusState = StatusState.WATCHING
+            )
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { loadUnwatchedEpisodesUseCase(any(), any()) } returns Result.failure(RuntimeException("x"))
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+
+            // When
+            viewModel.recordNextEpisode(entry)
+
+            // Then
+            coVerify { librarySyncService.syncEntry("entry1") }
+            coVerify(exactly = 0) { librarySyncService.advanceEntry(any(), any()) }
         }
 
         @Test
@@ -569,6 +600,7 @@ class LibraryViewModelTest {
                 Result.success(Unit)
             }
             coEvery { librarySyncService.syncEntry(any()) } returns Unit
+            coEvery { loadUnwatchedEpisodesUseCase(any(), any()) } returns Result.success(emptyList())
 
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
@@ -649,7 +681,7 @@ class LibraryViewModelTest {
         }
 
         @Test
-        @DisplayName("タップした話までまとめて記録され、再同期して閉じる")
+        @DisplayName("タップした話までまとめて記録され、開いている一覧から次の話へ進めて閉じる")
         fun bulkRecordUpToRecordsAndSyncs() = runTest(dispatcher) {
             val viewModel = createLoadedViewModel()
             coEvery {
@@ -662,7 +694,8 @@ class LibraryViewModelTest {
             coVerify {
                 bulkRecordEpisodesUseCase(listOf("ep2", "ep3"), "work1", StatusState.WATCHING, any(), any())
             }
-            coVerify { librarySyncService.syncEntry("entry1") }
+            coVerify { librarySyncService.advanceEntry("entry1", Episode(id = "ep4", number = 4)) }
+            coVerify(exactly = 0) { librarySyncService.syncEntry(any()) }
             assertNull(viewModel.uiState.value.bulkRecordEntryId)
             assertNull(viewModel.uiState.value.recordingEntryId)
         }
@@ -779,7 +812,7 @@ class LibraryViewModelTest {
         }
 
         @Test
-        @DisplayName("視聴完了にすると WATCHED に更新して再同期する")
+        @DisplayName("視聴完了にすると WATCHED に更新し、ライブラリの対象外なので手元から消す")
         fun confirmFinaleUpdatesStatus() = runTest(dispatcher) {
             val viewModel = createLoadedViewModel()
             coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
@@ -790,7 +823,9 @@ class LibraryViewModelTest {
             viewModel.confirmFinale()
 
             coVerify { updateViewStateUseCase("work1", StatusState.WATCHED) }
-            coVerify(exactly = 2) { librarySyncService.syncEntry("entry1") }
+            coVerify { librarySyncService.advanceEntry("entry1", Episode(id = "ep12", number = 12)) }
+            coVerify { librarySyncService.removeEntry("entry1") }
+            coVerify(exactly = 0) { librarySyncService.syncEntry(any()) }
             assertNull(viewModel.uiState.value.finaleConfirmation)
         }
 
@@ -881,6 +916,7 @@ class LibraryViewModelTest {
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(target))
             coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
             coEvery { librarySyncService.syncEntry(any()) } returns Unit
+            coEvery { loadUnwatchedEpisodesUseCase(any(), any()) } returns Result.success(emptyList())
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
 

@@ -105,4 +105,34 @@ class LibrarySyncServiceTest {
         coVerify(exactly = 0) { dao.upsert(any()) }
         coVerify(exactly = 0) { dao.replaceAll(any()) }
     }
+
+    @Test
+    @DisplayName("advanceEntry は次の話を差し替え、視聴予定なら視聴中にする")
+    fun advanceEntryUpdatesNextEpisode() = runTest {
+        val wannaWatch = entry(nextEpisodeNumber = 1).copy(statusState = StatusState.WANNA_WATCH)
+        coEvery { dao.getById("entry1") } returns wannaWatch.toEntity()
+
+        service.advanceEntry("entry1", Episode(id = "ep2", number = 2, title = "二話"))
+
+        coVerify {
+            dao.upsert(
+                match {
+                    it.nextEpisodeId == "ep2" &&
+                        it.nextEpisodeNumber == 2 &&
+                        it.nextEpisodeTitle == "二話" &&
+                        it.statusState == "WATCHING"
+                }
+            )
+        }
+    }
+
+    @Test
+    @DisplayName("advanceEntry で次の話が無ければ空にする（すべて視聴済み）")
+    fun advanceEntryClearsWhenNoNext() = runTest {
+        coEvery { dao.getById("entry1") } returns entry().toEntity()
+
+        service.advanceEntry("entry1", null)
+
+        coVerify { dao.upsert(match { it.nextEpisodeId == null && it.nextEpisodeNumber == null }) }
+    }
 }

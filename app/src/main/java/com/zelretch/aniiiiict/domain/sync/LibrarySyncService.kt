@@ -4,6 +4,7 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.local.LibraryEntryDao
 import com.zelretch.aniiiiict.data.local.LibraryEntryEntity
 import com.zelretch.aniiiiict.data.local.toEntity
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -77,6 +78,36 @@ class LibrarySyncService @Inject constructor(
             .onFailure { e ->
                 Timber.e(e, "エントリー更新失敗: id=$libraryEntryId")
             }
+    }
+
+    /**
+     * ライブラリで記録したあと、Annict に取り直しに行かず手元の行の「次の話」を進める。
+     * 視聴予定の作品は記録時に視聴中へ変わるので、ステータスも合わせる。
+     */
+    suspend fun advanceEntry(libraryEntryId: String, nextEpisode: Episode?) {
+        val entity = libraryEntryDao.getById(libraryEntryId) ?: return
+        val watching = StatusState.WATCHING.name
+        val wannaWatch = StatusState.WANNA_WATCH.name
+        libraryEntryDao.upsert(
+            entity.copy(
+                nextEpisodeId = nextEpisode?.id,
+                nextEpisodeNumber = nextEpisode?.number,
+                nextEpisodeNumberText = nextEpisode?.numberText,
+                nextEpisodeTitle = nextEpisode?.title,
+                statusState = if (entity.statusState == wannaWatch) watching else entity.statusState,
+                workViewerStatusState = if (entity.workViewerStatusState == wannaWatch) {
+                    watching
+                } else {
+                    entity.workViewerStatusState
+                }
+            )
+        )
+        Timber.i("次の話を更新: id=$libraryEntryId, next=${nextEpisode?.number}")
+    }
+
+    /** 視聴完了にした等でライブラリの対象外になったエントリーを手元から消す */
+    suspend fun removeEntry(libraryEntryId: String) {
+        libraryEntryDao.deleteById(libraryEntryId)
     }
 
     private suspend fun fetchAllPages(
