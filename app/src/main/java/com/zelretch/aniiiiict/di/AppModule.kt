@@ -4,6 +4,8 @@ import android.content.Context
 import com.zelretch.aniiiiict.BuildConfig
 import com.zelretch.aniiiiict.data.api.AniListApolloClient
 import com.zelretch.aniiiiict.data.api.AnnictApolloClient
+import com.zelretch.aniiiiict.data.api.AnnictHealthInterceptor
+import com.zelretch.aniiiiict.data.api.AnnictStatusMonitor
 import com.zelretch.aniiiiict.data.api.ErrorInterceptor
 import com.zelretch.aniiiiict.data.api.MyAnimeListApi
 import com.zelretch.aniiiiict.data.auth.AnnictAuthManager
@@ -50,9 +52,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+    fun provideOkHttpClient(annictStatusMonitor: AnnictStatusMonitor): OkHttpClient = OkHttpClient.Builder()
         // まずエラーを正しく分類する関所
         .addInterceptor(ErrorInterceptor())
+        // Annict の障害検知（ErrorInterceptor が例外に変換する前の生の応答を見る）
+        .addInterceptor(AnnictHealthInterceptor(annictStatusMonitor))
         // 次にログ（デバッグ時のみ詳細）
         .addInterceptor(
             HttpLoggingInterceptor().apply {

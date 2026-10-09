@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -61,6 +64,8 @@ import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailScreen
 import com.zelretch.aniiiiict.ui.animedetail.AnimeDetailViewModel
 import com.zelretch.aniiiiict.ui.auth.AuthScreen
 import com.zelretch.aniiiiict.ui.base.UiState
+import com.zelretch.aniiiiict.ui.common.AnnictStatusViewModel
+import com.zelretch.aniiiiict.ui.common.components.AnnictOutageBanner
 import com.zelretch.aniiiiict.ui.history.HistoryScreen
 import com.zelretch.aniiiiict.ui.history.HistoryScreenActions
 import com.zelretch.aniiiiict.ui.history.HistoryViewModel
@@ -259,108 +264,124 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
             }
         }
 
-        NavHost(navController = navController, startDestination = startDestination) {
-            composable("loading") {
-                LoadingScreen()
+        val annictStatusViewModel: AnnictStatusViewModel = hiltViewModel()
+        val isAnnictDown by annictStatusViewModel.isAnnictDown.collectAsState()
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            if (isAnnictDown) {
+                AnnictOutageBanner()
             }
-            composable("auth") {
-                AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
-            }
-            composable("track") {
-                val trackViewModel: TrackViewModel = hiltViewModel<TrackViewModel>()
-                val trackUiState by trackViewModel.uiState.collectAsState()
-                TrackScreen(
-                    viewModel = trackViewModel,
-                    uiState = trackUiState,
-                    onRecordEpisode = { id, workId, status ->
-                        trackViewModel.recordEpisode(
-                            id,
-                            workId,
-                            status
+            // バナー表示中はステータスバー分の余白をバナー側で取るので、各画面のTopAppBarには二重に付けない
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .then(if (isAnnictDown) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier)
+            ) {
+                NavHost(navController = navController, startDestination = startDestination) {
+                    composable("loading") {
+                        LoadingScreen()
+                    }
+                    composable("auth") {
+                        AuthScreen(uiState = mainUiState, onLoginClick = { mainViewModel.startAuth() })
+                    }
+                    composable("track") {
+                        val trackViewModel: TrackViewModel = hiltViewModel<TrackViewModel>()
+                        val trackUiState by trackViewModel.uiState.collectAsState()
+                        TrackScreen(
+                            viewModel = trackViewModel,
+                            uiState = trackUiState,
+                            onRecordEpisode = { id, workId, status ->
+                                trackViewModel.recordEpisode(
+                                    id,
+                                    workId,
+                                    status
+                                )
+                            },
+                            onRefresh = { trackViewModel.refresh() },
+                            onMenuClick = {
+                                scope.launch {
+                                    drawerState.open()
+                                }
+                            },
+                            onShowAnimeDetail = { programWithWork ->
+                                navController.navigate("anime_detail/${programWithWork.work.id}")
+                            }
                         )
-                    },
-                    onRefresh = { trackViewModel.refresh() },
-                    onMenuClick = {
-                        scope.launch {
-                            drawerState.open()
+                    }
+                    composable("history") {
+                        val historyViewModel: HistoryViewModel = hiltViewModel<HistoryViewModel>()
+                        val historyUiState by historyViewModel.uiState.collectAsState()
+                        val actions = HistoryScreenActions(
+                            onNavigateBack = { navController.navigateUp() },
+                            onRetry = { historyViewModel.loadRecords() },
+                            onDeleteRecord = { historyViewModel.deleteRecord(it) },
+                            onRefresh = { historyViewModel.loadRecords() },
+                            onLoadNextPage = { historyViewModel.loadNextPage() },
+                            onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
+                            onRecordClick = { historyViewModel.showRecordDetail(it) },
+                            onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
+                        )
+                        HistoryScreen(uiState = historyUiState, actions = actions)
+                    }
+                    composable("library") {
+                        val libraryViewModel: LibraryViewModel = hiltViewModel<LibraryViewModel>()
+                        val libraryUiState by libraryViewModel.uiState.collectAsState()
+                        LibraryScreen(
+                            viewModel = libraryViewModel,
+                            uiState = libraryUiState,
+                            onNavigateBack = { navController.navigateUp() },
+                            onNavigateToDetail = { workId ->
+                                navController.navigate("anime_detail/$workId")
+                            }
+                        )
+                    }
+                    composable("anime_detail/{workId}") { backStackEntry ->
+                        val workId = backStackEntry.arguments?.getString("workId") ?: ""
+                        val trackBackStackEntry = remember(backStackEntry) {
+                            runCatching { navController.getBackStackEntry("track") }.getOrNull()
                         }
-                    },
-                    onShowAnimeDetail = { programWithWork ->
-                        navController.navigate("anime_detail/${programWithWork.work.id}")
-                    }
-                )
-            }
-            composable("history") {
-                val historyViewModel: HistoryViewModel = hiltViewModel<HistoryViewModel>()
-                val historyUiState by historyViewModel.uiState.collectAsState()
-                val actions = HistoryScreenActions(
-                    onNavigateBack = { navController.navigateUp() },
-                    onRetry = { historyViewModel.loadRecords() },
-                    onDeleteRecord = { historyViewModel.deleteRecord(it) },
-                    onRefresh = { historyViewModel.loadRecords() },
-                    onLoadNextPage = { historyViewModel.loadNextPage() },
-                    onSearchQueryChange = { historyViewModel.updateSearchQuery(it) },
-                    onRecordClick = { historyViewModel.showRecordDetail(it) },
-                    onDismissRecordDetail = { historyViewModel.hideRecordDetail() }
-                )
-                HistoryScreen(uiState = historyUiState, actions = actions)
-            }
-            composable("library") {
-                val libraryViewModel: LibraryViewModel = hiltViewModel<LibraryViewModel>()
-                val libraryUiState by libraryViewModel.uiState.collectAsState()
-                LibraryScreen(
-                    viewModel = libraryViewModel,
-                    uiState = libraryUiState,
-                    onNavigateBack = { navController.navigateUp() },
-                    onNavigateToDetail = { workId ->
-                        navController.navigate("anime_detail/$workId")
-                    }
-                )
-            }
-            composable("anime_detail/{workId}") { backStackEntry ->
-                val workId = backStackEntry.arguments?.getString("workId") ?: ""
-                val trackBackStackEntry = remember(backStackEntry) {
-                    runCatching { navController.getBackStackEntry("track") }.getOrNull()
-                }
-                val libraryBackStackEntry = remember(backStackEntry) {
-                    runCatching { navController.getBackStackEntry("library") }.getOrNull()
-                }
-                val trackViewModel: TrackViewModel? = trackBackStackEntry?.let { hiltViewModel(it) }
-                val libraryViewModel: LibraryViewModel? = libraryBackStackEntry?.let { hiltViewModel(it) }
-                val detailViewModel: AnimeDetailViewModel = hiltViewModel()
-                val programWithWork = trackViewModel?.getProgramWithWork(workId)
+                        val libraryBackStackEntry = remember(backStackEntry) {
+                            runCatching { navController.getBackStackEntry("library") }.getOrNull()
+                        }
+                        val trackViewModel: TrackViewModel? = trackBackStackEntry?.let { hiltViewModel(it) }
+                        val libraryViewModel: LibraryViewModel? = libraryBackStackEntry?.let { hiltViewModel(it) }
+                        val detailViewModel: AnimeDetailViewModel = hiltViewModel()
+                        val programWithWork = trackViewModel?.getProgramWithWork(workId)
 
-                // 画面を閉じる際、この画面でステータス変更していれば遷移元へ反映する
-                val onClose: () -> Unit = {
-                    val changed = (detailViewModel.uiState.value as? UiState.Success)?.data?.statusChanged == true
-                    if (changed) {
-                        trackViewModel?.refresh()
-                        libraryViewModel?.onWorkStatusChanged(workId)
+                        // 画面を閉じる際、この画面でステータス変更していれば遷移元へ反映する
+                        val onClose: () -> Unit = {
+                            val changed =
+                                (detailViewModel.uiState.value as? UiState.Success)?.data?.statusChanged == true
+                            if (changed) {
+                                trackViewModel?.refresh()
+                                libraryViewModel?.onWorkStatusChanged(workId)
+                            }
+                            navController.navigateUp()
+                        }
+
+                        // システムバック（ジェスチャー/戻るボタン）でも反映されるようにする
+                        BackHandler(onBack = onClose)
+
+                        AnimeDetailScreen(
+                            workId = workId,
+                            programWithWork = programWithWork,
+                            onNavigateBack = onClose,
+                            onNavigateToWork = { relatedWorkId ->
+                                navController.navigate("anime_detail/$relatedWorkId")
+                            },
+                            viewModel = detailViewModel
+                        )
                     }
-                    navController.navigateUp()
+                    composable("settings") {
+                        val settingsViewModel = hiltViewModel<SettingsViewModel>()
+                        val syncStatus by settingsViewModel.syncStatus.collectAsState()
+                        SettingsScreen(
+                            syncStatus = syncStatus,
+                            onSyncLibrary = { settingsViewModel.syncLibrary() },
+                            onNavigateBack = { navController.navigateUp() }
+                        )
+                    }
                 }
-
-                // システムバック（ジェスチャー/戻るボタン）でも反映されるようにする
-                BackHandler(onBack = onClose)
-
-                AnimeDetailScreen(
-                    workId = workId,
-                    programWithWork = programWithWork,
-                    onNavigateBack = onClose,
-                    onNavigateToWork = { relatedWorkId ->
-                        navController.navigate("anime_detail/$relatedWorkId")
-                    },
-                    viewModel = detailViewModel
-                )
-            }
-            composable("settings") {
-                val settingsViewModel = hiltViewModel<SettingsViewModel>()
-                val syncStatus by settingsViewModel.syncStatus.collectAsState()
-                SettingsScreen(
-                    syncStatus = syncStatus,
-                    onSyncLibrary = { settingsViewModel.syncLibrary() },
-                    onNavigateBack = { navController.navigateUp() }
-                )
             }
         }
     }
