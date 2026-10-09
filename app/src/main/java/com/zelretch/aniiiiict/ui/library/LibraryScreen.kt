@@ -66,6 +66,7 @@ import coil.compose.AsyncImage
 import com.annict.type.SeasonName
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.LibraryEntry
+import com.zelretch.aniiiiict.ui.common.components.episode.FinaleConfirmDialog
 import com.zelretch.aniiiiict.ui.common.components.episode.InlineUnwatchedEpisodeList
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.common.components.toStatusColor
@@ -93,6 +94,13 @@ fun LibraryScreen(
             uiState = uiState,
             viewModel = viewModel,
             onNavigateToDetail = onNavigateToDetail
+        )
+    }
+    uiState.finaleConfirmation?.let { finale ->
+        FinaleConfirmDialog(
+            episodeNumber = finale.episodeNumber,
+            onConfirm = { viewModel.confirmFinale() },
+            onDismiss = { viewModel.dismissFinale() }
         )
     }
 }

@@ -8,8 +8,13 @@ import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
+import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
+import com.zelretch.aniiiiict.domain.usecase.FinaleState
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
+import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadUnwatchedEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.UpdateViewStateUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
@@ -44,6 +49,8 @@ class LibraryViewModelTest {
     private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
     private lateinit var loadUnwatchedEpisodesUseCase: LoadUnwatchedEpisodesUseCase
     private lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase
+    private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
+    private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -55,6 +62,8 @@ class LibraryViewModelTest {
         watchEpisodeUseCase = mockk()
         loadUnwatchedEpisodesUseCase = mockk()
         bulkRecordEpisodesUseCase = mockk()
+        judgeFinaleUseCase = mockk()
+        updateViewStateUseCase = mockk()
         errorMapper = mockk()
     }
 
@@ -71,6 +80,8 @@ class LibraryViewModelTest {
             watchEpisodeUseCase,
             loadUnwatchedEpisodesUseCase,
             bulkRecordEpisodesUseCase,
+            judgeFinaleUseCase,
+            updateViewStateUseCase,
             errorMapper
         )
     }
@@ -148,6 +159,8 @@ class LibraryViewModelTest {
                     watchEpisodeUseCase,
                     loadUnwatchedEpisodesUseCase,
                     bulkRecordEpisodesUseCase,
+                    judgeFinaleUseCase,
+                    updateViewStateUseCase,
                     errorMapper
                 )
             val state = viewModel.uiState.first { it.isSyncing }
@@ -179,6 +192,8 @@ class LibraryViewModelTest {
                     watchEpisodeUseCase,
                     loadUnwatchedEpisodesUseCase,
                     bulkRecordEpisodesUseCase,
+                    judgeFinaleUseCase,
+                    updateViewStateUseCase,
                     errorMapper
                 )
             viewModel.uiState.first { it.isSyncing }
@@ -675,6 +690,113 @@ class LibraryViewModelTest {
             coVerify { librarySyncService.syncEntry("entry1") }
             assertEquals("記録失敗", viewModel.uiState.value.error)
             assertNull(viewModel.uiState.value.recordingEntryId)
+        }
+    }
+
+    @Nested
+    @DisplayName("最終話確認")
+    inner class Finale {
+
+        private val entry = LibraryEntry(
+            id = "entry1",
+            work = Work(
+                id = "work1",
+                title = "Work",
+                malAnimeId = "123",
+                viewerStatusState = StatusState.WATCHING
+            ),
+            nextEpisode = Episode(id = "ep11", number = 11),
+            statusState = StatusState.WATCHING
+        )
+        private val unwatched = listOf(
+            Episode(id = "ep11", number = 11, hasNextEpisode = true),
+            Episode(id = "ep12", number = 12)
+        )
+
+        private suspend fun createLoadedViewModel(): LibraryViewModel {
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            coEvery { loadUnwatchedEpisodesUseCase("work1", "ep11") } returns Result.success(unwatched)
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+            return viewModel
+        }
+
+        @Test
+        @DisplayName("まとめて記録で最終話まで記録すると視聴完了ダイアログが出る")
+        fun bulkRecordToFinaleShowsConfirmation() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } returns
+                Result.success(BulkRecordResult(JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)))
+            viewModel.toggleBulkRecord(entry)
+
+            viewModel.bulkRecordUpTo(entry, 1)
+
+            coVerify {
+                bulkRecordEpisodesUseCase(
+                    listOf("ep11", "ep12"),
+                    "work1",
+                    StatusState.WATCHING,
+                    FinaleJudgmentInfo(malAnimeId = 123, lastEpisodeNumber = 12, lastEpisodeHasNext = false),
+                    any()
+                )
+            }
+            assertEquals(FinaleConfirmation("entry1", "work1", 12), viewModel.uiState.value.finaleConfirmation)
+        }
+
+        @Test
+        @DisplayName("最終話でなければダイアログは出ない")
+        fun bulkRecordNotFinaleShowsNothing() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } returns
+                Result.success(BulkRecordResult(JudgeFinaleResult(FinaleState.NOT_FINALE)))
+            viewModel.toggleBulkRecord(entry)
+
+            viewModel.bulkRecordUpTo(entry, 0)
+
+            assertNull(viewModel.uiState.value.finaleConfirmation)
+        }
+
+        @Test
+        @DisplayName("「見た」で最終話を記録すると視聴完了ダイアログが出る")
+        fun recordNextEpisodeFinaleShowsConfirmation() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase(11, 123) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
+
+            viewModel.recordNextEpisode(entry)
+
+            assertEquals(FinaleConfirmation("entry1", "work1", 11), viewModel.uiState.value.finaleConfirmation)
+        }
+
+        @Test
+        @DisplayName("視聴完了にすると WATCHED に更新して再同期する")
+        fun confirmFinaleUpdatesStatus() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase(11, 123) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
+            coEvery { updateViewStateUseCase("work1", StatusState.WATCHED) } returns Result.success(Unit)
+            viewModel.recordNextEpisode(entry)
+
+            viewModel.confirmFinale()
+
+            coVerify { updateViewStateUseCase("work1", StatusState.WATCHED) }
+            coVerify(exactly = 2) { librarySyncService.syncEntry("entry1") }
+            assertNull(viewModel.uiState.value.finaleConfirmation)
+        }
+
+        @Test
+        @DisplayName("後でを押すとダイアログが閉じ、ステータスは変えない")
+        fun dismissFinaleKeepsStatus() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            coEvery { watchEpisodeUseCase(any(), any(), any()) } returns Result.success(Unit)
+            coEvery { judgeFinaleUseCase(11, 123) } returns JudgeFinaleResult(FinaleState.FINALE_CONFIRMED)
+            viewModel.recordNextEpisode(entry)
+
+            viewModel.dismissFinale()
+
+            assertNull(viewModel.uiState.value.finaleConfirmation)
+            coVerify(exactly = 0) { updateViewStateUseCase(any(), any()) }
         }
     }
 

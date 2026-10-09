@@ -438,6 +438,31 @@ class LibraryScreenUITest {
         composeTestRule.onNodeWithText("未視聴のエピソードはありません").assertIsDisplayed()
     }
 
+    @Test
+    fun libraryScreen_最終話確認中_ダイアログが表示されボタンでconfirmとdismissが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(
+            entries = listOf(entry),
+            allEntries = listOf(entry),
+            finaleConfirmation = FinaleConfirmation(entryId = entry.id, workId = entry.work.id, episodeNumber = 12)
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("最終話確認").assertIsDisplayed()
+        composeTestRule.onNodeWithText("視聴完了にする").performClick()
+        verify { mockViewModel.confirmFinale() }
+        composeTestRule.onNodeWithText("後で").performClick()
+        verify { mockViewModel.dismissFinale() }
+    }
+
     private fun bulkEntry() = LibraryEntry(
         id = "entry1",
         work = Work(id = "work1", title = "テストアニメ", viewerStatusState = StatusState.WATCHING),
