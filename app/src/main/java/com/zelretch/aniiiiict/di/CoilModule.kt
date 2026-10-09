@@ -6,6 +6,8 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import coil.util.DebugLogger
+import com.zelretch.aniiiiict.BuildConfig
+import com.zelretch.aniiiiict.data.api.ErrorInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,10 +33,23 @@ object CoilModule {
             DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
                 .maxSizePercent(DISK_CACHE_SIZE_PERCENT) // ストレージの5%までキャッシュを使用
                 .build()
-        }.okHttpClient(okHttpClient).crossfade(true) // 画像切り替え時にクロスフェード効果を追加
+        }.okHttpClient(imageOkHttpClient(okHttpClient)).crossfade(true) // 画像切り替え時にクロスフェード効果を追加
             // ネットワークからの読み込みを優先し、キャッシュをフォールバックとして使用
             .diskCachePolicy(CachePolicy.ENABLED).memoryCachePolicy(CachePolicy.ENABLED)
             .networkCachePolicy(CachePolicy.ENABLED)
-            // デバッグログを有効化（開発中のみ）
-            .logger(DebugLogger()).build()
+            .apply {
+                // デバッグログを有効化（開発中のみ）
+                if (BuildConfig.DEBUG) logger(DebugLogger())
+            }.build()
+
+    /**
+     * 画像用のOkHttpClient。
+     * API用クライアントは debug で BODY ログを出すため、画像まで流すとレスポンス全体を
+     * バッファしてからログ出力することになり読み込みが大幅に遅くなる。
+     * コネクションプール等は共有しつつ、インターセプターだけ付け直す。
+     */
+    private fun imageOkHttpClient(base: OkHttpClient): OkHttpClient = base.newBuilder().apply {
+        interceptors().clear()
+        addInterceptor(ErrorInterceptor())
+    }.build()
 }

@@ -164,7 +164,7 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    private suspend fun onRecordSuccess(episodeId: String, workId: String) {
+    private fun onRecordSuccess(episodeId: String, workId: String) {
         _uiState.update {
             it.copy(
                 isRecording = false,
@@ -178,6 +178,7 @@ class TrackViewModel @Inject constructor(
                 _uiState.update { it.copy(recordingSuccess = null) }
             }
         }
+        // 最終話判定(MAL)と一覧の再取得は独立しているので並列に走らせる
         handleFinaleJudgement(episodeId, workId)
         refresh()
     }
@@ -226,7 +227,11 @@ class TrackViewModel @Inject constructor(
         }
     }
 
-    private suspend fun handleFinaleJudgement(episodeId: String, workId: String) {
+    /**
+     * 対象エピソードの特定はリフレッシュで allPrograms が置き換わる前に同期で行い、
+     * MAL への問い合わせだけを別コルーチンで走らせる。
+     */
+    private fun handleFinaleJudgement(episodeId: String, workId: String) {
         val program = _uiState.value.allPrograms.find { it.work.id == workId }
         val currentEpisode = program?.programs?.find { it.episode.id == episodeId }
 
@@ -237,14 +242,16 @@ class TrackViewModel @Inject constructor(
         val episodeNumber = currentEpisode.episode.number
         val malAnimeId = program.work.malAnimeId ?: return
 
-        val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId.toInt())
+        viewModelScope.launch {
+            val judgeResult = judgeFinaleUseCase(episodeNumber, malAnimeId.toInt())
 
-        if (judgeResult.isFinale) {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    showFinaleConfirmationForWorkId = workId,
-                    showFinaleConfirmationForEpisodeNumber = episodeNumber
-                )
+            if (judgeResult.isFinale) {
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        showFinaleConfirmationForWorkId = workId,
+                        showFinaleConfirmationForEpisodeNumber = episodeNumber
+                    )
+                }
             }
         }
     }

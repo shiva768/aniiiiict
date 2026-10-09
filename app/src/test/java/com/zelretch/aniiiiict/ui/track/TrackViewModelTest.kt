@@ -285,14 +285,16 @@ class TrackViewModelTest {
 
                 viewModel.recordEpisode(episodeId, workId, StatusState.WATCHING)
 
-                skipItems(1)
-                val finaleConfirmationState = awaitItem()
+                // 最終話判定と一覧リフレッシュは並列に走るため、確認ダイアログ表示状態になるまで待つ
+                var finaleConfirmationState = awaitItem()
+                while (finaleConfirmationState.showFinaleConfirmationForWorkId == null) {
+                    finaleConfirmationState = awaitItem()
+                }
                 assertEquals(workId, finaleConfirmationState.showFinaleConfirmationForWorkId)
 
                 viewModel.dismissFinaleConfirmation()
 
-                val finalState = awaitItem()
-                assertNull(finalState.showFinaleConfirmationForWorkId)
+                assertNull(expectMostRecentItem().showFinaleConfirmationForWorkId)
 
                 coVerify(exactly = 0) { updateViewStateUseCase.invoke(any(), any()) }
             }
