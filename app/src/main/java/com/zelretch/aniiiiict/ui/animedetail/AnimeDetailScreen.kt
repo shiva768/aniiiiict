@@ -3,6 +3,7 @@ package com.zelretch.aniiiiict.ui.animedetail
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -327,8 +328,11 @@ private fun PriorityChipRow(
     onPriorityChange: (WorkPriority) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 折り返さず1行に並べ、入りきらない画面では横スクロールで届くようにする
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
