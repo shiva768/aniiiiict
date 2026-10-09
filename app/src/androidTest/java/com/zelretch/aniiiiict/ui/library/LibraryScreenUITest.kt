@@ -3,15 +3,18 @@ package com.zelretch.aniiiiict.ui.library
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
+import com.zelretch.aniiiiict.data.model.WorkPriority
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -462,6 +465,77 @@ class LibraryScreenUITest {
         composeTestRule.onNodeWithText("後で").performClick()
         verify { mockViewModel.dismissFinale() }
     }
+
+    @Test
+    fun libraryScreen_カード長押し_優先度ダイアログからsetPriorityが呼ばれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val entry = bulkEntry()
+        val state = LibraryUiState(entries = listOf(entry), allEntries = listOf(entry))
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+        composeTestRule.onNodeWithText("テストアニメ").performTouchInput { longClick() }
+
+        // Assert
+        composeTestRule.onNodeWithText("優先度（この端末だけに保存されます）").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("priority_option_FEATURED").performClick()
+        verify { mockViewModel.setPriority(entry, WorkPriority.FEATURED) }
+    }
+
+    @Test
+    fun libraryScreen_優先度あり_セクション見出しが出て後回しは折りたたまれる() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val featured = priorityEntry("w1", "注目アニメ", WorkPriority.FEATURED)
+        val normal = priorityEntry("w2", "ふつうアニメ", WorkPriority.NORMAL)
+        val deferred = priorityEntry("w3", "後回しアニメ", WorkPriority.DEFERRED)
+        val entries = listOf(featured, normal, deferred)
+        val state = LibraryUiState(entries = entries, allEntries = entries)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("注目（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("ふつう（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("後回し（1）").assertIsDisplayed()
+        composeTestRule.onNodeWithText("注目アニメ").assertIsDisplayed()
+        composeTestRule.onNodeWithText("後回しアニメ").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("library_section_DEFERRED").performClick()
+        verify { mockViewModel.toggleDeferredSection() }
+    }
+
+    @Test
+    fun libraryScreen_後回し展開中_後回しの作品が表示される() {
+        // Arrange
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val deferred = priorityEntry("w3", "後回しアニメ", WorkPriority.DEFERRED)
+        val state = LibraryUiState(entries = listOf(deferred), allEntries = listOf(deferred), isDeferredExpanded = true)
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+
+        // Act
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        // Assert
+        composeTestRule.onNodeWithText("後回しアニメ").assertIsDisplayed()
+    }
+
+    private fun priorityEntry(id: String, title: String, priority: WorkPriority) = LibraryEntry(
+        id = "entry_$id",
+        work = Work(id = id, title = title, viewerStatusState = StatusState.WATCHING),
+        nextEpisode = null,
+        statusState = StatusState.WATCHING,
+        priority = priority
+    )
 
     private fun bulkEntry() = LibraryEntry(
         id = "entry1",
