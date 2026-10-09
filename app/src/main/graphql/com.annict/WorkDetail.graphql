@@ -28,7 +28,7 @@ query WorkDetail($workId: ID!) {
           }
         }
       }
-      casts(first: 30) {
+      casts(first: 30, orderBy: { field: SORT_NUMBER, direction: ASC }) {
         nodes {
           id
           name
