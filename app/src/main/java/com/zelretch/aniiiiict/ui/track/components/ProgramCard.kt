@@ -1,11 +1,8 @@
 package com.zelretch.aniiiiict.ui.track.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +20,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -36,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,13 +49,13 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.ProgramWithWork
+import com.zelretch.aniiiiict.ui.common.components.episode.InlineUnwatchedEpisodeList
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.track.TrackUiState
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 // 記録処理中に無効化した未視聴行を薄く見せる透明度
-private const val DISABLED_ROW_ALPHA = 0.4f
 
 @Composable
 fun ProgramCard(
@@ -215,10 +210,10 @@ private fun EpisodeInfoSection(
             )
         }
         AnimatedVisibility(visible = expanded) {
-            InlineUnwatchedList(
-                programWithWork = programWithWork,
+            InlineUnwatchedEpisodeList(
+                episodes = programWithWork.programs.map { it.episode },
                 isRecording = uiState.isRecording,
-                onBulkRecordUpTo = onBulkRecordUpTo
+                onRecordUpTo = onBulkRecordUpTo
             )
         }
     }
@@ -257,102 +252,6 @@ private fun BulkRecordButton(
                     text = unwatchedCount.toString(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun InlineUnwatchedList(
-    programWithWork: ProgramWithWork,
-    isRecording: Boolean,
-    onBulkRecordUpTo: (Int) -> Unit
-) {
-    var pressedIndex by remember { mutableStateOf<Int?>(null) }
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            Text(
-                text = "未視聴 ${programWithWork.programs.size}話 ・ タップで記録",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-            programWithWork.programs.forEachIndexed { index, program ->
-                InlineUnwatchedRow(
-                    program = program,
-                    index = index,
-                    filled = pressedIndex != null && index <= pressedIndex!!,
-                    showCountChip = pressedIndex == index,
-                    enabled = !isRecording,
-                    onPressedChange = { pressed -> pressedIndex = if (pressed) index else null },
-                    onClick = { onBulkRecordUpTo(index) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun InlineUnwatchedRow(
-    program: com.zelretch.aniiiiict.data.model.Program,
-    index: Int,
-    filled: Boolean,
-    showCountChip: Boolean,
-    enabled: Boolean,
-    onPressedChange: (Boolean) -> Unit,
-    onClick: () -> Unit
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    LaunchedEffect(isPressed) { onPressedChange(isPressed) }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("inline_episode_$index")
-            // 記録処理中はタップを無効化し、二度押しによる重複記録を防ぐ
-            .alpha(if (enabled) 1f else DISABLED_ROW_ALPHA)
-            .clickable(
-                enabled = enabled,
-                interactionSource = interactionSource,
-                indication = LocalIndication.current
-            ) { onClick() }
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            imageVector = if (filled) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-            contentDescription = null,
-            tint = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(18.dp)
-        )
-        val episodeText = buildString {
-            append(program.episode.formattedNumber)
-            program.episode.title?.let { append("「$it」") }
-        }
-        Text(
-            text = episodeText,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        if (showCountChip) {
-            Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = "${index + 1}話",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
                 )
             }

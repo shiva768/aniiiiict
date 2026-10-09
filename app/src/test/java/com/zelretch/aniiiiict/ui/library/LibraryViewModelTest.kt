@@ -6,7 +6,10 @@ import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.Work
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
+import com.zelretch.aniiiiict.domain.usecase.LoadUnwatchedEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.WatchEpisodeUseCase
 import com.zelretch.aniiiiict.ui.base.ErrorMapper
 import io.mockk.coEvery
@@ -39,6 +42,8 @@ class LibraryViewModelTest {
     private lateinit var loadLibraryEntriesUseCase: LoadLibraryEntriesUseCase
     private lateinit var librarySyncService: LibrarySyncService
     private lateinit var watchEpisodeUseCase: WatchEpisodeUseCase
+    private lateinit var loadUnwatchedEpisodesUseCase: LoadUnwatchedEpisodesUseCase
+    private lateinit var bulkRecordEpisodesUseCase: BulkRecordEpisodesUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -48,6 +53,8 @@ class LibraryViewModelTest {
         loadLibraryEntriesUseCase = mockk()
         librarySyncService = mockk()
         watchEpisodeUseCase = mockk()
+        loadUnwatchedEpisodesUseCase = mockk()
+        bulkRecordEpisodesUseCase = mockk()
         errorMapper = mockk()
     }
 
@@ -58,7 +65,14 @@ class LibraryViewModelTest {
 
     private fun createViewModel(): LibraryViewModel {
         every { librarySyncService.status } returns MutableStateFlow(SyncStatus.Idle)
-        return LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, watchEpisodeUseCase, errorMapper)
+        return LibraryViewModel(
+            loadLibraryEntriesUseCase,
+            librarySyncService,
+            watchEpisodeUseCase,
+            loadUnwatchedEpisodesUseCase,
+            bulkRecordEpisodesUseCase,
+            errorMapper
+        )
     }
 
     @Nested
@@ -128,7 +142,14 @@ class LibraryViewModelTest {
 
             // When
             val viewModel =
-                LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, watchEpisodeUseCase, errorMapper)
+                LibraryViewModel(
+                    loadLibraryEntriesUseCase,
+                    librarySyncService,
+                    watchEpisodeUseCase,
+                    loadUnwatchedEpisodesUseCase,
+                    bulkRecordEpisodesUseCase,
+                    errorMapper
+                )
             val state = viewModel.uiState.first { it.isSyncing }
 
             // Then
@@ -152,7 +173,14 @@ class LibraryViewModelTest {
             coEvery { loadLibraryEntriesUseCase() } returns Result.success(entries)
 
             val viewModel =
-                LibraryViewModel(loadLibraryEntriesUseCase, librarySyncService, watchEpisodeUseCase, errorMapper)
+                LibraryViewModel(
+                    loadLibraryEntriesUseCase,
+                    librarySyncService,
+                    watchEpisodeUseCase,
+                    loadUnwatchedEpisodesUseCase,
+                    bulkRecordEpisodesUseCase,
+                    errorMapper
+                )
             viewModel.uiState.first { it.isSyncing }
 
             // When
@@ -528,6 +556,125 @@ class LibraryViewModelTest {
 
             // Then - 記録は1度だけ
             coVerify(exactly = 1) { watchEpisodeUseCase("ep1", "work1", StatusState.WATCHING) }
+        }
+    }
+
+    @Nested
+    @DisplayName("まとめて記録")
+    inner class BulkRecord {
+
+        private val entry = LibraryEntry(
+            id = "entry1",
+            work = Work(
+                id = "work1",
+                title = "Work",
+                viewerStatusState = StatusState.WATCHING
+            ),
+            nextEpisode = Episode(id = "ep2", number = 2),
+            statusState = StatusState.WATCHING
+        )
+        private val unwatched = listOf(
+            Episode(id = "ep2", number = 2, hasNextEpisode = true),
+            Episode(id = "ep3", number = 3, hasNextEpisode = true),
+            Episode(id = "ep4", number = 4)
+        )
+
+        private suspend fun createLoadedViewModel(): LibraryViewModel {
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(listOf(entry))
+            coEvery { loadUnwatchedEpisodesUseCase("work1", "ep2") } returns Result.success(unwatched)
+            coEvery { librarySyncService.syncEntry(any()) } returns Unit
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+            return viewModel
+        }
+
+        @Test
+        @DisplayName("まとめてを開くと未視聴エピソード一覧が読み込まれる")
+        fun toggleLoadsUnwatchedEpisodes() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+
+            viewModel.toggleBulkRecord(entry)
+
+            assertEquals("entry1", viewModel.uiState.value.bulkRecordEntryId)
+            assertEquals(BulkEpisodesState.Loaded(unwatched), viewModel.uiState.value.bulkEpisodes)
+        }
+
+        @Test
+        @DisplayName("開いている状態でもう一度押すと閉じる")
+        fun toggleTwiceCollapses() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+
+            viewModel.toggleBulkRecord(entry)
+            viewModel.toggleBulkRecord(entry)
+
+            assertNull(viewModel.uiState.value.bulkRecordEntryId)
+            assertNull(viewModel.uiState.value.bulkEpisodes)
+        }
+
+        @Test
+        @DisplayName("一覧の取得に失敗するとエラー状態になる")
+        fun toggleShowsErrorOnFailure() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            val error = RuntimeException("boom")
+            coEvery { loadUnwatchedEpisodesUseCase(any(), any()) } returns Result.failure(error)
+            every { errorMapper.toUserMessage(error, any()) } returns "取得失敗"
+
+            viewModel.toggleBulkRecord(entry)
+
+            assertEquals(BulkEpisodesState.Error("取得失敗"), viewModel.uiState.value.bulkEpisodes)
+        }
+
+        @Test
+        @DisplayName("タップした話までまとめて記録され、再同期して閉じる")
+        fun bulkRecordUpToRecordsAndSyncs() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            coEvery {
+                bulkRecordEpisodesUseCase(any(), any(), any(), any(), any())
+            } returns Result.success(BulkRecordResult())
+            viewModel.toggleBulkRecord(entry)
+
+            viewModel.bulkRecordUpTo(entry, 1)
+
+            coVerify {
+                bulkRecordEpisodesUseCase(listOf("ep2", "ep3"), "work1", StatusState.WATCHING, any(), any())
+            }
+            coVerify { librarySyncService.syncEntry("entry1") }
+            assertNull(viewModel.uiState.value.bulkRecordEntryId)
+            assertNull(viewModel.uiState.value.recordingEntryId)
+        }
+
+        @Test
+        @DisplayName("記録中に連打しても2回目は弾かれる")
+        fun bulkRecordUpToIgnoresDoubleTap() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            val gate = CompletableDeferred<Unit>()
+            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } coAnswers {
+                gate.await()
+                Result.success(BulkRecordResult())
+            }
+            viewModel.toggleBulkRecord(entry)
+
+            viewModel.bulkRecordUpTo(entry, 0)
+            viewModel.bulkRecordUpTo(entry, 0)
+            gate.complete(Unit)
+
+            coVerify(exactly = 1) { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) }
+        }
+
+        @Test
+        @DisplayName("記録に失敗してもエラーを出し、一部記録済みの可能性があるので再同期する")
+        fun bulkRecordUpToFailureStillSyncs() = runTest(dispatcher) {
+            val viewModel = createLoadedViewModel()
+            val error = RuntimeException("boom")
+            coEvery { bulkRecordEpisodesUseCase(any(), any(), any(), any(), any()) } returns Result.failure(error)
+            every { errorMapper.toUserMessage(error, any()) } returns "記録失敗"
+            viewModel.toggleBulkRecord(entry)
+
+            viewModel.bulkRecordUpTo(entry, 2)
+
+            coVerify { librarySyncService.syncEntry("entry1") }
+            assertEquals("記録失敗", viewModel.uiState.value.error)
+            assertNull(viewModel.uiState.value.recordingEntryId)
         }
     }
 

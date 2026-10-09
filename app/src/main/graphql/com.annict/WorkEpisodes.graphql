@@ -1,0 +1,19 @@
+query WorkEpisodes($workId: ID!, $after: String) {
+  node(id: $workId) {
+    ... on Work {
+      episodes(first: 100, after: $after, orderBy: { field: SORT_NUMBER, direction: ASC }) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        nodes {
+          id
+          number
+          numberText
+          title
+          viewerDidTrack
+        }
+      }
+    }
+  }
+}
