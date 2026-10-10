@@ -2,7 +2,6 @@ package com.zelretch.aniiiiict.data.repository
 
 import com.annict.CreateRecordMutation
 import com.annict.DeleteRecordMutation
-import com.annict.LibraryEntryNodeQuery
 import com.annict.UpdateStatusMutation
 import com.annict.ViewerProgramsQuery
 import com.annict.ViewerRecordsQuery
@@ -245,89 +244,39 @@ class AnnictRepositoryImpl @Inject constructor(
             node
         }
 
-    override suspend fun getLibraryEntries(states: List<StatusState>, after: String?): Result<LibraryEntriesPage> =
-        executeApiRequest("getLibraryEntries") {
-            Timber.i("ライブラリエントリーの取得を開始: states=$states, after=$after")
+    override suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        after: String?,
+        seasons: List<String>?
+    ): Result<LibraryEntriesPage> = executeApiRequest("getLibraryEntries") {
+        Timber.i("ライブラリエントリーの取得を開始: states=$states, after=$after, seasons=$seasons")
 
-            val query = com.annict.ViewerLibraryEntriesQuery(
-                states = Optional.present(states),
-                after = Optional.presentIfNotNull(after)
-            )
-            val response = annictApolloClient.executeQuery(
-                operation = query,
-                context = "AnnictRepositoryImpl.getLibraryEntries"
-            )
+        val query = com.annict.ViewerLibraryEntriesQuery(
+            states = Optional.present(states),
+            after = Optional.presentIfNotNull(after),
+            seasons = Optional.presentIfNotNull(seasons)
+        )
+        val response = annictApolloClient.executeQuery(
+            operation = query,
+            context = "AnnictRepositoryImpl.getLibraryEntries"
+        )
 
-            if (response.hasErrors()) {
-                Timber.e("GraphQLエラー: ${response.errors}")
-                throw DomainError.ApiError.GraphQLError("Library entries query failed: ${response.errors}")
-            }
-
-            val libraryEntries = response.data?.viewer?.libraryEntries
-            val entries = libraryEntries?.nodes?.filterNotNull()?.mapNotNull { mapToLibraryEntry(it) } ?: emptyList()
-            val pageInfo = libraryEntries?.pageInfo
-
-            Timber.i("ライブラリエントリー取得完了: ${entries.size}件, hasNextPage=${pageInfo?.hasNextPage}")
-            LibraryEntriesPage(
-                entries = entries,
-                hasNextPage = pageInfo?.hasNextPage == true,
-                endCursor = pageInfo?.endCursor
-            )
+        if (response.hasErrors()) {
+            Timber.e("GraphQLエラー: ${response.errors}")
+            throw DomainError.ApiError.GraphQLError("Library entries query failed: ${response.errors}")
         }
 
-    override suspend fun getLibraryEntry(libraryEntryId: String): Result<LibraryEntry?> =
-        executeApiRequest("getLibraryEntry") {
-            Timber.i("ライブラリエントリーを取得中: id=$libraryEntryId")
+        val libraryEntries = response.data?.viewer?.libraryEntries
+        val entries = libraryEntries?.nodes?.filterNotNull()?.mapNotNull { mapToLibraryEntry(it) } ?: emptyList()
+        val pageInfo = libraryEntries?.pageInfo
 
-            val query = LibraryEntryNodeQuery(id = libraryEntryId)
-            val response = annictApolloClient.executeQuery(
-                operation = query,
-                context = "AnnictRepositoryImpl.getLibraryEntry"
-            )
-
-            if (response.hasErrors()) {
-                Timber.e("GraphQLエラー: ${response.errors}")
-                throw DomainError.ApiError.GraphQLError("Library entry node query failed: ${response.errors}")
-            }
-
-            val nodeData = response.data?.node?.onLibraryEntry
-                ?: return@executeApiRequest null
-            val viewerStatus = nodeData.work.viewerStatusState ?: return@executeApiRequest null
-            val statusState = nodeData.status?.state
-            LibraryEntry(
-                id = nodeData.id,
-                work = Work(
-                    id = nodeData.work.id,
-                    title = nodeData.work.title,
-                    seasonName = nodeData.work.seasonName,
-                    seasonYear = nodeData.work.seasonYear,
-                    media = nodeData.work.media.rawValue,
-                    malAnimeId = nodeData.work.malAnimeId,
-                    viewerStatusState = viewerStatus,
-                    noEpisodes = nodeData.work.noEpisodes,
-                    image = nodeData.work.image?.let { image ->
-                        WorkImage(
-                            recommendedImageUrl = image.recommendedImageUrl,
-                            facebookOgImageUrl = image.facebookOgImageUrl
-                        )
-                    }
-                ),
-                nextEpisode = nodeData.nextEpisode?.let { episode ->
-                    Episode(
-                        id = episode.id,
-                        number = episode.number,
-                        numberText = episode.numberText,
-                        title = episode.title
-                    )
-                } ?: firstEpisodeForWannaWatch(statusState, nodeData.work.noEpisodes) {
-                    nodeData.work.episodes?.nodes?.firstOrNull()
-                        ?.let { ep ->
-                            Episode(id = ep.id, number = ep.number, numberText = ep.numberText, title = ep.title)
-                        }
-                },
-                statusState = statusState
-            )
-        }
+        Timber.i("ライブラリエントリー取得完了: ${entries.size}件, hasNextPage=${pageInfo?.hasNextPage}")
+        LibraryEntriesPage(
+            entries = entries,
+            hasNextPage = pageInfo?.hasNextPage == true,
+            endCursor = pageInfo?.endCursor
+        )
+    }
 
     override suspend fun getWorkEpisodes(workId: String): Result<List<Episode>> = executeApiRequest("getWorkEpisodes") {
         Timber.i("エピソード一覧を取得中: workId=$workId")

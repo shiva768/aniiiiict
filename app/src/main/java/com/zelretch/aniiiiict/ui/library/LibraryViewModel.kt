@@ -175,7 +175,7 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
-     * カードの「見た」ボタン：次の1話をその場で記録し、ライブラリを再同期して進捗に反映する。
+     * カードの「見た」ボタン：次の1話をその場で記録し、次の話を進めて進捗に反映する。
      */
     fun recordNextEpisode(entry: LibraryEntry) {
         val episode = entry.nextEpisode ?: return
@@ -188,7 +188,7 @@ class LibraryViewModel @Inject constructor(
                 workId = entry.work.id,
                 currentStatus = entry.statusState ?: entry.work.viewerStatusState
             ).onSuccess {
-                librarySyncService.syncEntry(entry.id)
+                advanceAfterWatch(entry, episode)
                 loadFromRoom()
                 _uiState.update { it.copy(recordingEntryId = null) }
                 judgeFinale(entry, episode.number)
@@ -201,6 +201,19 @@ class LibraryViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * 「見た」のあと、作品のエピソード一覧から記録した話の次を引いて手元の行を進める。
+     * 一覧が取れない・記録した話が先頭に無いなど辻褄が合わないときは Annict から取り直す。
+     */
+    private suspend fun advanceAfterWatch(entry: LibraryEntry, watched: Episode) {
+        val episodes = loadUnwatchedEpisodesUseCase(entry.work.id, watched.id).getOrNull()
+        if (episodes?.firstOrNull()?.id == watched.id) {
+            librarySyncService.advanceEntry(entry.id, episodes.getOrNull(1))
+        } else {
+            librarySyncService.syncEntry(entry.id)
         }
     }
 
@@ -251,8 +264,13 @@ class LibraryViewModel @Inject constructor(
                     )
                 }
             )
-            // 途中で失敗しても一部は記録済みの可能性があるので、どちらの場合も再同期する
-            librarySyncService.syncEntry(entry.id)
+            if (result.isSuccess) {
+                // 開いている未視聴一覧から次の話がわかるので、Annict に取り直しに行かない
+                librarySyncService.advanceEntry(entry.id, episodes.getOrNull(upToIndex + 1))
+            } else {
+                // 途中で失敗したときはどこまで記録できたかわからないので Annict から取り直す
+                librarySyncService.syncEntry(entry.id)
+            }
             loadFromRoom()
             collapseBulkRecord()
             _uiState.update { state ->
@@ -297,7 +315,8 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch {
             updateViewStateUseCase(confirmation.workId, StatusState.WATCHED)
                 .onSuccess {
-                    librarySyncService.syncEntry(confirmation.entryId)
+                    // 視聴完了はライブラリの対象外なので手元から消す
+                    librarySyncService.removeEntry(confirmation.entryId)
                     loadFromRoom()
                 }
                 .onFailure { e ->

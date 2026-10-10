@@ -6,7 +6,6 @@ import com.annict.WorkSeriesListQuery
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntriesPage
-import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.PaginatedRecords
 
 interface AnnictRepository {
@@ -20,8 +19,13 @@ interface AnnictRepository {
     suspend fun updateWorkViewStatus(workId: String, state: StatusState): Result<Unit>
     suspend fun getWorkDetail(workId: String): Result<WorkDetailQuery.Node?>
     suspend fun getWorkSeriesList(workId: String): Result<WorkSeriesListQuery.Node?>
-    suspend fun getLibraryEntries(states: List<StatusState>, after: String? = null): Result<LibraryEntriesPage>
-    suspend fun getLibraryEntry(libraryEntryId: String): Result<LibraryEntry?>
+
+    /** seasons は Annict の "2024-autumn" 形式。指定するとそのシーズンの作品だけに絞る */
+    suspend fun getLibraryEntries(
+        states: List<StatusState>,
+        after: String? = null,
+        seasons: List<String>? = null
+    ): Result<LibraryEntriesPage>
 
     /** 作品の全エピソードを話数順で取得する（ページングは内部で辿る） */
     suspend fun getWorkEpisodes(workId: String): Result<List<Episode>>

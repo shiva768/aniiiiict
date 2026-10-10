@@ -2,7 +2,9 @@ package com.zelretch.aniiiiict.domain.sync
 
 import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.local.LibraryEntryDao
+import com.zelretch.aniiiiict.data.local.LibraryEntryEntity
 import com.zelretch.aniiiiict.data.local.toEntity
+import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.repository.AnnictRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,22 +50,29 @@ class LibrarySyncService @Inject constructor(
             }
     }
 
+    /**
+     * 1件だけ Annict と同期する。
+     * node(id:) で引くとエントリーが null になり消えてしまうことがあったので、
+     * 全件同期と同じ一覧クエリを作品のシーズンで絞って探す。
+     * 見つからない（視聴完了にした・シーズン不明など）ときは、消す判断を全件同期に任せる。
+     */
     suspend fun syncEntry(libraryEntryId: String) {
         Timber.i("エントリー更新: id=$libraryEntryId")
-        repository.getLibraryEntry(libraryEntryId)
-            .onSuccess { entry ->
-                if (entry == null) {
-                    libraryEntryDao.deleteById(libraryEntryId)
-                    Timber.i("エントリーが見つからないため削除: id=$libraryEntryId")
-                    return
-                }
-                val status = entry.statusState ?: entry.work.viewerStatusState
-                if (status in targetStates) {
+        val season = libraryEntryDao.getById(libraryEntryId)?.annictSeason()
+        if (season == null) {
+            Timber.i("シーズン不明のため全件同期: id=$libraryEntryId")
+            sync()
+            return
+        }
+        fetchAllPages(seasons = listOf(season))
+            .onSuccess { entries ->
+                val entry = entries.firstOrNull { it.id == libraryEntryId }
+                if (entry != null) {
                     libraryEntryDao.upsert(entry.toEntity())
                     Timber.i("エントリー更新完了: id=$libraryEntryId")
                 } else {
-                    libraryEntryDao.deleteById(libraryEntryId)
-                    Timber.i("対象外ステータスのため削除: id=$libraryEntryId, status=$status")
+                    Timber.i("シーズン内に見つからないため全件同期: id=$libraryEntryId, season=$season")
+                    sync()
                 }
             }
             .onFailure { e ->
@@ -71,12 +80,44 @@ class LibrarySyncService @Inject constructor(
             }
     }
 
-    private suspend fun fetchAllPages(): Result<List<com.zelretch.aniiiiict.data.model.LibraryEntry>> {
+    /**
+     * ライブラリで記録したあと、Annict に取り直しに行かず手元の行の「次の話」を進める。
+     * 視聴予定の作品は記録時に視聴中へ変わるので、ステータスも合わせる。
+     */
+    suspend fun advanceEntry(libraryEntryId: String, nextEpisode: Episode?) {
+        val entity = libraryEntryDao.getById(libraryEntryId) ?: return
+        val watching = StatusState.WATCHING.name
+        val wannaWatch = StatusState.WANNA_WATCH.name
+        libraryEntryDao.upsert(
+            entity.copy(
+                nextEpisodeId = nextEpisode?.id,
+                nextEpisodeNumber = nextEpisode?.number,
+                nextEpisodeNumberText = nextEpisode?.numberText,
+                nextEpisodeTitle = nextEpisode?.title,
+                statusState = if (entity.statusState == wannaWatch) watching else entity.statusState,
+                workViewerStatusState = if (entity.workViewerStatusState == wannaWatch) {
+                    watching
+                } else {
+                    entity.workViewerStatusState
+                }
+            )
+        )
+        Timber.i("次の話を更新: id=$libraryEntryId, next=${nextEpisode?.number}")
+    }
+
+    /** 視聴完了にした等でライブラリの対象外になったエントリーを手元から消す */
+    suspend fun removeEntry(libraryEntryId: String) {
+        libraryEntryDao.deleteById(libraryEntryId)
+    }
+
+    private suspend fun fetchAllPages(
+        seasons: List<String>? = null
+    ): Result<List<com.zelretch.aniiiiict.data.model.LibraryEntry>> {
         val allEntries = mutableListOf<com.zelretch.aniiiiict.data.model.LibraryEntry>()
         var cursor: String? = null
         var hasNextPage = true
         while (hasNextPage) {
-            val result = repository.getLibraryEntries(targetStates, cursor)
+            val result = repository.getLibraryEntries(targetStates, cursor, seasons)
             if (result.isFailure) return Result.failure(result.exceptionOrNull()!!)
             val page = result.getOrThrow()
             allEntries.addAll(page.entries)
@@ -86,4 +127,11 @@ class LibrarySyncService @Inject constructor(
         }
         return Result.success(allEntries)
     }
+}
+
+/** Annict の seasons 引数の形式（例: "2024-autumn"） */
+private fun LibraryEntryEntity.annictSeason(): String? {
+    val year = workSeasonYear ?: return null
+    val name = workSeasonName ?: return null
+    return "$year-${name.lowercase()}"
 }

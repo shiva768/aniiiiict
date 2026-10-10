@@ -11,6 +11,9 @@ abstract class LibraryEntryDao {
     @Query("SELECT * FROM library_entries")
     abstract suspend fun getAll(): List<LibraryEntryEntity>
 
+    @Query("SELECT * FROM library_entries WHERE id = :id")
+    abstract suspend fun getById(id: String): LibraryEntryEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertAll(entries: List<LibraryEntryEntity>)
 
