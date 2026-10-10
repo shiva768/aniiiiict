@@ -65,6 +65,7 @@ class LibraryViewModelTest {
         librarySyncService = mockk()
         coEvery { librarySyncService.advanceEntry(any(), any()) } returns Unit
         coEvery { librarySyncService.removeEntry(any()) } returns Unit
+        coEvery { librarySyncService.applyStatus(any(), any()) } returns Unit
         watchEpisodeUseCase = mockk()
         loadUnwatchedEpisodesUseCase = mockk()
         bulkRecordEpisodesUseCase = mockk()
@@ -483,8 +484,8 @@ class LibraryViewModelTest {
         }
 
         @Test
-        @DisplayName("onWorkStatusChangedでworkIdから該当エントリーを再同期する")
-        fun onWorkStatusChangedSyncsMatchingEntry() = runTest(dispatcher) {
+        @DisplayName("onWorkStatusChangedでworkIdから該当エントリーを引き、Annictから取り直さず手元に反映する")
+        fun onWorkStatusChangedAppliesStatusLocally() = runTest(dispatcher) {
             // Given
             val entry = LibraryEntry(
                 id = "entry1",
@@ -498,11 +499,13 @@ class LibraryViewModelTest {
             val viewModel = createViewModel()
             viewModel.uiState.first { !it.isLoading }
 
-            // When: 詳細画面で work1 のステータスが変更された
-            viewModel.onWorkStatusChanged("work1")
+            // When: 詳細画面で work1 を中止にした
+            viewModel.onWorkStatusChanged("work1", StatusState.STOP_WATCHING)
 
-            // Then: workId から entry1 を引いて再同期する
-            coVerify { librarySyncService.syncEntry("entry1") }
+            // Then: workId から entry1 を引いて手元に反映する（再同期はしない）
+            coVerify { librarySyncService.applyStatus("entry1", StatusState.STOP_WATCHING) }
+            coVerify(exactly = 0) { librarySyncService.syncEntry(any()) }
+            coVerify(exactly = 0) { librarySyncService.sync() }
         }
 
         @Test
@@ -522,10 +525,11 @@ class LibraryViewModelTest {
             viewModel.uiState.first { !it.isLoading }
 
             // When: ライブラリに存在しない作品
-            viewModel.onWorkStatusChanged("unknown-work")
+            viewModel.onWorkStatusChanged("unknown-work", StatusState.STOP_WATCHING)
 
             // Then: 再同期は呼ばれない
             coVerify(exactly = 0) { librarySyncService.syncEntry(any()) }
+            coVerify(exactly = 0) { librarySyncService.applyStatus(any(), any()) }
         }
 
         @Test

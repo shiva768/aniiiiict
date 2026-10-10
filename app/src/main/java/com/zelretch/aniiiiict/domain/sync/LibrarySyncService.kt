@@ -105,6 +105,21 @@ class LibrarySyncService @Inject constructor(
         Timber.i("次の話を更新: id=$libraryEntryId, next=${nextEpisode?.number}")
     }
 
+    /**
+     * 詳細画面などでステータスを変えたとき、Annict に取り直しに行かず手元に反映する。
+     * ライブラリの対象外（視聴完了・中止など）になったら手元から消す。
+     */
+    suspend fun applyStatus(libraryEntryId: String, status: StatusState) {
+        if (status !in targetStates) {
+            removeEntry(libraryEntryId)
+            Timber.i("対象外ステータスのため削除: id=$libraryEntryId, status=$status")
+            return
+        }
+        val entity = libraryEntryDao.getById(libraryEntryId) ?: return
+        libraryEntryDao.upsert(entity.copy(statusState = status.name, workViewerStatusState = status.name))
+        Timber.i("ステータスを更新: id=$libraryEntryId, status=$status")
+    }
+
     /** 視聴完了にした等でライブラリの対象外になったエントリーを手元から消す */
     suspend fun removeEntry(libraryEntryId: String) {
         libraryEntryDao.deleteById(libraryEntryId)
