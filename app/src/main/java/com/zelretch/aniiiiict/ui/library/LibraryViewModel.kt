@@ -159,12 +159,20 @@ class LibraryViewModel @Inject constructor(
     }
 
     /**
-     * 詳細画面などで作品のステータスが変更されたとき、workId から該当エントリーを引いて再同期する。
+     * 詳細画面などで作品のステータスが変更されたとき、workId から該当エントリーを引いて手元に反映する。
+     * 変更後のステータスはわかっているので Annict には取り直しに行かない（全件同期でスクロール位置が飛ぶため）。
      * ライブラリに存在しない作品（該当エントリー無し）の場合は何もしない。
      */
-    fun onWorkStatusChanged(workId: String) {
+    fun onWorkStatusChanged(workId: String, status: StatusState?) {
         val entryId = _uiState.value.allEntries.firstOrNull { it.work.id == workId }?.id ?: return
-        onEntryUpdated(entryId)
+        if (status == null) {
+            onEntryUpdated(entryId)
+            return
+        }
+        viewModelScope.launch {
+            librarySyncService.applyStatus(entryId, status)
+            loadFromRoom()
+        }
     }
 
     /**

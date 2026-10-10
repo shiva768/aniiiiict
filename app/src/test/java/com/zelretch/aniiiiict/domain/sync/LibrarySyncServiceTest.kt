@@ -135,4 +135,24 @@ class LibrarySyncServiceTest {
 
         coVerify { dao.upsert(match { it.nextEpisodeId == null && it.nextEpisodeNumber == null }) }
     }
+
+    @Test
+    @DisplayName("applyStatus で対象外（中止）にすると取り直さずに手元から消す")
+    fun applyStatusRemovesWhenNotTarget() = runTest {
+        service.applyStatus("entry1", StatusState.STOP_WATCHING)
+
+        coVerify { dao.deleteById("entry1") }
+        coVerify(exactly = 0) { repository.getLibraryEntries(any(), any(), any()) }
+    }
+
+    @Test
+    @DisplayName("applyStatus で対象のステータスなら手元の行のステータスを書き換える")
+    fun applyStatusUpdatesWhenTarget() = runTest {
+        coEvery { dao.getById("entry1") } returns entry().toEntity()
+
+        service.applyStatus("entry1", StatusState.ON_HOLD)
+
+        coVerify { dao.upsert(match { it.statusState == "ON_HOLD" && it.workViewerStatusState == "ON_HOLD" }) }
+        coVerify(exactly = 0) { dao.deleteById(any()) }
+    }
 }

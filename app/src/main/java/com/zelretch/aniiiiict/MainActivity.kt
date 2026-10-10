@@ -353,7 +353,7 @@ private fun AppNavigation(mainViewModel: MainViewModel) {
                             val detailData = (detailViewModel.uiState.value as? UiState.Success)?.data
                             if (detailData?.statusChanged == true) {
                                 trackViewModel?.refresh()
-                                libraryViewModel?.onWorkStatusChanged(workId)
+                                libraryViewModel?.onWorkStatusChanged(workId, detailData.selectedStatus)
                             }
                             if (detailData?.priorityChanged == true) {
                                 libraryViewModel?.onPriorityChanged()
