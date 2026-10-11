@@ -219,6 +219,34 @@ class AnimeDetailScreenUITest {
     }
 
     @Test
+    fun WikipediaのURLが空文字ならリンクを出さない() {
+        // Given: Annict が未設定の URL を空文字で返したケース
+        val animeDetailInfo = createAnimeDetailInfo(
+            officialSiteUrl = "https://example.com/official",
+            wikipediaUrl = ""
+        )
+        val mockViewModel = createMockViewModel(
+            state = UiState.Success(AnimeDetailData(animeDetailInfo = animeDetailInfo))
+        )
+
+        // When: 画面を表示
+        composeTestRule.setContent {
+            AniiiiictTheme {
+                AnimeDetailScreen(
+                    workId = "test-work-id",
+                    programWithWork = createSampleProgramWithWork(),
+                    onNavigateBack = {},
+                    viewModel = mockViewModel
+                )
+            }
+        }
+
+        // Then: 公式サイトだけ出て、Wikipedia は出ない（タップして落ちることがない）
+        composeTestRule.onNodeWithText("公式サイト").assertExists()
+        composeTestRule.onNodeWithText("Wikipedia").assertDoesNotExist()
+    }
+
+    @Test
     fun 配信プラットフォーム情報がある場合にセクションが表示される() {
         // Given: 配信プラットフォーム情報を含むAnimeDetailInfo
         val mockChannel = mockk<WorkDetailQuery.Channel>()
