@@ -1,6 +1,8 @@
 package com.zelretch.aniiiiict.ui.animedetail
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -60,6 +62,7 @@ import com.zelretch.aniiiiict.data.model.WorkPriority
 import com.zelretch.aniiiiict.ui.base.UiState
 import com.zelretch.aniiiiict.ui.common.components.toJapaneseLabel
 import com.zelretch.aniiiiict.ui.common.components.toStatusColor
+import timber.log.Timber
 
 private const val IMAGE_SIZE = 120
 private const val CARD_ELEVATION = 2
@@ -409,8 +412,8 @@ private fun AnimeDetailBasicInfo(animeDetailInfo: AnimeDetailInfo, modifier: Mod
 private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val links = listOfNotNull(
-        animeDetailInfo.officialSiteUrl?.let { "公式サイト" to it },
-        animeDetailInfo.wikipediaUrl?.let { "Wikipedia" to it }
+        normalizeExternalUrl(animeDetailInfo.officialSiteUrl)?.let { "公式サイト" to it },
+        normalizeExternalUrl(animeDetailInfo.wikipediaUrl)?.let { "Wikipedia" to it }
     )
 
     if (links.isNotEmpty()) {
@@ -435,8 +438,12 @@ private fun AnimeDetailExternalLinks(animeDetailInfo: AnimeDetailInfo, modifier:
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                                context.startActivity(intent)
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                                } catch (e: ActivityNotFoundException) {
+                                    Timber.w(e, "外部リンクを開けない: $url")
+                                    Toast.makeText(context, "開けるアプリが見つかりません", Toast.LENGTH_SHORT).show()
+                                }
                             }
                             .padding(vertical = 4.dp)
                     ) {
