@@ -4,18 +4,32 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 
 @Dao
-interface WorkPriorityDao {
+abstract class WorkPriorityDao {
     @Query("SELECT * FROM work_priorities")
-    suspend fun getAll(): List<WorkPriorityEntity>
+    abstract suspend fun getAll(): List<WorkPriorityEntity>
 
     @Query("SELECT * FROM work_priorities WHERE workId = :workId")
-    suspend fun get(workId: String): WorkPriorityEntity?
+    abstract suspend fun get(workId: String): WorkPriorityEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(entity: WorkPriorityEntity)
+    abstract suspend fun upsert(entity: WorkPriorityEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertAll(entities: List<WorkPriorityEntity>)
 
     @Query("DELETE FROM work_priorities WHERE workId = :workId")
-    suspend fun delete(workId: String)
+    abstract suspend fun delete(workId: String)
+
+    @Query("DELETE FROM work_priorities")
+    abstract suspend fun deleteAll()
+
+    /** 別端末から受け取った優先度で丸ごと置き換える */
+    @Transaction
+    open suspend fun replaceAll(entities: List<WorkPriorityEntity>) {
+        deleteAll()
+        insertAll(entities)
+    }
 }

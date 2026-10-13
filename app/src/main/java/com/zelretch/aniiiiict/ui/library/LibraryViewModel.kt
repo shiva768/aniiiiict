@@ -7,10 +7,13 @@ import com.annict.type.StatusState
 import com.zelretch.aniiiiict.data.model.Episode
 import com.zelretch.aniiiiict.data.model.LibraryEntry
 import com.zelretch.aniiiiict.data.model.WorkPriority
+import com.zelretch.aniiiiict.domain.priority.WorkPriorityPayload
 import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
+import com.zelretch.aniiiiict.domain.usecase.ExportWorkPrioritiesUseCase
 import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
+import com.zelretch.aniiiiict.domain.usecase.ImportWorkPrioritiesUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadUnwatchedEpisodesUseCase
@@ -70,6 +73,23 @@ data class FinaleConfirmation(
     val episodeNumber: Int
 )
 
+/** 優先度を別端末へ渡す（QR / テキスト）ダイアログの状態 */
+sealed interface PriorityTransferState {
+    /** この端末の優先度を QR で見せている */
+    data class Export(val payload: String, val counts: Map<WorkPriority, Int>) : PriorityTransferState
+
+    /** 読み取った優先度で置き換えてよいか確認している */
+    data class ConfirmImport(val priorities: Map<String, WorkPriority>) : PriorityTransferState {
+        val counts: Map<WorkPriority, Int> get() = priorities.tierCounts()
+    }
+}
+
+/** Tier1〜3 それぞれの件数（無印は数えない） */
+fun Map<String, WorkPriority>.tierCounts(): Map<WorkPriority, Int> =
+    listOf(WorkPriority.TIER1, WorkPriority.TIER2, WorkPriority.TIER3).associateWith { tier ->
+        values.count { it == tier }
+    }
+
 data class LibraryUiState(
     val entries: List<LibraryEntry> = emptyList(),
     val allEntries: List<LibraryEntry> = emptyList(),
@@ -86,7 +106,10 @@ data class LibraryUiState(
     // 「まとめて」を展開中のエントリー（同時に展開するのは1件だけ）
     val bulkRecordEntryId: String? = null,
     val bulkEpisodes: BulkEpisodesState? = null,
-    val finaleConfirmation: FinaleConfirmation? = null
+    val finaleConfirmation: FinaleConfirmation? = null,
+    val priorityTransfer: PriorityTransferState? = null,
+    // 優先度の受け渡しで出す一言（トースト）。一覧を差し替える error とは分ける
+    val priorityTransferMessage: String? = null
 )
 
 @HiltViewModel
@@ -100,6 +123,8 @@ class LibraryViewModel @Inject constructor(
     private val judgeFinaleUseCase: JudgeFinaleUseCase,
     private val updateViewStateUseCase: UpdateViewStateUseCase,
     private val setWorkPriorityUseCase: SetWorkPriorityUseCase,
+    private val exportWorkPrioritiesUseCase: ExportWorkPrioritiesUseCase,
+    private val importWorkPrioritiesUseCase: ImportWorkPrioritiesUseCase,
     private val errorMapper: ErrorMapper
 ) : ViewModel() {
 
@@ -355,6 +380,58 @@ class LibraryViewModel @Inject constructor(
                     }
                 }
         }
+    }
+
+    /** メニュー「優先度を QR で渡す」：この端末の優先度を QR 用の文字列にして見せる */
+    fun showPriorityExport() {
+        viewModelScope.launch {
+            exportWorkPrioritiesUseCase()
+                .onSuccess { payload ->
+                    val counts = WorkPriorityPayload.decode(payload).orEmpty().tierCounts()
+                    _uiState.update { it.copy(priorityTransfer = PriorityTransferState.Export(payload, counts)) }
+                }
+                .onFailure { e ->
+                    Timber.e(e, "優先度の書き出しに失敗")
+                    _uiState.update { it.copy(priorityTransferMessage = "優先度を書き出せませんでした") }
+                }
+        }
+    }
+
+    /** QR / クリップボードから読み取った文字列。優先度として読めれば置き換えの確認を出す */
+    fun onPriorityPayloadReceived(payload: String) {
+        val priorities = WorkPriorityPayload.decode(payload)
+        _uiState.update {
+            if (priorities == null) {
+                it.copy(priorityTransferMessage = "優先度の QR / テキストではありません")
+            } else {
+                it.copy(priorityTransfer = PriorityTransferState.ConfirmImport(priorities))
+            }
+        }
+    }
+
+    /** 置き換えの確認で「置き換える」：この端末の優先度を受け取った内容と同じにする */
+    fun confirmPriorityImport() {
+        val confirm = _uiState.value.priorityTransfer as? PriorityTransferState.ConfirmImport ?: return
+        _uiState.update { it.copy(priorityTransfer = null) }
+        viewModelScope.launch {
+            importWorkPrioritiesUseCase(confirm.priorities)
+                .onSuccess {
+                    _uiState.update { it.copy(priorityTransferMessage = "優先度を置き換えました") }
+                    loadFromRoom()
+                }
+                .onFailure { e ->
+                    Timber.e(e, "優先度の読み込みに失敗")
+                    _uiState.update { it.copy(priorityTransferMessage = "優先度を置き換えられませんでした") }
+                }
+        }
+    }
+
+    fun dismissPriorityTransfer() {
+        _uiState.update { it.copy(priorityTransfer = null) }
+    }
+
+    fun onPriorityTransferMessageShown() {
+        _uiState.update { it.copy(priorityTransferMessage = null) }
     }
 
     private fun collapseBulkRecord() {

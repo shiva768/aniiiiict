@@ -42,6 +42,10 @@ coil = "2.7.0"
 # Logging
 timber = "5.0.1"
 
+# QR
+zxing-core = "3.5.4"
+play-services-code-scanner = "16.1.0"
+
 # Testing
 junit = "4.13.2"
 mockito-core = "5.10.0"
@@ -107,6 +111,8 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing-core" }
+play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "play-services-code-scanner" }
 
 # Kotlin
 kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlin" }

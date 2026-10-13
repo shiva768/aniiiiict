@@ -54,4 +54,24 @@ class WorkPriorityUseCasesTest {
 
         assertEquals(WorkPriority.TIER1, GetWorkPriorityUseCase(dao)("work1"))
     }
+
+    @Test
+    @DisplayName("書き出しは保存されている Tier を文字列にする")
+    fun exportEncodesStored() = runTest {
+        coEvery { dao.getAll() } returns listOf(WorkPriorityEntity("raw", "TIER2"), WorkPriorityEntity("bad", "???"))
+
+        val payload = ExportWorkPrioritiesUseCase(dao)().getOrThrow()
+
+        assertEquals("aniiiiict-priority/1|1:|2:raw|3:", payload)
+    }
+
+    @Test
+    @DisplayName("読み込みは受け取った内容で丸ごと置き換える")
+    fun importReplacesAll() = runTest {
+        ImportWorkPrioritiesUseCase(dao)(mapOf("w1" to WorkPriority.TIER1, "w2" to WorkPriority.TIER3))
+
+        coVerify {
+            dao.replaceAll(listOf(WorkPriorityEntity("w1", "TIER1"), WorkPriorityEntity("w2", "TIER3")))
+        }
+    }
 }
