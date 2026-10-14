@@ -16,6 +16,10 @@
     android:supportsRtl="true"
     android:theme="@style/Theme.Aniiiiict"
     tools:targetApi="31">
+    <!-- 優先度の QR 読み取り（Google Code Scanner）のモジュールをインストール時に落としておく -->
+    <meta-data
+      android:name="com.google.mlkit.vision.DEPENDENCIES"
+      android:value="barcode_ui"/>
     <activity
       android:name=".MainActivity"
       android:exported="true"

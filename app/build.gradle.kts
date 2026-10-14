@@ -277,6 +277,8 @@ dependencies {
 
     // Logging
     implementation(libs.timber)
+    implementation(libs.zxing.core)
+    implementation(libs.play.services.code.scanner)
 
     // Testing
     testImplementation(kotlin("reflect"))

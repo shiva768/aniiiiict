@@ -1,5 +1,6 @@
 package com.zelretch.aniiiiict.ui.library
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -33,11 +34,14 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -54,6 +58,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +68,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,12 +92,29 @@ fun LibraryScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit = {}
 ) {
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             LibraryTopAppBar(
                 isFilterVisible = uiState.isFilterVisible,
                 onFilterClick = { viewModel.toggleFilterVisibility() },
-                onNavigateBack = onNavigateBack
+                onNavigateBack = onNavigateBack,
+                onExportPriorities = { viewModel.showPriorityExport() },
+                onScanPriorities = {
+                    scanPriorityQr(
+                        context = context,
+                        onScanned = { viewModel.onPriorityPayloadReceived(it) },
+                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                    )
+                },
+                onPastePriorities = {
+                    val text = readClipboardText(context)
+                    if (text.isNullOrBlank()) {
+                        Toast.makeText(context, "クリップボードが空です", Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewModel.onPriorityPayloadReceived(text)
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -102,6 +125,7 @@ fun LibraryScreen(
             onNavigateToDetail = onNavigateToDetail
         )
     }
+    PriorityTransferDialogs(uiState = uiState, viewModel = viewModel)
     uiState.finaleConfirmation?.let { finale ->
         FinaleConfirmDialog(
             episodeNumber = finale.episodeNumber,
@@ -111,9 +135,41 @@ fun LibraryScreen(
     }
 }
 
+@Composable
+private fun PriorityTransferDialogs(uiState: LibraryUiState, viewModel: LibraryViewModel) {
+    val context = LocalContext.current
+    when (val transfer = uiState.priorityTransfer) {
+        is PriorityTransferState.Export -> PriorityExportDialog(
+            state = transfer,
+            onShareText = { sharePriorityText(context, transfer.payload) },
+            onDismiss = { viewModel.dismissPriorityTransfer() }
+        )
+        is PriorityTransferState.ConfirmImport -> PriorityImportConfirmDialog(
+            state = transfer,
+            onConfirm = { viewModel.confirmPriorityImport() },
+            onDismiss = { viewModel.dismissPriorityTransfer() }
+        )
+        null -> Unit
+    }
+    LaunchedEffect(uiState.priorityTransferMessage) {
+        uiState.priorityTransferMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.onPriorityTransferMessageShown()
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LibraryTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit, onNavigateBack: () -> Unit) {
+private fun LibraryTopAppBar(
+    isFilterVisible: Boolean,
+    onFilterClick: () -> Unit,
+    onNavigateBack: () -> Unit,
+    onExportPriorities: () -> Unit,
+    onScanPriorities: () -> Unit,
+    onPastePriorities: () -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
     TopAppBar(
         title = {
             Text(
@@ -140,6 +196,26 @@ private fun LibraryTopAppBar(isFilterVisible: Boolean, onFilterClick: () -> Unit
                         MaterialTheme.colorScheme.onSurface
                     }
                 )
+            }
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "メニュー")
+                }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    listOf(
+                        "優先度を QR で渡す" to onExportPriorities,
+                        "QR を読み込む" to onScanPriorities,
+                        "クリップボードから読み込む" to onPastePriorities
+                    ).forEach { (label, onClick) ->
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                menuExpanded = false
+                                onClick()
+                            }
+                        )
+                    }
+                }
             }
         }
     )

@@ -9,8 +9,10 @@ import com.zelretch.aniiiiict.domain.sync.LibrarySyncService
 import com.zelretch.aniiiiict.domain.sync.SyncStatus
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordEpisodesUseCase
 import com.zelretch.aniiiiict.domain.usecase.BulkRecordResult
+import com.zelretch.aniiiiict.domain.usecase.ExportWorkPrioritiesUseCase
 import com.zelretch.aniiiiict.domain.usecase.FinaleJudgmentInfo
 import com.zelretch.aniiiiict.domain.usecase.FinaleState
+import com.zelretch.aniiiiict.domain.usecase.ImportWorkPrioritiesUseCase
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleResult
 import com.zelretch.aniiiiict.domain.usecase.JudgeFinaleUseCase
 import com.zelretch.aniiiiict.domain.usecase.LoadLibraryEntriesUseCase
@@ -55,6 +57,8 @@ class LibraryViewModelTest {
     private lateinit var judgeFinaleUseCase: JudgeFinaleUseCase
     private lateinit var updateViewStateUseCase: UpdateViewStateUseCase
     private lateinit var setWorkPriorityUseCase: SetWorkPriorityUseCase
+    private lateinit var exportWorkPrioritiesUseCase: ExportWorkPrioritiesUseCase
+    private lateinit var importWorkPrioritiesUseCase: ImportWorkPrioritiesUseCase
     private lateinit var errorMapper: ErrorMapper
     private val dispatcher = UnconfinedTestDispatcher()
 
@@ -73,6 +77,8 @@ class LibraryViewModelTest {
         updateViewStateUseCase = mockk()
         setWorkPriorityUseCase = mockk()
         coEvery { setWorkPriorityUseCase(any(), any()) } returns Result.success(Unit)
+        exportWorkPrioritiesUseCase = mockk()
+        importWorkPrioritiesUseCase = mockk()
         errorMapper = mockk()
     }
 
@@ -92,6 +98,8 @@ class LibraryViewModelTest {
             judgeFinaleUseCase,
             updateViewStateUseCase,
             setWorkPriorityUseCase,
+            exportWorkPrioritiesUseCase,
+            importWorkPrioritiesUseCase,
             errorMapper
         )
     }
@@ -172,6 +180,8 @@ class LibraryViewModelTest {
                     judgeFinaleUseCase,
                     updateViewStateUseCase,
                     setWorkPriorityUseCase,
+                    exportWorkPrioritiesUseCase,
+                    importWorkPrioritiesUseCase,
                     errorMapper
                 )
             val state = viewModel.uiState.first { it.isSyncing }
@@ -206,6 +216,8 @@ class LibraryViewModelTest {
                     judgeFinaleUseCase,
                     updateViewStateUseCase,
                     setWorkPriorityUseCase,
+                    exportWorkPrioritiesUseCase,
+                    importWorkPrioritiesUseCase,
                     errorMapper
                 )
             viewModel.uiState.first { it.isSyncing }
@@ -927,6 +939,78 @@ class LibraryViewModelTest {
             viewModel.recordNextEpisode(target)
 
             coVerify(exactly = 0) { setWorkPriorityUseCase(any(), any()) }
+        }
+    }
+
+    @Nested
+    @DisplayName("優先度の受け渡し")
+    inner class PriorityTransfer {
+
+        private suspend fun loadedViewModel(): LibraryViewModel {
+            coEvery { loadLibraryEntriesUseCase() } returns Result.success(emptyList())
+            val viewModel = createViewModel()
+            viewModel.uiState.first { !it.isLoading }
+            return viewModel
+        }
+
+        @Test
+        @DisplayName("書き出すと QR 用の文字列と Tier ごとの件数を出す")
+        fun showExport() = runTest(dispatcher) {
+            val viewModel = loadedViewModel()
+            coEvery { exportWorkPrioritiesUseCase() } returns Result.success("aniiiiict-priority/1|1:1,2|2:|3:3")
+
+            viewModel.showPriorityExport()
+
+            val state = viewModel.uiState.value.priorityTransfer as PriorityTransferState.Export
+            assertEquals("aniiiiict-priority/1|1:1,2|2:|3:3", state.payload)
+            assertEquals(
+                mapOf(WorkPriority.TIER1 to 2, WorkPriority.TIER2 to 0, WorkPriority.TIER3 to 1),
+                state.counts
+            )
+        }
+
+        @Test
+        @DisplayName("優先度として読めない文字列はメッセージだけ出し、置き換えない")
+        fun rejectsInvalidPayload() = runTest(dispatcher) {
+            val viewModel = loadedViewModel()
+
+            viewModel.onPriorityPayloadReceived("https://example.com")
+
+            assertNull(viewModel.uiState.value.priorityTransfer)
+            assertEquals("優先度の QR / テキストではありません", viewModel.uiState.value.priorityTransferMessage)
+            coVerify(exactly = 0) { importWorkPrioritiesUseCase(any()) }
+        }
+
+        @Test
+        @DisplayName("読み取ったら確認を出し、置き換えるで置き換えてライブラリを読み直す")
+        fun confirmImportReplaces() = runTest(dispatcher) {
+            val viewModel = loadedViewModel()
+            coEvery { importWorkPrioritiesUseCase(any()) } returns Result.success(Unit)
+
+            viewModel.onPriorityPayloadReceived("aniiiiict-priority/1|1:raw|2:|3:")
+            val confirm = viewModel.uiState.value.priorityTransfer as PriorityTransferState.ConfirmImport
+            assertEquals(mapOf("raw" to WorkPriority.TIER1), confirm.priorities)
+
+            viewModel.confirmPriorityImport()
+
+            coVerifyOrder {
+                importWorkPrioritiesUseCase(mapOf("raw" to WorkPriority.TIER1))
+                loadLibraryEntriesUseCase()
+            }
+            assertNull(viewModel.uiState.value.priorityTransfer)
+            assertEquals("優先度を置き換えました", viewModel.uiState.value.priorityTransferMessage)
+        }
+
+        @Test
+        @DisplayName("確認でキャンセルすると置き換えない")
+        fun dismissDoesNotImport() = runTest(dispatcher) {
+            val viewModel = loadedViewModel()
+
+            viewModel.onPriorityPayloadReceived("aniiiiict-priority/1|1:raw|2:|3:")
+            viewModel.dismissPriorityTransfer()
+
+            assertNull(viewModel.uiState.value.priorityTransfer)
+            coVerify(exactly = 0) { importWorkPrioritiesUseCase(any()) }
         }
     }
 

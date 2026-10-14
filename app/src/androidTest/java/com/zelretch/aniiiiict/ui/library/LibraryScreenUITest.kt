@@ -529,6 +529,60 @@ class LibraryScreenUITest {
         composeTestRule.onNodeWithTag("library_section_NONE").assertDoesNotExist()
     }
 
+    @Test
+    fun libraryScreen_メニューから優先度をQRで渡す_showPriorityExportが呼ばれる() {
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val state = LibraryUiState()
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        composeTestRule.onNodeWithContentDescription("メニュー").performClick()
+        composeTestRule.onNodeWithText("優先度を QR で渡す").performClick()
+
+        verify { mockViewModel.showPriorityExport() }
+    }
+
+    @Test
+    fun libraryScreen_優先度の書き出し中_QRと件数が表示される() {
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val state = LibraryUiState(
+            priorityTransfer = PriorityTransferState.Export(
+                payload = "aniiiiict-priority/1|1:1,2|2:|3:3",
+                counts = mapOf(WorkPriority.TIER1 to 2, WorkPriority.TIER2 to 0, WorkPriority.TIER3 to 1)
+            )
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        composeTestRule.onNodeWithTag("priority_export_qr").assertExists()
+        composeTestRule.onNodeWithText("Tier1 2件 / Tier2 0件 / Tier3 1件").assertExists()
+        composeTestRule.onNodeWithText("閉じる").performClick()
+        verify { mockViewModel.dismissPriorityTransfer() }
+    }
+
+    @Test
+    fun libraryScreen_優先度の読み込み確認_件数が出て置き換えるでconfirmPriorityImportが呼ばれる() {
+        val mockViewModel = mockk<LibraryViewModel>(relaxed = true)
+        val state = LibraryUiState(
+            priorityTransfer = PriorityTransferState.ConfirmImport(
+                mapOf("w1" to WorkPriority.TIER1, "w2" to WorkPriority.TIER3)
+            )
+        )
+        every { mockViewModel.uiState } returns MutableStateFlow(state)
+        composeTestRule.setContent {
+            LibraryScreen(viewModel = mockViewModel, uiState = state, onNavigateBack = {})
+        }
+
+        composeTestRule.onNodeWithText("優先度を置き換えますか？").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tier1 1件 / Tier2 0件 / Tier3 1件").assertExists()
+        composeTestRule.onNodeWithText("置き換える").performClick()
+        verify { mockViewModel.confirmPriorityImport() }
+    }
+
     private fun priorityEntry(id: String, title: String, priority: WorkPriority) = LibraryEntry(
         id = "entry_$id",
         work = Work(id = id, title = title, viewerStatusState = StatusState.WATCHING),
